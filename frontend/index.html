@@ -1,90 +1,1622 @@
 <!DOCTYPE html>
-<!-- saved from url=(0071)https://codepen.io/J-R-LE/full/KwNqMJb/709f4b841ea8d839429f3b60b6ccf266 -->
-<html lang="en" class="mac chrome147 js js"><!--<![endif]--><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LeVITA Vital-Test powered by LogiVita</title>
 
-  <meta name="csrf-param" content="authenticity_token">
-<meta name="csrf-token" content="dFd8oPvH6AB0QLJou5AijPgQpOMLwKHcdwOq4QDioYFGQGfIXIKbBhmwgOD8PTgfcxEIqIiu9MEEPoOB4O1EUw">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  
+  <style>
+    :root {
+      --primary: #2c3e50;
+      --secondary: #3498db;
+      --success: #27ae60;
+      --danger: #e74c3c;
+      --warning: #f39c12;
+      --bg: #f4f7f6;
+    }
 
-  <meta name="robots" content="noindex">
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: #333;
+      padding: 20px;
+    }
 
-  <title>LogiVital_V1</title>
+    .container {
+      max-width: 880px;
+      margin: auto;
+      background: white;
+      padding: 35px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
 
-  <link rel="stylesheet" href="./index_files/fullpage-defe0b00ddddc98ad4bc2c428e9d6182cd7742e2624f558656dbfb986d4ba13c.css">
-  <link rel="stylesheet" href="./index_files/global-4d2dbf7b9c7393b9f005b43dd9a104a1d4f205c562e4d80fbd5b31dcb738795f.css" media="all">
-  <link rel="stylesheet" href="./index_files/everypage-49d10d4f.css">
-  <link rel="stylesheet" href="./index_files/page-6d7ec71a37b87f5f80695384afc7b2b48ebfbe6ce33285d99441bfeb72357d7b.css" media="all">
-  <link rel="stylesheet" href="./index_files/editor-28e58047cdd10ddb866ce3eec8396fbb6003052a056114ce089680172508765f.css" media="all">
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
 
-  
+    .logo {
+      font-size: 34px;
+      font-weight: bold;
+      color: var(--primary);
+    }
 
-<style type="text/css">@font-face {font-family:Lato;font-style:normal;font-weight:400;src:url(/cf-fonts/s/lato/5.0.18/latin-ext/400/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Lato;font-style:normal;font-weight:400;src:url(/cf-fonts/s/lato/5.0.18/latin/400/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Lato;font-style:normal;font-weight:700;src:url(/cf-fonts/s/lato/5.0.18/latin-ext/700/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Lato;font-style:normal;font-weight:700;src:url(/cf-fonts/s/lato/5.0.18/latin/700/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Lato;font-style:normal;font-weight:900;src:url(/cf-fonts/s/lato/5.0.18/latin-ext/900/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Lato;font-style:normal;font-weight:900;src:url(/cf-fonts/s/lato/5.0.18/latin/900/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Lato;font-style:italic;font-weight:400;src:url(/cf-fonts/s/lato/5.0.18/latin-ext/400/italic.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Lato;font-style:italic;font-weight:400;src:url(/cf-fonts/s/lato/5.0.18/latin/400/italic.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Lato;font-style:italic;font-weight:700;src:url(/cf-fonts/s/lato/5.0.18/latin-ext/700/italic.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Lato;font-style:italic;font-weight:700;src:url(/cf-fonts/s/lato/5.0.18/latin/700/italic.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Lato;font-style:italic;font-weight:900;src:url(/cf-fonts/s/lato/5.0.18/latin/900/italic.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Lato;font-style:italic;font-weight:900;src:url(/cf-fonts/s/lato/5.0.18/latin-ext/900/italic.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}</style>
-      <meta name="twitter:title" content="LogiVital_V1">
-    <meta name="twitter:description" content="...">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="https://shots.codepen.io/username/pen/KwNqMJb/709f4b841ea8d839429f3b60b6ccf266-800.jpg?version=1779659815">
+    .vita-green {
+      color: var(--success);
+    }
+
+    .powered {
+      margin: 6px 0 0;
+      color: #667;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #eee;
+      border-radius: 5px;
+      margin-bottom: 30px;
+    }
+
+    #progress {
+      width: 0%;
+      height: 100%;
+      background: var(--secondary);
+      border-radius: 5px;
+      transition: 0.4s;
+    }
+
+    .question-step { display: none; }
+    .active { display: block; }
+
+    .instruction {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 25px;
+      line-height: 1.4;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 15px;
+      margin-bottom: 15px;
+      border: 2px solid #eee;
+      border-radius: 12px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    .options button,
+    .next-btn,
+    .cta-btn,
+    .reset-btn {
+      width: 100%;
+      padding: 15px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      border: 2px solid #eee;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.2s;
+    }
+
+    .options button {
+      background: white;
+      text-align: left;
+    }
+
+    .options button:hover {
+      border-color: var(--secondary);
+      background: #f0f7ff;
+    }
+
+    .next-btn {
+      background: var(--secondary);
+      color: white;
+      font-weight: bold;
+      text-align: center;
+      border: none;
+    }
+
+    .cta-btn {
+      background: var(--success);
+      color: white;
+      font-weight: bold;
+      text-align: center;
+      border: none;
+    }
+
+    .reset-btn {
+      background: var(--danger);
+      color: white;
+      font-weight: bold;
+      text-align: center;
+      border: none;
+    }
+
+    .info-box,
+    .success-box,
+    .warning-box,
+    .danger-box {
+      padding: 18px;
+      border-radius: 12px;
+      margin-top: 20px;
+      line-height: 1.6;
+    }
+
+    .info-box {
+      background: #eef2f7;
+      border-left: 5px solid var(--secondary);
+    }
+
+    .success-box {
+      background: #f0fff4;
+      border-left: 5px solid var(--success);
+    }
+
+    .warning-box {
+      background: #fff7e8;
+      border-left: 5px solid var(--warning);
+    }
+
+    .danger-box {
+      background: #fff0f0;
+      border-left: 5px solid var(--danger);
+    }
+
+    .checkbox-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    .checkbox-row input {
+      width: auto;
+      margin-top: 5px;
+    }
+
+    .small {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .hidden { display: none; }
+
+    .loading {
+      text-align: center;
+      padding: 30px;
+      font-weight: 600;
+    }
+
+    .score {
+      font-size: 46px;
+      font-weight: bold;
+      color: var(--secondary);
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .score-range-box {
+      margin-top: 20px;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .score-range-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .score-range-row:last-child {
+      border-bottom: none;
+    }
+
+    .score-range-value {
+      font-weight: 700;
+      white-space: nowrap;
+      color: var(--primary);
+    }
+
+    .score-range-row.active-level {
+      background: rgba(39, 174, 96, 0.12);
+      border-radius: 10px;
+      padding-left: 10px;
+      padding-right: 10px;
+      font-weight: 700;
+    }
+
+    .score-range-label {
+      flex: 1;
+    }
+
+    .score-range-note {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .red-flag-box {
+      background: #fff0f0;
+      border-left: 5px solid var(--danger);
+    }
+
+    .quick-actions {
+      margin-top: 10px;
+      padding-left: 18px;
+    }
+
+    .quick-actions li {
+      margin-bottom: 6px;
+    }
 
 
-    <meta property="og:image" content="https://shots.codepen.io/username/pen/KwNqMJb/709f4b841ea8d839429f3b60b6ccf266-800.jpg?version=1779659815" itemprop="thumbnailUrl">
-    <meta property="og:title" content="LogiVital_V1">
-    <meta property="og:url" content="https://codepen.io/J-R-LE/details/KwNqMJb/709f4b841ea8d839429f3b60b6ccf266">
-    <meta property="og:description" content="...">
+    .pilot-code {
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+      background: #eef2f7;
+      padding: 15px;
+      border-radius: 12px;
+      margin-top: 15px;
+    }
+
+    .chart-box {
+      max-width: 520px;
+      margin: 30px auto;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .area-card {
+      padding: 16px;
+      border-radius: 12px;
+      line-height: 1.5;
+      border-left: 5px solid #ccc;
+      background: #f7f7f7;
+    }
+
+    .area-good {
+      background: #f0fff4;
+      border-left-color: var(--success);
+    }
+
+    .area-medium {
+      background: #fff7e8;
+      border-left-color: var(--warning);
+    }
+
+    .area-low {
+      background: #fff0f0;
+      border-left-color: var(--danger);
+    }
+
+    .ai-box {
+      margin-top: 30px;
+      padding: 22px;
+      border-radius: 14px;
+      background: #eef2f7;
+      border-left: 5px solid var(--secondary);
+    }
+
+    .feedback-box {
+      margin-top: 25px;
+      padding: 22px;
+      border-radius: 14px;
+      background: #f0fff4;
+      border-left: 5px solid var(--success);
+    }
+    .vitality-support-box ul.support-hints {
+      margin: 18px 0 18px 18px;
+      padding: 0;
+    }
+
+    .vitality-support-box li {
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
 
 
-  <link rel="alternate" type="application/json+oembed" href="https://codepen.io/api/oembed?url=https%3A%2F%2Fcodepen.io%2FJ-R-LE%2Fpen%2FKwNqMJb%2F709f4b841ea8d839429f3b60b6ccf266&amp;format=json" title="LogiVital_V1">
+    .bmi-detail {
+      margin-top: 14px;
+      margin-bottom: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.55);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .vital-profile-box {
+      background: #f5fbf8;
+      border: 1px solid #d7ebe0;
+      border-radius: 20px;
+      padding: 26px;
+      margin: 22px 0 30px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+    }
 
-  
+    .vital-profile-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
 
-    <link rel="apple-touch-icon" type="image/png" href="https://cpwebassets.codepen.io/assets/favicon/apple-touch-icon-5ae1a0698dcc2402e9712f7d01ed509a57814f994c660df9f7a952f3060705ee.png">
+    .vital-profile-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--success);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
 
-    <meta name="apple-mobile-web-app-title" content="CodePen">
+    .vital-profile-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #1f2d2a;
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
 
-    <link rel="icon" type="image/x-icon" href="https://cpwebassets.codepen.io/assets/favicon/favicon-aec34940fbc1a6e787974dcd360f2c6b63348d4b1f4e06c77743096d55480f33.ico">
+    .vital-profile-subtitle {
+      font-size: 16px;
+      color: #5b6964;
+      line-height: 1.5;
+    }
 
-    <link rel="mask-icon" type="image/x-icon" href="https://cpwebassets.codepen.io/assets/favicon/logo-pin-b4b4269c16397ad2f0f7a01bcdf513a1994f4c94b8af2f191c09eb0d601762b1.svg" color="#111">
+    .vital-profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .vital-profile-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid #e5efea;
+    }
+
+    .vital-profile-card-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #23312e;
+      margin-bottom: 14px;
+    }
+
+    .vital-profile-list {
+      margin: 0;
+      padding-left: 19px;
+    }
+
+    .vital-profile-list li {
+      margin-bottom: 11px;
+      line-height: 1.55;
+      color: #44514c;
+      font-size: 15px;
+    }
+
+    .vital-score-scale {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .vital-score-item {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 11px 13px;
+      border-radius: 12px;
+      font-size: 14px;
+    }
+
+    .vital-score-item span {
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .vital-score-item strong {
+      font-weight: 700;
+    }
+
+    .vital-score-item.green {
+      background: #e6f6ea;
+      color: #1d7d42;
+    }
+
+    .vital-score-item.lightgreen {
+      background: #eef8e8;
+      color: #5f9a1d;
+    }
+
+    .vital-score-item.orange {
+      background: #fff4e7;
+      color: #c67a00;
+    }
+
+    .vital-score-item.red {
+      background: #ffeceb;
+      color: #cc3f2f;
+    }
+
+    .vital-profile-focus {
+      background: white;
+      border-left: 5px solid var(--success);
+      border-radius: 12px;
+      padding: 16px 18px;
+      font-size: 15px;
+      line-height: 1.65;
+      color: #44514c;
+      margin-bottom: 16px;
+    }
+
+    .vital-profile-footer {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #5b6964;
+    }
+
+    @media(max-width: 900px) {
+      .vital-profile-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .vital-profile-title {
+        font-size: 23px;
+      }
+
+      .vital-profile-header {
+        gap: 12px;
+      }
+
+      .vital-profile-box {
+        padding: 20px;
+      }
+    }
 
 
+  </style>
+</head>
 
-<style id="_goober"> @keyframes go2264125279{from{transform:scale(0) rotate(45deg);opacity:0;}to{transform:scale(1) rotate(45deg);opacity:1;}}@keyframes go3020080000{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}@keyframes go463499852{from{transform:scale(0) rotate(90deg);opacity:0;}to{transform:scale(1) rotate(90deg);opacity:1;}}@keyframes go1268368563{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}@keyframes go1310225428{from{transform:scale(0) rotate(45deg);opacity:0;}to{transform:scale(1) rotate(45deg);opacity:1;}}@keyframes go651618207{0%{height:0;width:0;opacity:0;}40%{height:0;width:6px;opacity:1;}100%{opacity:1;height:10px;}}@keyframes go901347462{from{transform:scale(0.6);opacity:0.4;}to{transform:scale(1);opacity:1;}}.go4109123758{z-index:9999;}.go4109123758 > *{pointer-events:auto;}</style><script src="./index_files/CWYDP2QE.json"></script><script src="./index_files/KVHtLEVcgM.js" async=""></script></head>
+<body>
 
-<body class="fullpage logged-in">
+<div class="container">
 
-  <header id="main-header" class="main-header"><div class="EditorHeader-module_root-cpo0V header-wrap HeaderWrap-module_root-PsKVw"><div class="Logo-module_root-ojP5q" data-component="Logo" data-test-id="logo"><a href="https://codepen.io/" class="Logo-module_small-T4UEU"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M100 34.2c-.4-2.6-3.3-4-5.3-5.3-3.6-2.4-7.1-4.7-10.7-7.1-8.5-5.7-17.1-11.4-25.6-17.1-2-1.3-4-2.7-6-4-1.4-1-3.3-1-4.8 0-5.7 3.8-11.5 7.7-17.2 11.5L5.2 29C3 30.4.1 31.8 0 34.8c-.1 3.3 0 6.7 0 10v16c0 2.9-.6 6.3 2.1 8.1 6.4 4.4 12.9 8.6 19.4 12.9 8 5.3 16 10.7 24 16 2.2 1.5 4.4 3.1 7.1 1.3 2.3-1.5 4.5-3 6.8-4.5 8.9-5.9 17.8-11.9 26.7-17.8l9.9-6.6c.6-.4 1.3-.8 1.9-1.3 1.4-1 2-2.4 2-4.1V37.3c.1-1.1.2-2.1.1-3.1 0-.1 0 .2 0 0zM54.3 12.3 88 34.8 73 44.9 54.3 32.4zm-8.6 0v20L27.1 44.8 12 34.8zM8.6 42.8 19.3 50 8.6 57.2zm37.1 44.9L12 65.2l15-10.1 18.6 12.5v20.1zM50 60.2 34.8 50 50 39.8 65.2 50zm4.3 27.5v-20l18.6-12.5 15 10.1zm37.1-30.5L80.7 50l10.8-7.2z"></path></svg><span class="ScreenReaderText-module_root-jASUi">CodePen Home</span></a><a href="https://codepen.io/" class="Logo-module_large-J2pKy"><svg fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" viewBox="0 0 138 26" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M15 8a7 7 0 1 0 0 10m7-8.7L33 2l11 7.3v7.4L33 24l-11-7.3zm0 0 11 7.4 11-7.4m0 7.4L33 9.3l-11 7.4M33 2v7.3m0 7.4V24M52 6h5a7 7 0 0 1 0 14h-5zm28 0h-9v14h9m-9-7h6m11 1h6a4 4 0 0 0 0-8h-6v14m26-14h-9v14h9m-9-7h6m11 7V6l11 14V6"></path></svg><span class="ScreenReaderText-module_root-jASUi">CodePen Home</span></a></div><div class="ItemTitle-module_root-tJA+7" data-test-id="item-title-area"><div class="ItemTitle-module_text-PYYCs" data-view="full"><div class="ItemTitle-module_by-nYpg9"><a class="ItemTitle-module_ownerLink-CLyo7" href="https://codepen.io/J-R-LE">JÖR LE </a><a class="BadgePro-module_root-EhalN BadgePro-module_svg-OztkH Badge-module_root-+zThw Badge-module_complex-7s8CR" title="PRO" data-test-id="pro-badge" href="https://codepen.io/pro" style="margin: 0px;"><svg viewBox="0 0 32 16" xmlns="http://www.w3.org/2000/svg" style="width: 32px; height: 16px;"><rect fill="#ffdd40" height="16" rx="1.5" width="32"></rect><path d="M9.174 5.598c.834 0 1.214.44 1.214 1.113 0 .76-.422 1.113-1.182 1.113h-.56c-.094 0-.105-.011-.105-.11V5.708c0-.1.01-.11.106-.11zm.106 3.67c.76 0 1.404-.188 1.847-.563.56-.452.855-1.135.855-2.016 0-.893-.317-1.61-.887-2.039-.443-.33-.97-.507-1.857-.507H7.106c-.095 0-.106.011-.106.11v7.494c0 .099.01.11.106.11h1.33c.094 0 .105-.011.105-.11v-2.37c0-.099.01-.11.106-.11zM14.375 9.047c0-.077 0-.11.063-.11.053 0 .074.022.116.088l1.953 2.722c.074.099.084.11.18.11h1.635c.064 0 .095 0 .095-.022a.31.31 0 0 0-.053-.088c-.707-.96-1.425-1.885-2.132-2.854a.085.085 0 0 1-.02-.045c0-.022.01-.044.041-.055.95-.286 1.573-1.124 1.573-2.28 0-.96-.454-1.62-1.055-1.973-.539-.32-1.056-.397-1.943-.397H12.94c-.095 0-.105.011-.105.11v7.494c0 .099.02.11.116.11h1.32c.094 0 .105-.011.105-.11zm.654-3.515c.834 0 1.214.418 1.214 1.09 0 .76-.422 1.07-1.182 1.07h-.58c-.096 0-.106-.012-.106-.11v-1.94c0-.1.01-.11.105-.11zM26 8c0-2.182-1.636-4-3.726-4s-3.726 1.818-3.726 4 1.636 4 3.726 4S26 10.182 26 8zm-5.837 0c0-1.311.855-2.402 2.111-2.402 1.256 0 2.111 1.09 2.111 2.402 0 1.311-.855 2.402-2.11 2.402-1.257 0-2.112-1.09-2.112-2.402z"></path></svg></a></div><h1 class="ItemTitle-module_title-6kJVb" id="item-title"><span class="ItemTitle-module_titleLink-1hRhU" id="editable-title-span">LogiVital_V1</span></h1></div></div><a href="https://codepen.io/J-R-LE/pen/KwNqMJb/709f4b841ea8d839429f3b60b6ccf266" title="View in Editor" class="Button-module_root-xw+9D EditorHeaderviewInEditorButton-module_root-x5c25"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="EditorHeaderviewInEditorButton-module_viewInEditorIcon-0a+oq"><path d="M24.56 92.536 0 100l7.453-24.583c6.356-.244 17.322 10.792 17.107 17.119zM96.617 32.082l-.475.471L67.383 3.766l.472-.472c12.927-12.94 42.016 15.517 28.762 28.788zM61.64 9.516l28.758 28.785-46.303 46.345c-1.222 1.221-2.234.884-2.234.884l2.314-15.356-14.454.074.072-14.468-15.342 2.312s-.34-1.011.883-2.234z"></path></svg> <span class="EditorHeaderviewInEditorButton-module_viewInEditorSpan-PNyNd">View Source Code</span></a><span class="ButtonGroup-module_root-RfSlH BookmarkButton-module_bookmarkButtonGroup-XHnqF"><button title="Remove Bookmark" class="Button-module_root-xw+9D BookmarkButton-module_bookmarkButton-8PJ4t" data-bookmarked="true"><svg data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 18"><path d="M0 1.8C0 .81.78 0 1.75 0h10.5C13.22 0 14 .81 14 1.8v15.3c0 .34-.18.65-.47.8-.29.15-.64.13-.91-.07L7 13.7l-5.62 4.13c-.27.2-.62.22-.91.07a.893.893 0 0 1-.47-.8V1.8Z" data-name="Layer 1"></path></svg></button><button aria-haspopup="true" aria-expanded="false" aria-label="View Bookmarks" title="View Bookmarks" class="Button-module_root-xw+9D ButtonWithDropdownTrigger-module_root-QUiLE"><svg viewBox="-122.9 121.1 105.9 61.9" xmlns="http://www.w3.org/2000/svg" class="ButtonWithDropdownTrigger-module_icon-BjxRt DropdownArrowIcon-module_icon-w0Zif"><path d="m-63.2 180.3 43.5-43.5c1.7-1.7 2.7-4 2.7-6.5s-1-4.8-2.7-6.5-4-2.7-6.5-2.7-4.8 1-6.5 2.7L-69.9 161l-37.2-37.2c-1.7-1.7-4-2.7-6.5-2.7s-4.8 1-6.5 2.6c-1.9 1.8-2.8 4.2-2.8 6.6 0 2.3.9 4.6 2.6 6.5 11.4 11.5 41 41.2 43 43.3l.2.2c3.6 3.6 10.3 3.6 13.9 0z"></path></svg></button></span><nav class="DropdownControlled-module_root-3ewM0 HeaderWrap-module_userMenu-Ocnx8 UserMenu-module_userMenuDropdownParent-+nd1x" data-direction="bottom left" data-open="false"><button class="UserMenu-module_userMenuButton-b38jZ" data-test-id="user-menu-button" title="User Menu" aria-haspopup="menu" aria-controls="_r_0_"><span id="sessionUserAvatar" class="UserMenu-module_sessionUserAvatar-d-j2e" data-test-id="user-avatar"></span><style>
-            #sessionContextAvatar {
-                background-image: url('https://assets.codepen.io/t-1/user-default-avatar.jpg?format=auto&version=0&width=80&height=80');
-              }
-            #sessionUserAvatar {
-                background-image: url('https://assets.codepen.io/t-1/user-default-avatar.jpg?format=auto&version=0&width=80&height=80');
-            }</style><span class="ScreenReaderText-module_root-jASUi">User Menu</span></button><div class="DropdownControlled-module_content-mxnG0" id="_r_0_" role="menu" data-open="false" hidden="" data-direction="bottom left"></div></nav></div></header>
-
-  <div class="oldie-header">
-    <a href="https://codepen.io/J-R-LE/pen/KwNqMJb/709f4b841ea8d839429f3b60b6ccf266?nocache=true&amp;view=pen">Edit Pen</a>
+  <div class="header">
+    <div class="logo">Le<span class="vita-green">VITA</span> Vital-Test</div>
+    <p class="powered">powered by <strong>LogiVita</strong></p>
+    <p>Wohlbefinden & Vitalität im Fokus</p>
   </div>
 
-  <div id="result-iframe-wrap" role="main">
-
-    <iframe id="result" src="./index_files/709f4b841ea8d839429f3b60b6ccf266.html" sandbox="allow-downloads allow-forms allow-modals allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts allow-top-navigation-by-user-activation" allow="accelerometer *; bluetooth *; camera *; clipboard-read *; clipboard-write *; display-capture *; encrypted-media *; geolocation *; gyroscope *; language-detector *; language-model *; local-network-access *; microphone *; midi *; rewriter *; serial *; summarizer *; translator *; web-share *; writer *; xr-spatial-tracking *" allowtransparency="true" allowpaymentrequest="true" allowfullscreen="true" class="result-iframe" loading="lazy"></iframe>
-
+  <div class="progress-bar">
+    <div id="progress"></div>
   </div>
 
-  <div id="pen-ad"></div>
+  <div id="loading" class="loading">Fragen werden geladen...</div>
+  <div id="quiz-flow"></div>
 
-   <textarea id="init-data" style="display:none">{"__browser":{"country":"DE","device":"unknown_device","mobile":false,"name":"chrome","platform":"mac","version":"147"},"__constants":{},"__CPDATA":{"domain_iframe":"https://cdpn.io","environment":"production","host":"codepen.io","iframe_allow":"accelerometer *; bluetooth *; camera *; clipboard-read *; clipboard-write *; display-capture *; encrypted-media *; geolocation *; gyroscope *; language-detector *; language-model *; local-network-access *; microphone *; midi *; rewriter *; serial *; summarizer *; translator *; web-share *; writer *; xr-spatial-tracking *","iframe_sandbox":"allow-downloads allow-forms allow-modals allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts allow-top-navigation-by-user-activation"},"__graphql":{"data":{"data":{"sessionUser":{"id":"ayGYjj","name":"JÖR LE","title":"JÖR LE","avatar":"https://assets.codepen.io/t-1/user-default-avatar.jpg?format=auto&amp;version=0","currentContext":{"id":"ayGYjj","title":"JÖR LE","name":"JÖR LE","avatar":"https://assets.codepen.io/t-1/user-default-avatar.jpg?format=auto&amp;version=0","username":"J-R-LE","__typename":"User"},"currentTeamId":null,"username":"J-R-LE","admin":false,"anon":false,"pro":true,"verified":true,"featureFlags":[],"teams":[],"__typename":"User"}}},"url":"https://codepen.io/graphql","api":"cprails"},"__user":{"anon":false,"base_url":"/J-R-LE/","cohorts":[],"current_team_hashid":null,"current_team_id":0,"hashid":"ayGYjj","id":17343073,"itemType":"user","name":"JÖR LE","paid":true,"tier":1,"username":"J-R-LE","created_at":"2026-05-14T11:37:20.741Z","email_verified":true,"collections_count":1,"collections_private_count":1,"followers_count":0,"followings_count":0,"pens_count":5,"pens_private_count":5,"projects_count":0,"projects_private_count":0},"__firebase":{"config":{"apiKey":"AIzaSyBgLAe7N_MdFpuVofMkcQLGwwhUu5tuxls","authDomain":"codepen-store-production.firebaseapp.com","databaseURL":"https://codepen-store-production.firebaseio.com","disabled":false,"projectId":"codepen-store-production"},"token":"eyJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJodHRwczovL2lkZW50aXR5dG9vbGtpdC5nb29nbGVhcGlzLmNvbS9nb29nbGUuaWRlbnRpdHkuaWRlbnRpdHl0b29sa2l0LnYxLklkZW50aXR5VG9vbGtpdCIsImNsYWltcyI6eyJvd25lcklkIjoiYXlHWWpqIiwiYWRtaW4iOmZhbHNlfSwiZXhwIjoxNzc5NzM5MTA4LCJpYXQiOjE3Nzk3MzU1MDgsImlzcyI6ImZpcmViYXNlLWFkbWluc2RrLThva3lsQGNvZGVwZW4tc3RvcmUtcHJvZHVjdGlvbi5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsInN1YiI6ImZpcmViYXNlLWFkbWluc2RrLThva3lsQGNvZGVwZW4tc3RvcmUtcHJvZHVjdGlvbi5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsInVpZCI6ImF5R1lqaiJ9.Ze1Y1ZT6tovpjyI4UHazsVIeQWkc_OrOWeHtPwzp0ZMTnWPvOskiOT3qIxYrq6PP2OzMwvkFOGyyB8l-6sxzjKL2ISwA-xNqlyNRhjkmHfiFu7EGG5negwciaNBHmqQk_O8RA40jrpCHlH3ZCfvG5Mh5EdyPfkKLC3EeT6AJOKnWUG7BAGnnTqoH4UiDQxgr9YoXDQGn2fWCVsxw2VPExN7XuMHjR0bJgclKKipynlG9of5eWW7T6dTOw4dawGAIz8ClVzLy3igSWIOXi7h8arS_f-FOsnaCKhYuVWpkT7myBfPlZqf10WuFjCLPaRItJdxR-MhR4yEpZjzdgxv2iQ"},"__pay_stripe_public_key":"pk_live_2GndomDfiklqpSNQn8FrGuwZSMIMzha7DkLJqlYe7IR0ihKAlKdiHg68JJc5eVPt68rzAjzAAVXcUwjySHRCsgjQQ00gtRBUFNH","__pay_braintree_env":"production","__item":"{\"id\":89419796,\"hashid\":\"KwNqMJb\",\"itemType\":\"pen\",\"user_id\":17343073,\"slug_hash\":\"KwNqMJb\",\"private\":true,\"slug_hash_private\":\"709f4b841ea8d839429f3b60b6ccf266\"}","__profiled":{"base_url":"/J-R-LE","hashid":"ayGYjj","id":17343073,"name":"JÖR LE","type":"user","username":"J-R-LE"},"__pageType":"full"}</textarea>
+  <div id="result-area" class="hidden">
+    <h2>Dein Vitalitäts-Profil</h2>
+    <div id="result-content"></div>
+  </div>
 
-  <div id="popup-overlay" class="overlay popup-overlay"></div>
-  <div id="modal-overlay" class="overlay modal-overlay"></div>
+</div>
 
-  <script src="./index_files/everypage-4ab01c7f453fd64e33598c75f12d7eb600e9e38a6ff48222e13df706ddb2e08e.js"></script>
+<script>
+  const SUPABASE_URL = "https://koctweetotpqaazeicwj.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
+  const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/submit-vital-check";
+  const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdWp0l2Cy_KDraD0kW5uXzecV3CdyR1L28nSmdLAzdLUoiTTA/viewform?usp=publish-editor";
+
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let questions = [];
+  let groupedQuestions = [];
+  let currentStep = 0;
+  let selectedAnswers = [];
+  let latestResult = null;
+  let radarChart = null;
+
+  const personalData = {
+    age: null,
+    gender: "",
+    height_cm: null,
+    weight_kg: null,
+    email: "",
+    first_name: "",
+    last_name: "",
+    consent_privacy: false,
+    consent_storage: false
+  };
+
+  async function init() {
+    try {
+      await loadQuestions();
+      buildSteps();
+      document.getElementById("loading").classList.add("hidden");
+      updateProgress();
+    } catch (error) {
+      document.getElementById("loading").innerHTML = `
+        <div class="danger-box"><strong>Fehler beim Laden</strong><br>${error.message}</div>
+      `;
+    }
+  }
+
+  async function loadQuestions() {
+    const { data, error } = await supabaseClient
+      .from("public_active_questions")
+      .select("*")
+      .order("question_sort_order", { ascending: true })
+      .order("option_sort_order", { ascending: true });
+
+    if (error) throw error;
+
+    const map = {};
+
+    data.forEach(row => {
+      if (!map[row.question_id]) {
+        map[row.question_id] = {
+          question_id: row.question_id,
+          question_key: row.question_key,
+          area_key: row.area_key,
+          area_label: row.area_label,
+          question_text: row.question_text,
+          help_text: row.help_text,
+          sort_order: row.question_sort_order,
+          options: []
+        };
+      }
+
+      map[row.question_id].options.push({
+        option_id: row.option_id,
+        option_text: row.option_text
+      });
+    });
+
+    questions = Object.values(map).sort((a, b) => a.sort_order - b.sort_order);
+    groupedQuestions = [{ type: "personal" }, ...questions, { type: "consent" }];
+  }
+
+  function isFemaleSpecificQuestion(question) {
+    const key = String(question.question_key || "").toLowerCase();
+    const text = `${question.question_text || ""} ${question.help_text || ""} ${question.area_label || ""}`.toLowerCase();
+
+    const femaleKeywords = [
+      "female",
+      "woman",
+      "women",
+      "frau",
+      "frauen",
+      "weiblich",
+      "menstru",
+      "zyklus",
+      "periode",
+      "regelblut",
+      "pms",
+      "wechseljah",
+      "schwanger",
+      "geburt",
+      "hormonell"
+    ];
+
+    return femaleKeywords.some(keyword => key.includes(keyword) || text.includes(keyword));
+  }
+
+  function buildGroupedQuestionsForGender() {
+    const shouldShowFemaleQuestions = personalData.gender === "weiblich";
+
+    const filteredQuestions = questions.filter(question => {
+      if (shouldShowFemaleQuestions) return true;
+      return !isFemaleSpecificQuestion(question);
+    });
+
+    groupedQuestions = [{ type: "personal" }, ...filteredQuestions, { type: "consent" }];
+  }
+
+  function buildSteps() {
+    const flow = document.getElementById("quiz-flow");
+    flow.innerHTML = "";
+
+    groupedQuestions.forEach((step, index) => {
+      const div = document.createElement("div");
+      div.className = `question-step ${index === 0 ? "active" : ""}`;
+      div.id = `step-${index}`;
+
+      if (step.type === "personal") div.innerHTML = personalStepHtml();
+      else if (step.type === "consent") div.innerHTML = consentStepHtml();
+      else div.innerHTML = questionStepHtml(step);
+
+      flow.appendChild(div);
+    });
+  }
+
+  function personalStepHtml() {
+    return `
+      <p class="instruction">Bitte gib deine Basisdaten ein</p>
+
+      <input type="text" id="first_name" placeholder="Vorname, optional">
+      <input type="text" id="last_name" placeholder="Nachname, optional">
+
+      <input type="number" id="age" placeholder="Alter" min="14" max="100">
+
+      <select id="gender">
+        <option value="">Geschlecht auswählen</option>
+        <option value="weiblich">Weiblich</option>
+        <option value="männlich">Männlich</option>
+        <option value="divers">Divers</option>
+        <option value="keine_angabe">Keine Angabe</option>
+      </select>
+
+      <input type="number" id="height_cm" placeholder="Größe in cm" min="120" max="230">
+      <input type="number" id="weight_kg" placeholder="Gewicht in kg" min="35" max="250">
+
+      <button class="next-btn" onclick="savePersonalData()">Weiter</button>
+    `;
+  }
+
+  function questionStepHtml(question) {
+    let html = `<p class="instruction">${question.question_text}</p>`;
+
+    if (question.help_text) html += `<p class="small">${question.help_text}</p>`;
+
+    html += `<div class="options">`;
+
+    question.options.forEach(option => {
+      html += `
+        <button onclick="saveAnswer('${option.option_id}')">
+          ${option.option_text}
+        </button>
+      `;
+    });
+
+    html += `</div>`;
+    return html;
+  }
+
+  function consentStepHtml() {
+    return `
+      <p class="instruction">Datenschutz & Auswertung</p>
+
+      <div class="info-box">
+        Deine Angaben werden zur Erstellung deines LEVITA Vital-Checks verarbeitet.
+        Die erste Auswertung erfolgt direkt auf dieser Seite. Eine KI-Auswertung per E-Mail kannst du danach freiwillig aktivieren.
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="consent_privacy">
+        <label for="consent_privacy">Ich habe die Datenschutzhinweise gelesen und verstanden.</label>
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="consent_storage">
+        <label for="consent_storage">Ich willige ein, dass meine Angaben für den Vital-Check gespeichert werden.</label>
+      </div>
+
+      <button class="next-btn" id="submitBtn" onclick="submitInitialCheck()">
+        Erste Auswertung anzeigen
+      </button>
+    `;
+  }
+
+  function savePersonalData() {
+    const age = Number(document.getElementById("age").value);
+    const gender = document.getElementById("gender").value;
+    const height_cm = Number(document.getElementById("height_cm").value);
+    const weight_kg = Number(document.getElementById("weight_kg").value);
+
+    if (!age || age < 14 || age > 100) return alert("Bitte ein gültiges Alter eingeben.");
+    if (!gender) return alert("Bitte Geschlecht auswählen.");
+    if (!height_cm || height_cm < 120 || height_cm > 230) return alert("Bitte eine gültige Größe eingeben.");
+    if (!weight_kg || weight_kg < 35 || weight_kg > 250) return alert("Bitte ein gültiges Gewicht eingeben.");
+
+    personalData.first_name = document.getElementById("first_name").value.trim();
+    personalData.last_name = document.getElementById("last_name").value.trim();
+    personalData.age = age;
+    personalData.gender = gender;
+    personalData.height_cm = height_cm;
+    personalData.weight_kg = weight_kg;
+
+    // Nach Auswahl des Geschlechts werden Frauen-spezifische Fragen nur dann angezeigt,
+    // wenn "weiblich" ausgewählt wurde. Alle anderen Fragen bleiben unverändert dynamisch aus Supabase geladen.
+    buildGroupedQuestionsForGender();
+    buildSteps();
+    currentStep = 0;
+    nextStep();
+  }
+
+  function saveAnswer(optionId) {
+    selectedAnswers.push({ option_id: optionId });
+    nextStep();
+  }
+
+  async function submitInitialCheck() {
+    personalData.consent_privacy = document.getElementById("consent_privacy").checked;
+    personalData.consent_storage = document.getElementById("consent_storage").checked;
+
+    if (!personalData.consent_privacy || !personalData.consent_storage) {
+      return alert("Bitte Datenschutz und Speicherung bestätigen.");
+    }
+
+    const submitBtn = document.getElementById("submitBtn");
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Auswertung wird erstellt...";
+
+    const payload = {
+      age: personalData.age,
+      gender: personalData.gender,
+      height_cm: personalData.height_cm,
+      weight_kg: personalData.weight_kg,
+      first_name: personalData.first_name || null,
+      last_name: personalData.last_name || null,
+      consent_privacy: true,
+      consent_storage: true,
+      answers: selectedAnswers
+    };
+
+    try {
+      const result = await callFunction(payload);
+      latestResult = result;
+      showResult(result);
+    } catch (error) {
+      alert("Fehler: " + error.message);
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Erste Auswertung anzeigen";
+    }
+  }
+
+  async function requestAiAnalysis() {
+    const email = document.getElementById("ai_email").value.trim();
+    const consentAi = document.getElementById("consent_ai_analysis").checked;
+    const consentMail = document.getElementById("consent_email_delivery").checked;
+    const btn = document.getElementById("aiBtn");
+
+    if (!email) return alert("Bitte E-Mail-Adresse eingeben.");
+    if (!consentAi || !consentMail) return alert("Bitte beide Einwilligungen bestätigen.");
+
+    btn.disabled = true;
+    btn.innerText = "KI-Auswertung wird erstellt...";
+
+    try {
+      const result = await callFunction({
+        mode: "request_ai_analysis",
+        public_code: latestResult.public_code,
+        email,
+        consent_ai_analysis: true,
+        consent_email_delivery: true
+      });
+
+      if (result.email_sent) {
+        document.getElementById("ai-status").innerHTML = `
+          <div class="success-box">Deine KI-Auswertung wurde per E-Mail versendet.</div>
+        `;
+      } else {
+        document.getElementById("ai-status").innerHTML = `
+          <div class="warning-box">Die Analyse wurde erstellt, aber der E-Mail-Versand konnte nicht bestätigt werden.</div>
+        `;
+      }
+    } catch (error) {
+      alert("Fehler: " + error.message);
+      btn.disabled = false;
+      btn.innerText = "KI-Auswertung per E-Mail anfordern";
+    }
+  }
+
+  async function callFunction(payload) {
+    const response = await fetch(FUNCTION_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || "Unbekannter Fehler.");
+    }
+
+    return result;
+  }
 
 
-  <script src="./index_files/vendor-c5bf0b0aacf8ff9f78e0.chunk.js"></script>
-<script src="./index_files/everypage-7142168acb5742f98259.js"></script><div id="react-messages"><div data-rht-toaster="" class="Messages-module_container-YzpcS" style="position: fixed; z-index: 9999; inset: 16px; pointer-events: none;"></div></div><div></div>
-  <script src="./index_files/full_page_renderer-5c5f4d03e4aca2a97df9e03dfc8ed9d048628ec94b84fe63e060b0276d8862f7.js"></script>
-<script nonce="">(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.nonce='Ot/tPi9kGA0=';d.innerHTML="window.__CF$cv$params={r:'a016c58d8b895d3d',t:'MTc3OTczNTUwOA=='};var a=document.createElement('script');a.nonce='Ot/tPi9kGA0=';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><iframe height="1" width="1" style="position: absolute; top: 0px; left: 0px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; visibility: hidden;" src="./index_files/saved_resource.html"></iframe>
+  function renderRadarExplanationBox(areas) {
+    const sortedAreas = [...areas].sort((a, b) => a.score - b.score);
+    const focusAreas = sortedAreas
+      .filter(area => area.score < 75)
+      .slice(0, 3)
+      .map(area => area.label);
+
+    const focusText = focusAreas.length > 0
+      ? `Bei dir liegen besonders <strong>${focusAreas.join(", ")}</strong> weiter innen. Das bedeutet nicht „schlecht“, sondern zeigt, wo kleine, realistische Hebel aktuell den größten Nutzen für deine Vitalität haben können.`
+      : `Deine Bereiche wirken insgesamt stabil. Der Fokus liegt deshalb weniger auf großen Veränderungen, sondern auf Erhalt, Feinschliff und guter Regelmäßigkeit.`;
+
+    return `
+      <div class="vital-profile-box">
+        <div class="vital-profile-header">
+          <div class="vital-profile-icon">◎</div>
+          <div>
+            <div class="vital-profile-title">So liest du dein Vitalitäts-Profil</div>
+            <div class="vital-profile-subtitle">
+              Die Spinnengrafik zeigt deine aktuelle Vitalitäts-Balance in den wichtigsten Bereichen.
+            </div>
+          </div>
+        </div>
+
+        <div class="vital-profile-grid">
+          <div class="vital-profile-card">
+            <div class="vital-profile-card-title">Was die Grafik zeigt</div>
+            <ul class="vital-profile-list">
+              <li>Je weiter außen ein Punkt liegt, desto stabiler wirkt dieser Bereich aktuell.</li>
+              <li>Weiter innen liegende Bereiche zeigen mögliche Ansatzpunkte für kleine Verbesserungen.</li>
+              <li>Die Grafik ist keine medizinische Bewertung, sondern eine Orientierung deiner aktuellen Balance.</li>
+            </ul>
+          </div>
+
+          <div class="vital-profile-card">
+            <div class="vital-profile-card-title">Einordnung der Werte</div>
+            <div class="vital-score-scale">
+              <div class="vital-score-item green">
+                <span>85–100</span>
+                <strong>sehr stabile Grundlage</strong>
+              </div>
+              <div class="vital-score-item lightgreen">
+                <span>70–84</span>
+                <strong>gute Basis mit Potenzial</strong>
+              </div>
+              <div class="vital-score-item orange">
+                <span>55–69</span>
+                <strong>sichtbare Stellschrauben</strong>
+              </div>
+              <div class="vital-score-item orange">
+                <span>40–54</span>
+                <strong>klarer Fokusbereich</strong>
+              </div>
+              <div class="vital-score-item red">
+                <span>0–39</span>
+                <strong>besonderer Orientierungsbereich</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vital-profile-focus">
+          ${focusText}
+        </div>
+
+        <div class="vital-profile-footer">
+          <strong>Wichtig:</strong> Ziel ist nicht Perfektion. Entscheidend ist, stabile Bereiche zu erhalten
+          und 1–2 passende Hebel bewusst zu verbessern. So kann der Vitalitäts-Index bei einer späteren
+          Wiederholung sichtbar stabilisiert oder weiterentwickelt werden.
+        </div>
+      </div>
+    `;
+  }
+
+  function showResult(result) {
+    document.getElementById("quiz-flow").style.display = "none";
+    document.querySelector(".progress-bar").style.display = "none";
+    document.getElementById("result-area").classList.remove("hidden");
+
+    const scorePayload = result.score.score_payload || {};
+    const areas = Object.entries(scorePayload).map(([key, value]) => ({
+      key,
+      label: value.label,
+      score: Number(value.score),
+      weight: value.weight
+    }));
+
+    let html = `
+      <div class="success-box">
+        <strong>Dein Vital-Check wurde erfolgreich erstellt.</strong><br>
+        Hier siehst du deine erste Orientierung. Eine ausführliche KI-Auswertung kannst du im nächsten Schritt freiwillig anfordern.
+      </div>
+
+      <div class="pilot-code">
+        Deine Pilot-ID:<br>${result.public_code}
+      </div>
+
+      <div class="info-box">
+        <strong>Basisdaten</strong><br><br>
+        Name: ${(personalData.first_name || personalData.last_name) ? `${personalData.first_name} ${personalData.last_name}` : "Nicht angegeben"}<br>
+        Alter: ${personalData.age}<br>
+        Geschlecht: ${personalData.gender}<br>
+        Größe: ${personalData.height_cm} cm<br>
+        Gewicht: ${personalData.weight_kg} kg<br>
+        BMI: ${result.bmi}
+      </div>
+
+      <div class="score">${result.score.total_score}/100</div>
+      ${renderVitalIndexBox(Number(result.score.total_score), result.score.score_label)}
+
+      <div class="chart-box">
+        <canvas id="vitalChart"></canvas>
+      </div>
+
+      ${renderRadarExplanationBox(areas)}
+
+      <h3>Erste Einschätzung deiner Bereiche</h3>
+      <div class="grid">
+        ${areas.map(area => areaCard(area)).join("")}
+      </div>
+
+      ${redFlagBox(result.score)}
+      ${vitalitySupportBox(areas, result)}
+      ${hintBoxes(result.score)}
+
+      <div class="ai-box">
+        <h3>Ausführliche KI-Auswertung erhalten</h3>
+        <p>
+          Wenn du möchtest, erstellen wir auf Basis deiner Angaben eine ausführliche,
+          motivierende KI-Auswertung mit konkreten Impulsen zur Hilfe zur Selbsthilfe.
+        </p>
+
+        <input type="email" id="ai_email" placeholder="E-Mail-Adresse">
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="consent_ai_analysis">
+          <label for="consent_ai_analysis">
+            Ich willige ein, dass meine Angaben für eine KI-gestützte Auswertung verarbeitet werden.
+          </label>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="consent_email_delivery">
+          <label for="consent_email_delivery">
+            Ich willige ein, dass mir die Auswertung per E-Mail zugesendet wird.
+          </label>
+        </div>
+
+        <button class="next-btn" id="aiBtn" onclick="requestAiAnalysis()">
+          KI-Auswertung per E-Mail anfordern
+        </button>
+
+        <div id="ai-status"></div>
+      </div>
+
+      <div class="feedback-box">
+        <h3>Hilf uns, den Vital-Check besser zu machen 🚀</h3>
+        <p>
+          Dein Feedback ist in der Entwicklungsphase besonders wertvoll.
+          Über den folgenden Button kannst du uns kurz mitteilen, wie hilfreich die Auswertung für dich war.
+        </p>
+        <button class="cta-btn" onclick="openGoogleForm()">Feedback geben</button>
+      </div>
+
+      <div class="info-box">
+        <strong>Wichtiger Hinweis:</strong><br>
+        Diese Auswertung ist keine Diagnose und ersetzt keine medizinische Beratung.
+        Sie dient der Orientierung und Hilfe zur Selbsthilfe.
+      </div>
+
+      <button class="reset-btn" onclick="resetVitalCheck()">
+        Neue Eingabe starten / Formular zurücksetzen
+      </button>
+    `;
+
+    document.getElementById("result-content").innerHTML = html;
+    renderRadarChart(areas);
+  }
+
+  function getScoreBoxClass(score) {
+    const value = Number(score);
+
+    if (value >= 85) return "success-box";
+    if (value >= 70) return "info-box";
+    if (value >= 55) return "warning-box";
+    if (value >= 40) return "warning-box";
+    return "danger-box";
+  }
+
+  function getVitalIndexMotivation(score) {
+    const value = Number(score);
+
+    if (value >= 85) {
+      return "Du hast bereits eine sehr stabile Vitalitäts-Basis. Ziel sollte es sein, diese Grundlage zu halten und gezielt kleine Optimierungen zu nutzen, ohne unnötig viel gleichzeitig zu verändern.";
+    }
+
+    if (value >= 70) {
+      return "Du bist auf einem guten Level. Ziel kann sein, deinen Vitalitäts-Index in den nächsten Wochen weiter zu stabilisieren und einzelne passende Hebel bewusst zu verbessern.";
+    }
+
+    if (value >= 55) {
+      return "Dein Ergebnis zeigt mehrere gute Ansätze, aber auch erkennbare Entwicklungsbereiche. Schon kleine regelmäßige Veränderungen können helfen, deinen Vitalitäts-Index in den nächsten Wochen sichtbar zu verbessern.";
+    }
+
+    if (value >= 40) {
+      return "Aktuell zeigen mehrere Bereiche Entwicklungspotenzial. Wichtig ist nicht, alles gleichzeitig zu verändern, sondern mit 1–2 einfachen Schritten zu starten und den Vitalitäts-Index später erneut zu vergleichen.";
+    }
+
+    return "Dein Ergebnis zeigt, dass Regeneration, Alltag und Vitalität aktuell besondere Aufmerksamkeit verdienen. Starte mit kleinen, gut machbaren Schritten und nutze eine spätere Wiederholung, um Veränderungen sichtbar zu machen.";
+  }
+
+  function renderVitalIndexBox(score, label) {
+    const ranges = [
+      {
+        min: 85,
+        max: 100,
+        value: "85–100",
+        label: "Sehr gute Vitalitäts-Balance",
+        text: "Deine Basis wirkt sehr stabil. Der Fokus liegt auf Erhalt, Feinschliff und konsequenter Routine."
+      },
+      {
+        min: 70,
+        max: 84.99,
+        value: "70–84",
+        label: "Gute Basis mit Potenzial",
+        text: "Viele Grundlagen sind vorhanden. Einzelne Stellschrauben können dein Energielevel weiter verbessern."
+      },
+      {
+        min: 55,
+        max: 69.99,
+        value: "55–69",
+        label: "Einzelne Bereiche verdienen Aufmerksamkeit",
+        text: "Mehrere Faktoren können deine Vitalität beeinflussen. Ein klarer Fokusbereich und kleine Schritte sind sinnvoll."
+      },
+      {
+        min: 40,
+        max: 54.99,
+        value: "40–54",
+        label: "Mehrere Vitalitätsfaktoren beeinflussen dein Energielevel",
+        text: "Hier lohnt sich ein strukturierter Einstieg, zum Beispiel mit Schlaf, Bewegung oder Ernährung als erstem Hebel."
+      },
+      {
+        min: 0,
+        max: 39.99,
+        value: "unter 40",
+        label: "Regeneration und Alltag verdienen besondere Aufmerksamkeit",
+        text: "Starte besonders niedrigschwellig. Bei starken Beschwerden oder deutlichen Veränderungen kann zusätzliche Beratung sinnvoll sein."
+      }
+    ];
+
+    const rows = ranges.map(range => {
+      const active = score >= range.min && score <= range.max;
+      return `
+        <div class="score-range-row ${active ? "active-level" : ""}">
+          <span class="score-range-value">${range.value}</span>
+          <span class="score-range-label">${range.label}${active ? " ← dein aktuelles Level" : ""}<br><small>${range.text}</small></span>
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <div class="info-box score-range-box">
+        <strong>LEVITA Vitalitäts-Index</strong><br><br>
+        Dein aktuelles Level: <strong>${label}</strong><br>
+        Der Index zeigt deine aktuelle Vitalitäts-Balance als Orientierung. Die Detailwerte werden genutzt,
+        um passende Impulse abzuleiten – nicht als Diagnose.<br><br>
+        ${rows}
+        <div class="score-range-note">
+          <strong>Dein nächstes Ziel:</strong><br>
+          ${getVitalIndexMotivation(score)}
+        </div>
+      </div>
+    `;
+  }
 
 
-</body></html>
+  function getBmiLabel(bmi) {
+    const value = Number(bmi);
+
+    if (!Number.isFinite(value)) return "keine Einordnung möglich";
+    if (value < 18.5) return "unterhalb des üblichen Orientierungsbereichs";
+    if (value < 25) return "im klassischen Orientierungsbereich";
+    if (value < 30) return "leicht oberhalb des klassischen Orientierungsbereichs";
+    return "deutlich oberhalb des klassischen Orientierungsbereichs";
+  }
+
+  function bmiDetailHtml(areaKey) {
+    if (areaKey !== "bmi") return "";
+
+    const bmiValue = Number(latestResult?.bmi);
+    if (!Number.isFinite(bmiValue)) return "";
+
+    return `
+      <div class="bmi-detail">
+        <strong>Aktueller BMI:</strong> ${bmiValue.toFixed(1)}<br>
+        <small>${getBmiLabel(bmiValue)}. Der BMI ist eine grobe Orientierung und sollte immer zusammen mit Muskelmasse, Aktivitätsniveau und Wohlbefinden betrachtet werden.</small>
+      </div>
+    `;
+  }
+
+  function areaCard(area) {
+    let cls = "area-good";
+    let text = "Gute Grundlage";
+
+    if (area.score < 55) {
+      cls = "area-low";
+      text = "Fokusbereich";
+    } else if (area.score < 75) {
+      cls = "area-medium";
+      text = "Optimierungspotenzial";
+    }
+
+    return `
+      <div class="area-card ${cls}">
+        <strong>${area.label}</strong><br>
+        <em>${text}</em>
+        ${bmiDetailHtml(area.key)}
+        ${getQuickInsight(area.key, area.score)}
+      </div>
+    `;
+  }
+
+
+  function getBmiQuickInsight() {
+    const bmiValue = Number(latestResult?.bmi);
+
+    if (!Number.isFinite(bmiValue)) {
+      return `Der BMI ist eine grobe Orientierung und sollte immer zusammen mit Muskelmasse, Aktivitätsniveau und Wohlbefinden betrachtet werden.`;
+    }
+
+    if (bmiValue < 19) {
+      return `Der aktuelle BMI liegt unter dem üblichen Orientierungsbereich. Gerade bei hoher Aktivität, Stress oder unregelmäßigen Mahlzeiten kann es sinnvoll sein, Energieversorgung, Regeneration und Muskelaufbau bewusster zu unterstützen.
+        <ul class="quick-actions">
+          <li>Heute: eine zusätzliche eiweiß- und energiereiche Zwischenmahlzeit ergänzen, z. B. Joghurt oder Quark mit Nüssen, ein Ei, Tofu, Hummus, Hülsenfrüchte oder ein Smoothie mit Haferflocken.</li>
+          <li>7 Tage: regelmäßige Mahlzeiten, ausreichend Flüssigkeit und Regeneration bewusst stabilisieren. Krafttraining kann sinnvoll sein, aber nicht als zusätzlicher Kalorienverbrauch, sondern moderat zur Stabilisierung und zum Muskelaufbau.</li>
+        </ul>`;
+    }
+
+    if (bmiValue < 25) {
+      return `Dein BMI liegt in einem stabilen Orientierungsbereich.
+        <ul class="quick-actions">
+          <li>Beibehalten: Ernährung, Bewegung und Regeneration ausgewogen betrachten.</li>
+          <li>Feinschliff: Körpergefühl, Energie und Leistungsfähigkeit wichtiger nehmen als nur Gewicht.</li>
+        </ul>`;
+    }
+
+    if (bmiValue < 30) {
+      return `Deine Körperkomposition kann ein sinnvoller Orientierungsbereich sein.
+        <ul class="quick-actions">
+          <li>Heute: eine kleine Bewegungs- oder Ernährungsroutine auswählen, z. B. 10 Minuten Gehen nach einer Mahlzeit oder eine bewusst eiweißreiche Hauptmahlzeit.</li>
+          <li>7 Tage: Eiweiß, Gemüse, Kraftimpulse und Alltagsbewegung bewusster kombinieren.</li>
+        </ul>`;
+    }
+
+    return `Deine Körperkomposition verdient aktuell besondere Aufmerksamkeit.
+      <ul class="quick-actions">
+        <li>Heute: nicht alles gleichzeitig ändern – eine einfache Routine wählen, z. B. Wasser vorbereiten, eine Mahlzeit strukturieren oder 10 Minuten gehen.</li>
+        <li>7 Tage: mit einem realistischen Einstieg in Bewegung, Ernährung und Regeneration starten. Kleine Schritte sind wichtiger als kurzfristige Perfektion.</li>
+      </ul>`;
+  }
+
+  function getQuickInsight(areaKey, score) {
+    if (areaKey === "bmi") {
+      return getBmiQuickInsight();
+    }
+
+    const low = score < 55;
+    const medium = score >= 55 && score < 75;
+
+    const level = low ? "low" : medium ? "medium" : "good";
+
+    const texts = {
+      sleep: {
+        low: `Dein Schlaf ist ein wichtiger Hebel für mehr Energie und Regeneration.
+          <ul class="quick-actions">
+            <li>Heute: feste Schlafenszeit wählen und 30 Minuten vorher Bildschirmzeit reduzieren.</li>
+            <li>7 Tage: jeden Morgen möglichst zur gleichen Zeit aufstehen.</li>
+          </ul>`,
+        medium: `Dein Schlaf zeigt eine brauchbare Basis, kann aber stabiler werden.
+          <ul class="quick-actions">
+            <li>Heute: eine kurze Abendroutine festlegen, z. B. Tee, Lesen oder ruhiges Dehnen.</li>
+            <li>7 Tage: Koffein am Nachmittag bewusst beobachten.</li>
+          </ul>`,
+        good: `Deine Schlafbasis wirkt stabil.
+          <ul class="quick-actions">
+            <li>Beibehalten: regelmäßige Schlafzeiten schützen.</li>
+            <li>Feinschliff: Erholung auch an stressigen Tagen aktiv einplanen.</li>
+          </ul>`
+      },
+      activity: {
+        low: `Bewegung ist aktuell einer der einfachsten Hebel für Vitalität.
+          <ul class="quick-actions">
+            <li>Heute: 10 Minuten zügig gehen, ideal nach einer Mahlzeit.</li>
+            <li>7 Tage: zwei feste Termine für leichte Bewegung oder betreutes Training einplanen.</li>
+          </ul>`,
+        medium: `Du hast bereits Bewegung im Alltag, jetzt zählt Regelmäßigkeit.
+          <ul class="quick-actions">
+            <li>Heute: einen konkreten Bewegungstermin in den Kalender setzen.</li>
+            <li>7 Tage: 2 kurze Kraft- oder Stabilitätsübungen ergänzen.</li>
+          </ul>`,
+        good: `Deine Bewegungsbasis wirkt stabil.
+          <ul class="quick-actions">
+            <li>Beibehalten: Mischung aus Alltag, Ausdauer und Kraft.</li>
+            <li>Feinschliff: Regeneration und Belastung bewusst ausbalancieren.</li>
+          </ul>`
+      },
+      nutrition: {
+        low: `Ernährung kann deine Energie im Alltag spürbar beeinflussen.
+          <ul class="quick-actions">
+            <li>Heute: eine Mahlzeit bewusst mit Eiweiß, Gemüse und Flüssigkeit planen.</li>
+            <li>7 Tage: Frühstück oder Mittagessen als feste Basis-Mahlzeit stabilisieren.</li>
+          </ul>`,
+        medium: `Deine Ernährung hat gute Ansätze, aber noch klare Stellschrauben.
+          <ul class="quick-actions">
+            <li>Heute: eine zusätzliche Portion Gemüse, Salat oder Obst einbauen.</li>
+            <li>7 Tage: bei jeder Hauptmahlzeit eine Eiweißquelle prüfen.</li>
+          </ul>`,
+        good: `Deine Ernährungsbasis wirkt solide.
+          <ul class="quick-actions">
+            <li>Beibehalten: regelmäßige Mahlzeiten und Lebensmittelqualität.</li>
+            <li>Feinschliff: Omega-3-Quellen und Trinkmenge im Blick behalten.</li>
+          </ul>`
+      },
+      vitamin_d: {
+        low: `Tageslicht kann für Energie, Rhythmus und Vitamin-D-Orientierung relevant sein.
+          <ul class="quick-actions">
+            <li>Heute: 10–15 Minuten Tageslicht im Freien einplanen.</li>
+            <li>7 Tage: 3 kurze Tageslicht-Spaziergänge testen; bei Unsicherheit Blutwert prüfen lassen.</li>
+          </ul>`,
+        medium: `Tageslicht ist teilweise vorhanden, kann aber bewusster genutzt werden.
+          <ul class="quick-actions">
+            <li>Heute: eine kurze Pause im Freien machen.</li>
+            <li>7 Tage: Tageslicht mit Bewegung koppeln, z. B. Spaziergang nach dem Essen.</li>
+          </ul>`,
+        good: `Deine Tageslicht-Basis wirkt günstig.
+          <ul class="quick-actions">
+            <li>Beibehalten: besonders in Herbst und Winter bewusst rausgehen.</li>
+            <li>Feinschliff: Tageslicht möglichst früh am Tag nutzen.</li>
+          </ul>`
+      },
+      bmi: {
+        low: `Der BMI ist nur eine grobe Orientierung, zeigt aber einen möglichen Ansatzpunkt.
+          <ul class="quick-actions">
+            <li>Heute: nicht alles ändern – eine kleine Bewegungs- oder Ernährungsroutine auswählen.</li>
+            <li>7 Tage: 2 betreute Trainingseinheiten oder eine Körperanalyse als Startpunkt prüfen.</li>
+          </ul>`,
+        medium: `Dein BMI zeigt einen Bereich mit Optimierungspotenzial.
+          <ul class="quick-actions">
+            <li>Heute: 10 Minuten Bewegung nach einer Mahlzeit testen.</li>
+            <li>7 Tage: Eiweiß, Gemüse und Schritte im Alltag bewusster beobachten.</li>
+          </ul>`,
+        good: `Dein BMI liegt in einem stabilen Orientierungsbereich.
+          <ul class="quick-actions">
+            <li>Beibehalten: Kraft, Ausdauer und Ernährung gemeinsam betrachten.</li>
+            <li>Feinschliff: Körpergefühl und Leistungsfähigkeit wichtiger nehmen als nur Gewicht.</li>
+          </ul>`
+      },
+      mental: {
+        low: `Deine Angaben sprechen für höhere Belastung oder geringe Erholung.
+          <ul class="quick-actions">
+            <li>Heute: eine feste 5-Minuten-Erholungsinsel einplanen.</li>
+            <li>7 Tage: Schlaf, Bewegung und Pausen nicht gleichzeitig perfektionieren – nur eine Routine wählen.</li>
+          </ul>`,
+        medium: `Deine mentale Balance kann durch kleine Routinen unterstützt werden.
+          <ul class="quick-actions">
+            <li>Heute: 10 Minuten ohne Handy spazieren gehen oder bewusst atmen.</li>
+            <li>7 Tage: einen festen Pausenanker pro Tag setzen.</li>
+          </ul>`,
+        good: `Deine mentale Basis wirkt stabil.
+          <ul class="quick-actions">
+            <li>Beibehalten: Erholung aktiv schützen.</li>
+            <li>Feinschliff: Bewegung und Schlaf als Schutzfaktoren nutzen.</li>
+          </ul>`
+      },
+      lifestyle: {
+        low: `Alkohol oder Nikotin können Schlaf, Regeneration und Energie beeinflussen.
+          <ul class="quick-actions">
+            <li>Heute: den Zusammenhang zwischen Konsum, Schlaf und Energie beobachten.</li>
+            <li>7 Tage: einen alkoholfreien oder nikotinfreien Testtag bewusst einplanen.</li>
+          </ul>`,
+        medium: `In diesem Bereich gibt es einzelne Stellschrauben.
+          <ul class="quick-actions">
+            <li>Heute: Konsum nicht bewerten, sondern Muster erkennen.</li>
+            <li>7 Tage: einen Abend ohne Alkohol oder Nikotin als Regenerations-Test nutzen.</li>
+          </ul>`,
+        good: `Deine Angaben sprechen hier für eine günstige Basis.
+          <ul class="quick-actions">
+            <li>Beibehalten: diese Routine unterstützt Schlaf und Trainingsfortschritt.</li>
+            <li>Feinschliff: Wirkung auf Energie und Regeneration weiter beobachten.</li>
+          </ul>`
+      },
+      micronutrients: {
+        low: `Einige Angaben können auf mögliche Nährstoff-Schwerpunkte hinweisen.
+          <ul class="quick-actions">
+            <li>Heute: Ernährung nicht pauschal supplementieren, sondern Muster prüfen.</li>
+            <li>7 Tage: bei Müdigkeit, vegan/vegetarisch oder starker Regelblutung Blutwerte bzw. Beratung erwägen.</li>
+          </ul>`,
+        medium: `Leichte Hinweise können sinnvoll beobachtet werden.
+          <ul class="quick-actions">
+            <li>Heute: Eiweiß, Eisenquellen, Omega-3 und B12 im Alltag prüfen.</li>
+            <li>7 Tage: bei anhaltender Müdigkeit eine gezielte Abklärung statt Zufalls-Supplementierung erwägen.</li>
+          </ul>`,
+        good: `Deine Angaben zeigen hier eine stabile Grundlage.
+          <ul class="quick-actions">
+            <li>Beibehalten: abwechslungsreiche Ernährung bleibt die Basis.</li>
+            <li>Feinschliff: Supplemente nur gezielt und sinnvoll prüfen.</li>
+          </ul>`
+      },
+      metabolic: {
+        low: `Energie, Appetit oder Gewicht haben sich auffällig verändert.
+          <ul class="quick-actions">
+            <li>Heute: Veränderungen notieren: Appetit, Gewicht, Müdigkeit, Schlaf.</li>
+            <li>7 Tage: bei deutlichem ungewolltem Gewichtsverlust oder starkem Appetitverlust ärztliche Abklärung erwägen.</li>
+          </ul>`,
+        medium: `Deine Energie- und Stoffwechselsignale zeigen leichte Auffälligkeiten.
+          <ul class="quick-actions">
+            <li>Heute: eine regelmäßige Mahlzeit und ausreichend Trinken sicherstellen.</li>
+            <li>7 Tage: Schlaf, Bewegung und Mahlzeitenrhythmus beobachten.</li>
+          </ul>`,
+        good: `Deine Energie-Basis wirkt stabil.
+          <ul class="quick-actions">
+            <li>Beibehalten: regelmäßige Mahlzeiten und Regeneration.</li>
+            <li>Feinschliff: Energielevel über die Woche beobachten.</li>
+          </ul>`
+      }
+    };
+
+    return texts[areaKey]?.[level] || "Diese Kategorie gibt dir eine erste Orientierung für mögliche alltagsnahe Stellschrauben.";
+  }
+
+  function redFlagBox(score) {
+    if (!score.doctor_hint) {
+      return `
+        <div class="success-box">
+          <strong>RED-FLAG-Check</strong><br>
+          Aus deinen Angaben ergibt sich aktuell kein besonderer Hinweis auf stärkere Auffälligkeiten innerhalb dieses Vital-Tests.
+          Bitte beachte trotzdem: Bei akuten Beschwerden, starken Schmerzen, deutlichem ungewolltem Gewichtsverlust,
+          Atemnot, Brustschmerz oder anhaltend starker psychischer Belastung sollte immer medizinischer Rat eingeholt werden.
+        </div>
+      `;
+    }
+
+    return `
+      <div class="danger-box red-flag-box">
+        <strong>RED FLAGS – bitte ernst nehmen</strong><br><br>
+        Einige deiner Angaben zeigen stärkere Auffälligkeiten oder deutliche Belastungen.
+        Der LeVITA Vital-Test stellt keine Diagnose, aber in dieser Situation kann eine ärztliche Abklärung sinnvoll sein,
+        besonders wenn Beschwerden neu, stark, anhaltend oder ungewohnt sind.<br><br>
+        <strong>Empfehlung:</strong> Bitte besprich auffällige Symptome, deutlichen ungewollten Gewichtsverlust,
+        starke Erschöpfung, häufige Tagesmüdigkeit oder anhaltende Niedergeschlagenheit mit einer Ärztin oder einem Arzt.
+      </div>
+    `;
+  }
+
+  function vitalitySupportBox(areas, result) {
+    const scoreOf = key => {
+      const area = areas.find(a => a.key === key);
+      return area ? Number(area.score) : 100;
+    };
+
+    const supplementFocus = Array.isArray(result?.supplement_focus)
+      ? result.supplement_focus
+      : [];
+
+    const hints = [];
+
+    // Wenn die Edge Function künftig priorisierte Supplement-Themen zurückgibt,
+    // nutzen wir diese zuerst. So bleibt die HTML-Kurzauswertung mit der KI-Mail harmonisiert.
+    supplementFocus.slice(0, 3).forEach(item => {
+      if (!item?.label) return;
+      hints.push(
+        `Deine Angaben deuten darauf hin, dass <strong>${item.label}</strong> als Orientierungsthema sinnvoll sein könnte${item.reason ? ` – ${item.reason}` : ""}.`
+      );
+    });
+
+    // Fallback, falls im ersten Ergebnis noch keine supplement_focus-Daten vorhanden sind.
+    // Die Formulierungen sind bewusst identisch in Tonalität und Zielrichtung zur KI-Auswertung:
+    // wenige passende Hebel, keine pauschalen Einnahme- oder Therapieempfehlungen.
+    const fallbackRules = [
+      {
+        key: "vitamin_d",
+        max: 75,
+        text: "Regelmäßiges Tageslicht scheint bei dir aktuell ein besonders sinnvoller Hebel für Energie, Schlafrhythmus und Vitamin-D-Orientierung zu sein."
+      },
+      {
+        key: "nutrition",
+        max: 75,
+        text: "Ernährung und Nährstoffqualität könnten bei deinen Angaben ein guter Ansatzpunkt sein – besonders Eiweiß, Gemüse, Flüssigkeit und hochwertige Fettquellen."
+      },
+      {
+        key: "micronutrients",
+        max: 75,
+        text: "Bestimmte Nährstoff-Themen könnten eine bewusste Einordnung verdienen. Sinnvoll ist dabei zuerst Orientierung, Ernährung und bei Bedarf ein Blutwert-Check – nicht pauschale Supplementierung."
+      },
+      {
+        key: "activity",
+        max: 75,
+        text: "Bewegung, Kraft und Regeneration können aktuell ein guter Hebel sein. Entscheidend ist ein kleiner, wiederholbarer Schritt, der zu deinem Alltag passt."
+      },
+      {
+        key: "sleep",
+        max: 75,
+        text: "Schlaf und Abendroutine könnten deine Regeneration spürbar unterstützen. Schon ein stabiler Rhythmus kann ein guter erster Hebel sein."
+      },
+      {
+        key: "lifestyle",
+        max: 75,
+        text: "Alkohol, Nikotin oder ähnliche Routinen können Schlaf und Regeneration beeinflussen. Ein bewusster Testtag kann helfen, den eigenen Zusammenhang besser zu erkennen."
+      },
+      {
+        key: "bmi",
+        max: 75,
+        text: "Körperkomposition kann ein sinnvoller Orientierungsbereich sein. Im Mittelpunkt stehen dabei Energie, Belastbarkeit, Kraft, Ernährung und Wohlbefinden – nicht nur ein einzelner Wert."
+      },
+      {
+        key: "mental",
+        max: 75,
+        text: "Mentale Balance und Erholung könnten deine Vitalität unterstützen. Oft hilft ein kleiner fester Pausenanker mehr als der Versuch, alles gleichzeitig zu verändern."
+      }
+    ];
+
+    for (const rule of fallbackRules) {
+      if (hints.length >= 3) break;
+      if (hints.some(h => h.includes(rule.text.slice(0, 20)))) continue;
+      if (scoreOf(rule.key) < rule.max) hints.push(rule.text);
+    }
+
+    if (hints.length === 0) {
+      hints.push("Deine Angaben zeigen in vielen Bereichen bereits eine gute Grundlage. Der wichtigste Hebel ist jetzt, stabile Routinen beizubehalten und kleine Verbesserungen bewusst zu testen.");
+      hints.push("Achte besonders darauf, was dir im Alltag spürbar mehr Energie, besseren Schlaf oder mehr Belastbarkeit gibt.");
+    }
+
+    return `
+      <div class="success-box vitality-support-box">
+        <strong>Was deine Vitalität aktuell besonders unterstützen könnte</strong><br><br>
+        Nicht alles muss gleichzeitig verändert werden. Entscheidend ist, welche kleinen Hebel zu deinem Alltag,
+        deiner Energie und deiner aktuellen Situation passen.<br><br>
+        <ul class="support-hints">
+          ${hints.slice(0, 3).map(hint => `<li>${hint}</li>`).join("")}
+        </ul>
+        <div class="small">
+          Diese Hinweise dienen der allgemeinen Orientierung. Sie ersetzen keine medizinische Beratung und enthalten keine individuelle Therapie- oder Dosierungsempfehlung.
+          Eine ausführlichere persönliche Einordnung erhältst du auf Wunsch in der KI-Auswertung per E-Mail.
+        </div>
+      </div>
+    `;
+  }
+
+  function hintBoxes(score) {
+    let html = "";
+
+    if (score.bloodtest_hint) {
+      html += `
+        <div class="warning-box">
+          <strong>Hinweis Blutwerte / Trockenbluttest</strong><br>
+          Aufgrund deiner Angaben könnte ein Trockenbluttest zusätzliche Hinweise liefern,
+          um deine Vitalität und Mikronährstoffversorgung gezielter einzuordnen.
+        </div>
+      `;
+    }
+
+    if (score.doctor_hint) {
+      html += `
+        <div class="warning-box">
+          <strong>Zusätzlicher Hinweis</strong><br>
+          Der RED-FLAG-Check wurde ausgelöst. Bitte nutze die Auswertung als Orientierung und kläre stärkere oder anhaltende Beschwerden zusätzlich ab.
+        </div>
+      `;
+    }
+
+    if (score.coaching_hint) {
+      html += `
+        <div class="success-box">
+          <strong>Praktischer nächster Schritt</strong><br>
+          Personen mit vergleichbarer Situation profitieren häufig von einem einfachen Einstieg,
+          z. B. einem betreuten Trainingsplan, einer Körperanalyse oder kleinen Alltagsroutinen.
+        </div>
+      `;
+    }
+
+    return html;
+  }
+
+  function renderRadarChart(areas) {
+    const ctx = document.getElementById("vitalChart");
+
+    if (radarChart) radarChart.destroy();
+
+    radarChart = new Chart(ctx, {
+      type: "radar",
+      data: {
+        labels: areas.map(a => a.label),
+        datasets: [{
+          label: "Vitalitäts-Profil",
+          data: areas.map(a => Math.round(a.score)),
+          backgroundColor: "rgba(52,152,219,0.2)",
+          borderColor: "#3498db",
+          borderWidth: 3,
+          pointBackgroundColor: "#3498db"
+        }]
+      },
+      options: {
+        scales: {
+          r: {
+            min: 0,
+            max: 100,
+            ticks: { stepSize: 20 }
+          }
+        }
+      }
+    });
+  }
+
+  function openGoogleForm() {
+    window.open(GOOGLE_FORM_URL, "_blank");
+  }
+
+  function resetVitalCheck() {
+    const confirmed = confirm(
+      "Möchtest du wirklich alle Eingaben auf dieser Seite löschen und neu starten? Bereits übermittelte Daten in der Datenbank werden dadurch nicht gelöscht."
+    );
+
+    if (!confirmed) return;
+
+    questions = [];
+    groupedQuestions = [];
+    currentStep = 0;
+    selectedAnswers = [];
+    latestResult = null;
+
+    if (radarChart) {
+      radarChart.destroy();
+      radarChart = null;
+    }
+
+    personalData.age = null;
+    personalData.gender = "";
+    personalData.height_cm = null;
+    personalData.weight_kg = null;
+    personalData.email = "";
+    personalData.first_name = "";
+    personalData.last_name = "";
+    personalData.consent_privacy = false;
+    personalData.consent_storage = false;
+
+    document.getElementById("result-area").classList.add("hidden");
+    document.getElementById("result-content").innerHTML = "";
+    document.getElementById("quiz-flow").style.display = "block";
+    document.querySelector(".progress-bar").style.display = "block";
+    document.getElementById("loading").classList.remove("hidden");
+    document.getElementById("loading").innerText = "Fragen werden geladen...";
+
+    init();
+  }
+
+  function nextStep() {
+    document.getElementById(`step-${currentStep}`).classList.remove("active");
+    currentStep++;
+    document.getElementById(`step-${currentStep}`).classList.add("active");
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const percent = (currentStep / (groupedQuestions.length - 1)) * 100;
+    document.getElementById("progress").style.width = `${percent}%`;
+  }
+
+  init();
+</script>
+
+</body>
+</html>
