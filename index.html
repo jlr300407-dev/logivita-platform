@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>LeVITA Vital-Test powered by LogiVita</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --primary: #2c3e50;
+      --secondary: #3498db;
+      --success: #27ae60;
+      --danger: #e74c3c;
+      --warning: #f39c12;
+      --bg: #f4f7f6;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: #333;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 880px;
+      margin: auto;
+      background: white;
+      padding: 35px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo {
+      font-size: 34px;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    .vita-green {
+      color: var(--success);
+    }
+
+    .powered {
+      margin: 6px 0 0;
+      color: #667;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #eee;
+      border-radius: 5px;
+      margin-bottom: 30px;
+    }
+
+    #progress {
+      width: 0%;
+      height: 100%;
+      background: var(--secondary);
+      border-radius: 5px;
+      transition: 0.4s;
+    }
+
+    .question-step { display: none; }
+    .active { display: block; }
+
+    .instruction {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 25px;
+      line-height: 1.4;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 15px;
+      margin-bottom: 15px;
+      border: 2px solid #eee;
+      border-radius: 12px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    .options button,
+    .next-btn,
+    .cta-btn,
+    .reset-btn {
+      width: 100%;
+      padding: 15px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      border: 2px solid #eee;
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.2s;
+    }
+
+    .options button {
+      background: white;
+      text-align: left;
+    }
+
+    .options button:hover {
+      border-color: var(--secondary);
+      background: #f0f7ff;
+    }
+
+    .next-btn {
+      background: var(--secondary);
+      color: white;
+      font-weight: bold;
+      text-align: center;
+      border: none;
+    }
+
+    .cta-btn {
+      background: var(--success);
+      color: white;
+      font-weight: bold;
+      text-align: center;
+      border: none;
+    }
+
+    .reset-btn {
+      background: var(--danger);
+      color: white;
+      font-weight: bold;
+      text-align: center;
+      border: none;
+    }
+
+    .info-box,
+    .success-box,
+    .warning-box,
+    .danger-box {
+      padding: 18px;
+      border-radius: 12px;
+      margin-top: 20px;
+      line-height: 1.6;
+    }
+
+    .info-box {
+      background: #eef2f7;
+      border-left: 5px solid var(--secondary);
+    }
+
+    .success-box {
+      background: #f0fff4;
+      border-left: 5px solid var(--success);
+    }
+
+    .warning-box {
+      background: #fff7e8;
+      border-left: 5px solid var(--warning);
+    }
+
+    .danger-box {
+      background: #fff0f0;
+      border-left: 5px solid var(--danger);
+    }
+
+    .checkbox-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    .checkbox-row input {
+      width: auto;
+      margin-top: 5px;
+    }
+
+    .small {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .hidden { display: none; }
+
+    .loading {
+      text-align: center;
+      padding: 30px;
+      font-weight: 600;
+    }
+
+    .score {
+      font-size: 46px;
+      font-weight: bold;
+      color: var(--secondary);
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .score-range-box {
+      margin-top: 20px;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .score-range-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .score-range-row:last-child {
+      border-bottom: none;
+    }
+
+    .score-range-value {
+      font-weight: 700;
+      white-space: nowrap;
+      color: var(--primary);
+    }
+
+    .score-range-row.active-level {
+      background: rgba(39, 174, 96, 0.12);
+      border-radius: 10px;
+      padding-left: 10px;
+      padding-right: 10px;
+      font-weight: 700;
+    }
+
+    .score-range-label {
+      flex: 1;
+    }
+
+    .score-range-note {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .red-flag-box {
+      background: #fff0f0;
+      border-left: 5px solid var(--danger);
+    }
+
+    .quick-actions {
+      margin-top: 10px;
+      padding-left: 18px;
+    }
+
+    .quick-actions li {
+      margin-bottom: 6px;
+    }
+
+
+    .pilot-code {
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+      background: #eef2f7;
+      padding: 15px;
+      border-radius: 12px;
+      margin-top: 15px;
+    }
+
+    .chart-box {
+      max-width: 520px;
+      margin: 30px auto;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .area-card {
+      padding: 16px;
+      border-radius: 12px;
+      line-height: 1.5;
+      border-left: 5px solid #ccc;
+      background: #f7f7f7;
+    }
+
+    .area-good {
+      background: #f0fff4;
+      border-left-color: var(--success);
+    }
+
+    .area-medium {
+      background: #fff7e8;
+      border-left-color: var(--warning);
+    }
+
+    .area-low {
+      background: #fff0f0;
+      border-left-color: var(--danger);
+    }
+
+    .ai-box {
+      margin-top: 30px;
+      padding: 22px;
+      border-radius: 14px;
+      background: #eef2f7;
+      border-left: 5px solid var(--secondary);
+    }
+
+    .feedback-box {
+      margin-top: 25px;
+      padding: 22px;
+      border-radius: 14px;
+      background: #f0fff4;
+      border-left: 5px solid var(--success);
+    }
+    .vitality-support-box ul.support-hints {
+      margin: 18px 0 18px 18px;
+      padding: 0;
+    }
+
+    .vitality-support-box li {
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+
+
+    .bmi-detail {
+      margin-top: 14px;
+      margin-bottom: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.55);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .vital-profile-box {
+      background: #f5fbf8;
+      border: 1px solid #d7ebe0;
+      border-radius: 20px;
+      padding: 26px;
+      margin: 22px 0 30px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+    }
+
+    .vital-profile-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .vital-profile-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--success);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .vital-profile-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #1f2d2a;
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+
+    .vital-profile-subtitle {
+      font-size: 16px;
+      color: #5b6964;
+      line-height: 1.5;
+    }
+
+    .vital-profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .vital-profile-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid #e5efea;
+    }
+
+    .vital-profile-card-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #23312e;
+      margin-bottom: 14px;
+    }
+
+    .vital-profile-list {
+      margin: 0;
+      padding-left: 19px;
+    }
+
+    .vital-profile-list li {
+      margin-bottom: 11px;
+      line-height: 1.55;
+      color: #44514c;
+      font-size: 15px;
+    }
+
+    .vital-score-scale {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .vital-score-item {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 11px 13px;
+      border-radius: 12px;
+      font-size: 14px;
+    }
+
+    .vital-score-item span {
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .vital-score-item strong {
+      font-weight: 700;
+    }
+
+    .vital-score-item.green {
+      background: #e6f6ea;
+      color: #1d7d42;
+    }
+
+    .vital-score-item.lightgreen {
+      background: #eef8e8;
+      color: #5f9a1d;
+    }
+
+    .vital-score-item.orange {
+      background: #fff4e7;
+      color: #c67a00;
+    }
+
+    .vital-score-item.red {
+      background: #ffeceb;
+      color: #cc3f2f;
+    }
+
+    .vital-profile-focus {
+      background: white;
+      border-left: 5px solid var(--success);
+      border-radius: 12px;
+      padding: 16px 18px;
+      font-size: 15px;
+      line-height: 1.65;
+      color: #44514c;
+      margin-bottom: 16px;
+    }
+
+    .vital-profile-footer {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #5b6964;
+    }
+
+    @media(max-width: 900px) {
+      .vital-profile-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .vital-profile-title {
+        font-size: 23px;
+      }
+
+      .vital-profile-header {
+        gap: 12px;
+      }
+
+      .vital-profile-box {
+        padding: 20px;
+      }
+    }
+
+
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="logo">Le<span class="vita-green">VITA</span> Vital-Test</div>
+    <p class="powered">powered by <strong>LogiVita</strong></p>
+    <p>Wohlbefinden & Vitalität im Fokus</p>
+  </div>
+
+  <div class="progress-bar">
+    <div id="progress"></div>
+  </div>
+
+  <div id="loading" class="loading">Fragen werden geladen...</div>
+  <div id="quiz-flow"></div>
+
+  <div id="result-area" class="hidden">
+    <h2>Dein Vitalitäts-Profil</h2>
+    <div id="result-content"></div>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL = "https://koctweetotpqaazeicwj.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
+  const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/submit-vital-check";
+  const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdWp0l2Cy_KDraD0kW5uXzecV3CdyR1L28nSmdLAzdLUoiTTA/viewform?usp=publish-editor";
+
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let questions = [];
+  let groupedQuestions = [];
+  let currentStep = 0;
+  let selectedAnswers = [];
+  let latestResult = null;
+  let radarChart = null;
+
+  const personalData = {
+    age: null,
+    gender: "",
+    height_cm: null,
+    weight_kg: null,
+    email: "",
+    first_name: "",
+    last_name: "",
+    consent_privacy: false,
+    consent_storage: false
+  };
+
+  async function init() {
+    try {
+      await loadQuestions();
+      buildSteps();
+      document.getElementById("loading").classList.add("hidden");
+      updateProgress();
+    } catch (error) {
+      document.getElementById("loading").innerHTML = `
+        <div class="danger-box"><strong>Fehler beim Laden</strong><br>${error.message}</div>
+      `;
+    }
+  }
+
+  async function loadQuestions() {
+    const { data, error } = await supabaseClient
+      .from("public_active_questions")
+      .select("*")
+      .order("question_sort_order", { ascending: true })
+      .order("option_sort_order", { ascending: true });
+
+    if (error) throw error;
+
+    const map = {};
+
+    data.forEach(row => {
+      if (!map[row.question_id]) {
+        map[row.question_id] = {
+          question_id: row.question_id,
+          question_key: row.question_key,
+          area_key: row.area_key,
+          area_label: row.area_label,
+          question_text: row.question_text,
+          help_text: row.help_text,
+          sort_order: row.question_sort_order,
+          options: []
+        };
+      }
+
+      map[row.question_id].options.push({
+        option_id: row.option_id,
+        option_text: row.option_text
+      });
+    });
+
+    questions = Object.values(map).sort((a, b) => a.sort_order - b.sort_order);
+    groupedQuestions = [{ type: "personal" }, ...questions, { type: "consent" }];
+  }
+
+  function isFemaleSpecificQuestion(question) {
+    const key = String(question.question_key || "").toLowerCase();
+    const text = `${question.question_text || ""} ${question.help_text || ""} ${question.area_label || ""}`.toLowerCase();
+
+    const femaleKeywords = [
+      "female",
+      "woman",
+      "women",
+      "frau",
+      "frauen",
+      "weiblich",
+      "menstru",
+      "zyklus",
+      "periode",
+      "regelblut",
+      "pms",
+      "wechseljah",
+      "schwanger",
+      "geburt",
+      "hormonell"
+    ];
+
+    return femaleKeywords.some(keyword => key.includes(keyword) || text.includes(keyword));
+  }
+
+  function buildGroupedQuestionsForGender() {
+    const shouldShowFemaleQuestions = personalData.gender === "weiblich";
+
+    const filteredQuestions = questions.filter(question => {
+      if (shouldShowFemaleQuestions) return true;
+      return !isFemaleSpecificQuestion(question);
+    });
+
+    groupedQuestions = [{ type: "personal" }, ...filteredQuestions, { type: "consent" }];
+  }
+
+  function buildSteps() {
+    const flow = document.getElementById("quiz-flow");
+    flow.innerHTML = "";
+
+    groupedQuestions.forEach((step, index) => {
+      const div = document.createElement("div");
+      div.className = `question-step ${index === 0 ? "active" : ""}`;
+      div.id = `step-${index}`;
+
+      if (step.type === "personal") div.innerHTML = personalStepHtml();
+      else if (step.type === "consent") div.innerHTML = consentStepHtml();
+      else div.innerHTML = questionStepHtml(step);
+
+      flow.appendChild(div);
+    });
+  }
+
+  function personalStepHtml() {
+    return `
+      <p class="instruction">Bitte gib deine Basisdaten ein</p>
+
+      <input type="text" id="first_name" placeholder="Vorname, optional">
+      <input type="text" id="last_name" placeholder="Nachname, optional">
+
+      <input type="number" id="age" placeholder="Alter" min="14" max="100">
+
+      <select id="gender">
+        <option value="">Geschlecht auswählen</option>
+        <option value="weiblich">Weiblich</option>
+        <option value="männlich">Männlich</option>
+        <option value="divers">Divers</option>
+        <option value="keine_angabe">Keine Angabe</option>
+      </select>
+
+      <input type="number" id="height_cm" placeholder="Größe in cm" min="120" max="230">
+      <input type="number" id="weight_kg" placeholder="Gewicht in kg" min="35" max="250">
+
+      <button class="next-btn" onclick="savePersonalData()">Weiter</button>
+    `;
+  }
+
+  function questionStepHtml(question) {
+    let html = `<p class="instruction">${question.question_text}</p>`;
+
+    if (question.help_text) html += `<p class="small">${question.help_text}</p>`;
+
+    html += `<div class="options">`;
+
+    question.options.forEach(option => {
+      html += `
+        <button onclick="saveAnswer('${option.option_id}')">
+          ${option.option_text}
+        </button>
+      `;
+    });
+
+    html += `</div>`;
+    return html;
+  }
+
+  function consentStepHtml() {
+    return `
+      <p class="instruction">Datenschutz & Auswertung</p>
+
+      <div class="info-box">
+        Deine Angaben werden zur Erstellung deines LEVITA Vital-Checks verarbeitet.
+        Die erste Auswertung erfolgt direkt auf dieser Seite. Eine KI-Auswertung per E-Mail kannst du danach freiwillig aktivieren.
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="consent_privacy">
+        <label for="consent_privacy">Ich habe die Datenschutzhinweise gelesen und verstanden.</label>
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="consent_storage">
+        <label for="consent_storage">Ich willige ein, dass meine Angaben für den Vital-Check gespeichert werden.</label>
+      </div>
+
+      <button class="next-btn" id="submitBtn" onclick="submitInitialCheck()">
+        Erste Auswertung anzeigen
+      </button>
+    `;
+  }
+
+  function savePersonalData() {
+    const age = Number(document.getElementById("age").value);
+    const gender = document.getElementById("gender").value;
+    const height_cm = Number(document.getElementById("height_cm").value);
+    const weight_kg = Number(document.getElementById("weight_kg").value);
+
+    if (!age || age < 14 || age > 100) return alert("Bitte ein gültiges Alter eingeben.");
+    if (!gender) return alert("Bitte Geschlecht auswählen.");
+    if (!height_cm || height_cm < 120 || height_cm > 230) return alert("Bitte eine gültige Größe eingeben.");
+    if (!weight_kg || weight_kg < 35 || weight_kg > 250) return alert("Bitte ein gültiges Gewicht eingeben.");
+
+    personalData.first_name = document.getElementById("first_name").value.trim();
+    personalData.last_name = document.getElementById("last_name").value.trim();
+    personalData.age = age;
+    personalData.gender = gender;
+    personalData.height_cm = height_cm;
+    personalData.weight_kg = weight_kg;
+
+    // Nach Auswahl des Geschlechts werden Frauen-spezifische Fragen nur dann angezeigt,
+    // wenn "weiblich" ausgewählt wurde. Alle anderen Fragen bleiben unverändert dynamisch aus Supabase geladen.
+    buildGroupedQuestionsForGender();
+    buildSteps();
+    currentStep = 0;
+    nextStep();
+  }
+
+  function saveAnswer(optionId) {
+    selectedAnswers.push({ option_id: optionId });
+    nextStep();
+  }
+
+  async function submitInitialCheck() {
+    personalData.consent_privacy = document.getElementById("consent_privacy").checked;
+    personalData.consent_storage = document.getElementById("consent_storage").checked;
+
+    if (!personalData.consent_privacy || !personalData.consent_storage) {
+      return alert("Bitte Datenschutz und Speicherung bestätigen.");
+    }
+
+    const submitBtn = document.getElementById("submitBtn");
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Auswertung wird erstellt...";
+
+    const payload = {
+      age: personalData.age,
+      gender: personalData.gender,
+      height_cm: personalData.height_cm,
+      weight_kg: personalData.weight_kg,
+      first_name: personalData.first_name || null,
+      last_name: personalData.last_name || null,
+      consent_privacy: true,
+      consent_storage: true,
+      answers: selectedAnswers
+    };
+
+    try {
+      const result = await callFunction(payload);
+      latestResult = result;
+      showResult(result);
+    } catch (error) {
+      alert("Fehler: " + error.message);
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Erste Auswertung anzeigen";
+    }
+  }
+
+  async function requestAiAnalysis() {
+    const email = document.getElementById("ai_email").value.trim();
+    const consentAi = document.getElementById("consent_ai_analysis").checked;
+    const consentMail = document.getElementById("consent_email_delivery").checked;
+    const btn = document.getElementById("aiBtn");
+
+    if (!email) return alert("Bitte E-Mail-Adresse eingeben.");
+    if (!consentAi || !consentMail) return alert("Bitte beide Einwilligungen bestätigen.");
+
+    btn.disabled = true;
+    btn.innerText = "KI-Auswertung wird erstellt...";
+
+    try {
+      const result = await callFunction({
+        mode: "request_ai_analysis",
+        public_code: latestResult.public_code,
+        email,
+        consent_ai_analysis: true,
+        consent_email_delivery: true
+      });
+
+      if (result.email_sent) {
+        document.getElementById("ai-status").innerHTML = `
+          <div class="success-box">Deine KI-Auswertung wurde per E-Mail versendet.</div>
+        `;
+      } else {
+        document.getElementById("ai-status").innerHTML = `
+          <div class="warning-box">Die Analyse wurde erstellt, aber der E-Mail-Versand konnte nicht bestätigt werden.</div>
+        `;
+      }
+    } catch (error) {
+      alert("Fehler: " + error.message);
+      btn.disabled = false;
+      btn.innerText = "KI-Auswertung per E-Mail anfordern";
+    }
+  }
+
+  async function callFunction(payload) {
+    const response = await fetch(FUNCTION_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || "Unbekannter Fehler.");
+    }
+
+    return result;
+  }
+
+
+  function renderRadarExplanationBox(areas) {
+    const sortedAreas = [...areas].sort((a, b) => a.score - b.score);
+    const focusAreas = sortedAreas
+      .filter(area => area.score < 75)
+      .slice(0, 3)
+      .map(area => area.label);
+
+    const focusText = focusAreas.length > 0
+      ? `Bei dir liegen besonders <strong>${focusAreas.join(", ")}</strong> weiter innen. Das bedeutet nicht „schlecht“, sondern zeigt, wo kleine, realistische Hebel aktuell den größten Nutzen für deine Vitalität haben können.`
+      : `Deine Bereiche wirken insgesamt stabil. Der Fokus liegt deshalb weniger auf großen Veränderungen, sondern auf Erhalt, Feinschliff und guter Regelmäßigkeit.`;
+
+    return `
+      <div class="vital-profile-box">
+        <div class="vital-profile-header">
+          <div class="vital-profile-icon">◎</div>
+          <div>
+            <div class="vital-profile-title">So liest du dein Vitalitäts-Profil</div>
+            <div class="vital-profile-subtitle">
+              Die Spinnengrafik zeigt deine aktuelle Vitalitäts-Balance in den wichtigsten Bereichen.
+            </div>
+          </div>
+        </div>
+
+        <div class="vital-profile-grid">
+          <div class="vital-profile-card">
+            <div class="vital-profile-card-title">Was die Grafik zeigt</div>
+            <ul class="vital-profile-list">
+              <li>Je weiter außen ein Punkt liegt, desto stabiler wirkt dieser Bereich aktuell.</li>
+              <li>Weiter innen liegende Bereiche zeigen mögliche Ansatzpunkte für kleine Verbesserungen.</li>
+              <li>Die Grafik ist keine medizinische Bewertung, sondern eine Orientierung deiner aktuellen Balance.</li>
+            </ul>
+          </div>
+
+          <div class="vital-profile-card">
+            <div class="vital-profile-card-title">Einordnung der Werte</div>
+            <div class="vital-score-scale">
+              <div class="vital-score-item green">
+                <span>85–100</span>
+                <strong>sehr stabile Grundlage</strong>
+              </div>
+              <div class="vital-score-item lightgreen">
+                <span>70–84</span>
+                <strong>gute Basis mit Potenzial</strong>
+              </div>
+              <div class="vital-score-item orange">
+                <span>55–69</span>
+                <strong>sichtbare Stellschrauben</strong>
+              </div>
+              <div class="vital-score-item orange">
+                <span>40–54</span>
+                <strong>klarer Fokusbereich</strong>
+              </div>
+              <div class="vital-score-item red">
+                <span>0–39</span>
+                <strong>besonderer Orientierungsbereich</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vital-profile-focus">
+          ${focusText}
+        </div>
+
+        <div class="vital-profile-footer">
+          <strong>Wichtig:</strong> Ziel ist nicht Perfektion. Entscheidend ist, stabile Bereiche zu erhalten
+          und 1–2 passende Hebel bewusst zu verbessern. So kann der Vitalitäts-Index bei einer späteren
+          Wiederholung sichtbar stabilisiert oder weiterentwickelt werden.
+        </div>
+      </div>
+    `;
+  }
+
+  function showResult(result) {
+    document.getElementById("quiz-flow").style.display = "none";
+    document.querySelector(".progress-bar").style.display = "none";
+    document.getElementById("result-area").classList.remove("hidden");
+
+    const scorePayload = result.score.score_payload || {};
+    const areas = Object.entries(scorePayload).map(([key, value]) => ({
+      key,
+      label: value.label,
+      score: Number(value.score),
+      weight: value.weight
+    }));
+
+    let html = `
+      <div class="success-box">
+        <strong>Dein Vital-Check wurde erfolgreich erstellt.</strong><br>
+        Hier siehst du deine erste Orientierung. Eine ausführliche KI-Auswertung kannst du im nächsten Schritt freiwillig anfordern.
+      </div>
+
+      <div class="pilot-code">
+        Deine Pilot-ID:<br>${result.public_code}
+      </div>
+
+      <div class="info-box">
+        <strong>Basisdaten</strong><br><br>
+        Name: ${(personalData.first_name || personalData.last_name) ? `${personalData.first_name} ${personalData.last_name}` : "Nicht angegeben"}<br>
+        Alter: ${personalData.age}<br>
+        Geschlecht: ${personalData.gender}<br>
+        Größe: ${personalData.height_cm} cm<br>
+        Gewicht: ${personalData.weight_kg} kg<br>
+        BMI: ${result.bmi}
+      </div>
+
+      <div class="score">${result.score.total_score}/100</div>
+      ${renderVitalIndexBox(Number(result.score.total_score), result.score.score_label)}
+
+      <div class="chart-box">
+        <canvas id="vitalChart"></canvas>
+      </div>
+
+      ${renderRadarExplanationBox(areas)}
+
+      <h3>Erste Einschätzung deiner Bereiche</h3>
+      <div class="grid">
+        ${areas.map(area => areaCard(area)).join("")}
+      </div>
+
+      ${redFlagBox(result.score)}
+      ${vitalitySupportBox(areas, result)}
+      ${hintBoxes(result.score)}
+
+      <div class="ai-box">
+        <h3>Ausführliche KI-Auswertung erhalten</h3>
+        <p>
+          Wenn du möchtest, erstellen wir auf Basis deiner Angaben eine ausführliche,
+          motivierende KI-Auswertung mit konkreten Impulsen zur Hilfe zur Selbsthilfe.
+        </p>
+
+        <input type="email" id="ai_email" placeholder="E-Mail-Adresse">
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="consent_ai_analysis">
+          <label for="consent_ai_analysis">
+            Ich willige ein, dass meine Angaben für eine KI-gestützte Auswertung verarbeitet werden.
+          </label>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="consent_email_delivery">
+          <label for="consent_email_delivery">
+            Ich willige ein, dass mir die Auswertung per E-Mail zugesendet wird.
+          </label>
+        </div>
+
+        <button class="next-btn" id="aiBtn" onclick="requestAiAnalysis()">
+          KI-Auswertung per E-Mail anfordern
+        </button>
+
+        <div id="ai-status"></div>
+      </div>
+
+      <div class="feedback-box">
+        <h3>Hilf uns, den Vital-Check besser zu machen 🚀</h3>
+        <p>
+          Dein Feedback ist in der Entwicklungsphase besonders wertvoll.
+          Über den folgenden Button kannst du uns kurz mitteilen, wie hilfreich die Auswertung für dich war.
+        </p>
+        <button class="cta-btn" onclick="openGoogleForm()">Feedback geben</button>
+      </div>
+
+      <div class="info-box">
+        <strong>Wichtiger Hinweis:</strong><br>
+        Diese Auswertung ist keine Diagnose und ersetzt keine medizinische Beratung.
+        Sie dient der Orientierung und Hilfe zur Selbsthilfe.
+      </div>
+
+      <button class="reset-btn" onclick="resetVitalCheck()">
+        Neue Eingabe starten / Formular zurücksetzen
+      </button>
+    `;
+
+    document.getElementById("result-content").innerHTML = html;
+    renderRadarChart(areas);
+  }
+
+  function getScoreBoxClass(score) {
+    const value = Number(score);
+
+    if (value >= 85) return "success-box";
+    if (value >= 70) return "info-box";
+    if (value >= 55) return "warning-box";
+    if (value >= 40) return "warning-box";
+    return "danger-box";
+  }
+
+  function getVitalIndexMotivation(score) {
+    const value = Number(score);
+
+    if (value >= 85) {
+      return "Du hast bereits eine sehr stabile Vitalitäts-Basis. Ziel sollte es sein, diese Grundlage zu halten und gezielt kleine Optimierungen zu nutzen, ohne unnötig viel gleichzeitig zu verändern.";
+    }
+
+    if (value >= 70) {
+      return "Du bist auf einem guten Level. Ziel kann sein, deinen Vitalitäts-Index in den nächsten Wochen weiter zu stabilisieren und einzelne passende Hebel bewusst zu verbessern.";
+    }
+
+    if (value >= 55) {
+      return "Dein Ergebnis zeigt mehrere gute Ansätze, aber auch erkennbare Entwicklungsbereiche. Schon kleine regelmäßige Veränderungen können helfen, deinen Vitalitäts-Index in den nächsten Wochen sichtbar zu verbessern.";
+    }
+
+    if (value >= 40) {
+      return "Aktuell zeigen mehrere Bereiche Entwicklungspotenzial. Wichtig ist nicht, alles gleichzeitig zu verändern, sondern mit 1–2 einfachen Schritten zu starten und den Vitalitäts-Index später erneut zu vergleichen.";
+    }
+
+    return "Dein Ergebnis zeigt, dass Regeneration, Alltag und Vitalität aktuell besondere Aufmerksamkeit verdienen. Starte mit kleinen, gut machbaren Schritten und nutze eine spätere Wiederholung, um Veränderungen sichtbar zu machen.";
+  }
+
+  function renderVitalIndexBox(score, label) {
+    const ranges = [
+      {
+        min: 85,
+        max: 100,
+        value: "85–100",
+        label: "Sehr gute Vitalitäts-Balance",
+        text: "Deine Basis wirkt sehr stabil. Der Fokus liegt auf Erhalt, Feinschliff und konsequenter Routine."
+      },
+      {
+        min: 70,
+        max: 84.99,
+        value: "70–84",
+        label: "Gute Basis mit Potenzial",
+        text: "Viele Grundlagen sind vorhanden. Einzelne Stellschrauben können dein Energielevel weiter verbessern."
+      },
+      {
+        min: 55,
+        max: 69.99,
+        value: "55–69",
+        label: "Einzelne Bereiche verdienen Aufmerksamkeit",
+        text: "Mehrere Faktoren können deine Vitalität beeinflussen. Ein klarer Fokusbereich und kleine Schritte sind sinnvoll."
+      },
+      {
+        min: 40,
+        max: 54.99,
+        value: "40–54",
+        label: "Mehrere Vitalitätsfaktoren beeinflussen dein Energielevel",
+        text: "Hier lohnt sich ein strukturierter Einstieg, zum Beispiel mit Schlaf, Bewegung oder Ernährung als erstem Hebel."
+      },
+      {
+        min: 0,
+        max: 39.99,
+        value: "unter 40",
+        label: "Regeneration und Alltag verdienen besondere Aufmerksamkeit",
+        text: "Starte besonders niedrigschwellig. Bei starken Beschwerden oder deutlichen Veränderungen kann zusätzliche Beratung sinnvoll sein."
+      }
+    ];
+
+    const rows = ranges.map(range => {
+      const active = score >= range.min && score <= range.max;
+      return `
+        <div class="score-range-row ${active ? "active-level" : ""}">
+          <span class="score-range-value">${range.value}</span>
+          <span class="score-range-label">${range.label}${active ? " ← dein aktuelles Level" : ""}<br><small>${range.text}</small></span>
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <div class="info-box score-range-box">
+        <strong>LEVITA Vitalitäts-Index</strong><br><br>
+        Dein aktuelles Level: <strong>${label}</strong><br>
+        Der Index zeigt deine aktuelle Vitalitäts-Balance als Orientierung. Die Detailwerte werden genutzt,
+        um passende Impulse abzuleiten – nicht als Diagnose.<br><br>
+        ${rows}
+        <div class="score-range-note">
+          <strong>Dein nächstes Ziel:</strong><br>
+          ${getVitalIndexMotivation(score)}
+        </div>
+      </div>
+    `;
+  }
+
+
+  function getBmiLabel(bmi) {
+    const value = Number(bmi);
+
+    if (!Number.isFinite(value)) return "keine Einordnung möglich";
+    if (value < 18.5) return "unterhalb des üblichen Orientierungsbereichs";
+    if (value < 25) return "im klassischen Orientierungsbereich";
+    if (value < 30) return "leicht oberhalb des klassischen Orientierungsbereichs";
+    return "deutlich oberhalb des klassischen Orientierungsbereichs";
+  }
+
+  function bmiDetailHtml(areaKey) {
+    if (areaKey !== "bmi") return "";
+
+    const bmiValue = Number(latestResult?.bmi);
+    if (!Number.isFinite(bmiValue)) return "";
+
+    return `
+      <div class="bmi-detail">
+        <strong>Aktueller BMI:</strong> ${bmiValue.toFixed(1)}<br>
+        <small>${getBmiLabel(bmiValue)}. Der BMI ist eine grobe Orientierung und sollte immer zusammen mit Muskelmasse, Aktivitätsniveau und Wohlbefinden betrachtet werden.</small>
+      </div>
+    `;
+  }
+
+  function areaCard(area) {
+    let cls = "area-good";
+    let text = "Gute Grundlage";
+
+    if (area.score < 55) {
+      cls = "area-low";
+      text = "Fokusbereich";
+    } else if (area.score < 75) {
+      cls = "area-medium";
+      text = "Optimierungspotenzial";
+    }
+
+    return `
+      <div class="area-card ${cls}">
+        <strong>${area.label}</strong><br>
+        <em>${text}</em>
+        ${bmiDetailHtml(area.key)}
+        ${getQuickInsight(area.key, area.score)}
+      </div>
+    `;
+  }
+
+
+  function getBmiQuickInsight() {
+    const bmiValue = Number(latestResult?.bmi);
+
+    if (!Number.isFinite(bmiValue)) {
+      return `Der BMI ist eine grobe Orientierung und sollte immer zusammen mit Muskelmasse, Aktivitätsniveau und Wohlbefinden betrachtet werden.`;
+    }
+
+    if (bmiValue < 19) {
+      return `Der aktuelle BMI liegt unter dem üblichen Orientierungsbereich. Gerade bei hoher Aktivität, Stress oder unregelmäßigen Mahlzeiten kann es sinnvoll sein, Energieversorgung, Regeneration und Muskelaufbau bewusster zu unterstützen.
+        <ul class="quick-actions">
+          <li>Heute: eine zusätzliche eiweiß- und energiereiche Zwischenmahlzeit ergänzen, z. B. Joghurt oder Quark mit Nüssen, ein Ei, Tofu, Hummus, Hülsenfrüchte oder ein Smoothie mit Haferflocken.</li>
+          <li>7 Tage: regelmäßige Mahlzeiten, ausreichend Flüssigkeit und Regeneration bewusst stabilisieren. Krafttraining kann sinnvoll sein, aber nicht als zusätzlicher Kalorienverbrauch, sondern moderat zur Stabilisierung und zum Muskelaufbau.</li>
+        </ul>`;
+    }
+
+    if (bmiValue < 25) {
+      return `Dein BMI liegt in einem stabilen Orientierungsbereich.
+        <ul class="quick-actions">
+          <li>Beibehalten: Ernährung, Bewegung und Regeneration ausgewogen betrachten.</li>
+          <li>Feinschliff: Körpergefühl, Energie und Leistungsfähigkeit wichtiger nehmen als nur Gewicht.</li>
+        </ul>`;
+    }
+
+    if (bmiValue < 30) {
+      return `Deine Körperkomposition kann ein sinnvoller Orientierungsbereich sein.
+        <ul class="quick-actions">
+          <li>Heute: eine kleine Bewegungs- oder Ernährungsroutine auswählen, z. B. 10 Minuten Gehen nach einer Mahlzeit oder eine bewusst eiweißreiche Hauptmahlzeit.</li>
+          <li>7 Tage: Eiweiß, Gemüse, Kraftimpulse und Alltagsbewegung bewusster kombinieren.</li>
+        </ul>`;
+    }
+
+    return `Deine Körperkomposition verdient aktuell besondere Aufmerksamkeit.
+      <ul class="quick-actions">
+        <li>Heute: nicht alles gleichzeitig ändern – eine einfache Routine wählen, z. B. Wasser vorbereiten, eine Mahlzeit strukturieren oder 10 Minuten gehen.</li>
+        <li>7 Tage: mit einem realistischen Einstieg in Bewegung, Ernährung und Regeneration starten. Kleine Schritte sind wichtiger als kurzfristige Perfektion.</li>
+      </ul>`;
+  }
+
+  function getQuickInsight(areaKey, score) {
+    if (areaKey === "bmi") {
+      return getBmiQuickInsight();
+    }
+
+    const low = score < 55;
+    const medium = score >= 55 && score < 75;
+
+    const level = low ? "low" : medium ? "medium" : "good";
+
+    const texts = {
+      sleep: {
+        low: `Dein Schlaf ist ein wichtiger Hebel für mehr Energie und Regeneration.
+          <ul class="quick-actions">
+            <li>Heute: feste Schlafenszeit wählen und 30 Minuten vorher Bildschirmzeit reduzieren.</li>
+            <li>7 Tage: jeden Morgen möglichst zur gleichen Zeit aufstehen.</li>
+          </ul>`,
+        medium: `Dein Schlaf zeigt eine brauchbare Basis, kann aber stabiler werden.
+          <ul class="quick-actions">
+            <li>Heute: eine kurze Abendroutine festlegen, z. B. Tee, Lesen oder ruhiges Dehnen.</li>
+            <li>7 Tage: Koffein am Nachmittag bewusst beobachten.</li>
+          </ul>`,
+        good: `Deine Schlafbasis wirkt stabil.
+          <ul class="quick-actions">
+            <li>Beibehalten: regelmäßige Schlafzeiten schützen.</li>
+            <li>Feinschliff: Erholung auch an stressigen Tagen aktiv einplanen.</li>
+          </ul>`
+      },
+      activity: {
+        low: `Bewegung ist aktuell einer der einfachsten Hebel für Vitalität.
+          <ul class="quick-actions">
+            <li>Heute: 10 Minuten zügig gehen, ideal nach einer Mahlzeit.</li>
+            <li>7 Tage: zwei feste Termine für leichte Bewegung oder betreutes Training einplanen.</li>
+          </ul>`,
+        medium: `Du hast bereits Bewegung im Alltag, jetzt zählt Regelmäßigkeit.
+          <ul class="quick-actions">
+            <li>Heute: einen konkreten Bewegungstermin in den Kalender setzen.</li>
+            <li>7 Tage: 2 kurze Kraft- oder Stabilitätsübungen ergänzen.</li>
+          </ul>`,
+        good: `Deine Bewegungsbasis wirkt stabil.
+          <ul class="quick-actions">
+            <li>Beibehalten: Mischung aus Alltag, Ausdauer und Kraft.</li>
+            <li>Feinschliff: Regeneration und Belastung bewusst ausbalancieren.</li>
+          </ul>`
+      },
+      nutrition: {
+        low: `Ernährung kann deine Energie im Alltag spürbar beeinflussen.
+          <ul class="quick-actions">
+            <li>Heute: eine Mahlzeit bewusst mit Eiweiß, Gemüse und Flüssigkeit planen.</li>
+            <li>7 Tage: Frühstück oder Mittagessen als feste Basis-Mahlzeit stabilisieren.</li>
+          </ul>`,
+        medium: `Deine Ernährung hat gute Ansätze, aber noch klare Stellschrauben.
+          <ul class="quick-actions">
+            <li>Heute: eine zusätzliche Portion Gemüse, Salat oder Obst einbauen.</li>
+            <li>7 Tage: bei jeder Hauptmahlzeit eine Eiweißquelle prüfen.</li>
+          </ul>`,
+        good: `Deine Ernährungsbasis wirkt solide.
+          <ul class="quick-actions">
+            <li>Beibehalten: regelmäßige Mahlzeiten und Lebensmittelqualität.</li>
+            <li>Feinschliff: Omega-3-Quellen und Trinkmenge im Blick behalten.</li>
+          </ul>`
+      },
+      vitamin_d: {
+        low: `Tageslicht kann für Energie, Rhythmus und Vitamin-D-Orientierung relevant sein.
+          <ul class="quick-actions">
+            <li>Heute: 10–15 Minuten Tageslicht im Freien einplanen.</li>
+            <li>7 Tage: 3 kurze Tageslicht-Spaziergänge testen; bei Unsicherheit Blutwert prüfen lassen.</li>
+          </ul>`,
+        medium: `Tageslicht ist teilweise vorhanden, kann aber bewusster genutzt werden.
+          <ul class="quick-actions">
+            <li>Heute: eine kurze Pause im Freien machen.</li>
+            <li>7 Tage: Tageslicht mit Bewegung koppeln, z. B. Spaziergang nach dem Essen.</li>
+          </ul>`,
+        good: `Deine Tageslicht-Basis wirkt günstig.
+          <ul class="quick-actions">
+            <li>Beibehalten: besonders in Herbst und Winter bewusst rausgehen.</li>
+            <li>Feinschliff: Tageslicht möglichst früh am Tag nutzen.</li>
+          </ul>`
+      },
+      bmi: {
+        low: `Der BMI ist nur eine grobe Orientierung, zeigt aber einen möglichen Ansatzpunkt.
+          <ul class="quick-actions">
+            <li>Heute: nicht alles ändern – eine kleine Bewegungs- oder Ernährungsroutine auswählen.</li>
+            <li>7 Tage: 2 betreute Trainingseinheiten oder eine Körperanalyse als Startpunkt prüfen.</li>
+          </ul>`,
+        medium: `Dein BMI zeigt einen Bereich mit Optimierungspotenzial.
+          <ul class="quick-actions">
+            <li>Heute: 10 Minuten Bewegung nach einer Mahlzeit testen.</li>
+            <li>7 Tage: Eiweiß, Gemüse und Schritte im Alltag bewusster beobachten.</li>
+          </ul>`,
+        good: `Dein BMI liegt in einem stabilen Orientierungsbereich.
+          <ul class="quick-actions">
+            <li>Beibehalten: Kraft, Ausdauer und Ernährung gemeinsam betrachten.</li>
+            <li>Feinschliff: Körpergefühl und Leistungsfähigkeit wichtiger nehmen als nur Gewicht.</li>
+          </ul>`
+      },
+      mental: {
+        low: `Deine Angaben sprechen für höhere Belastung oder geringe Erholung.
+          <ul class="quick-actions">
+            <li>Heute: eine feste 5-Minuten-Erholungsinsel einplanen.</li>
+            <li>7 Tage: Schlaf, Bewegung und Pausen nicht gleichzeitig perfektionieren – nur eine Routine wählen.</li>
+          </ul>`,
+        medium: `Deine mentale Balance kann durch kleine Routinen unterstützt werden.
+          <ul class="quick-actions">
+            <li>Heute: 10 Minuten ohne Handy spazieren gehen oder bewusst atmen.</li>
+            <li>7 Tage: einen festen Pausenanker pro Tag setzen.</li>
+          </ul>`,
+        good: `Deine mentale Basis wirkt stabil.
+          <ul class="quick-actions">
+            <li>Beibehalten: Erholung aktiv schützen.</li>
+            <li>Feinschliff: Bewegung und Schlaf als Schutzfaktoren nutzen.</li>
+          </ul>`
+      },
+      lifestyle: {
+        low: `Alkohol oder Nikotin können Schlaf, Regeneration und Energie beeinflussen.
+          <ul class="quick-actions">
+            <li>Heute: den Zusammenhang zwischen Konsum, Schlaf und Energie beobachten.</li>
+            <li>7 Tage: einen alkoholfreien oder nikotinfreien Testtag bewusst einplanen.</li>
+          </ul>`,
+        medium: `In diesem Bereich gibt es einzelne Stellschrauben.
+          <ul class="quick-actions">
+            <li>Heute: Konsum nicht bewerten, sondern Muster erkennen.</li>
+            <li>7 Tage: einen Abend ohne Alkohol oder Nikotin als Regenerations-Test nutzen.</li>
+          </ul>`,
+        good: `Deine Angaben sprechen hier für eine günstige Basis.
+          <ul class="quick-actions">
+            <li>Beibehalten: diese Routine unterstützt Schlaf und Trainingsfortschritt.</li>
+            <li>Feinschliff: Wirkung auf Energie und Regeneration weiter beobachten.</li>
+          </ul>`
+      },
+      micronutrients: {
+        low: `Einige Angaben können auf mögliche Nährstoff-Schwerpunkte hinweisen.
+          <ul class="quick-actions">
+            <li>Heute: Ernährung nicht pauschal supplementieren, sondern Muster prüfen.</li>
+            <li>7 Tage: bei Müdigkeit, vegan/vegetarisch oder starker Regelblutung Blutwerte bzw. Beratung erwägen.</li>
+          </ul>`,
+        medium: `Leichte Hinweise können sinnvoll beobachtet werden.
+          <ul class="quick-actions">
+            <li>Heute: Eiweiß, Eisenquellen, Omega-3 und B12 im Alltag prüfen.</li>
+            <li>7 Tage: bei anhaltender Müdigkeit eine gezielte Abklärung statt Zufalls-Supplementierung erwägen.</li>
+          </ul>`,
+        good: `Deine Angaben zeigen hier eine stabile Grundlage.
+          <ul class="quick-actions">
+            <li>Beibehalten: abwechslungsreiche Ernährung bleibt die Basis.</li>
+            <li>Feinschliff: Supplemente nur gezielt und sinnvoll prüfen.</li>
+          </ul>`
+      },
+      metabolic: {
+        low: `Energie, Appetit oder Gewicht haben sich auffällig verändert.
+          <ul class="quick-actions">
+            <li>Heute: Veränderungen notieren: Appetit, Gewicht, Müdigkeit, Schlaf.</li>
+            <li>7 Tage: bei deutlichem ungewolltem Gewichtsverlust oder starkem Appetitverlust ärztliche Abklärung erwägen.</li>
+          </ul>`,
+        medium: `Deine Energie- und Stoffwechselsignale zeigen leichte Auffälligkeiten.
+          <ul class="quick-actions">
+            <li>Heute: eine regelmäßige Mahlzeit und ausreichend Trinken sicherstellen.</li>
+            <li>7 Tage: Schlaf, Bewegung und Mahlzeitenrhythmus beobachten.</li>
+          </ul>`,
+        good: `Deine Energie-Basis wirkt stabil.
+          <ul class="quick-actions">
+            <li>Beibehalten: regelmäßige Mahlzeiten und Regeneration.</li>
+            <li>Feinschliff: Energielevel über die Woche beobachten.</li>
+          </ul>`
+      }
+    };
+
+    return texts[areaKey]?.[level] || "Diese Kategorie gibt dir eine erste Orientierung für mögliche alltagsnahe Stellschrauben.";
+  }
+
+  function redFlagBox(score) {
+    if (!score.doctor_hint) {
+      return `
+        <div class="success-box">
+          <strong>RED-FLAG-Check</strong><br>
+          Aus deinen Angaben ergibt sich aktuell kein besonderer Hinweis auf stärkere Auffälligkeiten innerhalb dieses Vital-Tests.
+          Bitte beachte trotzdem: Bei akuten Beschwerden, starken Schmerzen, deutlichem ungewolltem Gewichtsverlust,
+          Atemnot, Brustschmerz oder anhaltend starker psychischer Belastung sollte immer medizinischer Rat eingeholt werden.
+        </div>
+      `;
+    }
+
+    return `
+      <div class="danger-box red-flag-box">
+        <strong>RED FLAGS – bitte ernst nehmen</strong><br><br>
+        Einige deiner Angaben zeigen stärkere Auffälligkeiten oder deutliche Belastungen.
+        Der LeVITA Vital-Test stellt keine Diagnose, aber in dieser Situation kann eine ärztliche Abklärung sinnvoll sein,
+        besonders wenn Beschwerden neu, stark, anhaltend oder ungewohnt sind.<br><br>
+        <strong>Empfehlung:</strong> Bitte besprich auffällige Symptome, deutlichen ungewollten Gewichtsverlust,
+        starke Erschöpfung, häufige Tagesmüdigkeit oder anhaltende Niedergeschlagenheit mit einer Ärztin oder einem Arzt.
+      </div>
+    `;
+  }
+
+  function vitalitySupportBox(areas, result) {
+    const scoreOf = key => {
+      const area = areas.find(a => a.key === key);
+      return area ? Number(area.score) : 100;
+    };
+
+    const supplementFocus = Array.isArray(result?.supplement_focus)
+      ? result.supplement_focus
+      : [];
+
+    const hints = [];
+
+    // Wenn die Edge Function künftig priorisierte Supplement-Themen zurückgibt,
+    // nutzen wir diese zuerst. So bleibt die HTML-Kurzauswertung mit der KI-Mail harmonisiert.
+    supplementFocus.slice(0, 3).forEach(item => {
+      if (!item?.label) return;
+      hints.push(
+        `Deine Angaben deuten darauf hin, dass <strong>${item.label}</strong> als Orientierungsthema sinnvoll sein könnte${item.reason ? ` – ${item.reason}` : ""}.`
+      );
+    });
+
+    // Fallback, falls im ersten Ergebnis noch keine supplement_focus-Daten vorhanden sind.
+    // Die Formulierungen sind bewusst identisch in Tonalität und Zielrichtung zur KI-Auswertung:
+    // wenige passende Hebel, keine pauschalen Einnahme- oder Therapieempfehlungen.
+    const fallbackRules = [
+      {
+        key: "vitamin_d",
+        max: 75,
+        text: "Regelmäßiges Tageslicht scheint bei dir aktuell ein besonders sinnvoller Hebel für Energie, Schlafrhythmus und Vitamin-D-Orientierung zu sein."
+      },
+      {
+        key: "nutrition",
+        max: 75,
+        text: "Ernährung und Nährstoffqualität könnten bei deinen Angaben ein guter Ansatzpunkt sein – besonders Eiweiß, Gemüse, Flüssigkeit und hochwertige Fettquellen."
+      },
+      {
+        key: "micronutrients",
+        max: 75,
+        text: "Bestimmte Nährstoff-Themen könnten eine bewusste Einordnung verdienen. Sinnvoll ist dabei zuerst Orientierung, Ernährung und bei Bedarf ein Blutwert-Check – nicht pauschale Supplementierung."
+      },
+      {
+        key: "activity",
+        max: 75,
+        text: "Bewegung, Kraft und Regeneration können aktuell ein guter Hebel sein. Entscheidend ist ein kleiner, wiederholbarer Schritt, der zu deinem Alltag passt."
+      },
+      {
+        key: "sleep",
+        max: 75,
+        text: "Schlaf und Abendroutine könnten deine Regeneration spürbar unterstützen. Schon ein stabiler Rhythmus kann ein guter erster Hebel sein."
+      },
+      {
+        key: "lifestyle",
+        max: 75,
+        text: "Alkohol, Nikotin oder ähnliche Routinen können Schlaf und Regeneration beeinflussen. Ein bewusster Testtag kann helfen, den eigenen Zusammenhang besser zu erkennen."
+      },
+      {
+        key: "bmi",
+        max: 75,
+        text: "Körperkomposition kann ein sinnvoller Orientierungsbereich sein. Im Mittelpunkt stehen dabei Energie, Belastbarkeit, Kraft, Ernährung und Wohlbefinden – nicht nur ein einzelner Wert."
+      },
+      {
+        key: "mental",
+        max: 75,
+        text: "Mentale Balance und Erholung könnten deine Vitalität unterstützen. Oft hilft ein kleiner fester Pausenanker mehr als der Versuch, alles gleichzeitig zu verändern."
+      }
+    ];
+
+    for (const rule of fallbackRules) {
+      if (hints.length >= 3) break;
+      if (hints.some(h => h.includes(rule.text.slice(0, 20)))) continue;
+      if (scoreOf(rule.key) < rule.max) hints.push(rule.text);
+    }
+
+    if (hints.length === 0) {
+      hints.push("Deine Angaben zeigen in vielen Bereichen bereits eine gute Grundlage. Der wichtigste Hebel ist jetzt, stabile Routinen beizubehalten und kleine Verbesserungen bewusst zu testen.");
+      hints.push("Achte besonders darauf, was dir im Alltag spürbar mehr Energie, besseren Schlaf oder mehr Belastbarkeit gibt.");
+    }
+
+    return `
+      <div class="success-box vitality-support-box">
+        <strong>Was deine Vitalität aktuell besonders unterstützen könnte</strong><br><br>
+        Nicht alles muss gleichzeitig verändert werden. Entscheidend ist, welche kleinen Hebel zu deinem Alltag,
+        deiner Energie und deiner aktuellen Situation passen.<br><br>
+        <ul class="support-hints">
+          ${hints.slice(0, 3).map(hint => `<li>${hint}</li>`).join("")}
+        </ul>
+        <div class="small">
+          Diese Hinweise dienen der allgemeinen Orientierung. Sie ersetzen keine medizinische Beratung und enthalten keine individuelle Therapie- oder Dosierungsempfehlung.
+          Eine ausführlichere persönliche Einordnung erhältst du auf Wunsch in der KI-Auswertung per E-Mail.
+        </div>
+      </div>
+    `;
+  }
+
+  function hintBoxes(score) {
+    let html = "";
+
+    if (score.bloodtest_hint) {
+      html += `
+        <div class="warning-box">
+          <strong>Hinweis Blutwerte / Trockenbluttest</strong><br>
+          Aufgrund deiner Angaben könnte ein Trockenbluttest zusätzliche Hinweise liefern,
+          um deine Vitalität und Mikronährstoffversorgung gezielter einzuordnen.
+        </div>
+      `;
+    }
+
+    if (score.doctor_hint) {
+      html += `
+        <div class="warning-box">
+          <strong>Zusätzlicher Hinweis</strong><br>
+          Der RED-FLAG-Check wurde ausgelöst. Bitte nutze die Auswertung als Orientierung und kläre stärkere oder anhaltende Beschwerden zusätzlich ab.
+        </div>
+      `;
+    }
+
+    if (score.coaching_hint) {
+      html += `
+        <div class="success-box">
+          <strong>Praktischer nächster Schritt</strong><br>
+          Personen mit vergleichbarer Situation profitieren häufig von einem einfachen Einstieg,
+          z. B. einem betreuten Trainingsplan, einer Körperanalyse oder kleinen Alltagsroutinen.
+        </div>
+      `;
+    }
+
+    return html;
+  }
+
+  function renderRadarChart(areas) {
+    const ctx = document.getElementById("vitalChart");
+
+    if (radarChart) radarChart.destroy();
+
+    radarChart = new Chart(ctx, {
+      type: "radar",
+      data: {
+        labels: areas.map(a => a.label),
+        datasets: [{
+          label: "Vitalitäts-Profil",
+          data: areas.map(a => Math.round(a.score)),
+          backgroundColor: "rgba(52,152,219,0.2)",
+          borderColor: "#3498db",
+          borderWidth: 3,
+          pointBackgroundColor: "#3498db"
+        }]
+      },
+      options: {
+        scales: {
+          r: {
+            min: 0,
+            max: 100,
+            ticks: { stepSize: 20 }
+          }
+        }
+      }
+    });
+  }
+
+  function openGoogleForm() {
+    window.open(GOOGLE_FORM_URL, "_blank");
+  }
+
+  function resetVitalCheck() {
+    const confirmed = confirm(
+      "Möchtest du wirklich alle Eingaben auf dieser Seite löschen und neu starten? Bereits übermittelte Daten in der Datenbank werden dadurch nicht gelöscht."
+    );
+
+    if (!confirmed) return;
+
+    questions = [];
+    groupedQuestions = [];
+    currentStep = 0;
+    selectedAnswers = [];
+    latestResult = null;
+
+    if (radarChart) {
+      radarChart.destroy();
+      radarChart = null;
+    }
+
+    personalData.age = null;
+    personalData.gender = "";
+    personalData.height_cm = null;
+    personalData.weight_kg = null;
+    personalData.email = "";
+    personalData.first_name = "";
+    personalData.last_name = "";
+    personalData.consent_privacy = false;
+    personalData.consent_storage = false;
+
+    document.getElementById("result-area").classList.add("hidden");
+    document.getElementById("result-content").innerHTML = "";
+    document.getElementById("quiz-flow").style.display = "block";
+    document.querySelector(".progress-bar").style.display = "block";
+    document.getElementById("loading").classList.remove("hidden");
+    document.getElementById("loading").innerText = "Fragen werden geladen...";
+
+    init();
+  }
+
+  function nextStep() {
+    document.getElementById(`step-${currentStep}`).classList.remove("active");
+    currentStep++;
+    document.getElementById(`step-${currentStep}`).classList.add("active");
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const percent = (currentStep / (groupedQuestions.length - 1)) * 100;
+    document.getElementById("progress").style.width = `${percent}%`;
+  }
+
+  init();
+</script>
+
+</body>
+</html>
