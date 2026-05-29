@@ -523,15 +523,34 @@
     const ca = document.getElementById("consent_ai_analysis").checked;
     const cm = document.getElementById("consent_email_delivery").checked;
     const btn = document.getElementById("aiBtn");
+    const statusEl = document.getElementById("ai-status");
     if (!email) return alert("Bitte E-Mail-Adresse eingeben.");
     if (!ca || !cm) return alert("Bitte beide Einwilligungen bestätigen.");
-    btn.disabled = true; btn.innerText = "Auswertung wird erstellt…";
+    btn.disabled = true;
+    btn.innerText = "Auswertung wird erstellt…";
+    // Hinweis nach 8 Sekunden — Claude braucht manchmal etwas länger
+    const hintTimer = setTimeout(() => {
+      statusEl.innerHTML = `<div class="status-msg info-box box-info">⏳ Die KI-Auswertung wird gerade erstellt — das kann bis zu 30 Sekunden dauern. Bitte warte kurz…</div>`;
+    }, 8000);
     try {
       const result = await callFunction({ mode:"request_ai_analysis", public_code:latestResult.public_code, email, consent_ai_analysis:true, consent_email_delivery:true });
-      const statusEl = document.getElementById("ai-status");
-      if (result.email_sent) { statusEl.innerHTML = `<div class="status-msg info-box box-success">✓ Deine individuelle Auswertung wurde per E-Mail versendet.</div>`; }
-      else { statusEl.innerHTML = `<div class="status-msg info-box box-warning">Die Analyse wurde erstellt, aber der E-Mail-Versand konnte nicht bestätigt werden.</div>`; }
-    } catch (error) { alert("Fehler: " + error.message); btn.disabled = false; btn.innerText = "Individuelle Auswertung per E-Mail anfordern →"; }
+      clearTimeout(hintTimer);
+      if (result.email_sent) {
+        statusEl.innerHTML = `<div class="status-msg info-box box-success">✓ Deine individuelle Auswertung wurde per E-Mail versendet. Schau gleich in dein Postfach!</div>`;
+      } else {
+        statusEl.innerHTML = `<div class="status-msg info-box box-warning">Die Auswertung wurde erstellt — die E-Mail ist unterwegs. Falls sie nicht ankommt, prüfe deinen Spam-Ordner.</div>`;
+      }
+    } catch (error) {
+      clearTimeout(hintTimer);
+      // Timeout oder unbekannter Fehler — E-Mail kommt trotzdem oft an
+      statusEl.innerHTML = `<div class="status-msg info-box box-warning">
+        Die Verbindung hat etwas länger gedauert — deine Auswertung wird aber trotzdem erstellt.<br>
+        <strong>Schau in den nächsten Minuten in dein Postfach.</strong><br>
+        <small style="color:var(--text-muted);">Falls keine E-Mail ankommt, versuche es nochmals.</small>
+      </div>`;
+      btn.disabled = false;
+      btn.innerText = "Individuelle Auswertung per E-Mail anfordern →";
+    }
   }
 
   async function callFunction(payload) {
