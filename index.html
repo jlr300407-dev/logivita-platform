@@ -41,6 +41,12 @@
     .progress-count { font-size: 12px; color: var(--text-muted); font-weight: 500; }
     .progress-track { width: 100%; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
     #progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-green), var(--accent-blue)); border-radius: 2px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+    .progress-back-btn { background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; padding: 0 8px 0 0; line-height: 1; flex-shrink: 0; transition: color 0.2s; width: auto; margin: 0; }
+    .progress-back-btn:hover { color: var(--accent-green); transform: none; box-shadow: none; }
+    .progress-back-btn.hidden { visibility: hidden; pointer-events: none; }
+    .progress-left { display: flex; align-items: center; gap: 0; flex: 1; min-width: 0; }
+    .option-btn.selected-flash { border-color: var(--accent-green); background: var(--accent-green-dim); transform: translateX(2px); }
+    .option-btn.selected-flash::before { border-color: var(--accent-green); background: var(--accent-green); }
     .question-step { display: none; }
     .question-step.active { display: block; }
     .card { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 24px; margin-bottom: 16px; }
@@ -195,7 +201,10 @@
   </div>
   <div class="progress-wrap" id="progressWrap">
     <div class="progress-meta">
-      <span class="progress-area-label" id="progressAreaLabel">Vorbereitung</span>
+      <div class="progress-left">
+        <button class="progress-back-btn hidden" id="backBtn" onclick="goBack()" title="Zurück">←</button>
+        <span class="progress-area-label" id="progressAreaLabel">Vorbereitung</span>
+      </div>
       <span class="progress-count" id="progressCount"></span>
     </div>
     <div class="progress-track"><div id="progress-fill"></div></div>
@@ -233,6 +242,34 @@
 
   async function init() {
     initLogo();
+
+    // URL-Parameter prüfen: ?code=LEV-2026-000062 → Auswertung direkt laden
+    const urlParams = new URLSearchParams(window.location.search);
+    const codeParam = urlParams.get("code");
+    if (codeParam) {
+      document.getElementById("loading").textContent = "Deine Auswertung wird geladen…";
+      try {
+        const result = await callFunction({ mode: "load_result", public_code: codeParam });
+        if (result && result.success) {
+          latestResult = result;
+          // Persönliche Daten aus dem Ergebnis wiederherstellen
+          personalData.age = result.submission?.age || null;
+          personalData.gender = result.submission?.gender || "";
+          personalData.height_cm = result.submission?.height_cm || null;
+          personalData.weight_kg = result.submission?.weight_kg || null;
+          personalData.first_name = result.contact?.first_name || "";
+          personalData.last_name = result.contact?.last_name || "";
+          document.getElementById("loading").classList.add("hidden");
+          document.getElementById("progressWrap").style.display = "none";
+          showResult(result);
+          return;
+        }
+      } catch (e) {
+        // Wenn Laden fehlschlägt: normal starten
+        console.warn("Code-Parameter konnte nicht geladen werden:", e.message);
+      }
+    }
+
     try {
       await loadQuestions();
       buildSteps();
@@ -389,7 +426,40 @@
     nextStep();
   }
 
-  function saveAnswer(optionId) { selectedAnswers.push({ option_id: optionId }); nextStep(); }
+  function saveAnswer(optionId) {
+    // Mikro-Feedback: kurzes visuelles Highlight der gewählten Antwort
+    const activeStep = document.getElementById(`step-${currentStep}`);
+    if (activeStep) {
+      const btns = activeStep.querySelectorAll(".option-btn");
+      btns.forEach(btn => {
+        if (btn.getAttribute("onclick") && btn.getAttribute("onclick").includes(optionId)) {
+          btn.classList.add("selected-flash");
+        }
+      });
+    }
+    // 200ms Verzögerung für natürliches Gefühl
+    setTimeout(() => {
+      selectedAnswers.push({ option_id: optionId });
+      nextStep();
+    }, 200);
+  }
+
+  function goBack() {
+    // Nur ab Schritt 2 zurück (nicht von Frage 1 zurück zu Basisdaten)
+    if (currentStep < 2) return;
+    const cur = document.getElementById(`step-${currentStep}`);
+    if (cur) cur.classList.remove("active");
+    currentStep--;
+    // Letzte Antwort entfernen (nur wenn es eine Frage war, nicht personal/consent)
+    const prevQ = groupedQuestions[currentStep];
+    if (prevQ && prevQ.type !== "personal" && prevQ.type !== "consent") {
+      selectedAnswers.pop();
+    }
+    const prev = document.getElementById(`step-${currentStep}`);
+    if (prev) prev.classList.add("active");
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   function nextStep() {
     const cur = document.getElementById(`step-${currentStep}`);
@@ -405,14 +475,28 @@
     const total = groupedQuestions.length - 1;
     const pct = total > 0 ? (currentStep / total) * 100 : 0;
     document.getElementById("progress-fill").style.width = `${pct}%`;
+
+    // Zurück-Button: ab Schritt 2 sichtbar, bei consent ausblenden
+    const backBtn = document.getElementById("backBtn");
     const q = groupedQuestions[currentStep];
+    if (backBtn) {
+      const showBack = currentStep >= 2 && q && q.type !== "consent";
+      backBtn.classList.toggle("hidden", !showBack);
+    }
+
     if (!q) return;
-    if (q.type === "personal") { document.getElementById("progressAreaLabel").textContent = "👤 Basisdaten"; document.getElementById("progressCount").textContent = ""; }
-    else if (q.type === "consent") { document.getElementById("progressAreaLabel").textContent = "🔒 Fast fertig"; document.getElementById("progressCount").textContent = ""; }
-    else {
+    if (q.type === "personal") {
+      document.getElementById("progressAreaLabel").textContent = "👤 Basisdaten";
+      document.getElementById("progressCount").textContent = "";
+    } else if (q.type === "consent") {
+      document.getElementById("progressAreaLabel").textContent = "🔒 Fast fertig";
+      document.getElementById("progressCount").textContent = "";
+    } else {
       const icon = AREA_ICONS[q.area_key] || "●";
+      const questionNumber = currentStep; // currentStep 1 = erste Frage nach Basisdaten
+      const totalQuestions = total - 1; // -1 für consent
       document.getElementById("progressAreaLabel").textContent = `${icon} ${q.area_label || q.area_key}`;
-      document.getElementById("progressCount").textContent = `Frage ${currentStep} von ${total - 1}`;
+      document.getElementById("progressCount").textContent = `Frage ${questionNumber} von ${totalQuestions}`;
     }
   }
 
