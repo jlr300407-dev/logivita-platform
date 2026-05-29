@@ -572,6 +572,15 @@
     const totalScore = Number(result.score?.total_score || 0);
     const bioAge = result.score?.bio_age || result.bio_age || null;
     const suppFocus = Array.isArray(result.supplement_focus) ? result.supplement_focus : [];
+
+    // Alter aus personalData oder aus result.submission (bei load_result)
+    if (!personalData.age && result.submission?.age) {
+      personalData.age = result.submission.age;
+      personalData.gender = result.submission.gender || personalData.gender;
+      personalData.height_cm = result.submission.height_cm || personalData.height_cm;
+      personalData.weight_kg = result.submission.weight_kg || personalData.weight_kg;
+    }
+
     document.getElementById("result-content").innerHTML = buildResultHtml(result, areas, totalScore, bioAge, suppFocus);
     setTimeout(() => animateScoreRing(totalScore), 100);
     setTimeout(() => renderRadarChart(areas), 200);
@@ -604,7 +613,7 @@
           </div>
         </div>
         <div class="score-level-badge" style="background:${sc}22;color:${sc};">✦ ${score.score_label}</div>
-        ${bioAge ? `<div class="score-bio-age">Biologisches Alter: <strong>${bioAge} Jahre</strong> <span style="color:var(--text-muted);">&nbsp;·&nbsp; Kalendarisch: ${personalData.age} Jahre</span></div>` : ""}
+        ${bioAge ? `<div class="score-bio-age">Biologisches Alter: <strong>${bioAge} Jahre</strong>${personalData.age ? ` <span style="color:var(--text-muted);">&nbsp;·&nbsp; Kalendarisch: ${personalData.age} Jahre</span>` : ""}</div>` : ""}
       </div>`;
 
     // KPIs
