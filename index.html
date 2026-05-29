@@ -517,8 +517,15 @@
 
     html += renderRadarExplanation(areas);
 
-    // Top Hebel
-    const worst = [...areas].sort((a,b) => a.score - b.score)[0];
+    // Top Hebel — BMI-bewusst: bei niedrigem BMI nicht als Fokus anzeigen
+    const bmiNum = Number(result.bmi);
+    const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
+    const areasForHebel = bmiIsLow
+      ? areas.filter(a => a.key !== "bmi")
+      : areas;
+    const worst = areasForHebel.length > 0
+      ? [...areasForHebel].sort((a,b) => a.score - b.score)[0]
+      : areas[0];
     if (worst) {
       html += `<div class="hebel-box"><div class="hebel-icon">💡</div><div>
         <div class="hebel-title">Dein wichtigster Hebel heute</div>
@@ -531,7 +538,7 @@
     areas.forEach(area => { html += renderAreaCard(area, result); });
     html += `</div>`;
 
-    html += renderRedFlagBox(score);
+    html += renderRedFlagBox(score, totalScore);
     html += renderVitalitySupportBox(areas, result, suppFocus);
     html += renderHintBoxes(score);
 
@@ -644,8 +651,16 @@
 
   function renderAreaCard(area, result) {
     let cls = "area-good", statusTxt = "✓ Gute Grundlage";
-    if (area.score < 55) { cls = "area-low"; statusTxt = "⚠ Fokusbereich"; }
-    else if (area.score < 75) { cls = "area-medium"; statusTxt = "△ Optimierungspotenzial"; }
+    const bmi = area.key === "bmi" ? Number(result?.bmi) : null;
+    if (area.key === "bmi" && bmi !== null) {
+      if (bmi < 18.5) { cls = "area-medium"; statusTxt = "△ Niedriger Orientierungsbereich"; }
+      else if (bmi < 25) { cls = "area-good"; statusTxt = "✓ Stabiler Bereich"; }
+      else if (bmi < 30) { cls = "area-medium"; statusTxt = "△ Optimierungspotenzial"; }
+      else { cls = "area-low"; statusTxt = "⚠ Fokusbereich"; }
+    } else {
+      if (area.score < 55) { cls = "area-low"; statusTxt = "⚠ Fokusbereich"; }
+      else if (area.score < 75) { cls = "area-medium"; statusTxt = "△ Optimierungspotenzial"; }
+    }
     const icon = AREA_ICONS[area.key] || "●";
     const bmiHtml = area.key === "bmi" ? renderBmiDetail(result) : "";
     return `
@@ -659,9 +674,9 @@
         ${bmiHtml}
         <div class="area-detail" id="detail-${area.key}">
           <div class="insight-label">⚡ Sofort umsetzen</div>
-          <div class="insight-text">${getInsightNow(area.key, area.score)}</div>
+          <div class="insight-text">${getInsightNow(area.key, area.score, result?.bmi)}</div>
           <div class="insight-label">📅 Mittelfristig</div>
-          <div class="insight-text">${getInsightSoon(area.key, area.score)}</div>
+          <div class="insight-text">${getInsightSoon(area.key, area.score, result?.bmi)}</div>
         </div>
         <div class="tap-hint">Tippen für Details</div>
       </div>`;
@@ -678,58 +693,167 @@
 
   function getLevel(s) { return s < 55 ? "low" : s < 75 ? "medium" : "good"; }
 
-  function getInsightNow(key, score) {
+  // Hilfe: BMI-Kategorie aus echtem BMI-Wert
+  function getBmiCategory(bmiValue) {
+    const bmi = Number(bmiValue);
+    if (bmi < 18.5) return "low";       // untergewichtig
+    if (bmi < 25)   return "normal";    // normal
+    if (bmi < 30)   return "elevated";  // erhöht
+    return "high";                       // deutlich erhöht
+  }
+
+  function getInsightNow(key, score, bmiValue) {
+    if (key === "bmi" && bmiValue !== undefined) {
+      const cat = getBmiCategory(bmiValue);
+      if (cat === "low")      return "Heute eine zusätzliche eiweißreiche Mahlzeit einplanen — z.B. Joghurt, Eier, Hülsenfrüchte oder Quark. Fokus auf Energie und Regeneration, nicht auf Kalorienverbrauch.";
+      if (cat === "normal")   return "Ernährung, Bewegung und Regeneration ausgewogen beibehalten — du bist in einem stabilen Bereich.";
+      if (cat === "elevated") return "Heute 10 Minuten leichte Bewegung nach einer Mahlzeit einplanen — z.B. ein kurzer Spaziergang. Kein Druck, kein Extremprogramm.";
+      return "Nicht alles gleichzeitig ändern — eine kleine, realistische Routine wählen und konsequent beibehalten.";
+    }
     const l = getLevel(score);
     const m = {
-      sleep:{ low:"Heute feste Schlafenszeit wählen und 30 Min. vorher Bildschirm aus.", medium:"Kurze Abendroutine festlegen — z.B. Tee, Lesen oder ruhiges Dehnen.", good:"Regelmäßige Schlafzeiten aktiv schützen." },
-      activity:{ low:"Heute 10 Minuten zügig gehen — ideal nach einer Mahlzeit.", medium:"Einen konkreten Bewegungstermin in den Kalender setzen.", good:"Mischung aus Alltag, Ausdauer und Kraft beibehalten." },
-      nutrition:{ low:"Heute eine Mahlzeit bewusst mit Eiweiß, Gemüse und Flüssigkeit planen.", medium:"Eine zusätzliche Portion Gemüse oder Obst einbauen.", good:"Regelmäßige Mahlzeiten und Lebensmittelqualität beibehalten." },
-      vitamin_d:{ low:"Heute 10–15 Minuten Tageslicht im Freien einplanen.", medium:"Eine kurze Pause im Freien machen.", good:"Besonders in Herbst und Winter bewusst rausgehen." },
-      bmi:{ low:"Nicht alles ändern — eine kleine Bewegungs- oder Ernährungsroutine wählen.", medium:"10 Minuten Bewegung nach einer Mahlzeit testen.", good:"Kraft, Ausdauer und Ernährung gemeinsam betrachten." },
-      mental:{ low:"Heute eine feste 5-Minuten-Erholungsinsel einplanen.", medium:"10 Minuten ohne Handy spazieren gehen oder bewusst atmen.", good:"Erholung aktiv schützen." },
-      lifestyle:{ low:"Den Zusammenhang zwischen Konsum, Schlaf und Energie beobachten.", medium:"Konsum nicht bewerten, sondern Muster erkennen.", good:"Diese Routine unterstützt Schlaf und Trainingsfortschritt." },
-      micronutrients:{ low:"Ernährung nicht pauschal supplementieren, sondern Muster prüfen.", medium:"Eiweiß, Eisenquellen, Omega-3 und B12 im Alltag prüfen.", good:"Abwechslungsreiche Ernährung als Basis beibehalten." },
-      metabolic:{ low:"Veränderungen notieren: Appetit, Gewicht, Müdigkeit, Schlaf.", medium:"Regelmäßige Mahlzeit und ausreichend Trinken sicherstellen.", good:"Regelmäßige Mahlzeiten und Regeneration beibehalten." }
+      sleep:{
+        low:"Heute feste Schlafenszeit wählen und 30 Min. vorher Bildschirm aus.",
+        medium:"Kurze Abendroutine festlegen — z.B. Tee, Lesen oder ruhiges Dehnen.",
+        good:"Regelmäßige Schlafzeiten aktiv schützen."
+      },
+      activity:{
+        low:"Heute 10 Minuten zügig gehen — ideal nach einer Mahlzeit. Klein starten, regelmäßig bleiben.",
+        medium:"Einen konkreten Bewegungstermin in den Kalender setzen.",
+        good:"Mischung aus Alltag, Ausdauer und Kraft beibehalten."
+      },
+      nutrition:{
+        low:"Heute eine Mahlzeit bewusst mit Eiweiß, Gemüse und Flüssigkeit planen.",
+        medium:"Eine zusätzliche Portion Gemüse oder Obst einbauen.",
+        good:"Regelmäßige Mahlzeiten und Lebensmittelqualität beibehalten."
+      },
+      vitamin_d:{
+        low:"Heute 10–15 Minuten Tageslicht im Freien einplanen — möglichst am Vormittag.",
+        medium:"Eine kurze Pause im Freien machen.",
+        good:"Besonders in Herbst und Winter bewusst rausgehen."
+      },
+      mental:{
+        low:"Heute eine feste 5-Minuten-Erholungsinsel einplanen — ohne Handy, ohne To-do.",
+        medium:"10 Minuten ohne Handy spazieren gehen oder bewusst atmen.",
+        good:"Erholung aktiv schützen und nicht als Luxus betrachten."
+      },
+      lifestyle:{
+        low:"Den Zusammenhang zwischen Konsum, Schlaf und Energie heute bewusst beobachten.",
+        medium:"Konsum nicht bewerten, sondern Muster erkennen — wann, warum, wie viel.",
+        good:"Diese Routine unterstützt Schlaf und Trainingsfortschritt aktiv."
+      },
+      micronutrients:{
+        low:"Ernährung nicht pauschal supplementieren — zuerst Muster und Qualität der Mahlzeiten prüfen.",
+        medium:"Eiweiß, Eisenquellen, Omega-3 und B12 im Alltag bewusster einbauen.",
+        good:"Abwechslungsreiche Ernährung bleibt die beste Basis — Supplemente nur gezielt."
+      },
+      metabolic:{
+        low:"Veränderungen im Alltag bewusst notieren: Appetit, Energie, Gewicht, Schlaf.",
+        medium:"Regelmäßige Mahlzeiten und ausreichend Trinken als Basis sicherstellen.",
+        good:"Energie und Wohlbefinden über die Woche aktiv beobachten."
+      }
     };
     return m[key]?.[l] || "Diese Kategorie gibt dir eine erste Orientierung.";
   }
 
-  function getInsightSoon(key, score) {
+  function getInsightSoon(key, score, bmiValue) {
+    if (key === "bmi" && bmiValue !== undefined) {
+      const cat = getBmiCategory(bmiValue);
+      if (cat === "low")      return "Regelmäßige Mahlzeiten, ausreichend Eiweiß und bewusste Regeneration als Priorität setzen. Eine Körperanalyse im Studio kann helfen, Muskelmasse und Energieversorgung besser einzuordnen.";
+      if (cat === "normal")   return "Körpergefühl und Leistungsfähigkeit wichtiger nehmen als den Zahlenwert allein.";
+      if (cat === "elevated") return "Eiweiß, Gemüse und Alltagsbewegung bewusster kombinieren — kleine Schritte sind nachhaltiger als kurzfristige Programme.";
+      return "Betreutes Training und eine Körperanalyse im Studio als strukturierten Einstieg prüfen — gemeinsam mit Ernährungsoptimierung.";
+    }
     const l = getLevel(score);
     const m = {
-      sleep:{ low:"Jeden Morgen möglichst zur gleichen Zeit aufstehen.", medium:"Koffein am Nachmittag bewusst beobachten.", good:"Erholung auch an stressigen Tagen aktiv einplanen." },
-      activity:{ low:"Zwei feste Termine für Bewegung oder betreutes Training einplanen.", medium:"2 kurze Kraft- oder Stabilitätsübungen ergänzen.", good:"Regeneration und Belastung bewusst ausbalancieren." },
-      nutrition:{ low:"Frühstück oder Mittagessen als feste Basis-Mahlzeit stabilisieren.", medium:"Bei jeder Hauptmahlzeit eine Eiweißquelle prüfen.", good:"Omega-3-Quellen und Trinkmenge im Blick behalten." },
-      vitamin_d:{ low:"3 kurze Tageslicht-Spaziergänge testen; bei Unsicherheit Blutwert prüfen.", medium:"Tageslicht mit Bewegung koppeln — z.B. Spaziergang nach dem Essen.", good:"Tageslicht möglichst früh am Tag nutzen." },
-      bmi:{ low:"2 betreute Trainingseinheiten oder eine Körperanalyse als Startpunkt prüfen.", medium:"Eiweiß, Gemüse und Schritte im Alltag bewusster beobachten.", good:"Körpergefühl und Leistungsfähigkeit wichtiger nehmen als nur Gewicht." },
-      mental:{ low:"Schlaf, Bewegung und Pausen nicht gleichzeitig perfektionieren — nur eine Routine wählen.", medium:"Einen festen Pausenanker pro Tag setzen.", good:"Bewegung und Schlaf als Schutzfaktoren nutzen." },
-      lifestyle:{ low:"Einen alkohol- oder nikotinfreien Testtag bewusst einplanen.", medium:"Einen Abend ohne Alkohol oder Nikotin als Regenerations-Test nutzen.", good:"Wirkung auf Energie und Regeneration weiter beobachten." },
-      micronutrients:{ low:"Bei Müdigkeit oder pflanzlicher Ernährung Blutwerte bzw. Beratung erwägen.", medium:"Bei anhaltender Müdigkeit gezielte Abklärung statt Zufalls-Supplementierung.", good:"Supplemente nur gezielt und sinnvoll prüfen." },
-      metabolic:{ low:"Bei deutlichem ungewolltem Gewichtsverlust ärztliche Abklärung erwägen.", medium:"Schlaf, Bewegung und Mahlzeitenrhythmus beobachten.", good:"Energielevel über die Woche beobachten." }
+      sleep:{
+        low:"Jeden Morgen möglichst zur gleichen Zeit aufstehen — Rhythmus ist wichtiger als Dauer.",
+        medium:"Koffein nach 14 Uhr bewusst reduzieren und Wirkung beobachten.",
+        good:"Erholung auch an stressigen Tagen aktiv einplanen — nicht verschieben."
+      },
+      activity:{
+        low:"Zwei feste Termine pro Woche für Bewegung einplanen — betreutes Training kann helfen den Einstieg zu halten.",
+        medium:"2 kurze Kraft- oder Stabilitätsübungen ergänzen — 15 Minuten reichen als Start.",
+        good:"Regeneration und Belastung bewusst ausbalancieren — Übertraining vermeiden."
+      },
+      nutrition:{
+        low:"Frühstück oder Mittagessen als feste Basis-Mahlzeit stabilisieren — Rhythmus vor Perfektion.",
+        medium:"Bei jeder Hauptmahlzeit eine Eiweißquelle prüfen und bewusst einbauen.",
+        good:"Omega-3-Quellen und Trinkmenge regelmäßig im Blick behalten."
+      },
+      vitamin_d:{
+        low:"3 kurze Tageslicht-Spaziergänge pro Woche testen. Bei anhaltender Müdigkeit oder Herbst/Winter: Blutwert prüfen lassen.",
+        medium:"Tageslicht mit Bewegung koppeln — z.B. Spaziergang nach dem Mittagessen.",
+        good:"Tageslicht möglichst früh am Tag nutzen — stärkt den Schlaf-Wach-Rhythmus."
+      },
+      mental:{
+        low:"Nicht alles gleichzeitig perfektionieren — nur eine Routine wählen und 7 Tage durchhalten.",
+        medium:"Einen festen Pausenanker pro Tag setzen — zur gleichen Zeit, ohne Ausnahme.",
+        good:"Bewegung und Schlaf als aktive Schutzfaktoren für mentale Balance nutzen."
+      },
+      lifestyle:{
+        low:"Einen alkohol- oder nikotinfreien Tag pro Woche bewusst einplanen und Wirkung auf Schlaf beobachten.",
+        medium:"Einen Abend ohne Alkohol oder Nikotin als Regenerations-Test nutzen.",
+        good:"Positive Wirkung auf Energie und Erholung weiter bewusst wahrnehmen."
+      },
+      micronutrients:{
+        low:"Bei anhaltender Müdigkeit, pflanzlicher Ernährung oder starker körperlicher Belastung gezielte Blutwerte prüfen lassen — kein blindes Supplementieren.",
+        medium:"Bei anhaltender Müdigkeit gezielte Abklärung vor Supplement-Kauf prüfen.",
+        good:"Supplemente nur gezielt, sinnvoll und nach Bedarf einsetzen."
+      },
+      metabolic:{
+        low:"Bei deutlich ungewolltem Gewichtsverlust, starker Erschöpfung oder anhaltenden Veränderungen ärztliche Einschätzung einholen.",
+        medium:"Schlaf, Bewegung und Mahlzeitenrhythmus als zusammenhängendes System betrachten.",
+        good:"Energielevel und Wohlbefinden über die Woche regelmäßig beobachten."
+      }
     };
     return m[key]?.[l] || "Mittelfristig: Fortschritt beim nächsten Re-Check vergleichen.";
   }
 
-  function renderRedFlagBox(score) {
-    if (!score.doctor_hint) return `<div class="info-box box-success" style="margin-bottom:16px;"><strong>RED-FLAG-Check</strong><br>Aus deinen Angaben ergibt sich aktuell kein besonderer Hinweis auf stärkere Auffälligkeiten. Bei akuten Beschwerden, starken Schmerzen oder anhaltend starker psychischer Belastung bitte immer medizinischen Rat einholen.</div>`;
-    return `<div class="redflag-box"><strong>⚠ RED FLAGS – bitte ernst nehmen</strong><br><br>Einige deiner Angaben zeigen stärkere Auffälligkeiten. Der LeVITA Vital-Check stellt keine Diagnose, aber in dieser Situation kann eine ärztliche Abklärung sinnvoll sein.<br><br><strong>Empfehlung:</strong> Bitte besprich auffällige Symptome, deutlichen ungewollten Gewichtsverlust, starke Erschöpfung oder anhaltende Niedergeschlagenheit mit einer Ärztin oder einem Arzt.</div>`;
+  function renderRedFlagBox(score, totalScore) {
+    if (score.doctor_hint) {
+      return `<div class="redflag-box"><strong>⚠ RED FLAGS – bitte ernst nehmen</strong><br><br>Einige deiner Angaben zeigen stärkere Auffälligkeiten. Der LeVITA Vital-Check stellt keine Diagnose, aber in dieser Situation kann eine ärztliche Abklärung sinnvoll sein.<br><br><strong>Empfehlung:</strong> Bitte besprich auffällige Symptome, deutlichen ungewollten Gewichtsverlust, starke Erschöpfung oder anhaltende Niedergeschlagenheit mit einer Ärztin oder einem Arzt.</div>`;
+    }
+    if (totalScore < 55) {
+      return `<div class="info-box box-info" style="margin-bottom:16px;"><strong>RED-FLAG-Check</strong><br>Aus deinen Angaben ergibt sich aktuell kein besonderer Hinweis auf stärkere Auffälligkeiten. Bei akuten Beschwerden oder anhaltend starker Belastung bitte immer medizinischen Rat einholen.</div>`;
+    }
+    return "";
   }
 
   function renderVitalitySupportBox(areas, result, suppFocus) {
     const scoreOf = key => { const a = areas.find(x => x.key === key); return a ? Number(a.score) : 100; };
+    const bmiNum = Number(result?.bmi);
+    const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
     const hints = [];
-    suppFocus.slice(0,3).forEach(item => { if (item?.label) hints.push(`Deine Angaben deuten darauf hin, dass <strong>${item.label}</strong> als Orientierungsthema sinnvoll sein könnte${item.reason ? ` — ${item.reason}` : ""}.`); });
+
+    suppFocus.slice(0,3).forEach(item => {
+      if (item?.label) hints.push(`Deine Angaben deuten darauf hin, dass <strong>${item.label}</strong> als Orientierungsthema sinnvoll sein könnte${item.reason ? ` — ${item.reason}` : ""}.`);
+    });
+
+    // Bei niedrigem BMI: Ernährung und Regeneration priorisieren, keine Bewegungsempfehlung als erstes
+    if (bmiIsLow && hints.length < 3) {
+      hints.push("Deine Körperkomposition zeigt einen niedrigen Orientierungsbereich. Fokus auf regelmäßige Mahlzeiten, ausreichend Eiweiß und bewusste Regeneration — nicht auf mehr Kalorienverbrauch.");
+    }
+
     const fb = [
-      { key:"vitamin_d", max:75, text:"Regelmäßiges Tageslicht ist bei dir aktuell ein besonders sinnvoller Hebel für Energie, Schlafrhythmus und Vitamin-D-Orientierung." },
-      { key:"nutrition", max:75, text:"Ernährung und Nährstoffqualität könnten ein guter Ansatzpunkt sein — besonders Eiweiß, Gemüse, Flüssigkeit und hochwertige Fettquellen." },
-      { key:"micronutrients", max:75, text:"Bestimmte Nährstoff-Themen könnten eine bewusste Einordnung verdienen. Sinnvoll ist zuerst Ernährung — bei Bedarf ein Blutwert-Check." },
-      { key:"activity", max:75, text:"Bewegung, Kraft und Regeneration können aktuell ein guter Hebel sein. Entscheidend ist ein kleiner, wiederholbarer Schritt." },
-      { key:"sleep", max:75, text:"Schlaf und Abendroutine könnten deine Regeneration spürbar unterstützen. Schon ein stabiler Rhythmus kann ein guter erster Hebel sein." },
-      { key:"lifestyle", max:75, text:"Alkohol oder Nikotin können Schlaf und Regeneration beeinflussen. Ein bewusster Testtag hilft, den eigenen Zusammenhang besser zu erkennen." },
-      { key:"mental", max:75, text:"Mentale Balance und Erholung könnten deine Vitalität unterstützen. Oft hilft ein kleiner fester Pausenanker mehr als alles gleichzeitig zu verändern." }
+      { key:"sleep",          max:75, bmiLowSafe:true,  text:"Schlaf und Abendroutine könnten deine Regeneration spürbar unterstützen. Schon ein stabiler Rhythmus kann ein guter erster Hebel sein." },
+      { key:"mental",         max:75, bmiLowSafe:true,  text:"Mentale Balance und Erholung könnten deine Vitalität unterstützen. Oft hilft ein kleiner fester Pausenanker mehr als alles gleichzeitig zu verändern." },
+      { key:"nutrition",      max:75, bmiLowSafe:true,  text:"Ernährung und Nährstoffqualität könnten ein guter Ansatzpunkt sein — besonders Eiweiß, Gemüse, Flüssigkeit und hochwertige Fettquellen." },
+      { key:"micronutrients", max:75, bmiLowSafe:true,  text:"Bestimmte Nährstoff-Themen könnten eine bewusste Einordnung verdienen. Sinnvoll ist zuerst Ernährung — bei Bedarf ein Blutwert-Check." },
+      { key:"vitamin_d",      max:75, bmiLowSafe:true,  text:"Regelmäßiges Tageslicht ist bei dir aktuell ein besonders sinnvoller Hebel für Energie, Schlafrhythmus und Vitamin-D-Orientierung." },
+      { key:"activity",       max:75, bmiLowSafe:false, text:"Bewegung, Kraft und Regeneration können aktuell ein guter Hebel sein. Entscheidend ist ein kleiner, wiederholbarer Schritt." },
+      { key:"lifestyle",      max:75, bmiLowSafe:true,  text:"Alkohol oder Nikotin können Schlaf und Regeneration beeinflussen. Ein bewusster Testtag hilft, den eigenen Zusammenhang besser zu erkennen." }
     ];
-    for (const r of fb) { if (hints.length >= 3) break; if (scoreOf(r.key) < r.max) hints.push(r.text); }
+
+    for (const r of fb) {
+      if (hints.length >= 3) break;
+      // Bei niedrigem BMI keine Bewegungsempfehlung in der Support-Box
+      if (bmiIsLow && !r.bmiLowSafe) continue;
+      if (scoreOf(r.key) < r.max) hints.push(r.text);
+    }
+
     if (hints.length === 0) hints.push("Deine Angaben zeigen in vielen Bereichen bereits eine gute Grundlage. Der wichtigste Hebel ist jetzt, stabile Routinen beizubehalten.");
+
     return `
       <div class="support-box">
         <h3>Was deine Vitalität aktuell besonders unterstützen könnte</h3>
