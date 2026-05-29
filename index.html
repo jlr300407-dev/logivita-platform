@@ -253,7 +253,18 @@
     const map = {};
     data.forEach(row => {
       if (!map[row.question_id]) {
-        map[row.question_id] = { question_id:row.question_id, question_key:row.question_key, area_key:row.area_key, area_label:row.area_label, question_text:row.question_text, help_text:row.help_text, sort_order:row.question_sort_order, options:[] };
+        map[row.question_id] = {
+          question_id:row.question_id,
+          question_key:row.question_key,
+          area_key:row.area_key,
+          area_label:row.area_label,
+          question_text:row.question_text,
+          help_text:row.help_text,
+          sort_order:row.question_sort_order,
+          min_age: row.min_age || null,
+          max_age: row.max_age || null,
+          options:[]
+        };
       }
       map[row.question_id].options.push({ option_id:row.option_id, option_text:row.option_text });
     });
@@ -261,7 +272,7 @@
     groupedQuestions = [{ type:"personal" }, ...questions, { type:"consent" }];
   }
 
-  /* ── GENDER FILTER ── */
+  /* ── GENDER + ALTER FILTER ── */
   function isFemaleSpecific(q) {
     const key = String(q.question_key || "").toLowerCase();
     const text = `${q.question_text||""} ${q.help_text||""} ${q.area_label||""}`.toLowerCase();
@@ -271,7 +282,18 @@
 
   function buildGroupedQuestionsForGender() {
     const showFemale = personalData.gender === "weiblich";
-    const filtered = questions.filter(q => showFemale ? true : !isFemaleSpecific(q));
+    const age = personalData.age || 0;
+
+    const filtered = questions.filter(q => {
+      // Geschlechterfilter
+      if (!showFemale && isFemaleSpecific(q)) return false;
+      // Altersfilter min_age
+      if (q.min_age !== null && age < q.min_age) return false;
+      // Altersfilter max_age
+      if (q.max_age !== null && age > q.max_age) return false;
+      return true;
+    });
+
     groupedQuestions = [{ type:"personal" }, ...filtered, { type:"consent" }];
   }
 
