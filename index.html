@@ -231,7 +231,7 @@
   /* ── STATE ── */
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let questions = [], groupedQuestions = [], currentStep = 0, selectedAnswers = [], latestResult = null, radarChart = null, showComparison = false;
-  const personalData = { age:null, gender:"", height_cm:null, weight_kg:null, first_name:"", last_name:"", consent_privacy:false, consent_storage:false };
+  const personalData = { age:null, gender:"", height_cm:null, weight_kg:null, first_name:"", last_name:"", consent_privacy:false, consent_storage:false, goal_key:"", goal_option_id:"" };
 
   /* ── INIT ── */
   function initLogo() {
@@ -305,8 +305,17 @@
       }
       map[row.question_id].options.push({ option_id:row.option_id, option_key:row.option_key, option_text:row.option_text });
     });
-    questions = Object.values(map).sort((a,b) => a.sort_order - b.sort_order);
-    groupedQuestions = [{ type:"personal" }, ...questions, { type:"consent" }];
+    const allQuestions = Object.values(map).sort((a,b) => a.sort_order - b.sort_order);
+    // vital_goal separat herausfiltern — wird als erster Schritt vor Basisdaten angezeigt
+    questions = allQuestions.filter(q => q.question_key !== "vital_goal");
+    const goalQuestion = allQuestions.find(q => q.question_key === "vital_goal");
+    // Flow: Motivationsfrage → Basisdaten → Fragen → Consent
+    groupedQuestions = [
+      goalQuestion ? { type:"goal", question:goalQuestion } : null,
+      { type:"personal" },
+      ...questions,
+      { type:"consent" }
+    ].filter(Boolean);
   }
 
   /* ── GENDER + ALTER FILTER ── */
@@ -322,16 +331,20 @@
     const age = personalData.age || 0;
 
     const filtered = questions.filter(q => {
-      // Geschlechterfilter
       if (!showFemale && isFemaleSpecific(q)) return false;
-      // Altersfilter min_age
       if (q.min_age !== null && age < q.min_age) return false;
-      // Altersfilter max_age
       if (q.max_age !== null && age > q.max_age) return false;
       return true;
     });
 
-    groupedQuestions = [{ type:"personal" }, ...filtered, { type:"consent" }];
+    // Motivationsfrage aus dem ursprünglichen groupedQuestions wiederverwenden
+    const goalStep = groupedQuestions.find(s => s.type === "goal");
+    groupedQuestions = [
+      goalStep || null,
+      { type:"personal" },
+      ...filtered,
+      { type:"consent" }
+    ].filter(Boolean);
   }
 
   /* ── BUILD STEPS ── */
@@ -342,11 +355,37 @@
       const div = document.createElement("div");
       div.className = `question-step${index === 0 ? " active" : ""}`;
       div.id = `step-${index}`;
-      if (step.type === "personal") div.innerHTML = personalStepHtml();
+      if (step.type === "goal") div.innerHTML = goalStepHtml(step.question);
+      else if (step.type === "personal") div.innerHTML = personalStepHtml();
       else if (step.type === "consent") div.innerHTML = consentStepHtml();
       else div.innerHTML = questionStepHtml(step);
       flow.appendChild(div);
     });
+  }
+
+  /* ── GOAL STEP HTML ── */
+  function goalStepHtml(q) {
+    const goalIcons = {
+      goal_energy:      "⚡",
+      goal_weight:      "⚖️",
+      goal_fitness:     "💪",
+      goal_supplements: "💊",
+      goal_longevity:   "🌿",
+      goal_prevention:  "🛡️",
+      goal_curious:     "✨"
+    };
+    let html = `
+      <div class="card">
+        <div class="area-badge">🎯 Dein Ziel</div>
+        <div class="question-text">${q.question_text}</div>`;
+    if (q.help_text) html += `<div class="help-text">${q.help_text}</div>`;
+    html += `<div class="options-grid">`;
+    q.options.forEach(opt => {
+      const icon = goalIcons[opt.option_key] || "→";
+      html += `<button class="option-btn" onclick="saveGoal('${opt.option_id}', '${opt.option_key}')">${icon} ${opt.option_text}</button>`;
+    });
+    html += `</div></div>`;
+    return html;
   }
 
   /* ── STEP HTML ── */
@@ -405,6 +444,25 @@
         </div>
         <button class="next-btn" id="submitBtn" onclick="submitInitialCheck()">Auswertung erstellen →</button>
       </div>`;
+  }
+
+  /* ── SAVE GOAL ── */
+  function saveGoal(optionId, optionKey) {
+    // Mikro-Feedback
+    const activeStep = document.getElementById(`step-${currentStep}`);
+    if (activeStep) {
+      const btns = activeStep.querySelectorAll(".option-btn");
+      btns.forEach(btn => {
+        if (btn.getAttribute("onclick") && btn.getAttribute("onclick").includes(optionId)) {
+          btn.classList.add("selected-flash");
+        }
+      });
+    }
+    setTimeout(() => {
+      personalData.goal_key = optionKey;
+      personalData.goal_option_id = optionId;
+      nextStep();
+    }, 200);
   }
 
   /* ── NAVIGATION ── */
@@ -467,12 +525,13 @@
   }
 
   function goBack() {
-    if (currentStep < 2) return;
+    if (currentStep < 1) return;
     const cur = document.getElementById(`step-${currentStep}`);
     if (cur) cur.classList.remove("active");
     currentStep--;
     const prevQ = groupedQuestions[currentStep];
-    if (prevQ && prevQ.type !== "personal" && prevQ.type !== "consent") {
+    // Antwort entfernen — aber nicht bei goal, personal oder consent
+    if (prevQ && prevQ.type !== "goal" && prevQ.type !== "personal" && prevQ.type !== "consent") {
       selectedAnswers.pop();
     }
     // Wenn zurück zu supplement_usage: supplement_types wiederherstellen falls nötig
@@ -518,7 +577,10 @@
     }
 
     if (!q) return;
-    if (q.type === "personal") {
+    if (q.type === "goal") {
+      document.getElementById("progressAreaLabel").textContent = "🎯 Dein Ziel";
+      document.getElementById("progressCount").textContent = "";
+    } else if (q.type === "personal") {
       document.getElementById("progressAreaLabel").textContent = "👤 Basisdaten";
       document.getElementById("progressCount").textContent = "";
     } else if (q.type === "consent") {
@@ -526,8 +588,8 @@
       document.getElementById("progressCount").textContent = "";
     } else {
       const icon = AREA_ICONS[q.area_key] || "●";
-      const questionNumber = currentStep; // currentStep 1 = erste Frage nach Basisdaten
-      const totalQuestions = total - 1; // -1 für consent
+      const questionNumber = currentStep - 1; // -1 für goal step
+      const totalQuestions = total - 2; // -2 für goal + consent
       document.getElementById("progressAreaLabel").textContent = `${icon} ${q.area_label || q.area_key}`;
       document.getElementById("progressCount").textContent = `Frage ${questionNumber} von ${totalQuestions}`;
     }
@@ -542,7 +604,7 @@
     const btn = document.getElementById("submitBtn");
     btn.disabled = true; btn.innerText = "Auswertung wird erstellt…";
     try {
-      const result = await callFunction({ age:personalData.age, gender:personalData.gender, height_cm:personalData.height_cm, weight_kg:personalData.weight_kg, first_name:personalData.first_name||null, last_name:personalData.last_name||null, consent_privacy:true, consent_storage:true, answers:selectedAnswers });
+      const result = await callFunction({ age:personalData.age, gender:personalData.gender, height_cm:personalData.height_cm, weight_kg:personalData.weight_kg, first_name:personalData.first_name||null, last_name:personalData.last_name||null, goal_key:personalData.goal_key||null, consent_privacy:true, consent_storage:true, answers:selectedAnswers });
       latestResult = result;
       showResult(result);
     } catch (error) {
@@ -558,6 +620,8 @@
     const btn = document.getElementById("aiBtn");
     const statusEl = document.getElementById("ai-status");
     if (!email) return alert("Bitte E-Mail-Adresse eingeben.");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return alert("Bitte eine gültige E-Mail-Adresse eingeben — z.B. name@beispiel.de");
     if (!ca || !cm) return alert("Bitte beide Einwilligungen bestätigen.");
     btn.disabled = true;
     btn.innerText = "Auswertung wird erstellt…";
@@ -612,6 +676,7 @@
       personalData.gender = result.submission.gender || personalData.gender;
       personalData.height_cm = result.submission.height_cm || personalData.height_cm;
       personalData.weight_kg = result.submission.weight_kg || personalData.weight_kg;
+      personalData.goal_key = result.submission.goal_key || personalData.goal_key;
     }
 
     document.getElementById("result-content").innerHTML = buildResultHtml(result, areas, totalScore, bioAge, suppFocus);
@@ -660,7 +725,20 @@
       </div>`;
 
     // Basisdaten
-    const name = [personalData.first_name, personalData.last_name].filter(Boolean).join(" ");
+    const capName = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
+    const name = [capName(personalData.first_name), capName(personalData.last_name)].filter(Boolean).join(" ");
+    const goalLabels = {
+      goal_energy:      "⚡ Mehr Energie",
+      goal_weight:      "⚖️ Abnehmen / Figur",
+      goal_fitness:     "💪 Fitter werden",
+      goal_supplements: "💊 Supplements klären",
+      goal_longevity:   "🌿 Longevity",
+      goal_prevention:  "🛡️ Vorsorge",
+      goal_curious:     "✨ Neugier"
+    };
+    const goalPill = personalData.goal_key && goalLabels[personalData.goal_key]
+      ? `<span class="pill" style="background:var(--accent-green-dim);border-color:rgba(34,201,122,0.2);color:var(--accent-green);">🎯 ${goalLabels[personalData.goal_key]}</span>`
+      : "";
     html += `<div class="basisdaten-box">
       ${name ? `<span class="pill">👤 ${name}</span>` : ""}
       <span class="pill">Alter: ${personalData.age}</span>
@@ -669,6 +747,7 @@
       <span class="pill">Gewicht: ${personalData.weight_kg} kg</span>
       <span class="pill">BMI: ${result.bmi}</span>
       ${bioAge ? `<span class="pill">Bio-Alter: ${bioAge} J.</span>` : ""}
+      ${goalPill}
     </div>`;
 
     html += renderVitalIndexBox(totalScore, score.score_label);
@@ -684,15 +763,17 @@
 
     html += renderRadarExplanation(areas);
 
-    // Top Hebel — BMI-bewusst + Score-bewusst
+    // Top Hebel — BMI immer ausschließen (nicht direkt umsetzbar), bei niedrigem BMI auch activity ausschließen
     const bmiNum = Number(result.bmi);
     const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
-    const areasForHebel = bmiIsLow
-      ? areas.filter(a => a.key !== "bmi")
-      : areas;
+    const areasForHebel = areas.filter(a => {
+      if (a.key === "bmi") return false; // BMI nie als Hebel — nicht direkt umsetzbar
+      if (bmiIsLow && a.key === "activity") return false; // bei niedrigem BMI keine Bewegungsempfehlung
+      return true;
+    });
     const worst = areasForHebel.length > 0
       ? [...areasForHebel].sort((a,b) => a.score - b.score)[0]
-      : areas[0];
+      : null;
 
     if (totalScore >= 85) {
       // Bei sehr hohem Score: kein "stärkster Ansatzpunkt" — stattdessen Feinschliff-Hinweis
@@ -1096,7 +1177,7 @@
     if (!confirm("Möchtest du wirklich alle Eingaben zurücksetzen? Bereits übermittelte Daten in der Datenbank werden nicht gelöscht.")) return;
     questions=[]; groupedQuestions=[]; currentStep=0; selectedAnswers=[]; latestResult=null; showComparison=false;
     if (radarChart) { radarChart.destroy(); radarChart=null; }
-    Object.assign(personalData, { age:null, gender:"", height_cm:null, weight_kg:null, email:"", first_name:"", last_name:"", consent_privacy:false, consent_storage:false });
+    Object.assign(personalData, { age:null, gender:"", height_cm:null, weight_kg:null, email:"", first_name:"", last_name:"", consent_privacy:false, consent_storage:false, goal_key:"", goal_option_id:"" });
     document.getElementById("result-area").style.display = "none";
     document.getElementById("result-content").innerHTML = "";
     document.getElementById("quiz-flow").style.display = "block";
