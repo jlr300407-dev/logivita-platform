@@ -684,7 +684,7 @@
 
     html += renderRadarExplanation(areas);
 
-    // Top Hebel — BMI-bewusst: bei niedrigem BMI nicht als Fokus anzeigen
+    // Top Hebel — BMI-bewusst + Score-bewusst
     const bmiNum = Number(result.bmi);
     const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
     const areasForHebel = bmiIsLow
@@ -693,7 +693,16 @@
     const worst = areasForHebel.length > 0
       ? [...areasForHebel].sort((a,b) => a.score - b.score)[0]
       : areas[0];
-    if (worst) {
+
+    if (totalScore >= 85) {
+      // Bei sehr hohem Score: kein "stärkster Ansatzpunkt" — stattdessen Feinschliff-Hinweis
+      if (worst && worst.score < 90) {
+        html += `<div class="hebel-box"><div class="hebel-icon">✨</div><div>
+          <div class="hebel-title">Dein einziger kleiner Feinschliff</div>
+          <div class="hebel-text"><strong>${AREA_ICONS[worst.key]||""} ${worst.label}</strong> ist der einzige Bereich mit noch etwas Luft nach oben. Alles andere läuft bereits sehr stabil.</div>
+        </div></div>`;
+      }
+    } else if (worst) {
       html += `<div class="hebel-box"><div class="hebel-icon">💡</div><div>
         <div class="hebel-title">Dein wichtigster Hebel heute</div>
         <div class="hebel-text"><strong>${AREA_ICONS[worst.key]||""} ${worst.label}</strong> ist dein stärkster Ansatzpunkt. Kleine Verbesserungen hier wirken sich auf alle anderen Bereiche aus.</div>
@@ -707,7 +716,7 @@
 
     html += renderRedFlagBox(score, totalScore);
     html += renderVitalitySupportBox(areas, result, suppFocus);
-    html += renderHintBoxes(score);
+    html += renderHintBoxes(score, result.bmi);
 
     // Individuelle Auswertung
     html += `
@@ -1030,10 +1039,12 @@
       </div>`;
   }
 
-  function renderHintBoxes(score) {
+  function renderHintBoxes(score, bmi) {
     let html = "";
+    const bmiNum = Number(bmi);
+    const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
     if (score.bloodtest_hint) html += `<div class="hint-box box-warning"><strong>💉 Hinweis: Trockenbluttest</strong><br>Aufgrund deiner Angaben könnte ein Trockenbluttest zusätzliche Hinweise liefern, um deine Vitalität und Mikronährstoffversorgung gezielter einzuordnen — z.B. Vitamin D, Ferritin, Omega-3 oder Vitamin B12. Im LeVITA Gesundheitsstudio besteht hierfür ein passendes Angebot.</div>`;
-    if (score.coaching_hint) html += `<div class="hint-box box-success"><strong>🤝 Praktischer nächster Schritt</strong><br>Ein betreuter Trainingsplan, eine Körperanalyse oder kleine Alltagsroutinen können einen guten Einstieg bieten.</div>`;
+    if (score.coaching_hint && !bmiIsLow) html += `<div class="hint-box box-success"><strong>🤝 Praktischer nächster Schritt</strong><br>Ein betreuter Trainingsplan, eine Körperanalyse oder kleine Alltagsroutinen können einen guten Einstieg bieten.</div>`;
     return html;
   }
 
