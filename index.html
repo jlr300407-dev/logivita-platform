@@ -303,7 +303,7 @@
           options:[]
         };
       }
-      map[row.question_id].options.push({ option_id:row.option_id, option_text:row.option_text });
+      map[row.question_id].options.push({ option_id:row.option_id, option_key:row.option_key, option_text:row.option_text });
     });
     questions = Object.values(map).sort((a,b) => a.sort_order - b.sort_order);
     groupedQuestions = [{ type:"personal" }, ...questions, { type:"consent" }];
@@ -426,8 +426,17 @@
     nextStep();
   }
 
+  // Hilfe: option_key aus option_id auflösen
+  function getOptionKeyById(optionId) {
+    for (const q of questions) {
+      const opt = q.options.find(o => o.option_id === optionId);
+      if (opt) return opt.option_key || null;
+    }
+    return null;
+  }
+
   function saveAnswer(optionId) {
-    // Mikro-Feedback: kurzes visuelles Highlight der gewählten Antwort
+    // Mikro-Feedback
     const activeStep = document.getElementById(`step-${currentStep}`);
     if (activeStep) {
       const btns = activeStep.querySelectorAll(".option-btn");
@@ -437,23 +446,47 @@
         }
       });
     }
-    // 200ms Verzögerung für natürliches Gefühl
+
     setTimeout(() => {
       selectedAnswers.push({ option_id: optionId });
+
+      // Bedingte Logik: supplement_types überspringen wenn "Nein, ich nehme keine" gewählt
+      const optionKey = getOptionKeyById(optionId);
+      const currentQ = groupedQuestions[currentStep];
+      if (currentQ?.question_key === "supplement_usage" && optionKey === "supp_none") {
+        // supplement_types aus groupedQuestions entfernen
+        groupedQuestions = groupedQuestions.filter(q => q.question_key !== "supplement_types");
+        // Schritte neu aufbauen ohne die entfernte Frage
+        const wasStep = currentStep;
+        buildSteps();
+        currentStep = wasStep;
+      }
+
       nextStep();
     }, 200);
   }
 
   function goBack() {
-    // Nur ab Schritt 2 zurück (nicht von Frage 1 zurück zu Basisdaten)
     if (currentStep < 2) return;
     const cur = document.getElementById(`step-${currentStep}`);
     if (cur) cur.classList.remove("active");
     currentStep--;
-    // Letzte Antwort entfernen (nur wenn es eine Frage war, nicht personal/consent)
     const prevQ = groupedQuestions[currentStep];
     if (prevQ && prevQ.type !== "personal" && prevQ.type !== "consent") {
       selectedAnswers.pop();
+    }
+    // Wenn zurück zu supplement_usage: supplement_types wiederherstellen falls nötig
+    const backQ = groupedQuestions[currentStep];
+    if (backQ?.question_key === "supplement_usage") {
+      const hasSupplTypes = groupedQuestions.some(q => q.question_key === "supplement_types");
+      if (!hasSupplTypes) {
+        const supplTypes = questions.find(q => q.question_key === "supplement_types");
+        if (supplTypes) {
+          const usageIdx = groupedQuestions.findIndex(q => q.question_key === "supplement_usage");
+          groupedQuestions.splice(usageIdx + 1, 0, supplTypes);
+          buildSteps();
+        }
+      }
     }
     const prev = document.getElementById(`step-${currentStep}`);
     if (prev) prev.classList.add("active");
