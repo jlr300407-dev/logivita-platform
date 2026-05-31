@@ -653,15 +653,22 @@
       personalData.weight_kg = result.submission.weight_kg || personalData.weight_kg;
       personalData.goal_key = result.submission.goal_key || personalData.goal_key;
     }
-    document.getElementById("result-content").innerHTML = buildResultHtml(result, areas, totalScore, bioAge, suppFocus);
+    // Frontend-Korrektur: score_label vom Backend kann bei Grenzwert 85 falsch sein
+    const correctedScoreLabel = totalScore >= 85 ? "Vital & Stabil"
+      : totalScore >= 70 ? "Aktiv mit Momentum"
+      : totalScore >= 55 ? "Auf dem Weg"
+      : totalScore >= 40 ? "Im Aufbau"
+      : "Neustart";
+    document.getElementById("result-content").innerHTML = buildResultHtml(result, areas, totalScore, bioAge, suppFocus, correctedScoreLabel);
     setTimeout(() => animateScoreRing(totalScore), 100);
     setTimeout(() => renderRadarChart(areas), 200);
     setTimeout(() => { document.querySelectorAll(".area-bar-fill[data-w]").forEach(el => { el.style.width = el.getAttribute("data-w") + "%"; }); }, 300);
     ra.scrollIntoView({ behavior:"smooth" });
   }
 
-  function buildResultHtml(result, areas, totalScore, bioAge, suppFocus) {
+  function buildResultHtml(result, areas, totalScore, bioAge, suppFocus, correctedScoreLabel) {
     const score = result.score;
+    const scoreLabel = correctedScoreLabel || score.score_label;
     let html = "";
     html += `<div class="info-box box-success" style="margin-bottom:20px;"><strong>Dein Vital-Check wurde erfolgreich erstellt.</strong><br>Hier siehst du deine persönliche Auswertung. Eine individuelle Analyse per E-Mail kannst du weiter unten anfordern.</div>`;
     html += `<div class="pilot-code-box">Deine Pilot-ID: <strong>${result.public_code}</strong></div>`;
@@ -682,20 +689,20 @@
             <div class="score-of">von 100</div>
           </div>
         </div>
-        <div class="score-level-badge" style="background:${sc}22;color:${sc};">✦ ${score.score_label}</div>
+        <div class="score-level-badge" style="background:${sc}22;color:${sc};">✦ ${scoreLabel}</div>
         ${bioAge ? `
           <div class="score-bio-age">Biologisches Alter: <strong>${bioAge} Jahre</strong>${personalData.age ? ` <span style="color:var(--text-muted);">&nbsp;·&nbsp; Kalendarisch: ${personalData.age} Jahre</span>` : ""}</div>
           <div class="score-bio-age-disclaimer">Schätzung auf Basis deiner Lebensstilantworten — kein Laborwert</div>
         ` : ""}
       </div>`;
 
-    const weakCount = areas.filter(a => a.score < 55).length;
+    const weakCount = areas.filter(a => a.score < 70).length;
     const bioColor = bioAge && bioAge < personalData.age ? "var(--accent-green)" : "var(--accent-amber)";
     html += `
       <div class="kpi-row">
         <div class="kpi-card"><span class="kpi-icon">⚡</span><div class="kpi-val" style="color:${sc};">${Math.round(totalScore)}</div><div class="kpi-label">Vitalitätsindex</div></div>
         <div class="kpi-card"><span class="kpi-icon">🧬</span><div class="kpi-val" style="color:${bioColor};">${bioAge||"–"}</div><div class="kpi-label">Bio-Alter</div></div>
-        <div class="kpi-card"><span class="kpi-icon">📊</span><div class="kpi-val" style="color:var(--accent-amber);">${weakCount}</div><div class="kpi-label">Fokus-Bereiche</div></div>
+        <div class="kpi-card"><span class="kpi-icon">📊</span><div class="kpi-val" style="color:var(--accent-amber);">${weakCount}</div><div class="kpi-label">Optimierungsfelder</div></div>
       </div>`;
 
     const capName = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
@@ -714,7 +721,7 @@
       ${goalPill}
     </div>`;
 
-    html += renderVitalIndexBox(totalScore, score.score_label);
+    html += renderVitalIndexBox(totalScore, scoreLabel);
     html += `<div class="section-card">
       <div class="section-header">
         <div class="section-title">Vitalitäts-Spinne</div>
