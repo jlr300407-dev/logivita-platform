@@ -272,7 +272,7 @@
 
     try {
       await loadQuestions();
-      buildSteps();
+      buildSteps(0);
       document.getElementById("loading").classList.add("hidden");
       updateProgress();
     } catch (error) {
@@ -348,12 +348,12 @@
   }
 
   /* ── BUILD STEPS ── */
-  function buildSteps() {
+  function buildSteps(activeIndex = 0) {
     const flow = document.getElementById("quiz-flow");
     flow.innerHTML = "";
     groupedQuestions.forEach((step, index) => {
       const div = document.createElement("div");
-      div.className = `question-step${index === 0 ? " active" : ""}`;
+      div.className = `question-step${index === activeIndex ? " active" : ""}`;
       div.id = `step-${index}`;
       if (step.type === "goal") div.innerHTML = goalStepHtml(step.question);
       else if (step.type === "personal") div.innerHTML = personalStepHtml();
@@ -479,20 +479,11 @@
     personalData.last_name = document.getElementById("last_name").value.trim();
     personalData.age = age; personalData.gender = gender; personalData.height_cm = height_cm; personalData.weight_kg = weight_kg;
 
-    // Aktuellen Schritt merken (personal step index)
-    const personalStepIndex = currentStep;
-
-    // Fragen nach Geschlecht/Alter filtern und Steps neu aufbauen
+    // Aktuellen Schritt merken, Fragen filtern, Steps mit korrektem aktivem Step neu aufbauen
+    const nextStepIndex = currentStep + 1;
     buildGroupedQuestionsForGender();
-    buildSteps();
-
-    // Nach dem Rebuild: currentStep auf den personal step setzen und dann vorwärts
-    currentStep = personalStepIndex;
-    const cur = document.getElementById(`step-${currentStep}`);
-    if (cur) cur.classList.remove("active");
-    currentStep++;
-    const nxt = document.getElementById(`step-${currentStep}`);
-    if (nxt) nxt.classList.add("active");
+    buildSteps(nextStepIndex);
+    currentStep = nextStepIndex;
     updateProgress();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -525,12 +516,8 @@
       const optionKey = getOptionKeyById(optionId);
       const currentQ = groupedQuestions[currentStep];
       if (currentQ?.question_key === "supplement_usage" && optionKey === "supp_none") {
-        // supplement_types aus groupedQuestions entfernen
         groupedQuestions = groupedQuestions.filter(q => q.question_key !== "supplement_types");
-        // Schritte neu aufbauen ohne die entfernte Frage
-        const wasStep = currentStep;
-        buildSteps();
-        currentStep = wasStep;
+        buildSteps(currentStep);
       }
 
       nextStep();
@@ -556,7 +543,7 @@
         if (supplTypes) {
           const usageIdx = groupedQuestions.findIndex(q => q.question_key === "supplement_usage");
           groupedQuestions.splice(usageIdx + 1, 0, supplTypes);
-          buildSteps();
+          buildSteps(currentStep);
         }
       }
     }
