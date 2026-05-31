@@ -306,9 +306,11 @@
       map[row.question_id].options.push({ option_id:row.option_id, option_key:row.option_key, option_text:row.option_text });
     });
     const allQuestions = Object.values(map).sort((a,b) => a.sort_order - b.sort_order);
-    // vital_goal separat herausfiltern — wird als erster Schritt vor Basisdaten angezeigt
+    // vital_goal STRIKT aus questions ausschließen — wird separat als goal-Step behandelt
     questions = allQuestions.filter(q => q.question_key !== "vital_goal");
-    const goalQuestion = allQuestions.find(q => q.question_key === "vital_goal");
+    const goalQuestion = allQuestions.find(q => q.question_key === "vital_goal") || null;
+    // Globale Referenz auf goalQuestion speichern
+    window._goalQuestion = goalQuestion;
     // Flow: Motivationsfrage → Basisdaten → Fragen → Consent
     groupedQuestions = [
       goalQuestion ? { type:"goal", question:goalQuestion } : null,
@@ -331,16 +333,18 @@
     const age = personalData.age || 0;
 
     const filtered = questions.filter(q => {
+      // vital_goal niemals als reguläre Frage anzeigen
+      if (q.question_key === "vital_goal") return false;
       if (!showFemale && isFemaleSpecific(q)) return false;
       if (q.min_age !== null && age < q.min_age) return false;
       if (q.max_age !== null && age > q.max_age) return false;
       return true;
     });
 
-    // Motivationsfrage aus dem ursprünglichen groupedQuestions wiederverwenden
-    const goalStep = groupedQuestions.find(s => s.type === "goal");
+    // Motivationsfrage zuverlässig aus globalem Speicher holen
+    const goalQuestion = window._goalQuestion || null;
     groupedQuestions = [
-      goalStep || null,
+      goalQuestion ? { type:"goal", question:goalQuestion } : null,
       { type:"personal" },
       ...filtered,
       { type:"consent" }
