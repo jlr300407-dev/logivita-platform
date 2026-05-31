@@ -1019,16 +1019,30 @@
       else if (key.includes("vitamin_d") || key.includes("vitamin d")) {
         hints.push(`<strong>Vitamin D</strong> — bei wenig Tageslicht besonders relevant. ${isVegan ? "Auf pflanzliches D3 aus Flechten achten." : "Trockenbluttest gibt Klarheit über den tatsächlichen Wert."}`);
       }
-      // Protein
+      // Protein — ernährungsweise-spezifisch, nie pauschal veganen Text bei omnivor
       else if (key.includes("protein")) {
-        hints.push(`<strong>Protein</strong> — pflanzliches Protein ist vollwertig wenn die Quellen kombiniert werden: Hülsenfrüchte, Nüsse, Tofu und Vollkornprodukte ergänzen sich optimal.`);
+        if (isVegan) {
+          hints.push(`<strong>Protein</strong> — pflanzliches Protein ist vollwertig wenn die Quellen kombiniert werden: Hülsenfrüchte, Nüsse, Tofu und Vollkornprodukte ergänzen sich optimal.`);
+        } else if (isVegetarian) {
+          hints.push(`<strong>Protein</strong> — eine Eiweißquelle zu jeder Mahlzeit einplanen: Eier, Quark, Hüttenkäse, Hülsenfrüchte oder Nüsse sind gute Helfer.`);
+        } else {
+          hints.push(`<strong>Protein</strong> — eine Eiweißquelle zu jeder Mahlzeit bewusst einplanen: Eier, Quark, Fisch, mageres Fleisch oder Hülsenfrüchte unterstützen Sättigung und Regeneration.`);
+        }
       }
       // Ernährung zuerst — BfR-Prinzip
       else if (key.includes("nutrition_first") || key.includes("ernaehrung")) {
         hints.push(`<strong>Ernährung zuerst</strong> — viele Nährstoffdefizite lassen sich über gezielte Ernährungsoptimierung lösen. Das Bundesinstitut für Risikobewertung bestätigt: Bei ausgewogener Ernährung sind Supplements in der Regel nicht nötig.`);
       }
-      // Fallback für unbekannte Regeln
+      // Fallback für unbekannte Regeln — Kreatin bei Minderjährigen und doctor_hint blockieren
       else if (item.label) {
+        const labelLower = item.label.toLowerCase();
+        const userAge = result?.submission?.age ? Number(result.submission.age) : 99;
+        const doctorHint = result?.score?.doctor_hint === true;
+        const bmiLow = bmiNum < 18.5;
+        // Kreatin NIE bei Alter < 18, BMI < 18.5 oder doctor_hint
+        if ((labelLower.includes("creatin") || labelLower.includes("kreatin")) && (userAge < 18 || bmiLow || doctorHint)) {
+          return; // Kreatin überspringen
+        }
         hints.push(`<strong>${item.label}</strong>${reason ? ` — ${reason}` : ""}.`);
       }
     });
