@@ -311,8 +311,9 @@
     const goalQuestion = allQuestions.find(q => q.question_key === "vital_goal") || null;
     // Globale Referenz auf goalQuestion speichern
     window._goalQuestion = goalQuestion;
-    // Flow: Motivationsfrage → Basisdaten → Fragen → Consent
+    // Flow: Intro → Motivationsfrage → Basisdaten → Fragen → Consent
     groupedQuestions = [
+      { type:"intro" },
       goalQuestion ? { type:"goal", question:goalQuestion } : null,
       { type:"personal" },
       ...questions,
@@ -343,7 +344,9 @@
 
     // Motivationsfrage zuverlässig aus globalem Speicher holen
     const goalQuestion = window._goalQuestion || null;
+    // Flow: Intro → Motivationsfrage → Basisdaten → Fragen → Consent
     groupedQuestions = [
+      { type:"intro" },
       goalQuestion ? { type:"goal", question:goalQuestion } : null,
       { type:"personal" },
       ...filtered,
@@ -359,12 +362,81 @@
       const div = document.createElement("div");
       div.className = `question-step${index === activeIndex ? " active" : ""}`;
       div.id = `step-${index}`;
-      if (step.type === "goal") div.innerHTML = goalStepHtml(step.question);
+      if (step.type === "intro") div.innerHTML = introStepHtml();
+      else if (step.type === "goal") div.innerHTML = goalStepHtml(step.question);
       else if (step.type === "personal") div.innerHTML = personalStepHtml();
       else if (step.type === "consent") div.innerHTML = consentStepHtml();
       else div.innerHTML = questionStepHtml(step);
       flow.appendChild(div);
     });
+  }
+
+  /* ── INTRO STEP HTML ── */
+  function introStepHtml() {
+    return `
+      <div class="card" style="text-align:center;padding:32px 24px;">
+        <div style="font-size:40px;margin-bottom:16px;">🌿</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:26px;font-weight:700;color:var(--text-primary);margin-bottom:10px;line-height:1.3;">
+          Wie vital bist du wirklich?
+        </div>
+        <div style="font-size:15px;color:var(--text-secondary);line-height:1.7;margin-bottom:28px;max-width:480px;margin-left:auto;margin-right:auto;">
+          In ca. 5 Minuten erfährst du deinen persönlichen Vitalitäts-Index — und was du heute konkret tun kannst, um länger fit, energiegeladen und gesund zu bleiben.
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px;text-align:left;">
+          <div style="background:var(--accent-green-dim);border:1px solid rgba(34,201,122,0.2);border-radius:var(--radius-sm);padding:14px;">
+            <div style="font-size:18px;margin-bottom:6px;">⚡</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Vitalitäts-Index</div>
+            <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Dein persönlicher Score von 0–100 — sofort nach dem Test.</div>
+          </div>
+          <div style="background:var(--accent-green-dim);border:1px solid rgba(34,201,122,0.2);border-radius:var(--radius-sm);padding:14px;">
+            <div style="font-size:18px;margin-bottom:6px;">🧬</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Biologisches Alter</div>
+            <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Wie alt ist dein Körper wirklich? Die Antwort überrascht oft.</div>
+          </div>
+          <div style="background:var(--accent-blue-dim);border:1px solid rgba(59,158,255,0.2);border-radius:var(--radius-sm);padding:14px;">
+            <div style="font-size:18px;margin-bottom:6px;">🎯</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Deine Hebel</div>
+            <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Wo du mit kleinem Aufwand den größten Unterschied machst.</div>
+          </div>
+          <div style="background:var(--accent-blue-dim);border:1px solid rgba(59,158,255,0.2);border-radius:var(--radius-sm);padding:14px;">
+            <div style="font-size:18px;margin-bottom:6px;">📧</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Individuelle Analyse</div>
+            <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Deine persönliche KI-Auswertung — kostenlos per E-Mail.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:28px;">
+          <div style="display:flex;align-items:center;gap:10px;text-align:left;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:var(--radius-sm);border:1px solid var(--border);">
+            <span style="font-size:18px;flex-shrink:0;">🔬</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Wissenschaftlich orientiert</div>
+              <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Das Modell berücksichtigt 9 Vitalitätsbereiche — von Schlaf und Bewegung bis Ernährung und mentaler Balance.</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;text-align:left;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:var(--radius-sm);border:1px solid var(--border);">
+            <span style="font-size:18px;flex-shrink:0;">🔒</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Deine Daten sind sicher</div>
+              <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Alle Angaben werden DSGVO-konform verarbeitet. Du entscheidest, was gespeichert wird.</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;text-align:left;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:var(--radius-sm);border:1px solid var(--border);">
+            <span style="font-size:18px;flex-shrink:0;">🎁</span>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Kostenlos & unverbindlich</div>
+              <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Keine Anmeldung, keine Verpflichtung — einfach starten und sofort Ergebnisse sehen.</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="next-btn" onclick="nextStep()" style="font-size:17px;padding:18px;">
+          Jetzt starten →
+        </button>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:10px;">
+          Ca. 5 Minuten · Kostenlos · Unverbindlich
+        </div>
+      </div>`;
   }
 
   /* ── GOAL STEP HTML ── */
@@ -535,7 +607,7 @@
     currentStep--;
     const prevQ = groupedQuestions[currentStep];
     // Antwort entfernen — aber nicht bei goal, personal oder consent
-    if (prevQ && prevQ.type !== "goal" && prevQ.type !== "personal" && prevQ.type !== "consent") {
+    if (prevQ && prevQ.type !== "intro" && prevQ.type !== "goal" && prevQ.type !== "personal" && prevQ.type !== "consent") {
       selectedAnswers.pop();
     }
     // Wenn zurück zu supplement_usage: supplement_types wiederherstellen falls nötig
@@ -576,12 +648,15 @@
     const backBtn = document.getElementById("backBtn");
     const q = groupedQuestions[currentStep];
     if (backBtn) {
-      const showBack = currentStep >= 1 && q && q.type !== "consent";
+      const showBack = currentStep >= 1 && q && q.type !== "consent" && q.type !== "intro";
       backBtn.classList.toggle("hidden", !showBack);
     }
 
     if (!q) return;
-    if (q.type === "goal") {
+    if (q.type === "intro") {
+      document.getElementById("progressAreaLabel").textContent = "LeVITA Vital-Check";
+      document.getElementById("progressCount").textContent = "";
+    } else if (q.type === "goal") {
       document.getElementById("progressAreaLabel").textContent = "🎯 Dein Ziel";
       document.getElementById("progressCount").textContent = "";
     } else if (q.type === "personal") {
@@ -593,9 +668,9 @@
     } else {
       const icon = AREA_ICONS[q.area_key] || "●";
       // Fragennummer: currentStep minus 2 (goal + personal) = echte Fragennummer
-      const prefixSteps = groupedQuestions.filter((s, i) => i < currentStep && (s.type === "goal" || s.type === "personal")).length;
+      const prefixSteps = groupedQuestions.filter((s, i) => i < currentStep && (s.type === "intro" || s.type === "goal" || s.type === "personal")).length;
       const questionNumber = currentStep - prefixSteps;
-      const totalQuestions = total - 1 - groupedQuestions.filter(s => s.type === "goal" || s.type === "personal").length;
+      const totalQuestions = total - 1 - groupedQuestions.filter(s => s.type === "intro" || s.type === "goal" || s.type === "personal").length;
       document.getElementById("progressAreaLabel").textContent = `${icon} ${q.area_label || q.area_key}`;
       document.getElementById("progressCount").textContent = `Frage ${questionNumber} von ${totalQuestions}`;
     }
