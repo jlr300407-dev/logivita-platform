@@ -980,12 +980,23 @@
     const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
     const hints = [];
 
-    // Antworten analysieren für Ernährungsweise und spezifische Trigger
-    const answerTexts = (result._answers || []).map(a => (a.answer_text || "").toLowerCase());
-    const isVegan = answerTexts.some(t => t.includes("vegan"));
-    const isVegetarian = answerTexts.some(t => t.includes("vegetar"));
+    // Ernährungsweise aus suppFocus rule_keys ableiten — zuverlässiger als _answers
+    // b12_vegan, omega3_no_fish etc. verraten die Ernährungsweise direkt
+    const allRuleKeys = suppFocus.map(item => (item.rule_key || item.label || "").toLowerCase());
+    const isVegan = allRuleKeys.some(k => k.includes("vegan") || k.includes("b12_vegan"));
+    const isVegetarian = !isVegan && allRuleKeys.some(k => k.includes("vegetar") || k.includes("b12_vegetar"));
     const isPlantBased = isVegan || isVegetarian;
-    const noFish = answerTexts.some(t => t.includes("kein fisch") || t.includes("esse keinen fisch"));
+    const noFish = allRuleKeys.some(k => k.includes("no_fish") || k.includes("kein_fisch") || k.includes("omega3_no") || k.includes("omega3_rare"));
+
+    // Fallback: Antworten wenn vorhanden
+    const answerTexts = (result._answers || []).map(a => (a.answer_text || "").toLowerCase());
+    const isVeganFromAnswers = answerTexts.some(t => t.includes("vegan"));
+    const isVegetarianFromAnswers = answerTexts.some(t => t.includes("vegetar"));
+    const noFishFromAnswers = answerTexts.some(t => t.includes("kein fisch") || t.includes("esse keinen fisch"));
+    const isVeganFinal = isVegan || isVeganFromAnswers;
+    const isVegetarianFinal = isVegetarian || (!isVeganFinal && isVegetarianFromAnswers);
+    const isPlantBasedFinal = isVeganFinal || isVegetarianFinal;
+    const noFishFinal = noFish || noFishFromAnswers;
 
     /* NEU: suppFocus mit direkteren Formulierungen rendern */
     suppFocus.slice(0, 3).forEach(item => {
@@ -998,17 +1009,17 @@
         hints.push(`<strong>Jod</strong> — bei vegetarischer Ernährung ohne Fisch oft unterschätzt. Jodiertes Speisesalz konsequent verwenden ist die einfachste Lösung.`);
       }
       // B12 — bei vegan zwingend
-      else if (key.includes("b12") && isVegan) {
+      else if (key.includes("b12") && isVeganFinal) {
         hints.push(`<strong>Vitamin B12</strong> — bei veganer Ernährung zwingend ergänzen. Das ist die eine klare Empfehlung der DGE, die keine Ausnahme kennt.`);
       }
       // B12 — bei vegetarisch nur bei Symptomen
-      else if (key.includes("b12") && isVegetarian) {
+      else if (key.includes("b12") && isVegetarianFinal) {
         hints.push(`<strong>Vitamin B12</strong> — bei vegetarischer Ernährung meist über Milchprodukte gedeckt. Bei Müdigkeit oder Konzentrationsproblemen lohnt eine Kontrolle.`);
       }
       // Omega-3 — nur bei fehlendem Fisch und Risikofaktor, nicht pauschal
       else if (key.includes("omega") || key.includes("omega3")) {
-        if (noFish || isPlantBased) {
-          hints.push(`<strong>Omega-3</strong> — kein Fisch in der Ernährung. Gute pflanzliche Quellen: Leinöl, Walnüsse, Chiasamen. ${isVegan ? "Algenöl liefert direkt EPA und DHA." : "Bei Bedarf Algenöl als Alternative zu Fischöl."}`);
+        if (noFishFinal || isPlantBasedFinal) {
+          hints.push(`<strong>Omega-3</strong> — kein Fisch in der Ernährung. Gute pflanzliche Quellen: Leinöl, Walnüsse, Chiasamen. ${isVeganFinal ? "Algenöl liefert direkt EPA und DHA." : "Bei Bedarf Algenöl als Alternative zu Fischöl."}`);
         }
       }
       // Eisen — mit Bioverfügbarkeitshinweis
@@ -1017,13 +1028,13 @@
       }
       // Vitamin D — nur bei klarer Indikation
       else if (key.includes("vitamin_d") || key.includes("vitamin d")) {
-        hints.push(`<strong>Vitamin D</strong> — bei wenig Tageslicht besonders relevant. ${isVegan ? "Auf pflanzliches D3 aus Flechten achten." : "Trockenbluttest gibt Klarheit über den tatsächlichen Wert."}`);
+        hints.push(`<strong>Vitamin D</strong> — bei wenig Tageslicht besonders relevant. ${isVeganFinal ? "Auf pflanzliches D3 aus Flechten achten." : "Trockenbluttest gibt Klarheit über den tatsächlichen Wert."}`);
       }
       // Protein — ernährungsweise-spezifisch, nie pauschal veganen Text bei omnivor
       else if (key.includes("protein")) {
-        if (isVegan) {
+        if (isVeganFinal) {
           hints.push(`<strong>Protein</strong> — pflanzliches Protein ist vollwertig wenn die Quellen kombiniert werden: Hülsenfrüchte, Nüsse, Tofu und Vollkornprodukte ergänzen sich optimal.`);
-        } else if (isVegetarian) {
+        } else if (isVegetarianFinal) {
           hints.push(`<strong>Protein</strong> — eine Eiweißquelle zu jeder Mahlzeit einplanen: Eier, Quark, Hüttenkäse, Hülsenfrüchte oder Nüsse sind gute Helfer.`);
         } else {
           hints.push(`<strong>Protein</strong> — eine Eiweißquelle zu jeder Mahlzeit bewusst einplanen: Eier, Quark, Fisch, mageres Fleisch oder Hülsenfrüchte unterstützen Sättigung und Regeneration.`);
@@ -1048,7 +1059,7 @@
     });
 
     /* NEU: Jod-Trigger direkt aus Ernährungsweise wenn nicht schon in suppFocus */
-    if (hints.length < 3 && isPlantBased && noFish && !hints.some(h => h.includes("Jod"))) {
+    if (hints.length < 3 && isPlantBasedFinal && noFishFinal && !hints.some(h => h.includes("Jod"))) {
       hints.push(`<strong>Jod</strong> — bei vegetarischer Ernährung ohne Fisch oft die größte Versorgungslücke. Jodiertes Speisesalz konsequent verwenden ist die einfachste und wirksamste Lösung.`);
     }
 
