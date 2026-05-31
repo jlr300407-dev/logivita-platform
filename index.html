@@ -671,7 +671,9 @@
     const ra = document.getElementById("result-area");
     ra.style.display = "block";
     const sp = result.score?.score_payload || {};
-    const areas = Object.entries(sp).map(([key, value]) => ({ key, label:value.label, score:Number(value.score), weight:value.weight }));
+    const areas = Object.entries(sp)
+      .filter(([key]) => key !== "general") // vital_goal Bereich nicht anzeigen
+      .map(([key, value]) => ({ key, label:(value as any).label, score:Number((value as any).score), weight:(value as any).weight }));
     const totalScore = Number(result.score?.total_score || 0);
     const bioAge = result.score?.bio_age || result.bio_age || null;
     const suppFocus = Array.isArray(result.supplement_focus) ? result.supplement_focus : [];
