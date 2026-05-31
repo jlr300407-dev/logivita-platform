@@ -478,10 +478,23 @@
     personalData.first_name = document.getElementById("first_name").value.trim();
     personalData.last_name = document.getElementById("last_name").value.trim();
     personalData.age = age; personalData.gender = gender; personalData.height_cm = height_cm; personalData.weight_kg = weight_kg;
+
+    // Aktuellen Schritt merken (personal step index)
+    const personalStepIndex = currentStep;
+
+    // Fragen nach Geschlecht/Alter filtern und Steps neu aufbauen
     buildGroupedQuestionsForGender();
     buildSteps();
-    currentStep = 0;
-    nextStep();
+
+    // Nach dem Rebuild: currentStep auf den personal step setzen und dann vorwärts
+    currentStep = personalStepIndex;
+    const cur = document.getElementById(`step-${currentStep}`);
+    if (cur) cur.classList.remove("active");
+    currentStep++;
+    const nxt = document.getElementById(`step-${currentStep}`);
+    if (nxt) nxt.classList.add("active");
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   // Hilfe: option_key aus option_id auflösen
@@ -568,11 +581,11 @@
     const pct = total > 0 ? (currentStep / total) * 100 : 0;
     document.getElementById("progress-fill").style.width = `${pct}%`;
 
-    // Zurück-Button: ab Schritt 2 sichtbar, bei consent ausblenden
+    // Zurück-Button: ab Schritt 1 sichtbar (goal ist Schritt 0, zurück ab Schritt 1), bei consent ausblenden
     const backBtn = document.getElementById("backBtn");
     const q = groupedQuestions[currentStep];
     if (backBtn) {
-      const showBack = currentStep >= 2 && q && q.type !== "consent";
+      const showBack = currentStep >= 1 && q && q.type !== "consent";
       backBtn.classList.toggle("hidden", !showBack);
     }
 
@@ -588,8 +601,10 @@
       document.getElementById("progressCount").textContent = "";
     } else {
       const icon = AREA_ICONS[q.area_key] || "●";
-      const questionNumber = currentStep - 1; // -1 für goal step
-      const totalQuestions = total - 2; // -2 für goal + consent
+      // Fragennummer: currentStep minus 2 (goal + personal) = echte Fragennummer
+      const prefixSteps = groupedQuestions.filter((s, i) => i < currentStep && (s.type === "goal" || s.type === "personal")).length;
+      const questionNumber = currentStep - prefixSteps;
+      const totalQuestions = total - 1 - groupedQuestions.filter(s => s.type === "goal" || s.type === "personal").length;
       document.getElementById("progressAreaLabel").textContent = `${icon} ${q.area_label || q.area_key}`;
       document.getElementById("progressCount").textContent = `Frage ${questionNumber} von ${totalQuestions}`;
     }
