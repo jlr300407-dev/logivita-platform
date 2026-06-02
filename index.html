@@ -837,8 +837,9 @@
     html += `</div>`;
 
     html += renderRedFlagBox(score, totalScore);
-    html += renderVitalitySupportBox(areas, result, suppFocus);
-    html += renderHintBoxes(score, result.bmi, result.submission?.goal_key || personalData.goal_key);
+    const { html: supportHtml, bloodtestShown } = renderVitalitySupportBox(areas, result, suppFocus);
+    html += supportHtml;
+    html += renderHintBoxes(score, result.bmi, result.submission?.goal_key || personalData.goal_key, bloodtestShown);
 
     html += `
       <div class="ai-box">
@@ -1163,21 +1164,26 @@
 
     if (hints.length === 0) hints.push("Deine Angaben zeigen in vielen Bereichen bereits eine gute Grundlage. Der wichtigste Hebel ist jetzt, stabile Routinen beizubehalten.");
 
-    return `
+    // Trockenbluttest in Hints erkannt? → Flag für renderHintBoxes
+    const bloodtestShown = hints.some(h => h.includes("Trockenbluttest") || h.includes("Blutwert-Check"));
+
+    const html = `
       <div class="support-box">
         <h3>Was deine Vitalität aktuell besonders unterstützen könnte</h3>
         <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;">Nicht alles muss gleichzeitig verändert werden. Entscheidend ist, welche kleinen Hebel zu deinem Alltag passen.</p>
         <ul class="support-hints">${hints.slice(0,3).map(h => `<li>${h}</li>`).join("")}</ul>
         <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Diese Hinweise dienen der allgemeinen Orientierung und ersetzen keine medizinische Beratung. Eine ausführlichere Einordnung erhältst du in der individuellen Auswertung per E-Mail.</div>
       </div>`;
+    return { html, bloodtestShown };
   }
 
   /* NEU: renderHintBoxes mit goal_key-basiertem coaching_hint */
-  function renderHintBoxes(score, bmi, goalKey) {
+  function renderHintBoxes(score, bmi, goalKey, bloodtestShown = false) {
     let html = "";
     const bmiNum = Number(bmi);
     const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
-    if (score.bloodtest_hint) html += `<div class="hint-box box-warning"><strong>💉 Hinweis: Trockenbluttest</strong><br>Aufgrund deiner Angaben könnte ein Trockenbluttest zusätzliche Hinweise liefern, um deine Vitalität und Mikronährstoffversorgung gezielter einzuordnen — z.B. Vitamin D, Ferritin, Omega-3 oder Vitamin B12. Im LeVITA Gesundheitsstudio besteht hierfür ein passendes Angebot.</div>`;
+    // Trockenbluttest nur zeigen wenn nicht schon in Support-Box angezeigt
+    if (score.bloodtest_hint && !bloodtestShown) html += `<div class="hint-box box-warning"><strong>💉 Hinweis: Trockenbluttest</strong><br>Aufgrund deiner Angaben könnte ein Trockenbluttest zusätzliche Hinweise liefern, um deine Vitalität und Mikronährstoffversorgung gezielter einzuordnen — z.B. Vitamin D, Ferritin, Omega-3 oder Vitamin B12. Im LeVITA Gesundheitsstudio besteht hierfür ein passendes Angebot.</div>`;
 
     /* NEU: coaching_hint goal_key-basiert statt generisch */
     if (score.coaching_hint && !bmiIsLow) {
