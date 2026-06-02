@@ -510,10 +510,62 @@
       selectedAnswers.push({ option_id: optionId });
       const optionKey = getOptionKeyById(optionId);
       const currentQ = groupedQuestions[currentStep];
+
+      // Bestehende Logik: supplement_types überspringen
       if (currentQ?.question_key === "supplement_usage" && optionKey === "supp_none") {
         groupedQuestions = groupedQuestions.filter(q => q.question_key !== "supplement_types");
         buildSteps(currentStep);
       }
+
+      // NEU: alcohol_amount überspringen wenn alcohol_frequency = "a" (Nie)
+      if (currentQ?.question_key === "alcohol_frequency" && optionKey === "a") {
+        groupedQuestions = groupedQuestions.filter(q => q.question_key !== "alcohol_amount");
+        buildSteps(currentStep);
+      }
+      // Wiederherstellen wenn zurückgegangen und anders gewählt
+      if (currentQ?.question_key === "alcohol_frequency" && optionKey !== "a") {
+        const hasAmount = groupedQuestions.some(q => q.question_key === "alcohol_amount");
+        if (!hasAmount) {
+          const amountQ = questions.find(q => q.question_key === "alcohol_amount");
+          if (amountQ) {
+            const freqIdx = groupedQuestions.findIndex(q => q.question_key === "alcohol_frequency");
+            groupedQuestions.splice(freqIdx + 1, 0, amountQ);
+            buildSteps(currentStep);
+          }
+        }
+      }
+
+      // NEU: social_connection einblenden wenn low_mood ODER low_interest = c/d/e
+      if (currentQ?.question_key === "low_mood" || currentQ?.question_key === "low_interest") {
+        const triggerKeys = ["c", "d", "e"];
+        const shouldShow = triggerKeys.includes(optionKey);
+        // Prüfen ob die andere Frage bereits einen Trigger gesetzt hat
+        const otherKey = currentQ.question_key === "low_mood" ? "low_interest" : "low_mood";
+        const otherAnswer = selectedAnswers.slice(0, -1).find(a => {
+          const key = getOptionKeyById(a.option_id);
+          const q = questions.find(q2 => q2.options.some(o => o.option_id === a.option_id));
+          return q?.question_key === otherKey;
+        });
+        const otherOptionKey = otherAnswer ? getOptionKeyById(otherAnswer.option_id) : null;
+        const otherTriggers = otherOptionKey && triggerKeys.includes(otherOptionKey);
+        const hasSocial = groupedQuestions.some(q => q.question_key === "social_connection");
+
+        if ((shouldShow || otherTriggers) && !hasSocial) {
+          const socialQ = questions.find(q => q.question_key === "social_connection");
+          if (socialQ) {
+            // Nach low_interest einfügen (sort_order 225 liegt nach 220)
+            const interestIdx = groupedQuestions.findIndex(q => q.question_key === "low_interest");
+            if (interestIdx !== -1) {
+              groupedQuestions.splice(interestIdx + 1, 0, socialQ);
+              buildSteps(currentStep);
+            }
+          }
+        } else if (!shouldShow && !otherTriggers && hasSocial) {
+          groupedQuestions = groupedQuestions.filter(q => q.question_key !== "social_connection");
+          buildSteps(currentStep);
+        }
+      }
+
       nextStep();
     }, 200);
   }
@@ -534,6 +586,32 @@
           const usageIdx = groupedQuestions.findIndex(q => q.question_key === "supplement_usage");
           groupedQuestions.splice(usageIdx + 1, 0, supplTypes);
           buildSteps(currentStep);
+        }
+      }
+    }
+    // NEU: alcohol_amount wiederherstellen wenn zurück zu alcohol_frequency
+    if (backQ?.question_key === "alcohol_frequency") {
+      const hasAmount = groupedQuestions.some(q => q.question_key === "alcohol_amount");
+      if (!hasAmount) {
+        const amountQ = questions.find(q => q.question_key === "alcohol_amount");
+        if (amountQ) {
+          const freqIdx = groupedQuestions.findIndex(q => q.question_key === "alcohol_frequency");
+          groupedQuestions.splice(freqIdx + 1, 0, amountQ);
+          buildSteps(currentStep);
+        }
+      }
+    }
+    // NEU: social_connection wiederherstellen wenn zurück zu low_mood oder low_interest
+    if (backQ?.question_key === "low_mood" || backQ?.question_key === "low_interest") {
+      const hasSocial = groupedQuestions.some(q => q.question_key === "social_connection");
+      if (!hasSocial) {
+        const socialQ = questions.find(q => q.question_key === "social_connection");
+        if (socialQ) {
+          const interestIdx = groupedQuestions.findIndex(q => q.question_key === "low_interest");
+          if (interestIdx !== -1) {
+            groupedQuestions.splice(interestIdx + 1, 0, socialQ);
+            buildSteps(currentStep);
+          }
         }
       }
     }
