@@ -1188,9 +1188,14 @@
       { key:"lifestyle",      max:75, bmiLowSafe:true,  text:"Alkohol oder Nikotin können Schlaf und Regeneration beeinflussen. Ein bewusster Testtag hilft, den eigenen Zusammenhang besser zu erkennen." }
     ];
 
-    // Prüfen ob bereits ein Ernährungs-Hint aus suppFocus vorhanden
-    const hasNutritionHint = hints.some(h =>
-      h.includes("Ernährung zuerst") || h.includes("Ernährung optimieren") || h.includes("nutrition_first")
+    // Prüfen ob rule_nutrition_first bereits in suppFocus — dann Ernährungs-Fallback überspringen
+    const hasNutritionFirst = suppFocus.some(item =>
+      (item.rule_key || "").toLowerCase().includes("nutrition_first") ||
+      (item.rule_key || "").toLowerCase().includes("ernaehrung")
+    );
+    const hasNutritionHint = hasNutritionFirst || hints.some(h =>
+      h.includes("Ernährung zuerst") ||
+      h.includes("Nährstoffdefizite lassen sich über gezielte Ernährung")
     );
 
     for (const r of fb) {
