@@ -351,8 +351,8 @@
           </div>
           <div style="background:var(--accent-green-dim);border:1px solid rgba(34,201,122,0.2);border-radius:var(--radius-sm);padding:14px;">
             <div style="font-size:18px;margin-bottom:6px;">🧬</div>
-            <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Biologisches Alter</div>
-            <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Wie alt ist dein Körper wirklich? Die Antwort überrascht oft.</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Vitalitäts-Alter</div>
+            <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Ein Orientierungswert basierend auf deinen Lebensgewohnheiten — überrascht oft.</div>
           </div>
           <div style="background:var(--accent-blue-dim);border:1px solid rgba(59,158,255,0.2);border-radius:var(--radius-sm);padding:14px;">
             <div style="font-size:18px;margin-bottom:6px;">🎯</div>
@@ -370,7 +370,7 @@
             <span style="font-size:18px;flex-shrink:0;">🔬</span>
             <div>
               <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Wissenschaftlich orientiert</div>
-              <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Das Modell berücksichtigt 9 Vitalitätsbereiche — von Schlaf und Bewegung bis Ernährung und mentaler Balance. Die Schwerpunkte folgen den Empfehlungen von WHO, DGE und dem Bundesinstitut für Risikobewertung.</div>
+              <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Das Modell basiert auf wissenschaftlich anerkannten Gesundheitsdeterminanten (Schlaf, Bewegung, Ernährung, Stress, Tageslicht). Der Vitalitäts-Index ist ein Orientierungswert — kein medizinisches Messinstrument.</div>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;text-align:left;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:var(--radius-sm);border:1px solid var(--border);">
@@ -691,17 +691,17 @@
         </div>
         <div class="score-level-badge" style="background:${sc}22;color:${sc};">✦ ${scoreLabel}</div>
         ${bioAge ? `
-          <div class="score-bio-age">Biologisches Alter: <strong>${bioAge} Jahre</strong>${personalData.age ? ` <span style="color:var(--text-muted);">&nbsp;·&nbsp; Kalendarisch: ${personalData.age} Jahre</span>` : ""}</div>
-          <div class="score-bio-age-disclaimer">Schätzung auf Basis deiner Lebensstilantworten — kein Laborwert</div>
+          <div class="score-bio-age">Vitalitäts-Alter: <strong>${bioAge} Jahre</strong>${personalData.age ? ` <span style="color:var(--text-muted);">&nbsp;·&nbsp; Kalendarisch: ${personalData.age} Jahre</span>` : ""}</div>
+          <div class="score-bio-age-disclaimer">Orientierungswert aus Lebensstilantworten — kein medizinischer Biomarker</div>
         ` : ""}
       </div>`;
 
-    const weakCount = areas.filter(a => a.score < 70).length;
+    const weakCount = areas.filter(a => a.score < 75).length;
     const bioColor = bioAge && bioAge < personalData.age ? "var(--accent-green)" : "var(--accent-amber)";
     html += `
       <div class="kpi-row">
         <div class="kpi-card"><span class="kpi-icon">⚡</span><div class="kpi-val" style="color:${sc};">${Math.round(totalScore)}</div><div class="kpi-label">Vitalitätsindex</div></div>
-        <div class="kpi-card"><span class="kpi-icon">🧬</span><div class="kpi-val" style="color:${bioColor};">${bioAge||"–"}</div><div class="kpi-label">Bio-Alter</div></div>
+        <div class="kpi-card"><span class="kpi-icon">🧬</span><div class="kpi-val" style="color:${bioColor};">${bioAge||"–"}</div><div class="kpi-label">Vitalitäts-Alter</div></div>
         <div class="kpi-card"><span class="kpi-icon">📊</span><div class="kpi-val" style="color:var(--accent-amber);">${weakCount}</div><div class="kpi-label">Optimierungsfelder</div></div>
       </div>`;
 
@@ -717,7 +717,7 @@
       <span class="pill">Größe: ${personalData.height_cm} cm</span>
       <span class="pill">Gewicht: ${personalData.weight_kg} kg</span>
       <span class="pill">BMI: ${result.bmi}</span>
-      ${bioAge ? `<span class="pill">Bio-Alter: ${bioAge} J.</span>` : ""}
+      ${bioAge ? `<span class="pill">Vitalitäts-Alter: ${bioAge} J.</span>` : ""}
       ${goalPill}
     </div>`;
 
@@ -1106,7 +1106,7 @@
       const gk = goalKey || "";
       let coachingText = "";
       if (gk === "goal_longevity") {
-        coachingText = `🌿 <strong>Longevity-Einstieg</strong><br>Eine Körperanalyse und ein Trockenbluttest geben dir konkrete Werte — Muskelmasse, Biomarker, biologisches Alter im Vergleich. Die Präventionskurse §20 im LeVITA Studio sind speziell dafür gemacht und werden von vielen Krankenkassen bezuschusst.`;
+        coachingText = `🌿 <strong>Longevity-Einstieg</strong><br>Eine Körperanalyse und ein Trockenbluttest geben dir konkrete Werte — Muskelmasse, Biomarker, Vitalitäts-Alter im Vergleich. Die Präventionskurse §20 im LeVITA Studio sind speziell dafür gemacht und werden von vielen Krankenkassen bezuschusst.`;
       } else if (gk === "goal_prevention") {
         coachingText = `🛡️ <strong>Prävention mit Plan</strong><br>Unsere Präventionskurse §20 helfen dir, gezielt an deiner Gesundheit zu arbeiten — strukturiert, betreut und von vielen Krankenkassen bezuschusst.`;
       } else if (gk === "goal_fitness") {
