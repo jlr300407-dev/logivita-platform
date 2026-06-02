@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LeVITA Trainer-Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --brand-dark: #0a1628; --brand-card: #132338; --brand-card2: #1a2d45;
+      --accent-green: #22c97a; --accent-green-dim: rgba(34,201,122,0.12);
+      --accent-blue: #3b9eff; --accent-blue-dim: rgba(59,158,255,0.10);
+      --accent-amber: #f5a623; --accent-red: #ff5c5c;
+      --text-primary: #f0f4f8; --text-secondary: #8da0b8; --text-muted: #4a6280;
+      --border: rgba(255,255,255,0.07); --border-hover: rgba(255,255,255,0.14);
+      --radius: 16px; --radius-sm: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--brand-dark); color: var(--text-primary); min-height: 100vh; }
+    header { background: var(--brand-card); border-bottom: 1px solid var(--border); padding: 20px 28px; display: flex; align-items: center; justify-content: space-between; }
+    .header-logo { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text-primary); }
+    .header-logo span { color: var(--accent-green); }
+    .header-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .header-badge { padding: 5px 14px; border-radius: 20px; background: var(--accent-blue-dim); border: 1px solid rgba(59,158,255,0.2); color: var(--accent-blue); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 28px 24px; }
+    .card { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+    .card h2 { font-size: 17px; font-weight: 700; margin-bottom: 6px; color: var(--text-primary); }
+    .card h3 { font-size: 15px; font-weight: 700; margin-bottom: 14px; color: var(--text-primary); }
+    .muted { color: var(--text-muted); font-size: 13px; line-height: 1.5; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 20px; }
+    .kpi { background: var(--brand-card2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; }
+    .kpi span { display: block; color: var(--text-muted); font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px; }
+    .kpi strong { display: block; font-size: 28px; font-weight: 800; color: var(--text-primary); }
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    input, textarea, select { width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; margin-bottom: 12px; transition: border-color 0.18s; }
+    input:focus, textarea:focus { outline: none; border-color: var(--accent-green); background: var(--accent-green-dim); }
+    input[type="date"] { color-scheme: dark; }
+    textarea { min-height: 96px; resize: vertical; }
+    label { display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 5px; }
+    button { width: 100%; padding: 13px; border: none; border-radius: var(--radius-sm); background: var(--accent-green); color: #0a1628; font-weight: 800; cursor: pointer; font-size: 14px; font-family: 'DM Sans', sans-serif; transition: all 0.2s; margin-top: 6px; }
+    button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(34,201,122,0.2); }
+    .btn-secondary { background: var(--brand-card2); color: var(--text-secondary); border: 1px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--border-hover); color: var(--text-primary); box-shadow: none; }
+    .btn-small { width: auto; padding: 6px 12px; font-size: 12px; margin: 0; }
+    .btn-danger { background: rgba(255,92,92,0.1); color: var(--accent-red); border: 1px solid rgba(255,92,92,0.25); font-size: 13px; }
+    .btn-danger:hover { background: rgba(255,92,92,0.18); box-shadow: none; }
+    .status { margin-top: 12px; padding: 12px 14px; border-radius: var(--radius-sm); font-size: 13px; line-height: 1.5; }
+    .status-info { background: var(--accent-blue-dim); border: 1px solid rgba(59,158,255,0.2); color: var(--text-secondary); }
+    .status-success { background: var(--accent-green-dim); border: 1px solid rgba(34,201,122,0.2); color: var(--accent-green); }
+    .status-error { background: rgba(255,92,92,0.08); border: 1px solid rgba(255,92,92,0.25); color: var(--accent-red); }
+    .hidden { display: none !important; }
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; margin: 3px; }
+    .pill-green { background: var(--accent-green-dim); color: var(--accent-green); border: 1px solid rgba(34,201,122,0.2); }
+    .pill-amber { background: rgba(245,166,35,0.1); color: var(--accent-amber); border: 1px solid rgba(245,166,35,0.2); }
+    .pill-red { background: rgba(255,92,92,0.1); color: var(--accent-red); border: 1px solid rgba(255,92,92,0.2); }
+    .pill-blue { background: var(--accent-blue-dim); color: var(--accent-blue); border: 1px solid rgba(59,158,255,0.2); }
+    .pill-gray { background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid var(--border); }
+    .score-ring-wrap { position: relative; width: 160px; height: 160px; margin: 16px auto; }
+    .score-ring-svg { width: 160px; height: 160px; transform: rotate(-90deg); }
+    .score-ring-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 12; }
+    .score-ring-fill { fill: none; stroke-width: 12; stroke-linecap: round; stroke-dasharray: 422; stroke-dashoffset: 422; transition: stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1); }
+    .score-ring-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .score-number { font-family: 'DM Serif Display', serif; font-size: 44px; line-height: 1; }
+    .score-of { font-size: 11px; color: var(--text-muted); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: top; color: var(--text-secondary); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .info-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .area-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 13px; }
+    .area-bar-label { width: 160px; flex-shrink: 0; color: var(--text-secondary); font-size: 12px; }
+    .area-bar-track { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+    .area-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+    .area-bar-val { width: 32px; text-align: right; font-weight: 700; font-size: 12px; }
+    .hint-box { padding: 14px 16px; border-radius: var(--radius-sm); margin-bottom: 10px; font-size: 13px; line-height: 1.6; color: var(--text-secondary); }
+    .hint-green { background: var(--accent-green-dim); border-left: 3px solid var(--accent-green); }
+    .hint-amber { background: rgba(245,166,35,0.08); border-left: 3px solid var(--accent-amber); }
+    .hint-red { background: rgba(255,92,92,0.08); border-left: 3px solid var(--accent-red); }
+    .hint-blue { background: var(--accent-blue-dim); border-left: 3px solid var(--accent-blue); }
+    /* NEU: Vitalitäts-Alter Card */
+    .bio-age-card { background: var(--accent-green-dim); border: 1px solid rgba(34,201,122,0.2); border-radius: var(--radius-sm); padding: 16px; text-align: center; margin-bottom: 16px; }
+    .bio-age-number { font-family: 'DM Serif Display', serif; font-size: 36px; color: var(--accent-green); line-height: 1; margin-bottom: 4px; }
+    .bio-age-label { font-size: 11px; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+    .bio-age-disclaimer { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+    .bio-age-diff { font-size: 13px; color: var(--text-secondary); margin-top: 6px; }
+    /* NEU: Lösch-Box */
+    .delete-box { background: rgba(255,92,92,0.05); border: 1px solid rgba(255,92,92,0.2); border-radius: var(--radius-sm); padding: 16px; margin-top: 16px; }
+    .delete-box p { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px; }
+    @media (max-width: 900px) { .grid, .kpi-grid, .analysis-grid { grid-template-columns: 1fr; } }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- PIN-SCHUTZ OVERLAY -->
+<div id="pinOverlay" style="position:fixed;inset:0;background:var(--brand-dark);z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:var(--brand-card);border:1px solid var(--border);border-radius:var(--radius);padding:40px 36px;max-width:380px;width:90%;text-align:center;">
+    <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--text-primary);margin-bottom:4px;">Le<span style="color:var(--accent-green);">VITA</span></div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:28px;">Trainer-Dashboard · Interner Zugang</div>
+    <div style="font-size:32px;margin-bottom:16px;">🔒</div>
+    <div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Zugang für autorisierte Mitarbeiter</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:24px;line-height:1.5;">Bitte PIN eingeben um fortzufahren.</div>
+    <input id="pinInput" type="password" placeholder="PIN eingeben"
+      style="width:100%;padding:14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:18px;text-align:center;letter-spacing:6px;margin-bottom:12px;"
+      onkeydown="if(event.key==='Enter')checkPin()" />
+    <button onclick="checkPin()" style="width:100%;padding:14px;border:none;border-radius:var(--radius-sm);background:var(--accent-green);color:#0a1628;font-weight:800;font-size:15px;cursor:pointer;font-family:'DM Sans',sans-serif;">
+      Zugang öffnen →
+    </button>
+    <div id="pinError" style="display:none;margin-top:12px;padding:10px;background:rgba(255,92,92,0.08);border:1px solid rgba(255,92,92,0.25);border-radius:var(--radius-sm);font-size:13px;color:var(--accent-red);">
+      Falscher PIN. Bitte erneut versuchen.
+    </div>
+    <div style="margin-top:20px;font-size:11px;color:var(--text-muted);line-height:1.6;">
+      Diese Ansicht ist ausschließlich für autorisierte LeVITA-Mitarbeiter bestimmt.<br>
+      Bei Fragen: <a href="mailto:datenschutz@le-vita.com" style="color:var(--text-muted);">datenschutz@le-vita.com</a>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div>
+    <div class="header-logo">Le<span>VITA</span> Trainer-Dashboard</div>
+    <div class="header-sub">Vital-Check Analyseansicht powered by LogiVita</div>
+  </div>
+  <div class="header-badge">Intern · Nur für autorisierte Mitarbeiter</div>
+</header>
+
+<main class="wrap">
+
+  <!-- STUDIO ÜBERSICHT -->
+  <div class="card">
+    <h2>Studio-Übersicht</h2>
+    <p class="muted">Die wichtigsten Kennzahlen aus allen bisherigen Vital-Checks.</p>
+    <button onclick="loadStudioOverview()" style="width:auto;padding:10px 20px;margin-top:12px;">Übersicht aktualisieren</button>
+    <div class="kpi-grid" style="margin-top:20px;">
+      <div class="kpi"><span>Abgeschlossene Checks</span><strong id="kpiCompleted">–</strong></div>
+      <div class="kpi"><span>Ø Vitalitätsindex</span><strong id="kpiAverageScore">–</strong></div>
+      <div class="kpi"><span>Ø Vitalitäts-Alter</span><strong id="kpiBioAge">–</strong></div>
+      <div class="kpi"><span>Beratungsbedarf</span><strong id="kpiConsulting">–</strong></div>
+      <div class="kpi"><span>Häufigste Belastung</span><strong id="kpiTopBurden" style="font-size:14px;">–</strong></div>
+    </div>
+    <div class="grid" style="margin-top:24px;">
+      <div>
+        <h3>Häufigste Belastungsbereiche</h3>
+        <ul id="burdenList" style="padding-left:18px;color:var(--text-secondary);font-size:13px;line-height:2;"><li>Noch keine Daten geladen.</li></ul>
+      </div>
+      <div>
+        <h3>Priorisierte Beratungsfälle</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Pilot-ID</th><th>Name</th><th>Score</th><th>Vit.-Alter</th><th>Fokus</th><th></th></tr></thead>
+            <tbody id="consultingTable"><tr><td colspan="6" style="color:var(--text-muted);">Noch keine Daten geladen.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div id="overviewStatus" class="hidden"></div>
+  </div>
+
+  <!-- ANALYSE LADEN -->
+  <div class="grid">
+    <div class="card">
+      <h2>Analyse per Pilot-ID laden</h2>
+      <p class="muted" style="margin-bottom:16px;">Gib die Pilot-ID ein, z.B. <strong style="color:var(--text-primary);">LEV-2026-000044</strong></p>
+      <label>Pilot-ID / Public Code</label>
+      <input id="projectCode" placeholder="LEV-2026-000044" />
+      <button onclick="loadSingleAnalysis()">Analyse laden</button>
+      <div id="singleStatus" class="hidden"></div>
+    </div>
+    <div class="card">
+      <h3>Hinweis zur Nutzung</h3>
+      <p class="muted">Diese Ansicht ist ausschließlich für autorisierte LeVITA-Mitarbeiter bestimmt. Die Informationen dienen der allgemeinen Vitalitäts- und Präventionsberatung. Sie stellen keine medizinische Diagnose oder Therapieempfehlung dar.</p>
+      <div class="hint-box hint-blue" style="margin-top:14px;">
+        <strong style="color:var(--accent-blue);">Datenschutz:</strong> Alle angezeigten Daten werden nur mit expliziter Nutzereinwilligung verarbeitet.
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYSE SECTION -->
+  <div id="analysisSection" class="hidden">
+
+    <div class="card">
+      <h2>Analyseübersicht</h2>
+      <!-- NEU: Datum prominent + alle Basisdaten -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <p id="analysisMeta" class="muted"></p>
+        <span id="analysisDate" style="font-size:12px;color:var(--accent-green);font-weight:700;"></span>
+      </div>
+      <div id="personInfo" class="info-row"></div>
+      <div id="focusBadge" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="analysis-grid">
+      <div class="card">
+        <h3>Vitalitätsindex</h3>
+        <div class="score-ring-wrap">
+          <svg class="score-ring-svg" viewBox="0 0 160 160">
+            <circle class="score-ring-bg" cx="80" cy="80" r="67"/>
+            <circle class="score-ring-fill" id="dashRingFill" cx="80" cy="80" r="67"/>
+            <defs><linearGradient id="dashRingGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#22c97a"/><stop offset="100%" stop-color="#3b9eff"/>
+            </linearGradient></defs>
+          </svg>
+          <div class="score-ring-inner">
+            <div class="score-number" id="totalScore" style="color:#22c97a;">–</div>
+            <div class="score-of">von 100</div>
+          </div>
+        </div>
+        <p id="scoreLabel" style="text-align:center;font-size:13px;color:var(--text-muted);margin-top:8px;"></p>
+        <!-- NEU: Vitalitäts-Alter mit Disclaimer -->
+        <div class="bio-age-card" id="bioAgeCard" style="display:none;">
+          <div class="bio-age-number" id="bioAgeDisplay">–</div>
+          <div class="bio-age-label">Vitalitäts-Alter</div>
+          <div class="bio-age-disclaimer">Orientierungswert aus Lebensstilantworten — kein medizinischer Biomarker</div>
+          <div class="bio-age-diff" id="bioAgeDiff"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Vitalitäts-Spinne</h3>
+        <canvas id="radarChart" height="260"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Bereichs-Scores im Detail</h3>
+      <div id="areaBars"></div>
+    </div>
+
+    <div class="analysis-grid">
+      <div class="card">
+        <h3>Top-Prioritäten</h3>
+        <ul id="topPriorities" style="padding-left:18px;color:var(--text-secondary);font-size:13px;line-height:1.8;"></ul>
+      </div>
+      <div class="card">
+        <h3>Beratungsimpulse</h3>
+        <div id="consultingHints"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Trainer-Gesprächsleitfaden</h3>
+      <div id="trainerGuide"></div>
+    </div>
+
+    <div class="card">
+      <h3>Nächste Maßnahme & Re-Check</h3>
+      <p class="muted" style="margin-bottom:16px;">Dieses Feld wird in V1 noch nicht gespeichert. Es dient als Gesprächsnotiz zum Kopieren.</p>
+      <label>Vereinbarte nächste Maßnahme</label>
+      <textarea id="nextAction" placeholder="z.B. 2x Krafttraining, Schlafroutine, Ernährungsprotokoll, Tageslicht-Routine …"></textarea>
+      <label>Empfohlener Re-Check</label>
+      <input id="recheckDate" type="date" />
+      <button class="btn-secondary" onclick="copyTrainerNote()">Trainer-Notiz kopieren</button>
+      <div id="copyStatus" class="hidden"></div>
+      <!-- NEU: Datenlöschung direkt aus dem Dashboard -->
+      <div class="delete-box" id="deleteBox">
+        <p><strong style="color:var(--accent-red);">🗑 Datenlöschung auf Nutzeranfrage</strong><br>
+        Wenn der Nutzer die Löschung seiner Daten verlangt, kann der Datenbestand hier direkt und vollständig gelöscht werden. Auswertungsdaten werden sofort gelöscht, E-Mail-Protokoll innerhalb von 30 Tagen.</p>
+        <button class="btn-danger" onclick="confirmDelete()">Daten unwiderruflich löschen</button>
+      </div>
+
+      <!-- Bestätigungs-Modal -->
+      <div id="deleteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:none;align-items:center;justify-content:center;">
+        <div style="background:var(--brand-card);border:1px solid rgba(255,92,92,0.4);border-radius:var(--radius);padding:32px;max-width:480px;width:90%;margin:auto;">
+          <div style="font-size:24px;margin-bottom:12px;">⚠️</div>
+          <h3 style="color:var(--accent-red);margin-bottom:12px;">Datenlöschung bestätigen</h3>
+          <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:16px;">
+            Du bist dabei, <strong style="color:var(--text-primary);">alle gespeicherten Daten</strong> zu dieser Auswertung unwiderruflich zu löschen:
+          </p>
+          <div id="deleteModalInfo" style="background:var(--brand-card2);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;color:var(--text-secondary);margin-bottom:16px;line-height:1.8;"></div>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">
+            Folgende Daten werden gelöscht: Antworten, Score, Kontaktdaten, Einwilligungen, KI-Analyse.<br>
+            Das E-Mail-Protokoll wird innerhalb von 30 Tagen gelöscht.<br>
+            <strong style="color:var(--accent-red);">Diese Aktion kann nicht rückgängig gemacht werden.</strong>
+          </p>
+          <!-- NEU: Checkbox Bestätigungsmail -->
+          <div id="deleteEmailRow" style="display:none;padding:10px 12px;background:var(--accent-green-dim);border:1px solid rgba(34,201,122,0.2);border-radius:var(--radius-sm);margin-bottom:16px;">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--text-secondary);text-transform:none;letter-spacing:0;font-weight:400;">
+              <input type="checkbox" id="sendConfirmationEmail" style="width:16px;height:16px;margin:0;accent-color:var(--accent-green);" />
+              Löschbestätigung per E-Mail an Nutzer senden
+            </label>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-secondary" onclick="closeDeleteModal()" style="flex:1;">Abbrechen</button>
+            <button class="btn-danger" id="confirmDeleteBtn" onclick="executeDelete()" style="flex:1;">Ja, jetzt löschen</button>
+          </div>
+          <div id="deleteStatus" class="hidden" style="margin-top:12px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Antworten-Übersicht</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Bereich</th><th>Frage</th><th>Antwort</th><th>Risiko</th></tr></thead>
+          <tbody id="answersTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<script>
+  // ── PIN-SCHUTZ ──
+  // PIN hier ändern — für Produktion empfehlen wir min. 6 Stellen
+  const DASHBOARD_PIN = "levita2026";
+
+  function checkPin() {
+    const input = document.getElementById("pinInput").value.trim();
+    const errorEl = document.getElementById("pinError");
+    if (input === DASHBOARD_PIN) {
+      document.getElementById("pinOverlay").style.display = "none";
+      sessionStorage.setItem("dashboard_auth", "1");
+      loadStudioOverview();
+    } else {
+      errorEl.style.display = "block";
+      document.getElementById("pinInput").value = "";
+      document.getElementById("pinInput").focus();
+      // Kurzes Shake-Animation
+      const overlay = document.getElementById("pinOverlay").querySelector("div");
+      overlay.style.animation = "none";
+      overlay.offsetHeight; // reflow
+      overlay.style.animation = "shake 0.3s ease";
+    }
+  }
+
+  // Bereits authentifiziert in dieser Session?
+  if (sessionStorage.getItem("dashboard_auth") === "1") {
+    document.getElementById("pinOverlay").style.display = "none";
+  }
+
+  const SUPABASE_URL = "https://koctweetotpqaazeicwj.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
+  const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/submit-vital-check";
+  const PRIVACY_EMAIL = "datenschutz@le-vita.com";
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let radarChart = null;
+  let currentAnalysis = null;
+
+  const AREA_ICONS = { sleep:"🌙", activity:"⚡", nutrition:"🥗", vitamin_d:"☀️", bmi:"⚖️", mental:"🧘", lifestyle:"🍃", micronutrients:"💊", metabolic:"🔥" };
+
+  const GOAL_LABELS = {
+    goal_energy: "⚡ Mehr Energie", goal_weight: "⚖️ Abnehmen / Figur",
+    goal_fitness: "💪 Fitter werden", goal_supplements: "💊 Supplements klären",
+    goal_longevity: "🌿 Longevity", goal_prevention: "🛡️ Vorsorge", goal_curious: "✨ Neugier"
+  };
+
+  function showStatus(id, message, type = "info") {
+    const el = document.getElementById(id);
+    el.textContent = message;
+    el.className = `status status-${type}`;
+    el.classList.remove("hidden");
+  }
+
+  function hideStatus(id) { document.getElementById(id).classList.add("hidden"); }
+  function safe(value, fallback = "–") { return value === null || value === undefined || value === "" ? fallback : value; }
+
+  function getScoreColor(score) {
+    if (score >= 85) return "#22c97a";
+    if (score >= 70) return "#3b9eff";
+    if (score >= 55) return "#f5a623";
+    if (score >= 40) return "#ff8c42";
+    return "#ff5c5c";
+  }
+
+  function getScoreLabel(score) {
+    if (score >= 85) return "Vital & Stabil";
+    if (score >= 70) return "Aktiv mit Momentum";
+    if (score >= 55) return "Auf dem Weg";
+    if (score >= 40) return "Im Aufbau";
+    return "Neustart";
+  }
+
+  function focusLevel(score, scoreRow, areaScores) {
+    const weakAreas = areaScores.filter(a => Number(a.score) < 50).length;
+    if (scoreRow.doctor_hint || score < 40) return { label:"🔴 Ärztliche Abklärung erwägen", cls:"pill-red" };
+    if (scoreRow.bloodtest_hint || scoreRow.coaching_hint || score < 60 || weakAreas >= 2) return { label:"🟠 Beratung empfohlen", cls:"pill-amber" };
+    if (score < 80 || weakAreas === 1) return { label:"🟡 Optimierung sinnvoll", cls:"pill-amber" };
+    return { label:"🟢 Stabile Basis", cls:"pill-green" };
+  }
+
+  function extractAreaScores(scorePayload) {
+    if (!scorePayload) return [];
+    if (typeof scorePayload === "object" && !Array.isArray(scorePayload)) {
+      return Object.entries(scorePayload).map(([key, value]) => ({
+        key, area: value.label || key,
+        score: typeof value === "object" ? Number(value.score || 0) : Number(value || 0)
+      }));
+    }
+    return [];
+  }
+
+  function animateDashRing(score) {
+    const ring = document.getElementById("dashRingFill");
+    const numEl = document.getElementById("totalScore");
+    if (!ring || !numEl) return;
+    const C = 2 * Math.PI * 67;
+    ring.setAttribute("stroke-dasharray", C);
+    ring.setAttribute("stroke-dashoffset", C);
+    ring.setAttribute("stroke", "url(#dashRingGrad)");
+    let current = 0;
+    const dur = 1200, start = performance.now();
+    function step(now) {
+      const prog = Math.min((now - start) / dur, 1);
+      const ease = 1 - Math.pow(1 - prog, 3);
+      current = Math.round(score * ease);
+      numEl.textContent = current;
+      numEl.style.color = getScoreColor(current);
+      ring.style.strokeDashoffset = C - (current / 100) * C;
+      if (prog < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ── LOAD SINGLE ── */
+  async function loadSingleAnalysis() {
+    hideStatus("singleStatus");
+    const publicCode = document.getElementById("projectCode").value.trim();
+    if (!publicCode) return showStatus("singleStatus", "Bitte eine Pilot-ID eingeben.", "error");
+    showStatus("singleStatus", "Analyse wird geladen …", "info");
+
+    try {
+      const { data: submission, error: se } = await supabaseClient
+        .from("submissions").select("*").eq("public_code", publicCode).single();
+      if (se || !submission) throw new Error("Keine Submission zu dieser Pilot-ID gefunden.");
+
+      const { data: score, error: sce } = await supabaseClient
+        .from("submission_scores").select("*").eq("submission_id", submission.id).single();
+      if (sce || !score) throw new Error("Kein Score zu dieser Submission gefunden.");
+
+      const { data: contact } = await supabaseClient
+        .from("submission_contacts").select("*").eq("submission_id", submission.id).maybeSingle();
+
+      const { data: answers } = await supabaseClient
+        .from("submission_answers")
+        .select("*, questions(question_text, area_key)")
+        .eq("submission_id", submission.id)
+        .order("created_at", { ascending: true });
+
+      renderAnalysis(submission, score, contact, answers || []);
+      showStatus("singleStatus", "Analyse erfolgreich geladen.", "success");
+      document.getElementById("analysisSection").classList.remove("hidden");
+      document.getElementById("analysisSection").scrollIntoView({ behavior: "smooth" });
+
+    } catch (err) {
+      showStatus("singleStatus", err.message, "error");
+    }
+  }
+
+  function renderAnalysis(submission, score, contact, answers) {
+    const total = Number(score.total_score || 0);
+    const areaScores = extractAreaScores(score.score_payload);
+    const focus = focusLevel(total, score, areaScores);
+    const bioAge = score.bio_age || null;
+
+    // NEU: Datum der Auswertung prominent
+    const createdDate = submission.created_at
+      ? new Date(submission.created_at).toLocaleDateString("de-DE", { day:"2-digit", month:"2-digit", year:"numeric" }) : "–";
+    const createdTime = submission.created_at
+      ? new Date(submission.created_at).toLocaleTimeString("de-DE", { hour:"2-digit", minute:"2-digit" }) : "";
+
+    currentAnalysis = { submission, score, contact, answers, areaScores, focus };
+
+    document.getElementById("analysisMeta").textContent =
+      `Pilot-ID: ${submission.public_code}`;
+    document.getElementById("analysisDate").textContent =
+      `📅 Auswertung vom ${createdDate} um ${createdTime} Uhr`;
+
+    // NEU: Vollständige Basisdaten inkl. Größe, Gewicht, Ziel, Datum
+    const goalLabel = GOAL_LABELS[submission.goal_key] || "";
+    document.getElementById("personInfo").innerHTML = `
+      <span class="pill pill-gray">👤 ${safe(contact?.first_name)} ${safe(contact?.last_name, "")}</span>
+      <span class="pill pill-gray">✉ ${safe(contact?.email)}</span>
+      <span class="pill pill-gray">Alter: ${safe(submission.age)} J.</span>
+      <span class="pill pill-gray">Geschlecht: ${safe(submission.gender)}</span>
+      <span class="pill pill-gray">Größe: ${safe(submission.height_cm)} cm</span>
+      <span class="pill pill-gray">Gewicht: ${safe(submission.weight_kg)} kg</span>
+      <span class="pill pill-gray">BMI: ${safe(submission.bmi)}</span>
+      ${bioAge ? `<span class="pill pill-green">Vitalitäts-Alter: ${bioAge} J.</span>` : ""}
+      ${goalLabel ? `<span class="pill pill-blue">🎯 ${goalLabel}</span>` : ""}
+      <span class="pill pill-gray">📅 ${createdDate}</span>
+    `;
+
+    document.getElementById("focusBadge").innerHTML =
+      `<span class="pill ${focus.cls}">${focus.label}</span>`;
+
+    document.getElementById("scoreLabel").textContent =
+      score.score_label || getScoreLabel(total);
+
+    // Vitalitäts-Alter
+    if (bioAge && submission.age) {
+      const diff = Number(submission.age) - Number(bioAge);
+      const bioCard = document.getElementById("bioAgeCard");
+      bioCard.style.display = "block";
+      document.getElementById("bioAgeDisplay").textContent = bioAge;
+      document.getElementById("bioAgeDiff").textContent = diff > 0
+        ? `${diff} Jahre jünger als kalendarisch (${submission.age} J.)`
+        : diff < 0
+        ? `${Math.abs(diff)} Jahre älter als kalendarisch (${submission.age} J.)`
+        : `Entspricht kalendarischem Alter (${submission.age} J.)`;
+    }
+
+    setTimeout(() => animateDashRing(total), 100);
+    renderRadar(areaScores);
+    renderAreaBars(areaScores, submission);
+    renderPriorities(score.top_priorities);
+    renderConsultingHints(score, areaScores);
+    renderTrainerGuide(score, areaScores);
+    renderAnswers(answers);
+    prepareRecheckDate();
+  }
+
+  function renderRadar(areaScores) {
+    const ctx = document.getElementById("radarChart");
+    if (radarChart) radarChart.destroy();
+    radarChart = new Chart(ctx, {
+      type: "radar",
+      data: {
+        labels: areaScores.map(a => a.area),
+        datasets: [{ label:"Vitalitäts-Profil", data: areaScores.map(a => Math.round(Number(a.score))), backgroundColor:"rgba(59,158,255,0.15)", borderColor:"#3b9eff", borderWidth:2.5, pointBackgroundColor:"#3b9eff", pointRadius:4 }]
+      },
+      options: {
+        scales: { r: { min:0, max:100, ticks:{ stepSize:25, color:"rgba(255,255,255,0.2)", font:{size:10}, backdropColor:"transparent" }, grid:{color:"rgba(255,255,255,0.06)"}, angleLines:{color:"rgba(255,255,255,0.06)"}, pointLabels:{color:"#8da0b8", font:{size:11,weight:"600"}} } },
+        plugins: { legend:{display:false} }, animation:{duration:800}
+      }
+    });
+  }
+
+  function renderAreaBars(areaScores, submission) {
+    const html = areaScores
+      .sort((a, b) => Number(a.score) - Number(b.score))
+      .map(area => {
+        const score = Math.round(Number(area.score));
+        const color = score >= 75 ? "var(--accent-green)" : score >= 55 ? "var(--accent-amber)" : "var(--accent-red)";
+        const icon = AREA_ICONS[area.key] || "●";
+        return `<div class="area-bar-row">
+          <div class="area-bar-label">${icon} ${area.area}</div>
+          <div class="area-bar-track"><div class="area-bar-fill" style="width:${score}%;background:${color};"></div></div>
+          <div class="area-bar-val" style="color:${color};">${score}</div>
+        </div>`;
+      }).join("");
+    document.getElementById("areaBars").innerHTML = html;
+  }
+
+  function renderPriorities(topPriorities) {
+    const priorities = Array.isArray(topPriorities) ? topPriorities
+      : typeof topPriorities === "object" ? Object.values(topPriorities) : [];
+    document.getElementById("topPriorities").innerHTML = priorities.length
+      ? priorities.map(item => {
+          const label = typeof item === "string" ? item : item.label || item.area_key || "Priorität";
+          const score = item.score !== undefined ? ` · Score: ${Math.round(Number(item.score))}` : "";
+          return `<li style="margin-bottom:6px;color:var(--text-secondary);">${label}${score}</li>`;
+        }).join("")
+      : "<li style='color:var(--text-muted);'>Keine Top-Prioritäten gespeichert.</li>";
+  }
+
+  function renderConsultingHints(score, areaScores) {
+    const hints = [];
+    if (score.doctor_hint) hints.push({ cls:"hint-red", text:"Ärztliche Abklärung behutsam empfehlen — einige Angaben zeigen stärkere Auffälligkeiten." });
+    if (score.bloodtest_hint) hints.push({ cls:"hint-amber", text:"Trockenbluttest kann sinnvoll sein — z.B. Vitamin D, Ferritin, Omega-3 oder B12 gezielt prüfen." });
+    if (score.coaching_hint) hints.push({ cls:"hint-green", text:"Coaching- oder Betreuungsgespräch anbieten — Trainingsplan oder Körperanalyse als Einstieg." });
+    areaScores.filter(a => Number(a.score) < 60).sort((a,b) => Number(a.score)-Number(b.score)).slice(0,3)
+      .forEach(a => hints.push({ cls:"hint-blue", text:`${a.area}: im Gespräch konkrete Maßnahmen besprechen (Score: ${Math.round(Number(a.score))}).` }));
+    if (!hints.length) hints.push({ cls:"hint-green", text:"Keine starken Auffälligkeiten. Ziele und nächste Schritte gemeinsam besprechen." });
+    hints.push({ cls:"hint-blue", text:"Hinweis: Diese Auswertung ersetzt keine medizinische Diagnose." });
+    document.getElementById("consultingHints").innerHTML = hints.map(h => `<div class="hint-box ${h.cls}">${h.text}</div>`).join("");
+  }
+
+  function renderTrainerGuide(score, areaScores) {
+    const weakAreas = areaScores.filter(a => Number(a.score) < 70).sort((a,b) => Number(a.score)-Number(b.score)).slice(0,3).map(a => a.area);
+    const guide = [];
+    if (weakAreas.length) guide.push(`<strong>Fokusbereiche ansprechen:</strong> ${weakAreas.join(", ")}`);
+    guide.push("Was ist aktuell die größte Belastung im Alltag?");
+    guide.push("Welche Veränderung wäre für die nächsten 7 Tage realistisch?");
+    guide.push("Welche Unterstützung erwartet der Teilnehmer vom Studio?");
+    if (score.bloodtest_hint) guide.push("Trockenbluttest als nächsten konkreten Schritt anbieten.");
+    if (score.doctor_hint) guide.push("Ärztliche Abklärung behutsam und einfühlsam ansprechen.");
+    guide.push("Re-Check in 4–8 Wochen vereinbaren und im Kalender fixieren.");
+    document.getElementById("trainerGuide").innerHTML = guide.map(g => `<div class="hint-box hint-blue" style="margin-bottom:8px;">${g}</div>`).join("");
+  }
+
+  function renderAnswers(answers) {
+    document.getElementById("answersTable").innerHTML = answers.map(row => `
+      <tr>
+        <td>${safe(row.area_key || row.questions?.area_key)}</td>
+        <td>${safe(row.questions?.question_text || row.question_key)}</td>
+        <td style="color:var(--text-primary);">${safe(row.answer_text)}</td>
+        <td>${safe(row.risk_points)}</td>
+      </tr>
+    `).join("") || `<tr><td colspan="4" style="color:var(--text-muted);">Keine Antworten gefunden.</td></tr>`;
+  }
+
+  function prepareRecheckDate() {
+    const date = new Date();
+    date.setDate(date.getDate() + 42);
+    document.getElementById("recheckDate").value = date.toISOString().split("T")[0];
+  }
+
+  // NEU: Echte Datenlöschung über Edge Function
+  function confirmDelete() {
+    if (!currentAnalysis) return alert("Bitte zuerst eine Analyse laden.");
+    const { submission, contact } = currentAnalysis;
+    const name = [contact?.first_name, contact?.last_name].filter(Boolean).join(" ") || "Kein Name angegeben";
+    const email = contact?.email || null;
+
+    document.getElementById("deleteModalInfo").innerHTML = `
+      <strong style="color:var(--text-primary);">Pilot-ID:</strong> ${submission.public_code}<br>
+      <strong style="color:var(--text-primary);">Name:</strong> ${name}<br>
+      <strong style="color:var(--text-primary);">E-Mail:</strong> ${email || "nicht angegeben"}<br>
+      <strong style="color:var(--text-primary);">Alter / BMI:</strong> ${submission.age} J. / BMI ${submission.bmi}
+    `;
+
+    // Checkbox nur anzeigen wenn E-Mail vorhanden
+    const emailRow = document.getElementById("deleteEmailRow");
+    const emailCheckbox = document.getElementById("sendConfirmationEmail");
+    if (email) {
+      emailRow.style.display = "block";
+      emailCheckbox.checked = true; // Standard: angehakt
+    } else {
+      emailRow.style.display = "none";
+      emailCheckbox.checked = false;
+    }
+
+    document.getElementById("deleteStatus").classList.add("hidden");
+    document.getElementById("confirmDeleteBtn").disabled = false;
+    document.getElementById("confirmDeleteBtn").textContent = "Ja, jetzt löschen";
+    document.getElementById("deleteModal").style.display = "flex";
+  }
+
+  function closeDeleteModal() {
+    document.getElementById("deleteModal").style.display = "none";
+  }
+
+  async function executeDelete() {
+    if (!currentAnalysis) return;
+    const { submission } = currentAnalysis;
+    const btn = document.getElementById("confirmDeleteBtn");
+    const statusEl = document.getElementById("deleteStatus");
+
+    btn.disabled = true;
+    btn.textContent = "Löschung läuft…";
+    statusEl.className = "status status-info";
+    statusEl.textContent = "Daten werden gelöscht…";
+    statusEl.classList.remove("hidden");
+
+    try {
+      const sendEmail = document.getElementById("sendConfirmationEmail")?.checked || false;
+
+      const response = await fetch(FUNCTION_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` },
+        body: JSON.stringify({ mode: "delete_submission", public_code: submission.public_code, send_confirmation_email: sendEmail })
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        const emailNote = sendEmail
+          ? (result.email_sent ? " · Bestätigungsmail gesendet." : " · Bestätigungsmail konnte nicht gesendet werden.")
+          : "";
+        statusEl.className = "status status-success";
+        statusEl.textContent = `✓ Alle Daten für ${submission.public_code} wurden erfolgreich gelöscht.${emailNote}`;
+        btn.textContent = "Gelöscht";
+
+        // Analyseansicht nach 2 Sekunden leeren
+        setTimeout(() => {
+          closeDeleteModal();
+          document.getElementById("analysisSection").classList.add("hidden");
+          document.getElementById("projectCode").value = "";
+          currentAnalysis = null;
+          showStatus("singleStatus", `Daten für ${submission.public_code} wurden erfolgreich gelöscht.`, "success");
+        }, 2000);
+      } else {
+        statusEl.className = "status status-error";
+        statusEl.textContent = `Fehler: ${result.error || "Unbekannter Fehler"}`;
+        btn.disabled = false;
+        btn.textContent = "Erneut versuchen";
+      }
+    } catch (err) {
+      statusEl.className = "status status-error";
+      statusEl.textContent = `Verbindungsfehler: ${err.message}`;
+      btn.disabled = false;
+      btn.textContent = "Erneut versuchen";
+    }
+  }
+
+  // Klick außerhalb des Modals schließt es
+  document.addEventListener("click", (e) => {
+    const modal = document.getElementById("deleteModal");
+    if (modal && modal.style.display === "flex" && e.target === modal) {
+      closeDeleteModal();
+    }
+  });
+
+  function copyTrainerNote() {
+    hideStatus("copyStatus");
+    if (!currentAnalysis) return showStatus("copyStatus", "Bitte zuerst eine Analyse laden.", "error");
+    const { submission, score, contact, focus } = currentAnalysis;
+    const action = document.getElementById("nextAction").value.trim();
+    const recheck = document.getElementById("recheckDate").value;
+    const bioAge = score.bio_age;
+    const goalLabel = GOAL_LABELS[submission.goal_key] || "–";
+    const createdDate = submission.created_at
+      ? new Date(submission.created_at).toLocaleDateString("de-DE") : "–";
+
+    const note = `
+LeVITA Vital-Check — Trainer-Notiz
+
+Pilot-ID: ${submission.public_code}
+Datum der Auswertung: ${createdDate}
+Name: ${safe(contact?.first_name)} ${safe(contact?.last_name, "")}
+E-Mail: ${safe(contact?.email)}
+Alter: ${safe(submission.age)} J. | Geschlecht: ${safe(submission.gender)} | Größe: ${safe(submission.height_cm)} cm | Gewicht: ${safe(submission.weight_kg)} kg | BMI: ${safe(submission.bmi)}
+Ziel: ${goalLabel}
+${bioAge ? `Vitalitäts-Alter: ${bioAge} Jahre (Orientierungswert aus Lebensstilantworten)` : ""}
+
+Vitalitätsindex: ${Math.round(Number(score.total_score || 0))}/100
+Beratungsfokus: ${focus.label}
+
+Vereinbarte Maßnahme:
+${action || "Noch nicht festgelegt"}
+
+Empfohlener Re-Check:
+${recheck || "in 4–8 Wochen"}
+
+Hinweis: Diese Auswertung dient der allgemeinen Vitalitäts- und Präventionsberatung
+und ersetzt keine medizinische Diagnose.
+    `.trim();
+
+    navigator.clipboard.writeText(note)
+      .then(() => showStatus("copyStatus", "Trainer-Notiz wurde kopiert.", "success"))
+      .catch(() => showStatus("copyStatus", "Kopieren nicht möglich — bitte Text manuell markieren.", "error"));
+  }
+
+  /* ── STUDIO OVERVIEW ── */
+  async function loadStudioOverview() {
+    hideStatus("overviewStatus");
+    showStatus("overviewStatus", "Übersicht wird geladen …", "info");
+    try {
+      const { data: submissions } = await supabaseClient.from("submissions").select("*").limit(500);
+      const { data: scores } = await supabaseClient.from("submission_scores").select("*").limit(500);
+      const { data: answers } = await supabaseClient.from("submission_answers").select("*").limit(5000);
+      const { data: contacts } = await supabaseClient.from("submission_contacts").select("*").limit(500);
+
+      const completed = submissions || [];
+      const scoreRows = scores || [];
+      const answerRows = answers || [];
+      const contactRows = contacts || [];
+
+      const contactMap = {};
+      contactRows.forEach(c => contactMap[c.submission_id] = c);
+      const submissionMap = {};
+      completed.forEach(s => submissionMap[s.id] = s);
+
+      const avgScore = scoreRows.length
+        ? Math.round(scoreRows.reduce((s,r) => s + Number(r.total_score||0), 0) / scoreRows.length) : "–";
+
+      const bioAges = scoreRows.filter(r => r.bio_age).map(r => Number(r.bio_age));
+      const avgBioAge = bioAges.length
+        ? Math.round(bioAges.reduce((s,v) => s+v, 0) / bioAges.length) : "–";
+
+      const burdenMap = {};
+      answerRows.forEach(r => {
+        if (Number(r.risk_points||0) >= 2) {
+          const area = r.area_key || "Allgemein";
+          burdenMap[area] = (burdenMap[area]||0) + 1;
+        }
+      });
+      const burdenList = Object.entries(burdenMap).map(([area,count]) => ({area,count})).sort((a,b) => b.count-a.count);
+
+      const consultingNeeds = scoreRows.map(row => {
+        const submission = submissionMap[row.submission_id];
+        const contact = contactMap[row.submission_id];
+        const areaScores = extractAreaScores(row.score_payload);
+        const focus = focusLevel(Number(row.total_score||0), row, areaScores);
+        const weakest = [...areaScores].sort((a,b) => Number(a.score)-Number(b.score))[0];
+        return { row, submission, contact, focus, weakest };
+      }).filter(item => item.submission && (
+        Number(item.row.total_score||0) < 60 ||
+        item.row.doctor_hint || item.row.bloodtest_hint || item.row.coaching_hint ||
+        Number(item.weakest?.score||100) < 50
+      )).sort((a,b) => Number(a.row.total_score||0)-Number(b.row.total_score||0));
+
+      document.getElementById("kpiCompleted").textContent = completed.length;
+      document.getElementById("kpiAverageScore").textContent = avgScore;
+      document.getElementById("kpiBioAge").textContent = avgBioAge;
+      document.getElementById("kpiConsulting").textContent = consultingNeeds.length;
+      document.getElementById("kpiTopBurden").textContent = burdenList[0]?.area || "–";
+
+      document.getElementById("burdenList").innerHTML = burdenList.length
+        ? burdenList.slice(0,5).map(b => `<li>${b.area}: ${b.count} Auffälligkeiten</li>`).join("")
+        : "<li style='color:var(--text-muted);'>Noch keine Belastungsschwerpunkte erkannt.</li>";
+
+      document.getElementById("consultingTable").innerHTML = consultingNeeds.length
+        ? consultingNeeds.slice(0,10).map(item => {
+            const createdDate = item.submission.created_at
+              ? new Date(item.submission.created_at).toLocaleDateString("de-DE") : "–";
+            return `<tr>
+              <td style="color:var(--text-primary);font-weight:600;">${safe(item.submission.public_code)}<br><small style="color:var(--text-muted);font-weight:400;">${createdDate}</small></td>
+              <td>${safe(item.contact?.first_name)} ${safe(item.contact?.last_name,"")}</td>
+              <td style="color:${getScoreColor(Number(item.row.total_score||0))};font-weight:700;">${Math.round(Number(item.row.total_score||0))}</td>
+              <td>${item.row.bio_age ? `<span class="pill pill-green">${item.row.bio_age} J.</span>` : "–"}</td>
+              <td><span class="pill ${item.focus.cls==="pill-red"?"pill-red":item.focus.cls==="pill-amber"?"pill-amber":"pill-green"}">${item.focus.label}</span></td>
+              <td><button class="btn-small" onclick="openAnalysis('${item.submission.public_code}')">Öffnen</button></td>
+            </tr>`;
+          }).join("")
+        : `<tr><td colspan="6" style="color:var(--text-muted);">Aktuell keine priorisierten Beratungsfälle.</td></tr>`;
+
+      showStatus("overviewStatus", "Übersicht erfolgreich aktualisiert.", "success");
+    } catch (err) {
+      showStatus("overviewStatus", "Fehler beim Laden: " + err.message, "error");
+    }
+  }
+
+  function openAnalysis(publicCode) {
+    document.getElementById("projectCode").value = publicCode;
+    loadSingleAnalysis();
+  }
+
+  document.getElementById("projectCode").addEventListener("keydown", e => {
+    if (e.key === "Enter") loadSingleAnalysis();
+  });
+
+  // Auto-load nur wenn Session bereits authentifiziert
+  if (sessionStorage.getItem("dashboard_auth") === "1") {
+    loadStudioOverview();
+  }
+</script>
+</body>
+</html>
