@@ -535,6 +535,24 @@
         }
       }
 
+      // NEU: muscle_cramps einblenden wenn strength_training = "a" oder "b"
+      if (currentQ?.question_key === "strength_training") {
+        const triggerKeys = ["a", "b"];
+        const shouldShow = triggerKeys.includes(optionKey);
+        const hasCramps = groupedQuestions.some(q => q.question_key === "muscle_cramps");
+        if (shouldShow && !hasCramps) {
+          const crampsQ = questions.find(q => q.question_key === "muscle_cramps");
+          if (crampsQ) {
+            const strengthIdx = groupedQuestions.findIndex(q => q.question_key === "strength_training");
+            groupedQuestions.splice(strengthIdx + 1, 0, crampsQ);
+            buildSteps(currentStep);
+          }
+        } else if (!shouldShow && hasCramps) {
+          groupedQuestions = groupedQuestions.filter(q => q.question_key !== "muscle_cramps");
+          buildSteps(currentStep);
+        }
+      }
+
       // NEU: social_connection einblenden wenn low_mood ODER low_interest = c/d/e
       if (currentQ?.question_key === "low_mood" || currentQ?.question_key === "low_interest") {
         const triggerKeys = ["c", "d", "e"];
@@ -585,6 +603,18 @@
         if (supplTypes) {
           const usageIdx = groupedQuestions.findIndex(q => q.question_key === "supplement_usage");
           groupedQuestions.splice(usageIdx + 1, 0, supplTypes);
+          buildSteps(currentStep);
+        }
+      }
+    }
+    // NEU: muscle_cramps wiederherstellen wenn zurück zu strength_training
+    if (backQ?.question_key === "strength_training") {
+      const hasCramps = groupedQuestions.some(q => q.question_key === "muscle_cramps");
+      if (!hasCramps) {
+        const crampsQ = questions.find(q => q.question_key === "muscle_cramps");
+        if (crampsQ) {
+          const strengthIdx = groupedQuestions.findIndex(q => q.question_key === "strength_training");
+          groupedQuestions.splice(strengthIdx + 1, 0, crampsQ);
           buildSteps(currentStep);
         }
       }
