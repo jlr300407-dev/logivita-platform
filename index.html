@@ -1153,15 +1153,17 @@
       else if (key.includes("nutrition_first") || key.includes("ernaehrung")) {
         hints.push(`<strong>Ernährung zuerst</strong> — viele Nährstoffdefizite lassen sich über gezielte Ernährungsoptimierung lösen. Das Bundesinstitut für Risikobewertung bestätigt: Bei ausgewogener Ernährung sind Supplements in der Regel nicht nötig.`);
       }
-      // Fallback für unbekannte Regeln — Kreatin bei Minderjährigen und doctor_hint blockieren
+      // Fallback für unbekannte Regeln — Kreatin nur bei vegan/vegetarisch + Kontraindikationen prüfen
       else if (item.label) {
         const labelLower = item.label.toLowerCase();
         const userAge = result?.submission?.age ? Number(result.submission.age) : 99;
         const doctorHint = result?.score?.doctor_hint === true;
         const bmiLow = bmiNum < 18.5;
         // Kreatin NIE bei Alter < 18, BMI < 18.5 oder doctor_hint
-        if ((labelLower.includes("creatin") || labelLower.includes("kreatin")) && (userAge < 18 || bmiLow || doctorHint)) {
-          return; // Kreatin überspringen
+        if (labelLower.includes("creatin") || labelLower.includes("kreatin")) {
+          if (userAge < 18 || bmiLow || doctorHint) return;
+          // Kreatin NUR bei veganer oder vegetarischer Ernährung
+          if (!isVeganFinal && !isVegetarianFinal) return;
         }
         hints.push(`<strong>${item.label}</strong>${reason ? ` — ${reason}` : ""}.`);
       }
