@@ -1240,8 +1240,9 @@
     // Trockenbluttest nur zeigen wenn nicht schon in Support-Box angezeigt
     if (score.bloodtest_hint && !bloodtestShown) html += `<div class="hint-box box-warning"><strong>💉 Hinweis: Trockenbluttest</strong><br>Aufgrund deiner Angaben könnte ein Trockenbluttest zusätzliche Hinweise liefern, um deine Nährstoffversorgung gezielter einzuordnen — z.B. Vitamin D, Ferritin, Omega-3 oder Vitamin B12.<br><br><a href="mailto:info@le-vita.com?subject=Trockenbluttest%20anfragen" style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Trockenbluttest besprechen →</a></div>`;
 
-    /* NEU: coaching_hint goal_key-basiert statt generisch */
-    if (score.coaching_hint && !bmiIsLow) {
+    /* CTA immer anzeigen wenn goal_key gesetzt — coaching_hint ist DB-Flag, goal_key reicht als Trigger */
+    const showCTA = (score.coaching_hint || goalKey) && !bmiIsLow;
+    if (showCTA) {
       const gk = goalKey || "";
       let coachingText = "";
       if (gk === "goal_longevity") {
