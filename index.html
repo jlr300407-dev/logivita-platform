@@ -376,8 +376,8 @@
           <div style="display:flex;align-items:center;gap:10px;text-align:left;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:var(--radius-sm);border:1px solid var(--border);">
             <span style="font-size:18px;flex-shrink:0;">🔒</span>
             <div>
-              <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Deine Daten sind sicher</div>
-              <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Alle Angaben werden DSGVO-konform verarbeitet. Du entscheidest, was gespeichert wird.</div>
+              <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Datenschutz bewusst umgesetzt</div>
+              <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Deine Angaben werden gemäß unseren Datenschutzhinweisen verarbeitet. Du entscheidest separat, ob du eine KI-gestützte E-Mail-Auswertung anforderst.</div>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;text-align:left;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:var(--radius-sm);border:1px solid var(--border);">
@@ -453,7 +453,7 @@
         </div>
         <div class="checkbox-row">
           <input type="checkbox" id="consent_privacy" />
-          <label for="consent_privacy">Ich habe die Datenschutzhinweise gelesen und verstanden.</label>
+          <label for="consent_privacy">Ich habe die <a href="https://www.le-vita.com/datenschutz" target="_blank" style="color:var(--accent-green);text-decoration:underline;">Datenschutzhinweise</a> gelesen und verstanden.</label>
         </div>
         <div class="checkbox-row">
           <input type="checkbox" id="consent_storage" />
@@ -728,7 +728,7 @@
       }
     } catch (error) {
       clearTimeout(hintTimer);
-      statusEl.innerHTML = `<div class="status-msg info-box box-warning">Die Verbindung hat etwas länger gedauert — deine Auswertung wird aber trotzdem erstellt.<br><strong>Schau in den nächsten Minuten in dein Postfach.</strong><br><small style="color:var(--text-muted);">Falls keine E-Mail ankommt, versuche es nochmals.</small></div>`;
+      statusEl.innerHTML = `<div class="status-msg info-box box-warning">Die Verbindung hat etwas länger gedauert — es ist nicht sicher, ob die Anfrage angekommen ist.<br><strong>Bitte prüfe dein Postfach in den nächsten Minuten.</strong><br><small style="color:var(--text-muted);">Falls keine E-Mail ankommt, versuche es erneut oder melde dich bei uns: info@le-vita.com</small></div>`;
       btn.disabled = false;
       btn.innerText = "Individuelle Auswertung per E-Mail anfordern →";
     }
@@ -761,7 +761,8 @@
       personalData.weight_kg = result.submission.weight_kg || personalData.weight_kg;
       personalData.goal_key = result.submission.goal_key || personalData.goal_key;
     }
-    // Frontend-Korrektur: score_label vom Backend kann bei Grenzwert 85 falsch sein
+    // TODO V1-Fix: score_label vom Backend bei Grenzwert 85 korrigieren (Supabase RPC)
+    // Frontend-Workaround aktiv bis Backend gefixt ist — danach diese Zeilen entfernen
     const correctedScoreLabel = totalScore >= 85 ? "Vital & Stabil"
       : totalScore >= 70 ? "Aktiv mit Momentum"
       : totalScore >= 55 ? "Auf dem Weg"
@@ -902,7 +903,13 @@
       </div>`;
 
     html += `<div class="disclaimer"><strong>Wichtiger Hinweis:</strong> Diese Auswertung ist keine Diagnose und ersetzt keine medizinische Beratung. Sie dient der Orientierung und Hilfe zur Selbsthilfe. Die Schwerpunkte basieren auf Empfehlungen von WHO, DGE und dem Bundesinstitut für Risikobewertung.<br><br>powered by <strong>LogiVita</strong></div>`;
-    html += `<button class="danger-btn" onclick="resetVitalCheck()">Neue Eingabe starten / Formular zurücksetzen</button>`;
+
+    html += `
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+        <button class="next-btn" onclick="window.print()" style="background:rgba(255,255,255,0.07);color:var(--text-secondary);border:1px solid var(--border);">📄 Auswertung als PDF speichern</button>
+        <button class="danger-btn" onclick="resetVitalCheck()">🔄 Neue Eingabe starten</button>
+        <button onclick="deletMyData()" style="background:none;border:1px solid rgba(255,92,92,0.3);color:#ff5c5c;border-radius:var(--radius-sm);padding:12px 20px;font-size:13px;font-weight:600;cursor:pointer;width:100%;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,92,92,0.1)'" onmouseout="this.style.background='none'">🗑 Meine gespeicherten Daten löschen</button>
+      </div>`;
     return html;
   }
 
@@ -1117,9 +1124,9 @@
       if (key.includes("jod") || key.includes("iod")) {
         hints.push(`<strong>Jod</strong> — bei vegetarischer Ernährung ohne Fisch oft unterschätzt. Jodiertes Speisesalz konsequent verwenden ist die einfachste Lösung.`);
       }
-      // B12 — bei vegan zwingend
+      // B12 — bei vegan: DGE-Empfehlung sachlich
       else if (key.includes("b12") && isVeganFinal) {
-        hints.push(`<strong>Vitamin B12</strong> — bei veganer Ernährung zwingend ergänzen. Das ist die eine klare Empfehlung der DGE, die keine Ausnahme kennt.`);
+        hints.push(`<strong>Vitamin B12</strong> — bei veganer Ernährung empfiehlt die DGE nach aktuellem Kenntnisstand eine zuverlässige Ergänzung, da pflanzliche Lebensmittel kein verwertbares B12 liefern. Eine Blutwertkontrolle gibt zusätzliche Orientierung.`);
       }
       // B12 — bei vegetarisch nur bei Symptomen
       else if (key.includes("b12") && isVegetarianFinal) {
@@ -1188,11 +1195,15 @@
       { key:"lifestyle",      max:75, bmiLowSafe:true,  text:"Alkohol oder Nikotin können Schlaf und Regeneration beeinflussen. Ein bewusster Testtag hilft, den eigenen Zusammenhang besser zu erkennen." }
     ];
 
-    // Prüfen ob rule_nutrition_first bereits in suppFocus — dann Ernährungs-Fallback überspringen
-    const hasNutritionFirst = suppFocus.some(item =>
-      (item.rule_key || "").toLowerCase().includes("nutrition_first") ||
-      (item.rule_key || "").toLowerCase().includes("ernaehrung")
-    );
+    // Prüfen ob Ernährungs-Hinweis bereits in suppFocus — dann Fallback überspringen
+    // Prüft sowohl rule_key als auch supplement_label (Label wurde auf "Ernährung zuerst optimieren" gesetzt)
+    const hasNutritionFirst = suppFocus.some(item => {
+      const key = (item.rule_key || "").toLowerCase();
+      const label = (item.label || item.supplement_label || "").toLowerCase();
+      return key.includes("nutrition_first") || key.includes("ernaehrung") ||
+             key.includes("rule_nutrition") || label.includes("ernährung zuerst") ||
+             label.includes("ernaehrung zuerst");
+    });
     const hasNutritionHint = hasNutritionFirst || hints.some(h =>
       h.includes("Ernährung zuerst") ||
       h.includes("Nährstoffdefizite lassen sich über gezielte Ernährung")
@@ -1227,24 +1238,24 @@
     const bmiNum = Number(bmi);
     const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
     // Trockenbluttest nur zeigen wenn nicht schon in Support-Box angezeigt
-    if (score.bloodtest_hint && !bloodtestShown) html += `<div class="hint-box box-warning"><strong>💉 Hinweis: Trockenbluttest</strong><br>Aufgrund deiner Angaben könnte ein Trockenbluttest zusätzliche Hinweise liefern, um deine Vitalität und Mikronährstoffversorgung gezielter einzuordnen — z.B. Vitamin D, Ferritin, Omega-3 oder Vitamin B12. Im LeVITA Gesundheitsstudio besteht hierfür ein passendes Angebot.</div>`;
+    if (score.bloodtest_hint && !bloodtestShown) html += `<div class="hint-box box-warning"><strong>💉 Hinweis: Trockenbluttest</strong><br>Aufgrund deiner Angaben könnte ein Trockenbluttest zusätzliche Hinweise liefern, um deine Nährstoffversorgung gezielter einzuordnen — z.B. Vitamin D, Ferritin, Omega-3 oder Vitamin B12.<br><br><a href="mailto:info@le-vita.com?subject=Trockenbluttest%20anfragen" style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Trockenbluttest besprechen →</a></div>`;
 
     /* NEU: coaching_hint goal_key-basiert statt generisch */
     if (score.coaching_hint && !bmiIsLow) {
       const gk = goalKey || "";
       let coachingText = "";
       if (gk === "goal_longevity") {
-        coachingText = `🌿 <strong>Longevity-Einstieg</strong><br>Eine Körperanalyse und ein Trockenbluttest geben dir konkrete Werte — Muskelmasse, Biomarker, Vitalitäts-Alter im Vergleich. Die Präventionskurse §20 im LeVITA Studio sind speziell dafür gemacht und werden von vielen Krankenkassen bezuschusst.`;
+        coachingText = `🌿 <strong>Longevity-Einstieg</strong><br>Eine Körperanalyse und ein Trockenbluttest geben dir konkrete Werte — Muskelmasse, Biomarker, Vitalitäts-Alter im Vergleich. Die Präventionskurse §20 im LeVITA Studio sind speziell dafür gemacht und werden von vielen Krankenkassen bezuschusst.<br><br><a href="https://www.le-vita.com/praeventionskurse-gemuenden-wohra" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">§20-Kurs ansehen →</a>`;
       } else if (gk === "goal_prevention") {
-        coachingText = `🛡️ <strong>Prävention mit Plan</strong><br>Unsere Präventionskurse §20 helfen dir, gezielt an deiner Gesundheit zu arbeiten — strukturiert, betreut und von vielen Krankenkassen bezuschusst.`;
+        coachingText = `🛡️ <strong>Prävention mit Plan</strong><br>Unsere Präventionskurse §20 helfen dir, gezielt an deiner Gesundheit zu arbeiten — strukturiert, betreut und von vielen Krankenkassen bezuschusst.<br><br><a href="https://www.le-vita.com/praeventionskurse-gemuenden-wohra" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">§20-Kurs ansehen →</a>`;
       } else if (gk === "goal_fitness") {
-        coachingText = `💪 <strong>Probetraining</strong><br>Ein kostenloser Einstieg ins LeVITA — unverbindlich, mit Trainer-Begleitung. Mit anderen macht Bewegung mehr Spaß und man bleibt dabei.`;
+        coachingText = `💪 <strong>Probetraining</strong><br>Ein kostenloser Einstieg ins LeVITA — unverbindlich, mit Trainer-Begleitung. Mit anderen macht Bewegung mehr Spaß und man bleibt dabei.<br><br><a href="https://www.le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Probetraining anfragen →</a>`;
       } else if (gk === "goal_weight") {
-        coachingText = `⚖️ <strong>Figur & Abnehmen</strong><br>Betreutes Training kombiniert mit Ernährungsberatung im LeVITA — ein kostenloser Einstieg zeigt dir wie es funktioniert.`;
+        coachingText = `⚖️ <strong>Figur & Abnehmen</strong><br>Betreutes Training kombiniert mit Ernährungsberatung im LeVITA — ein kostenloser Einstieg zeigt dir wie es funktioniert.<br><br><a href="https://www.le-vita.com/abnehmen-ernaehrung-und-fitness-gemuenden-wohra" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Mehr erfahren →</a>`;
       } else if (gk === "goal_energy") {
-        coachingText = `⚡ <strong>Energie & Regeneration</strong><br>VELUS JET® Wellness im LeVITA — gezielt für Entspannung, Regeneration und neue Energie im Alltag.`;
+        coachingText = `⚡ <strong>Energie & Regeneration</strong><br>VELUS JET® Wellness im LeVITA — gezielt für Entspannung, Regeneration und neue Energie im Alltag.<br><br><a href="https://www.le-vita.com/gesundheit-gemuenden-wohra-velus-jet-venen-engel" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">VELUS JET kennenlernen →</a>`;
       } else {
-        coachingText = `🤝 <strong>Persönlicher nächster Schritt</strong><br>Ein kostenloses Orientierungsgespräch, ein betreuter Trainingsplan oder eine Körperanalyse — alles unter einem Dach im LeVITA Studio Gemünden.`;
+        coachingText = `🤝 <strong>Kostenloses Orientierungsgespräch</strong><br>Ein kostenloses Gespräch, ein betreuter Trainingsplan oder eine Körperanalyse — alles unter einem Dach im LeVITA Studio Gemünden.<br><br><a href="mailto:info@le-vita.com?subject=Orientierungsgespräch%20Vital-Check" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Gespräch anfragen →</a>`;
       }
       html += `<div class="hint-box box-success">${coachingText}</div>`;
     }
@@ -1286,6 +1297,47 @@
   }
 
   function openGoogleForm() { window.open(GOOGLE_FORM_URL, "_blank"); }
+
+  async function deletMyData() {
+    if (!latestResult?.public_code) {
+      alert("Keine aktive Auswertung gefunden. Bitte lade die Seite neu oder wende dich an info@le-vita.com mit deiner Pilot-ID.");
+      return;
+    }
+    const confirmed = confirm(
+      `Möchtest du wirklich alle gespeicherten Daten zu Pilot-ID ${latestResult.public_code} löschen?\n\n` +
+      `Folgende Daten werden sofort gelöscht:\n` +
+      `- Deine Antworten und Angaben\n` +
+      `- Dein Score und alle Bereichswerte\n` +
+      `- Deine Kontaktdaten\n` +
+      `- Deine KI-Auswertung\n\n` +
+      `Das E-Mail-Protokoll wird innerhalb von 30 Tagen entfernt.\n\n` +
+      `Diese Aktion kann nicht rückgängig gemacht werden.`
+    );
+    if (!confirmed) return;
+
+    try {
+      const deleteBtn = document.querySelector('[onclick="deletMyData()"]');
+      if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.textContent = "⏳ Wird gelöscht…"; }
+
+      const result = await callFunction({
+        mode: "delete_submission",
+        public_code: latestResult.public_code,
+        send_confirmation_email: true
+      });
+
+      if (result?.success) {
+        alert(`✓ Deine Daten wurden erfolgreich gelöscht.\n\nFalls eine E-Mail-Adresse hinterlegt war, erhältst du eine Bestätigung.\n\nDu wirst jetzt zur Startseite weitergeleitet.`);
+        resetVitalCheck();
+      } else {
+        alert("Beim Löschen ist ein Fehler aufgetreten. Bitte wende dich an info@le-vita.com mit deiner Pilot-ID: " + latestResult.public_code);
+        if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = "🗑 Meine gespeicherten Daten löschen"; }
+      }
+    } catch (err) {
+      console.error("Löschfehler:", err);
+      alert("Verbindungsfehler. Bitte versuche es erneut oder kontaktiere uns: info@le-vita.com");
+    }
+  }
+
 
   function resetVitalCheck() {
     if (!confirm("Möchtest du wirklich alle Eingaben zurücksetzen? Bereits übermittelte Daten in der Datenbank werden nicht gelöscht.")) return;
