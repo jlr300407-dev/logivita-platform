@@ -1382,14 +1382,121 @@
     return { html, bloodtestShown };
   }
 
-  /* NEU: renderHintBoxes mit goal_key-basiertem coaching_hint */
+  /* renderHintBoxes — vollständige Sicherheits- und Wellness-Hinweise */
   function renderHintBoxes(score, bmi, goalKey, bloodtestShown = false) {
     let html = "";
     const bmiNum = Number(bmi);
     const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
+    const answers = latestResult?.answers || [];
 
-    // Trockenbluttest-Trigger: DB-Flag ODER Frontend-Fallback (spiegelt Edge Function Logik)
-    // bloodtestRelevant in Edge Function: bloodtest_hint || lifestyle < 50 || BMI ≥ 28 + Vit.D < 80 || Alter ≥ 65
+    const getAnswer = (key) => answers.find(a => a.question_key === key);
+    const getRisk = (key) => Number(getAnswer(key)?.risk_points || 0);
+
+    // ── 1. GEWICHTSVERLUST + APPETIT (kritisch)
+    const weightRisk = getRisk("unintentional_weight_loss");
+    const appetiteRisk = getRisk("appetite_change");
+    if (weightRisk >= 3 || appetiteRisk >= 3 || (weightRisk >= 2 && appetiteRisk >= 2)) {
+      html += `<div class="hint-box" style="background:rgba(255,92,92,0.08);border:1px solid rgba(255,92,92,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;">
+        <strong style="color:#ff8a8a;">⚠️ Körpergewicht &amp; Appetit</strong><br>
+        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+          Du hast ungewollten Gewichtsverlust oder deutliche Veränderungen beim Appetit angegeben.
+          Diese Signale sind es wert, mit einem Arzt zu besprechen — besonders wenn sie länger anhalten.
+          Die individuelle E-Mail-Auswertung gibt dir weitere Orientierung.
+        </span>
+      </div>`;
+    }
+
+    // ── 2. TAGESMÜDIGKEIT (Schlafapnoe-Signal)
+    if (getRisk("daytime_sleepiness") >= 3) {
+      html += `<div class="hint-box" style="background:rgba(255,160,0,0.08);border:1px solid rgba(255,160,0,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;">
+        <strong style="color:#ffb347;">😴 Starke Tagesmüdigkeit</strong><br>
+        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+          Du fühlst dich häufig oder täglich tagsüber müde — auch wenn du nachts schläfst.
+          Das kann ein Hinweis auf unruhigen Schlaf oder andere Faktoren sein.
+          Ein Gespräch mit dem Arzt oder eine Schlafanalyse kann Klarheit bringen.
+        </span>
+      </div>`;
+    }
+
+    // ── 3. CHRONISCHER STRESS
+    if (getRisk("stress_level") >= 3) {
+      html += `<div class="hint-box" style="background:rgba(255,160,0,0.08);border:1px solid rgba(255,160,0,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;">
+        <strong style="color:#ffb347;">🧠 Hoher Stresslevel</strong><br>
+        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+          Du gibst einen hohen oder sehr hohen Stresslevel an. Chronischer Stress wirkt sich
+          langfristig auf Schlaf, Immunsystem und Herzgesundheit aus — einer der wichtigsten
+          Hebel für deine Vitalität.
+        </span><br><br>
+        <a href="https://www.le-vita.com/gesundheit-gemuenden-wohra-velus-jet-venen-engel" target="_blank"
+           style="display:inline-block;padding:9px 20px;background:rgba(255,160,0,0.15);color:#ffb347;border:1px solid rgba(255,160,0,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">
+          Entspannung &amp; Regeneration →
+        </a>
+      </div>`;
+    }
+
+    // ── 4. SCHWINDEL / BLASSE NÄGEL (Mangelzeichen)
+    if (getRisk("dizziness_pale_nails") >= 3 && !bloodtestShown) {
+      html += `<div class="hint-box box-warning" style="margin-bottom:12px;">
+        <strong>💉 Mögliche Mangelzeichen</strong><br>
+        <span style="font-size:13px;line-height:1.6;">
+          Du hast häufigen Schwindel oder blasse Nägel angegeben — das können Hinweise auf
+          Nährstoffmangel sein (z.B. Eisen oder B12). Ein Trockenbluttest gibt hier konkrete Werte.
+        </span><br><br>
+        <a href="mailto:info@le-vita.com?subject=Trockenbluttest%20anfragen"
+           style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">
+          Trockenbluttest besprechen →
+        </a>
+      </div>`;
+    }
+
+    // ── 5. EINSCHLAFSCHWIERIGKEITEN > 1 Stunde
+    if (getRisk("sleep_latency") >= 3) {
+      html += `<div class="hint-box" style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;">
+        <strong style="color:#a78bfa;">🌙 Starke Einschlafschwierigkeiten</strong><br>
+        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+          Mehr als eine Stunde zum Einschlafen zu brauchen ist ein relevantes Signal.
+          Häufig stecken Stress, Bildschirmzeit oder ein unregelmäßiger Rhythmus dahinter —
+          manchmal auch andere Faktoren. Die E-Mail-Auswertung gibt dir konkrete Tipps.
+        </span>
+      </div>`;
+    }
+
+    // ── 6. NIKOTIN täglich/regelmäßig
+    if (getRisk("nicotine_use") >= 3) {
+      html += `<div class="hint-box" style="background:rgba(255,92,92,0.06);border:1px solid rgba(255,92,92,0.2);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;">
+        <strong style="color:#ff8a8a;">🚬 Nikotin &amp; Gesundheit</strong><br>
+        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+          Regelmäßiger Nikotinkonsum ist einer der stärksten beeinflussbaren Risikofaktoren
+          für Herz, Gefäße und Lunge. Jede Reduktion zählt — auch kleine Schritte wirken.
+          Sprich uns gerne an wenn du Unterstützung möchtest.
+        </span>
+      </div>`;
+    }
+
+    // ── 7. MENTALES WOHLBEFINDEN
+    const lowInterest = getAnswer("low_interest");
+    const lowMood = getAnswer("low_mood");
+    const isCriticalMood = (a) => a?.answer_text &&
+      (a.answer_text.includes("Hälfte") || a.answer_text.includes("Fast täglich") ||
+       a.answer_text.includes("Jeden Tag") || Number(a.risk_points) >= 2);
+
+    if (isCriticalMood(lowInterest) || isCriticalMood(lowMood)) {
+      html += `<div class="hint-box" style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;">
+        <strong style="color:#a78bfa;">🌱 Mentales Wohlbefinden</strong><br>
+        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+          Deine Angaben zeigen, dass du an manchen Tagen weniger Freude oder Energie empfindest
+          als du dir wünschen würdest. Das ist ein Signal das es wert ist, aufmerksam zu bleiben —
+          manchmal helfen kleine Alltagsveränderungen, manchmal ist ein Gespräch mit jemandem
+          dem du vertraust der beste nächste Schritt.
+        </span><br><br>
+        <a href="https://www.le-vita.com/gesundheit-gemuenden-wohra-velus-jet-venen-engel" target="_blank"
+           style="display:inline-block;padding:9px 20px;background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">
+          Gespräch oder Entspannung anfragen →
+        </a>
+      </div>`;
+    }
+
+    // ── TROCKENBLUTTEST
     const lifestyleScore = score.score_payload?.lifestyle?.score
       ? Number(score.score_payload.lifestyle.score) : 100;
     const vitaminDScore = score.score_payload?.vitamin_d?.score
@@ -1398,28 +1505,28 @@
       || lifestyleScore < 50
       || (bmiNum >= 28 && vitaminDScore < 80);
 
-    if (frontendBloodtestRelevant && !bloodtestShown) {
+    if (frontendBloodtestRelevant && !bloodtestShown && getRisk("dizziness_pale_nails") < 3) {
       const btReason = lifestyleScore < 50 && !score.bloodtest_hint
         ? "Regelmäßiger Alkohol- oder Nikotinkonsum kann bestimmte Nährstoffwerte beeinflussen — ein gezielter Test gibt Klarheit."
         : "Auf Basis deiner Angaben könnte ein Trockenbluttest zusätzliche Hinweise liefern — z.B. zu Vitamin D, Ferritin oder B12.";
       html += `<div class="hint-box box-warning"><strong>💉 Trockenbluttest</strong><br>${btReason}<br><br><a href="mailto:info@le-vita.com?subject=Trockenbluttest%20anfragen" style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Trockenbluttest besprechen →</a></div>`;
     }
 
-    /* CTA immer anzeigen wenn goal_key gesetzt — coaching_hint ist DB-Flag, goal_key reicht als Trigger */
+    // ── CTA
     const showCTA = (score.coaching_hint || goalKey) && !bmiIsLow;
     if (showCTA) {
       const gk = goalKey || "";
       let coachingText = "";
       if (gk === "goal_longevity") {
-        coachingText = `🌿 <strong>Longevity-Einstieg</strong><br>Eine Körperanalyse und ein Trockenbluttest geben dir konkrete Werte — Muskelmasse, Biomarker, Vitalitäts-Alter im Vergleich. Die Präventionskurse §20 im LeVITA Studio sind speziell dafür gemacht und werden von vielen Krankenkassen bezuschusst.<br><br><a href="https://www.le-vita.com/praeventionskurse-gemuenden-wohra" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">§20-Kurs ansehen →</a>`;
+        coachingText = `🌿 <strong>Longevity-Einstieg</strong><br>Eine Körperanalyse und ein Trockenbluttest geben dir konkrete Werte — Muskelmasse, Biomarker, Vitalitäts-Alter im Vergleich. Die Präventionskurse §20 im LeVITA Studio werden von vielen Krankenkassen bezuschusst.<br><br><a href="https://www.le-vita.com/praeventionskurse-gemuenden-wohra" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">§20-Kurs ansehen →</a>`;
       } else if (gk === "goal_prevention") {
         coachingText = `🛡️ <strong>Prävention mit Plan</strong><br>Unsere Präventionskurse §20 helfen dir, gezielt an deiner Gesundheit zu arbeiten — strukturiert, betreut und von vielen Krankenkassen bezuschusst.<br><br><a href="https://www.le-vita.com/praeventionskurse-gemuenden-wohra" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">§20-Kurs ansehen →</a>`;
       } else if (gk === "goal_fitness") {
-        coachingText = `💪 <strong>Probetraining</strong><br>Ein kostenloser Einstieg ins LeVITA — unverbindlich, mit Trainer-Begleitung. Mit anderen macht Bewegung mehr Spaß und man bleibt dabei.<br><br><a href="https://www.le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Probetraining anfragen →</a>`;
+        coachingText = `💪 <strong>Probetraining</strong><br>Ein kostenloser Einstieg ins LeVITA — unverbindlich, mit Trainer-Begleitung.<br><br><a href="https://www.le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Probetraining anfragen →</a>`;
       } else if (gk === "goal_weight") {
-        coachingText = `⚖️ <strong>Figur & Abnehmen</strong><br>Betreutes Training kombiniert mit Ernährungsberatung im LeVITA — ein kostenloser Einstieg zeigt dir wie es funktioniert.<br><br><a href="https://www.le-vita.com/abnehmen-ernaehrung-und-fitness-gemuenden-wohra" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Mehr erfahren →</a>`;
+        coachingText = `⚖️ <strong>Figur &amp; Abnehmen</strong><br>Betreutes Training kombiniert mit Ernährungsberatung im LeVITA — ein kostenloser Einstieg zeigt dir wie es funktioniert.<br><br><a href="https://www.le-vita.com/abnehmen-ernaehrung-und-fitness-gemuenden-wohra" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Mehr erfahren →</a>`;
       } else if (gk === "goal_energy") {
-        coachingText = `⚡ <strong>Energie & Regeneration</strong><br>VELUS JET® Wellness im LeVITA — gezielt für Entspannung, Regeneration und neue Energie im Alltag.<br><br><a href="https://www.le-vita.com/gesundheit-gemuenden-wohra-velus-jet-venen-engel" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">VELUS JET kennenlernen →</a>`;
+        coachingText = `⚡ <strong>Energie &amp; Regeneration</strong><br>VELUS JET® Wellness im LeVITA — gezielt für Entspannung, Regeneration und neue Energie im Alltag.<br><br><a href="https://www.le-vita.com/gesundheit-gemuenden-wohra-velus-jet-venen-engel" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">VELUS JET kennenlernen →</a>`;
       } else {
         coachingText = `🤝 <strong>Kostenloses Orientierungsgespräch</strong><br>Ein kostenloses Gespräch, ein betreuter Trainingsplan oder eine Körperanalyse — alles unter einem Dach im LeVITA Studio Gemünden.<br><br><a href="mailto:info@le-vita.com?subject=Orientierungsgespräch%20Vital-Check" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Gespräch anfragen →</a>`;
       }
@@ -1427,7 +1534,6 @@
     }
     return html;
   }
-
   function renderRadarChart(areas) {
     const ctx = document.getElementById("vitalChart");
     if (!ctx) return;
