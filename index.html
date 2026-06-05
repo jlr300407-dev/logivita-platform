@@ -273,23 +273,28 @@
       .from("public_active_questions").select("*")
       .order("question_sort_order", { ascending: true })
       .order("option_sort_order", { ascending: true });
-    if (error) throw error;
+    if (error) throw new Error("Fragen konnten nicht geladen werden: " + (error.message || JSON.stringify(error)));
+    if (!data || data.length === 0) throw new Error("Keine Fragen gefunden — bitte Seite neu laden oder info@le-vita.com kontaktieren.");
     const map = {};
     data.forEach(row => {
       if (!map[row.question_id]) {
         map[row.question_id] = { question_id:row.question_id, question_key:row.question_key, area_key:row.area_key, area_label:row.area_label, question_text:row.question_text, help_text:row.help_text, sort_order:row.question_sort_order, min_age: row.min_age || null, max_age: row.max_age || null, options:[] };
       }
-      map[row.question_id].options.push({ option_id:row.option_id, option_key:row.option_key, option_text:row.option_text });
+      if (row.option_id) {
+        map[row.question_id].options.push({ option_id:row.option_id, option_key:row.option_key, option_text:row.option_text });
+      }
     });
-    const allQuestions = Object.values(map).sort((a,b) => a.sort_order - b.sort_order);
+    const allQuestions = Object.values(map).sort((a, b) => a.sort_order - b.sort_order);
     questions = allQuestions.filter(q => q.question_key !== "vital_goal");
     const goalQuestion = allQuestions.find(q => q.question_key === "vital_goal") || null;
     window._goalQuestion = goalQuestion;
+    // Fisch-Frage initial ausblenden — wird nur bei omnivor eingeblendet
+    const fishQuestionKeys = ["omega3_fish", "fish_frequency", "fish_consumption", "fish_intake"];
     groupedQuestions = [
       { type:"intro" },
       goalQuestion ? { type:"goal", question:goalQuestion } : null,
       { type:"personal" },
-      ...questions,
+      ...questions.filter(q => !fishQuestionKeys.some(fk => q.question_key?.includes(fk))),
       { type:"consent" }
     ].filter(Boolean);
   }
@@ -958,7 +963,7 @@
       const answersHtml = Object.entries(grouped).map(([area, ans]) => `
         <div style="margin-bottom:14px;">
           <div style="font-size:11px;font-weight:700;color:var(--accent-green);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">${areaLabels[area] || area}</div>
-          ${(ans as any[]).map((a: any) => `
+          ${ans.map(a => `
             <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:0.5px solid var(--border);gap:12px;">
               <div style="font-size:12px;color:var(--text-secondary);flex:1;">${questionLabels[a.question_key] || a.question_key}</div>
               <div style="font-size:12px;color:var(--text-primary);font-weight:500;text-align:right;max-width:50%;">${a.answer_text}</div>
