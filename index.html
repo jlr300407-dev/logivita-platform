@@ -477,7 +477,14 @@
     const gender = document.getElementById("gender").value;
     const height_cm = Number(document.getElementById("height_cm").value);
     const weight_kg = Number(document.getElementById("weight_kg").value);
-    if (!age || age < 14 || age > 100) return alert("Bitte ein gültiges Alter eingeben.");
+    if (!age || age < 16 || age > 100) {
+      if (age < 16) {
+        alert("Der LeVITA Vital-Check richtet sich an Personen ab 16 Jahren. Für Jüngere ist eine Einwilligung der Erziehungsberechtigten erforderlich — bitte wende dich an info@le-vita.com.");
+      } else {
+        alert("Bitte ein gültiges Alter eingeben.");
+      }
+      return;
+    }
     if (!gender) return alert("Bitte Geschlecht auswählen.");
     if (!height_cm || height_cm < 120 || height_cm > 230) return alert("Bitte eine gültige Größe eingeben.");
     if (!weight_kg || weight_kg < 35 || weight_kg > 250) return alert("Bitte ein gültiges Gewicht eingeben.");
@@ -1237,8 +1244,23 @@
     let html = "";
     const bmiNum = Number(bmi);
     const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
-    // Trockenbluttest nur zeigen wenn nicht schon in Support-Box angezeigt
-    if (score.bloodtest_hint && !bloodtestShown) html += `<div class="hint-box box-warning"><strong>💉 Hinweis: Trockenbluttest</strong><br>Aufgrund deiner Angaben könnte ein Trockenbluttest zusätzliche Hinweise liefern, um deine Nährstoffversorgung gezielter einzuordnen — z.B. Vitamin D, Ferritin, Omega-3 oder Vitamin B12.<br><br><a href="mailto:info@le-vita.com?subject=Trockenbluttest%20anfragen" style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Trockenbluttest besprechen →</a></div>`;
+
+    // Trockenbluttest-Trigger: DB-Flag ODER Frontend-Fallback (spiegelt Edge Function Logik)
+    // bloodtestRelevant in Edge Function: bloodtest_hint || lifestyle < 50 || BMI ≥ 28 + Vit.D < 80 || Alter ≥ 65
+    const lifestyleScore = score.score_payload?.lifestyle?.score
+      ? Number(score.score_payload.lifestyle.score) : 100;
+    const vitaminDScore = score.score_payload?.vitamin_d?.score
+      ? Number(score.score_payload.vitamin_d.score) : 100;
+    const frontendBloodtestRelevant = score.bloodtest_hint
+      || lifestyleScore < 50
+      || (bmiNum >= 28 && vitaminDScore < 80);
+
+    if (frontendBloodtestRelevant && !bloodtestShown) {
+      const btReason = lifestyleScore < 50 && !score.bloodtest_hint
+        ? "Regelmäßiger Alkohol- oder Nikotinkonsum kann bestimmte Nährstoffwerte beeinflussen — ein gezielter Test gibt Klarheit."
+        : "Auf Basis deiner Angaben könnte ein Trockenbluttest zusätzliche Hinweise liefern — z.B. zu Vitamin D, Ferritin oder B12.";
+      html += `<div class="hint-box box-warning"><strong>💉 Trockenbluttest</strong><br>${btReason}<br><br><a href="mailto:info@le-vita.com?subject=Trockenbluttest%20anfragen" style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Trockenbluttest besprechen →</a></div>`;
+    }
 
     /* CTA immer anzeigen wenn goal_key gesetzt — coaching_hint ist DB-Flag, goal_key reicht als Trigger */
     const showCTA = (score.coaching_hint || goalKey) && !bmiIsLow;
