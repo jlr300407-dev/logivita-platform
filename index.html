@@ -889,7 +889,18 @@
       if (bmiIsLow && a.key === "activity") return false;
       return true;
     });
-    const worst = areasForHebel.length > 0 ? [...areasForHebel].sort((a,b) => a.score - b.score)[0] : null;
+
+    // Schlaf-Ausnahmeregel: bei kritisch wenig Schlaf (< 5h) immer Schlaf als Haupthebel
+    // unabhängig vom numerischen Score — medizinisch eindeutig kritischer
+    const sleepArea = areas.find(a => a.key === "sleep");
+    const hasCriticalSleep = result.answers?.some(a =>
+      a.question_key === "sleep_duration" && a.answer_text?.includes("Weniger als 5")
+    );
+    const worst = areasForHebel.length > 0
+      ? (hasCriticalSleep && sleepArea
+          ? sleepArea
+          : [...areasForHebel].sort((a,b) => a.score - b.score)[0])
+      : null;
 
     if (totalScore >= 85) {
       if (worst && worst.score < 90) {
@@ -924,35 +935,58 @@
         metabolic: "Energie & Stoffwechsel", general: "Allgemein"
       };
       const questionLabels = {
-        activity_days:       "Wie viele Tage pro Woche bist du körperlich aktiv?",
-        activity_intensity:  "Wie intensiv ist deine Bewegung?",
-        strength_training:   "Wie oft trainierst du gezielt Kraft?",
-        muscle_cramps:       "Hast du beim Sport Muskelkrämpfe?",
-        sitting_hours:       "Wie viele Stunden sitzt du täglich?",
-        sleep_duration:      "Wie viele Stunden schläfst du pro Nacht?",
-        sleep_quality:       "Wie erholsam ist dein Schlaf?",
-        sleep_problems:      "Hast du Einschlaf- oder Durchschlafschwierigkeiten?",
-        nutrition_type:      "Wie ernährst du dich?",
-        omega3_fish:         "Wie oft isst du fettreichen Seefisch?",
-        vegetable_fruit:     "Wie oft isst du Gemüse und Obst?",
-        protein_frequency:   "Wie oft isst du bewusst eiweißreiche Lebensmittel?",
-        meal_regularity:     "Isst du regelmäßig zu festen Zeiten?",
-        sunlight_exposure:   "Wie viel Zeit verbringst du täglich im Freien?",
-        alcohol_frequency:   "Wie häufig trinkst du Alkohol?",
-        alcohol_amount:      "Wie viele alkoholische Getränke pro Monat?",
-        smoking:             "Rauchst du?",
-        supplement_usage:    "Nimmst du Nahrungsergänzungsmittel?",
-        supplement_types:    "Welche Supplements nimmst du?",
-        stress_level:        "Wie gestresst fühlst du dich im Alltag?",
-        low_mood:            "Wie oft fühlst du dich niedergeschlagen?",
-        low_interest:        "Wie oft verlierst du die Freude an Dingen?",
-        social_connection:   "Wie gut bist du sozial eingebunden?",
-        energy_level:        "Wie ist dein Energielevel im Alltag?",
-        appetite_changes:    "Hast du ungewollte Appetitveränderungen?",
-        weight_changes:      "Hast du ungewollte Gewichtsveränderungen?",
-        hormonal_transition: "Befindest du dich in den Wechseljahren?",
-        period_bleeding:     "Wie ist deine Regelblutung?",
-        vital_goal:          "Was ist dein wichtigstes Ziel?"
+        // Bewegung & Kraft
+        activity_days:             "Wie viele Tage pro Woche bist du körperlich aktiv?",
+        activity_intensity:        "Wie intensiv ist deine Bewegung?",
+        strength_training:         "Wie oft trainierst du gezielt Kraft?",
+        muscle_cramps:             "Hast du beim Sport Muskelkrämpfe?",
+        sitting_hours:             "Wie viele Stunden sitzt du täglich?",
+        // Schlaf & Regeneration
+        sleep_duration:            "Wie viele Stunden schläfst du pro Nacht?",
+        sleep_quality:             "Wie erholsam ist dein Schlaf?",
+        sleep_problems:            "Hast du Einschlaf- oder Durchschlafschwierigkeiten?",
+        sleep_latency:             "Wie lange brauchst du zum Einschlafen?",
+        daytime_sleepiness:        "Bist du tagsüber müde oder schläfrig?",
+        // Ernährung
+        nutrition_type:            "Wie ernährst du dich?",
+        diet_type:                 "Wie ernährst du dich?",
+        omega3_fish:               "Wie oft isst du fettreichen Seefisch?",
+        fish_frequency:            "Wie oft isst du fettreichen Seefisch?",
+        vegetable_fruit:           "Wie oft isst du Gemüse und Obst?",
+        vegetables_fruit:          "Wie oft isst du Gemüse und Obst?",
+        protein_frequency:         "Wie oft isst du bewusst eiweißreiche Lebensmittel?",
+        protein_intake:            "Wie oft isst du bewusst eiweißreiche Lebensmittel?",
+        meal_regularity:           "Isst du regelmäßig zu festen Zeiten?",
+        water_intake:              "Wie viel trinkst du täglich?",
+        // Vitamin D & Tageslicht
+        sunlight_exposure:         "Wie viel Zeit verbringst du täglich im Freien?",
+        sun_exposure_winter:       "Wie viel Tageslicht bekommst du im Winter?",
+        sun_exposure_summer:       "Wie viel Tageslicht bekommst du im Sommer?",
+        // Alkohol / Nikotin
+        alcohol_frequency:         "Wie häufig trinkst du Alkohol?",
+        alcohol_amount:            "Wie viele alkoholische Getränke pro Monat?",
+        smoking:                   "Rauchst du?",
+        nicotine_use:              "Rauchst du oder nutzt du Nikotin?",
+        // Mentale Balance & Stress
+        stress_level:              "Wie gestresst fühlst du dich im Alltag?",
+        low_mood:                  "Wie oft fühlst du dich niedergeschlagen?",
+        low_interest:              "Wie oft verlierst du die Freude an Dingen?",
+        social_connection:         "Wie gut bist du sozial eingebunden?",
+        // Energie & Stoffwechsel
+        energy_level:              "Wie ist dein Energielevel im Alltag?",
+        appetite_change:           "Hast du Veränderungen beim Appetit?",
+        appetite_changes:          "Hast du Veränderungen beim Appetit?",
+        weight_changes:            "Hast du ungewollte Gewichtsveränderungen?",
+        unintentional_weight_loss: "Hast du ungewollte Gewichtsveränderungen?",
+        // Mikronährstoffe
+        supplement_usage:          "Nimmst du Nahrungsergänzungsmittel?",
+        supplement_types:          "Welche Supplements nimmst du?",
+        hormonal_transition:       "Befindest du dich in den Wechseljahren?",
+        period_bleeding:           "Wie ist deine Regelblutung?",
+        dizziness_pale_nails:      "Hast du Symptome wie Schwindel oder blasse Nägel?",
+        iron_symptoms:             "Hast du Symptome wie Müdigkeit oder Blässe?",
+        // Allgemein
+        vital_goal:                "Was ist dein wichtigstes Ziel?"
       };
       const grouped = {};
       answers.forEach(a => {
