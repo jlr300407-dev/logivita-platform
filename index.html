@@ -304,11 +304,14 @@
   function buildGroupedQuestionsForGender() {
     const showFemale = personalData.gender === "weiblich";
     const age = personalData.age || 0;
+    const fishQuestionKeys = ["omega3_fish", "fish_frequency", "fish_consumption", "fish_intake"];
     const filtered = questions.filter(q => {
       if (q.question_key === "vital_goal") return false;
       if (!showFemale && isFemaleSpecific(q)) return false;
       if (q.min_age !== null && age < q.min_age) return false;
       if (q.max_age !== null && age > q.max_age) return false;
+      // Fisch-Frage initial immer ausblenden — wird nur bei omnivor/pescetarisch eingeblendet
+      if (fishQuestionKeys.some(fk => q.question_key?.includes(fk))) return false;
       return true;
     });
     const goalQuestion = window._goalQuestion || null;
@@ -529,27 +532,23 @@
         buildSteps(currentStep);
       }
 
-      // Fisch-Frage ausblenden bei vegan oder vegetarisch
-      // Ein Veganer/Vegetarier isst per Definition keinen Fisch — Frage überflüssig
-      // Die omega3/jod-Empfehlungen werden direkt aus der Ernährungsweise abgeleitet
+      // Fisch-Frage: initial ausgeblendet, nur bei omnivor/pescetarisch einblenden
       if (currentQ?.question_key === "nutrition_type") {
-        const isPlantBased = ["vegan", "vegetar"].some(k => optionKey?.includes(k));
         const fishQuestionKeys = ["omega3_fish", "fish_frequency", "fish_consumption", "fish_intake"];
-        if (isPlantBased) {
-          groupedQuestions = groupedQuestions.filter(q => !fishQuestionKeys.some(fk => q.question_key?.includes(fk)));
-          buildSteps(currentStep);
-        } else {
-          // Wiederherstellen wenn zurück zu omnivor gewechselt
-          fishQuestionKeys.forEach(fk => {
-            const exists = groupedQuestions.some(q => q.question_key?.includes(fk));
-            if (!exists) {
-              const fishQ = questions.find(q => q.question_key?.includes(fk));
-              if (fishQ) {
-                const nutritionIdx = groupedQuestions.findIndex(q => q.question_key === "nutrition_type");
-                groupedQuestions.splice(nutritionIdx + 1, 0, fishQ);
-              }
+        const isOmnivor = !["vegan", "vegetar"].some(k => optionKey?.includes(k));
+        if (isOmnivor) {
+          const hasFish = groupedQuestions.some(q => fishQuestionKeys.some(fk => q.question_key?.includes(fk)));
+          if (!hasFish) {
+            const fishQ = questions.find(q => fishQuestionKeys.some(fk => q.question_key?.includes(fk)));
+            if (fishQ) {
+              const nutritionIdx = groupedQuestions.findIndex(q => q.question_key === "nutrition_type");
+              groupedQuestions.splice(nutritionIdx + 1, 0, fishQ);
+              buildSteps(currentStep);
             }
-          });
+          }
+        } else {
+          // Sicherheitshalber entfernen wenn jemand von omnivor zu pflanzlich wechselt
+          groupedQuestions = groupedQuestions.filter(q => !fishQuestionKeys.some(fk => q.question_key?.includes(fk)));
           buildSteps(currentStep);
         }
       }
@@ -919,6 +918,37 @@
         lifestyle: "Alkohol / Nikotin", micronutrients: "Mikronährstoffe",
         metabolic: "Energie & Stoffwechsel", general: "Allgemein"
       };
+      const questionLabels = {
+        activity_days:       "Wie viele Tage pro Woche bist du körperlich aktiv?",
+        activity_intensity:  "Wie intensiv ist deine Bewegung?",
+        strength_training:   "Wie oft trainierst du gezielt Kraft?",
+        muscle_cramps:       "Hast du beim Sport Muskelkrämpfe?",
+        sitting_hours:       "Wie viele Stunden sitzt du täglich?",
+        sleep_duration:      "Wie viele Stunden schläfst du pro Nacht?",
+        sleep_quality:       "Wie erholsam ist dein Schlaf?",
+        sleep_problems:      "Hast du Einschlaf- oder Durchschlafschwierigkeiten?",
+        nutrition_type:      "Wie ernährst du dich?",
+        omega3_fish:         "Wie oft isst du fettreichen Seefisch?",
+        vegetable_fruit:     "Wie oft isst du Gemüse und Obst?",
+        protein_frequency:   "Wie oft isst du bewusst eiweißreiche Lebensmittel?",
+        meal_regularity:     "Isst du regelmäßig zu festen Zeiten?",
+        sunlight_exposure:   "Wie viel Zeit verbringst du täglich im Freien?",
+        alcohol_frequency:   "Wie häufig trinkst du Alkohol?",
+        alcohol_amount:      "Wie viele alkoholische Getränke pro Monat?",
+        smoking:             "Rauchst du?",
+        supplement_usage:    "Nimmst du Nahrungsergänzungsmittel?",
+        supplement_types:    "Welche Supplements nimmst du?",
+        stress_level:        "Wie gestresst fühlst du dich im Alltag?",
+        low_mood:            "Wie oft fühlst du dich niedergeschlagen?",
+        low_interest:        "Wie oft verlierst du die Freude an Dingen?",
+        social_connection:   "Wie gut bist du sozial eingebunden?",
+        energy_level:        "Wie ist dein Energielevel im Alltag?",
+        appetite_changes:    "Hast du ungewollte Appetitveränderungen?",
+        weight_changes:      "Hast du ungewollte Gewichtsveränderungen?",
+        hormonal_transition: "Befindest du dich in den Wechseljahren?",
+        period_bleeding:     "Wie ist deine Regelblutung?",
+        vital_goal:          "Was ist dein wichtigstes Ziel?"
+      };
       const grouped = {};
       answers.forEach(a => {
         const area = a.area_key || "general";
@@ -926,12 +956,12 @@
         grouped[area].push(a);
       });
       const answersHtml = Object.entries(grouped).map(([area, ans]) => `
-        <div style="margin-bottom:12px;">
+        <div style="margin-bottom:14px;">
           <div style="font-size:11px;font-weight:700;color:var(--accent-green);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">${areaLabels[area] || area}</div>
-          ${ans.map(a => `
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:0.5px solid var(--border);gap:12px;">
-              <div style="font-size:12px;color:var(--text-secondary);flex:1;">${a.question_key?.replace(/_/g,' ')}</div>
-              <div style="font-size:12px;color:var(--text-primary);font-weight:500;text-align:right;max-width:55%;">${a.answer_text}</div>
+          ${(ans as any[]).map((a: any) => `
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:0.5px solid var(--border);gap:12px;">
+              <div style="font-size:12px;color:var(--text-secondary);flex:1;">${questionLabels[a.question_key] || a.question_key}</div>
+              <div style="font-size:12px;color:var(--text-primary);font-weight:500;text-align:right;max-width:50%;">${a.answer_text}</div>
             </div>`).join("")}
         </div>`).join("");
 
