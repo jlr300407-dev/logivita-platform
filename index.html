@@ -529,13 +529,38 @@
         buildSteps(currentStep);
       }
 
-      // NEU: alcohol_amount überspringen wenn alcohol_frequency = "a" (Nie)
-      if (currentQ?.question_key === "alcohol_frequency" && optionKey === "a") {
+      // Fisch-Frage ausblenden bei vegan oder vegetarisch
+      // Ein Veganer/Vegetarier isst per Definition keinen Fisch — Frage überflüssig
+      // Die omega3/jod-Empfehlungen werden direkt aus der Ernährungsweise abgeleitet
+      if (currentQ?.question_key === "nutrition_type") {
+        const isPlantBased = ["vegan", "vegetar"].some(k => optionKey?.includes(k));
+        const fishQuestionKeys = ["fish_frequency", "fish_consumption", "fish_intake"];
+        if (isPlantBased) {
+          groupedQuestions = groupedQuestions.filter(q => !fishQuestionKeys.some(fk => q.question_key?.includes(fk)));
+          buildSteps(currentStep);
+        } else {
+          // Wiederherstellen wenn zurück zu omnivor gewechselt
+          fishQuestionKeys.forEach(fk => {
+            const exists = groupedQuestions.some(q => q.question_key?.includes(fk));
+            if (!exists) {
+              const fishQ = questions.find(q => q.question_key?.includes(fk));
+              if (fishQ) {
+                const nutritionIdx = groupedQuestions.findIndex(q => q.question_key === "nutrition_type");
+                groupedQuestions.splice(nutritionIdx + 1, 0, fishQ);
+              }
+            }
+          });
+          buildSteps(currentStep);
+        }
+      }
+
+      // NEU: alcohol_amount überspringen wenn alcohol_frequency = "a" (Nie) oder "occasion" (Nur zu Anlässen)
+      if (currentQ?.question_key === "alcohol_frequency" && (optionKey === "a" || optionKey === "occasion")) {
         groupedQuestions = groupedQuestions.filter(q => q.question_key !== "alcohol_amount");
         buildSteps(currentStep);
       }
       // Wiederherstellen wenn zurückgegangen und anders gewählt
-      if (currentQ?.question_key === "alcohol_frequency" && optionKey !== "a") {
+      if (currentQ?.question_key === "alcohol_frequency" && optionKey !== "a" && optionKey !== "occasion") {
         const hasAmount = groupedQuestions.some(q => q.question_key === "alcohol_amount");
         if (!hasAmount) {
           const amountQ = questions.find(q => q.question_key === "alcohol_amount");
@@ -883,6 +908,44 @@
     const { html: supportHtml, bloodtestShown } = renderVitalitySupportBox(areas, result, suppFocus);
     html += supportHtml;
     html += renderHintBoxes(score, result.bmi, result.submission?.goal_key || personalData.goal_key, bloodtestShown);
+
+    // Antworten-Übersicht — aufklappbar
+    if (answers && answers.length > 0) {
+      const areaLabels = {
+        activity: "Bewegung & Kraft", sleep: "Schlaf & Regeneration",
+        nutrition: "Ernährung", mental: "Mentale Balance & Stress",
+        vitamin_d: "Vitamin D & Tageslicht", bmi: "BMI",
+        lifestyle: "Alkohol / Nikotin", micronutrients: "Mikronährstoffe",
+        metabolic: "Energie & Stoffwechsel", general: "Allgemein"
+      };
+      const grouped = {};
+      answers.forEach(a => {
+        const area = a.area_key || "general";
+        if (!grouped[area]) grouped[area] = [];
+        grouped[area].push(a);
+      });
+      const answersHtml = Object.entries(grouped).map(([area, ans]) => `
+        <div style="margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:var(--accent-green);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">${areaLabels[area] || area}</div>
+          ${ans.map(a => `
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:0.5px solid var(--border);gap:12px;">
+              <div style="font-size:12px;color:var(--text-secondary);flex:1;">${a.question_key?.replace(/_/g,' ')}</div>
+              <div style="font-size:12px;color:var(--text-primary);font-weight:500;text-align:right;max-width:55%;">${a.answer_text}</div>
+            </div>`).join("")}
+        </div>`).join("");
+
+      html += `
+        <div class="section-card" style="margin-bottom:16px;">
+          <div class="section-header" onclick="toggleAnswers()" style="cursor:pointer;user-select:none;">
+            <div class="section-title">📋 Meine Antworten aus diesem Check</div>
+            <button class="toggle-btn" id="answersToggleBtn">Einblenden</button>
+          </div>
+          <div id="answersPanel" style="display:none;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;">Hier siehst du alle deine Antworten aus diesem Vital-Check. Beim nächsten Check kannst du direkt vergleichen was sich verändert hat.</div>
+            ${answersHtml}
+          </div>
+        </div>`;
+    }
 
     html += `
       <div class="ai-box">
@@ -1325,6 +1388,15 @@
   }
 
   function openGoogleForm() { window.open(GOOGLE_FORM_URL, "_blank"); }
+
+  function toggleAnswers() {
+    const panel = document.getElementById("answersPanel");
+    const btn = document.getElementById("answersToggleBtn");
+    if (!panel || !btn) return;
+    const isHidden = panel.style.display === "none";
+    panel.style.display = isHidden ? "block" : "none";
+    btn.textContent = isHidden ? "Ausblenden" : "Einblenden";
+  }
 
   async function deletMyData() {
     if (!latestResult?.public_code) {
