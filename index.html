@@ -538,21 +538,27 @@
       }
 
       // Fisch-Frage: initial ausgeblendet, nur bei omnivor/pescetarisch einblenden
-      if (currentQ?.question_key === "nutrition_type") {
+      if (currentQ?.question_key === "nutrition_type" || currentQ?.question_key === "diet_type") {
         const fishQuestionKeys = ["omega3_fish", "fish_frequency", "fish_consumption", "fish_intake"];
-        const isOmnivor = !["vegan", "vegetar"].some(k => optionKey?.includes(k));
-        if (isOmnivor) {
+        // Prüfe über option_key (c=Vegetarisch, d=Vegan) UND option_text als Fallback
+        const selectedOpt = currentQ.options?.find(o => o.option_id === selectedAnswers[selectedAnswers.length - 1]?.option_id);
+        const optText = (selectedOpt?.option_text || "").toLowerCase();
+        const isPlantBased = optionKey === "c" || optionKey === "d"
+          || optText.includes("vegan") || optText.includes("vegetar");
+        if (!isPlantBased) {
+          // Omnivor/Mischkost — Fisch-Frage einblenden
           const hasFish = groupedQuestions.some(q => fishQuestionKeys.some(fk => q.question_key?.includes(fk)));
           if (!hasFish) {
             const fishQ = questions.find(q => fishQuestionKeys.some(fk => q.question_key?.includes(fk)));
             if (fishQ) {
-              const nutritionIdx = groupedQuestions.findIndex(q => q.question_key === "nutrition_type");
+              const nutritionIdx = groupedQuestions.findIndex(q =>
+                q.question_key === "nutrition_type" || q.question_key === "diet_type");
               groupedQuestions.splice(nutritionIdx + 1, 0, fishQ);
               buildSteps(currentStep);
             }
           }
         } else {
-          // Sicherheitshalber entfernen wenn jemand von omnivor zu pflanzlich wechselt
+          // Vegan/Vegetarisch — Fisch-Frage ausblenden
           groupedQuestions = groupedQuestions.filter(q => !fishQuestionKeys.some(fk => q.question_key?.includes(fk)));
           buildSteps(currentStep);
         }
@@ -1047,13 +1053,12 @@
         <button class="next-btn" onclick="openGoogleForm()">Feedback geben</button>
       </div>`;
 
-    html += `<div class="disclaimer"><strong>Wichtiger Hinweis:</strong> Diese Auswertung ist keine Diagnose und ersetzt keine medizinische Beratung. Sie dient der Orientierung und Hilfe zur Selbsthilfe. Die Schwerpunkte basieren auf Empfehlungen von WHO, DGE und dem Bundesinstitut für Risikobewertung.<br><br>powered by <strong>LogiVita</strong></div>`;
+    html += `<div class="disclaimer"><strong>Wichtiger Hinweis:</strong> Diese Auswertung ist keine Diagnose und ersetzt keine medizinische Beratung. Sie dient der Orientierung und Hilfe zur Selbsthilfe. Die Schwerpunkte basieren auf Empfehlungen von WHO, DGE und dem Bundesinstitut für Risikobewertung.<br><br>powered by <strong>LogiVita</strong><br><br><span style="font-size:11px;color:var(--text-muted);">Möchtest du deine gespeicherten Daten löschen? <button onclick="deletMyData()" style="background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;text-decoration:underline;padding:0;">Daten löschen</button></span></div>`;
 
     html += `
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
         <button class="next-btn" onclick="window.print()" style="background:rgba(255,255,255,0.07);color:var(--text-secondary);border:1px solid var(--border);">📄 Auswertung als PDF speichern</button>
-        <button class="danger-btn" onclick="resetVitalCheck()">🔄 Neue Eingabe starten</button>
-        <button onclick="deletMyData()" style="background:none;border:1px solid rgba(255,92,92,0.3);color:#ff5c5c;border-radius:var(--radius-sm);padding:12px 20px;font-size:13px;font-weight:600;cursor:pointer;width:100%;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,92,92,0.1)'" onmouseout="this.style.background='none'">🗑 Meine gespeicherten Daten löschen</button>
+        <button class="danger-btn" onclick="resetVitalCheck()">🔄 Erneut testen →</button>
       </div>`;
     return html;
   }
