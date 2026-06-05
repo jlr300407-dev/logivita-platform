@@ -534,7 +534,7 @@
       // Die omega3/jod-Empfehlungen werden direkt aus der Ernährungsweise abgeleitet
       if (currentQ?.question_key === "nutrition_type") {
         const isPlantBased = ["vegan", "vegetar"].some(k => optionKey?.includes(k));
-        const fishQuestionKeys = ["fish_frequency", "fish_consumption", "fish_intake"];
+        const fishQuestionKeys = ["omega3_fish", "fish_frequency", "fish_consumption", "fish_intake"];
         if (isPlantBased) {
           groupedQuestions = groupedQuestions.filter(q => !fishQuestionKeys.some(fk => q.question_key?.includes(fk)));
           buildSteps(currentStep);
@@ -815,6 +815,7 @@
   function buildResultHtml(result, areas, totalScore, bioAge, suppFocus, correctedScoreLabel) {
     const score = result.score;
     const scoreLabel = correctedScoreLabel || score.score_label;
+    const answers = result.answers || [];
     let html = "";
     html += `<div class="info-box box-success" style="margin-bottom:20px;"><strong>Dein Vital-Check wurde erfolgreich erstellt.</strong><br>Hier siehst du deine persönliche Auswertung. Eine individuelle Analyse per E-Mail kannst du weiter unten anfordern.</div>`;
     html += `<div class="pilot-code-box">Deine Pilot-ID: <strong>${result.public_code}</strong></div>`;
