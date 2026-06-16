@@ -1200,15 +1200,178 @@
       return "Nicht alles gleichzeitig ändern — eine kleine, realistische Routine wählen und konsequent beibehalten.";
     }
     const l = getLevel(score);
+    const ans = latestResult?.answers || [];
+    const getA = (k) => ans.find(a => a.question_key === k);
+    const getRisk = (k) => Number(getA(k)?.risk_points || 0);
+    const getText = (k) => getA(k)?.answer_text || "";
+    const bmiIsLow = Number(bmiValue) < 18.5;
+
+    // ── SCHLAF: nach Ursache differenzieren
+    if (key === "sleep") {
+      const dur = getText("sleep_duration");
+      const lat = getRisk("sleep_latency");   // 0-4
+      const day = getRisk("daytime_sleepiness"); // 0-4
+      if (l === "low") {
+        if (dur.includes("Weniger als 5") || dur.includes("5–6"))
+          return "Heute feste Schlafenszeit wählen und 30 Min. vorher Bildschirm aus.";
+        if (lat >= 2)
+          return "Entspannungsroutine vor dem Schlafen einbauen — kein Bildschirm, kein Handy.";
+        return "Heute feste Schlafenszeit wählen und 30 Min. vorher Bildschirm aus.";
+      }
+      if (l === "medium") {
+        if (day >= 3 && !dur.includes("Weniger als 5") && !dur.includes("5–6"))
+          return "Tagesmüdigkeit trotz ausreichend Schlaf — Schlafqualität, Stress oder Rhythmus prüfen.";
+        if (lat >= 2)
+          return "Einschlafroutine verbessern: kühl, dunkel, kein Bildschirm 30 Min. vorher.";
+        return "Kurze Abendroutine festlegen — z.B. Tee, Lesen oder ruhiges Dehnen.";
+      }
+      return "Regelmäßige Schlafzeiten aktiv schützen.";
+    }
+
+    // ── BEWEGUNG: nach Muster differenzieren + BMI-Schutz
+    if (key === "activity") {
+      const actDays = getRisk("activity_days");    // 0-4 (höher = seltener)
+      const strength = getRisk("strength_training"); // 0-4
+      const sitting = getRisk("sitting_hours");      // 0-4
+      if (l === "low" || l === "medium") {
+        if (bmiIsLow)
+          return "Sanfte Alltagsbewegung wie kurze Spaziergänge — Fokus auf Energie und Regeneration.";
+        if (actDays >= 3 && strength >= 3)
+          return "Einen festen Trainingstag einplanen — 30 Minuten reichen als Einstieg.";
+        if (actDays <= 1 && strength >= 3)
+          return "Kraft ergänzen — 2 kurze Krafteinheiten pro Woche stärken Muskelmasse und Stoffwechsel.";
+        if (sitting >= 3)
+          return "Stehpause alle 60–90 Minuten einbauen — kurz aufstehen und 2 Minuten bewegen.";
+        return "Einen konkreten Bewegungstermin in den Kalender setzen.";
+      }
+      return "Mischung aus Alltag, Ausdauer und Kraft beibehalten.";
+    }
+
+    // ── ERNÄHRUNG: nach Einzelantworten differenzieren
+    if (key === "nutrition") {
+      const veg = getText("vegetable_fruit") || getText("vegetables_fruit");
+      const water = getText("water_intake");
+      const protein = getText("protein_intake") || getText("protein_frequency");
+      if (l === "low")
+        return "Heute eine Mahlzeit bewusst mit Eiweiß, Gemüse und Flüssigkeit planen.";
+      if (l === "medium") {
+        if (veg.includes("täglich")) {
+          if (water.includes("Unregelmäßig") || water.includes("Wenig"))
+            return "Flüssigkeit gleichmäßiger über den Tag verteilen — Konzentration und Energie profitieren direkt.";
+          if (protein.includes("Selten") || protein.includes("Einige Male"))
+            return "Bei jeder Hauptmahlzeit eine Eiweißquelle einplanen — Hülsenfrüchte, Eier, Quark oder Nüsse.";
+          return "Mahlzeitenqualität und Eiweißanteil bewusster einplanen — Gemüse ist bereits stark.";
+        }
+        return "Eine zusätzliche Portion Gemüse oder Obst einbauen.";
+      }
+      return "Regelmäßige Mahlzeiten und Lebensmittelqualität beibehalten.";
+    }
+
+    // ── VITAMIN D: nach tatsächlicher Tageslicht-Häufigkeit
+    if (key === "vitamin_d") {
+      const sun = getText("sunlight_exposure") || getText("sun_exposure_winter");
+      if (l === "low") {
+        if (sun.includes("Selten") || sun.includes("Kaum") || sun.includes("Fast nie"))
+          return "Heute 10–15 Minuten Tageslicht im Freien einplanen — möglichst am Vormittag.";
+        return "Heute 10–15 Minuten Tageslicht im Freien einplanen — möglichst am Vormittag.";
+      }
+      if (l === "medium") {
+        if (sun.includes("täglich") || sun.includes("Täglich"))
+          return "Im Winter auch an bewölkten Tagen kurz raus — diffuses Tageslicht zählt.";
+        return "Tageslicht täglich einplanen — besonders morgens reguliert es den Schlaf-Wach-Rhythmus.";
+      }
+      return "Besonders in Herbst und Winter bewusst rausgehen.";
+    }
+
+    // ── MENTAL: nach dominantem Signal differenzieren
+    if (key === "mental") {
+      const stress = getRisk("stress_level");
+      const mood = getRisk("low_mood");
+      const interest = getRisk("low_interest");
+      const social = getRisk("social_connection");
+      if (l === "low") {
+        if (stress >= 3)
+          return "Heute eine feste 5-Minuten-Erholungsinsel einplanen — ohne Handy, ohne To-do.";
+        if (mood >= 2 || interest >= 2)
+          return "Ein kurzes Gespräch mit jemandem dem du vertraust kann Erleichterung bringen.";
+        return "Heute eine feste 5-Minuten-Erholungsinsel einplanen — ohne Handy, ohne To-do.";
+      }
+      if (l === "medium") {
+        if (stress >= 3)
+          return "Einen festen Erholungsanker pro Tag setzen — zur gleichen Zeit, ohne Ausnahme.";
+        if (social >= 2)
+          return "Sozialer Kontakt schützt die mentale Gesundheit — eine Nachricht oder ein Anruf reicht.";
+        return "10 Minuten ohne Handy — spazieren oder bewusst atmen.";
+      }
+      return "Erholung aktiv schützen und nicht als Luxus betrachten.";
+    }
+
+    // ── LIFESTYLE: nach Nikotin vs. Alkohol differenzieren
+    if (key === "lifestyle") {
+      const nicotine = getRisk("nicotine_use");
+      const alcohol = getRisk("alcohol_frequency");
+      const alcoholAmt = getRisk("alcohol_amount");
+      if (l === "low") {
+        if (nicotine >= 3)
+          return "Jede Reduktion zählt — auch ein Nichtrauchtag pro Woche ist ein echter Schritt.";
+        if (alcohol >= 3)
+          return "Alkoholfreie Tage bewusst einplanen — unterstützt Schlaf und Regeneration direkt.";
+        return "Den Zusammenhang zwischen Konsum, Schlaf und Energie heute bewusst beobachten.";
+      }
+      if (l === "medium") {
+        if (nicotine >= 2)
+          return "Einen rauchfreien Tag pro Woche als Experiment einplanen — Wirkung auf Energie beobachten.";
+        if (alcohol >= 2 && alcoholAmt >= 2)
+          return "Alkoholfreie Abende bewusst einbauen — Schlaf und Regeneration verbessern sich messbar.";
+        return "Konsum nicht bewerten, sondern Muster erkennen — wann, warum, wie viel.";
+      }
+      return "Diese Routine unterstützt Schlaf und Trainingsfortschritt aktiv.";
+    }
+
+    // ── MIKRONÄHRSTOFFE: nach Symptomen und Ernährungsweise
+    if (key === "micronutrients") {
+      const dizzy = getRisk("dizziness_pale_nails");
+      const supps = getText("supplement_usage");
+      const nutType = getText("nutrition_type") || getText("diet_type");
+      const gender = latestResult?.submission?.gender || "";
+      const isPlant = nutType.includes("vegan") || nutType.includes("Vegan") ||
+                      nutType.includes("vegetar") || nutType.includes("Vegetar");
+      const isFemale = gender === "female" || gender === "weiblich";
+      if (l === "low") {
+        if (dizzy >= 2 && isPlant && isFemale)
+          return "Eisenreiche Lebensmittel mit Vitamin C kombinieren — Hülsenfrüchte + Paprika oder Orangensaft.";
+        if (dizzy >= 2)
+          return "Schwindel oder blasse Nägel können auf Nährstoffmangel hinweisen — gezielte Abklärung prüfen.";
+        return "Ernährung nicht pauschal supplementieren — zuerst Muster und Qualität der Mahlzeiten prüfen.";
+      }
+      if (l === "medium") {
+        if (dizzy >= 2 && isPlant)
+          return "Eisenreiche Lebensmittel immer mit Vitamin C kombinieren — verbessert die Aufnahme deutlich.";
+        if (supps.includes("Ja") || supps.includes("ja"))
+          return "Aktuelle Supplements auf Qualität und Dosierung prüfen — gezielt statt pauschal.";
+        return "Eiweiß, Eisenquellen, Omega-3 und B12 im Alltag bewusster einbauen.";
+      }
+      return "Abwechslungsreiche Ernährung bleibt die beste Basis — Supplemente nur gezielt.";
+    }
+
+    // ── METABOLIC: nach Symptomen
+    if (key === "metabolic") {
+      const weightLoss = getRisk("unintentional_weight_loss");
+      const appetite = getRisk("appetite_change");
+      if (l === "low") {
+        if (weightLoss >= 2 || appetite >= 3)
+          return "Regelmäßige Mahlzeiten und ausreichend Eiweiß als Basis sicherstellen.";
+        return "Veränderungen im Alltag bewusst notieren: Appetit, Energie, Gewicht, Schlaf.";
+      }
+      if (l === "medium")
+        return "Regelmäßige Mahlzeiten und ausreichend Trinken als Basis sicherstellen.";
+      return "Energie und Wohlbefinden über die Woche aktiv beobachten.";
+    }
+
+    // ── FALLBACK für alle anderen Bereiche (BMI wird separat behandelt)
     const m = {
       sleep:{ low:"Heute feste Schlafenszeit wählen und 30 Min. vorher Bildschirm aus.", medium:"Kurze Abendroutine festlegen — z.B. Tee, Lesen oder ruhiges Dehnen.", good:"Regelmäßige Schlafzeiten aktiv schützen." },
-      activity:{ low:"Heute 10 Minuten zügig gehen — ideal nach einer Mahlzeit. Klein starten, regelmäßig bleiben.", medium:"Einen konkreten Bewegungstermin in den Kalender setzen.", good:"Mischung aus Alltag, Ausdauer und Kraft beibehalten." },
-      nutrition:{ low:"Heute eine Mahlzeit bewusst mit Eiweiß, Gemüse und Flüssigkeit planen.", medium:"Eine zusätzliche Portion Gemüse oder Obst einbauen.", good:"Regelmäßige Mahlzeiten und Lebensmittelqualität beibehalten." },
-      vitamin_d:{ low:"Heute 10–15 Minuten Tageslicht im Freien einplanen — möglichst am Vormittag.", medium:"Eine kurze Pause im Freien machen.", good:"Besonders in Herbst und Winter bewusst rausgehen." },
-      mental:{ low:"Heute eine feste 5-Minuten-Erholungsinsel einplanen — ohne Handy, ohne To-do.", medium:"10 Minuten ohne Handy spazieren gehen oder bewusst atmen.", good:"Erholung aktiv schützen und nicht als Luxus betrachten." },
-      lifestyle:{ low:"Den Zusammenhang zwischen Konsum, Schlaf und Energie heute bewusst beobachten.", medium:"Konsum nicht bewerten, sondern Muster erkennen — wann, warum, wie viel.", good:"Diese Routine unterstützt Schlaf und Trainingsfortschritt aktiv." },
-      micronutrients:{ low:"Ernährung nicht pauschal supplementieren — zuerst Muster und Qualität der Mahlzeiten prüfen.", medium:"Eiweiß, Eisenquellen, Omega-3 und B12 im Alltag bewusster einbauen.", good:"Abwechslungsreiche Ernährung bleibt die beste Basis — Supplemente nur gezielt." },
-      metabolic:{ low:"Veränderungen im Alltag bewusst notieren: Appetit, Energie, Gewicht, Schlaf.", medium:"Regelmäßige Mahlzeiten und ausreichend Trinken als Basis sicherstellen.", good:"Energie und Wohlbefinden über die Woche aktiv beobachten." }
+      activity:{ low:"Heute 10 Minuten zügig gehen.", medium:"Einen konkreten Bewegungstermin setzen.", good:"Mischung aus Alltag, Ausdauer und Kraft beibehalten." },
     };
     return m[key]?.[l] || "Diese Kategorie gibt dir eine erste Orientierung.";
   }
@@ -1222,15 +1385,154 @@
       return "Betreutes Training und eine Körperanalyse im Studio als strukturierten Einstieg prüfen — gemeinsam mit Ernährungsoptimierung.";
     }
     const l = getLevel(score);
+    const ans = latestResult?.answers || [];
+    const getA = (k) => ans.find(a => a.question_key === k);
+    const getRisk = (k) => Number(getA(k)?.risk_points || 0);
+    const getText = (k) => getA(k)?.answer_text || "";
+    const bmiIsLow = Number(bmiValue) < 18.5;
+
+    // ── SCHLAF mittelfristig
+    if (key === "sleep") {
+      const lat = getRisk("sleep_latency");
+      const dur = getText("sleep_duration");
+      if (l === "low") {
+        if (lat >= 3)
+          return "Koffein nach 14 Uhr konsequent reduzieren und Schlafumgebung optimieren — kühl, dunkel, ruhig.";
+        return "Jeden Morgen möglichst zur gleichen Zeit aufstehen — Rhythmus ist wichtiger als Schlafdauer.";
+      }
+      if (l === "medium")
+        return "Koffein nach 14 Uhr bewusst reduzieren und Wirkung eine Woche beobachten.";
+      return "Erholung auch an stressigen Tagen aktiv einplanen — nicht verschieben.";
+    }
+
+    // ── BEWEGUNG mittelfristig + BMI-Schutz
+    if (key === "activity") {
+      const strength = getRisk("strength_training");
+      const sitting = getRisk("sitting_hours");
+      if (l === "low") {
+        if (bmiIsLow)
+          return "Sanfte Routine aufbauen — Spaziergänge, Dehnen, leichte Bewegung. Erst Ernährung stabilisieren.";
+        if (strength >= 3)
+          return "Zwei feste Bewegungstermine pro Woche einplanen — betreutes Training hilft beim Einstieg.";
+        return "Zwei feste Termine pro Woche für Bewegung einplanen — betreutes Training kann den Einstieg festigen.";
+      }
+      if (l === "medium") {
+        if (bmiIsLow)
+          return "Alltagsbewegung beibehalten — kein intensives Kraft- oder Ausdauertraining bei diesem Gewicht.";
+        if (strength >= 2 && sitting >= 2)
+          return "Krafttraining und Stehpausen kombinieren — 2 Einheiten Kraft + regelmäßige Bewegungspausen.";
+        if (strength >= 2)
+          return "2 kurze Kraft- oder Stabilitätsübungen ergänzen — 15 Minuten reichen als Start.";
+        return "Alltagsbewegung erhöhen — Treppe, kurze Wege zu Fuß, Mittagspause aktiv nutzen.";
+      }
+      return "Regeneration und Belastung bewusst ausbalancieren — Übertraining vermeiden.";
+    }
+
+    // ── ERNÄHRUNG mittelfristig
+    if (key === "nutrition") {
+      const veg = getText("vegetable_fruit") || getText("vegetables_fruit");
+      const water = getText("water_intake");
+      const protein = getText("protein_intake") || getText("protein_frequency");
+      if (l === "low")
+        return "Frühstück oder Mittagessen als feste Basis-Mahlzeit stabilisieren — Rhythmus vor Perfektion.";
+      if (l === "medium") {
+        if (veg.includes("täglich") && protein.includes("Selten"))
+          return "Eiweißquelle bei jeder Hauptmahlzeit gezielt einplanen — Basis ist bereits gut.";
+        if (water.includes("Unregelmäßig"))
+          return "Trinkroutine aufbauen — morgens ein Glas Wasser als fester Start hilft.";
+        return "Bei jeder Hauptmahlzeit eine Eiweißquelle prüfen und bewusst einbauen.";
+      }
+      return "Omega-3-Quellen und Trinkmenge regelmäßig im Blick behalten.";
+    }
+
+    // ── VITAMIN D mittelfristig
+    if (key === "vitamin_d") {
+      const sun = getText("sunlight_exposure") || getText("sun_exposure_winter");
+      if (l === "low") {
+        if (sun.includes("Selten") || sun.includes("Kaum"))
+          return "3 kurze Tageslicht-Spaziergänge pro Woche als Gewohnheit aufbauen. Bei Müdigkeit: Vitamin-D-Wert prüfen lassen.";
+        return "Tageslicht mit Bewegung koppeln — Spaziergang nach dem Mittagessen ist ideal.";
+      }
+      if (l === "medium")
+        return "Tageslicht mit Bewegung koppeln — z.B. Spaziergang nach dem Mittagessen.";
+      return "Tageslicht möglichst früh am Tag nutzen — stärkt den Schlaf-Wach-Rhythmus.";
+    }
+
+    // ── MENTAL mittelfristig
+    if (key === "mental") {
+      const stress = getRisk("stress_level");
+      const mood = getRisk("low_mood");
+      const interest = getRisk("low_interest");
+      const social = getRisk("social_connection");
+      if (l === "low") {
+        if (stress >= 3)
+          return "Stressquellen identifizieren — was lässt sich langfristig reduzieren oder delegieren?";
+        if (mood >= 2 || interest >= 2)
+          return "Professionelle Unterstützung kann helfen wenn Niedergeschlagenheit anhält — kein Luxus, sondern Pflege.";
+        return "Nur eine Routine wählen und 7 Tage konsequent durchhalten — Perfektion ist nicht das Ziel.";
+      }
+      if (l === "medium") {
+        if (social >= 2)
+          return "Regelmäßige soziale Kontakte einplanen — einmal pro Woche reicht als Anker.";
+        return "Einen festen Pausenanker pro Tag setzen — zur gleichen Zeit, ohne Ausnahme.";
+      }
+      return "Bewegung und Schlaf als aktive Schutzfaktoren für mentale Balance nutzen.";
+    }
+
+    // ── LIFESTYLE mittelfristig
+    if (key === "lifestyle") {
+      const nicotine = getRisk("nicotine_use");
+      const alcohol = getRisk("alcohol_frequency");
+      if (l === "low") {
+        if (nicotine >= 3)
+          return "Professionelle Unterstützung beim Rauchstopp erhöht die Erfolgsquote deutlich — Hausarzt oder Telefonberatung.";
+        if (alcohol >= 3)
+          return "Einen alkoholfreien Tag pro Woche als feste Gewohnheit einbauen — Wirkung auf Schlaf beobachten.";
+        return "Einen alkohol- oder nikotinfreien Tag pro Woche einplanen und Wirkung auf Schlaf beobachten.";
+      }
+      if (l === "medium") {
+        if (nicotine >= 2)
+          return "Reduktionsplan entwickeln — weniger ist ein gültiger erster Schritt.";
+        return "Einen Abend ohne Alkohol oder Nikotin als Regenerations-Test nutzen.";
+      }
+      return "Positive Wirkung auf Energie und Erholung weiter bewusst wahrnehmen.";
+    }
+
+    // ── MIKRONÄHRSTOFFE mittelfristig
+    if (key === "micronutrients") {
+      const dizzy = getRisk("dizziness_pale_nails");
+      const nutType = getText("nutrition_type") || getText("diet_type");
+      const isPlant = nutType.includes("vegan") || nutType.includes("Vegan") ||
+                      nutType.includes("vegetar") || nutType.includes("Vegetar");
+      if (l === "low") {
+        if (dizzy >= 2 && isPlant)
+          return "Bei anhaltenden Mangelzeichen und pflanzlicher Ernährung: Trockenbluttest für Eisen, B12 und Vitamin D prüfen lassen.";
+        return "Bei anhaltender Müdigkeit oder pflanzlicher Ernährung gezielte Blutwerte prüfen — kein blindes Supplementieren.";
+      }
+      if (l === "medium") {
+        if (isPlant)
+          return "B12, Jod und Eisen bei pflanzlicher Ernährung gezielt im Blick behalten — Trockenbluttest gibt Klarheit.";
+        return "Bei anhaltender Müdigkeit gezielte Abklärung vor Supplement-Kauf prüfen.";
+      }
+      return "Supplemente nur gezielt, sinnvoll und nach Bedarf einsetzen.";
+    }
+
+    // ── METABOLIC mittelfristig
+    if (key === "metabolic") {
+      const weightLoss = getRisk("unintentional_weight_loss");
+      if (l === "low") {
+        if (weightLoss >= 3)
+          return "Bei deutlich ungewolltem Gewichtsverlust ärztliche Einschätzung einholen — nicht abwarten.";
+        return "Schlaf, Bewegung und Mahlzeitenrhythmus als zusammenhängendes System betrachten.";
+      }
+      if (l === "medium")
+        return "Schlaf, Bewegung und Mahlzeitenrhythmus als zusammenhängendes System betrachten.";
+      return "Energielevel und Wohlbefinden über die Woche regelmäßig beobachten.";
+    }
+
+    // ── FALLBACK
     const m = {
-      sleep:{ low:"Jeden Morgen möglichst zur gleichen Zeit aufstehen — Rhythmus ist wichtiger als Dauer.", medium:"Koffein nach 14 Uhr bewusst reduzieren und Wirkung beobachten.", good:"Erholung auch an stressigen Tagen aktiv einplanen — nicht verschieben." },
-      activity:{ low:"Zwei feste Termine pro Woche für Bewegung einplanen — betreutes Training kann helfen den Einstieg zu halten.", medium:"2 kurze Kraft- oder Stabilitätsübungen ergänzen — 15 Minuten reichen als Start.", good:"Regeneration und Belastung bewusst ausbalancieren — Übertraining vermeiden." },
-      nutrition:{ low:"Frühstück oder Mittagessen als feste Basis-Mahlzeit stabilisieren — Rhythmus vor Perfektion.", medium:"Bei jeder Hauptmahlzeit eine Eiweißquelle prüfen und bewusst einbauen.", good:"Omega-3-Quellen und Trinkmenge regelmäßig im Blick behalten." },
-      vitamin_d:{ low:"3 kurze Tageslicht-Spaziergänge pro Woche testen. Bei anhaltender Müdigkeit oder Herbst/Winter: Blutwert prüfen lassen.", medium:"Tageslicht mit Bewegung koppeln — z.B. Spaziergang nach dem Mittagessen.", good:"Tageslicht möglichst früh am Tag nutzen — stärkt den Schlaf-Wach-Rhythmus." },
-      mental:{ low:"Nicht alles gleichzeitig perfektionieren — nur eine Routine wählen und 7 Tage durchhalten.", medium:"Einen festen Pausenanker pro Tag setzen — zur gleichen Zeit, ohne Ausnahme.", good:"Bewegung und Schlaf als aktive Schutzfaktoren für mentale Balance nutzen." },
-      lifestyle:{ low:"Einen alkohol- oder nikotinfreien Tag pro Woche bewusst einplanen und Wirkung auf Schlaf beobachten.", medium:"Einen Abend ohne Alkohol oder Nikotin als Regenerations-Test nutzen.", good:"Positive Wirkung auf Energie und Erholung weiter bewusst wahrnehmen." },
-      micronutrients:{ low:"Bei anhaltender Müdigkeit, pflanzlicher Ernährung oder starker körperlicher Belastung gezielte Blutwerte prüfen lassen — kein blindes Supplementieren.", medium:"Bei anhaltender Müdigkeit gezielte Abklärung vor Supplement-Kauf prüfen.", good:"Supplemente nur gezielt, sinnvoll und nach Bedarf einsetzen." },
-      metabolic:{ low:"Bei deutlich ungewolltem Gewichtsverlust, starker Erschöpfung oder anhaltenden Veränderungen ärztliche Einschätzung einholen.", medium:"Schlaf, Bewegung und Mahlzeitenrhythmus als zusammenhängendes System betrachten.", good:"Energielevel und Wohlbefinden über die Woche regelmäßig beobachten." }
+      sleep:{ low:"Jeden Morgen zur gleichen Zeit aufstehen.", medium:"Koffein nach 14 Uhr reduzieren.", good:"Erholung aktiv einplanen." },
     };
     return m[key]?.[l] || "Mittelfristig: Fortschritt beim nächsten Re-Check vergleichen.";
   }
