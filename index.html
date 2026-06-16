@@ -934,6 +934,26 @@
     html += renderRedFlagBox(score, totalScore);
     const { html: supportHtml, bloodtestShown } = renderVitalitySupportBox(areas, result, suppFocus);
     html += supportHtml;
+    html += `
+      <div class="ai-box">
+        <div class="ai-badge">✦ Individuelle Auswertung</div>
+        <div class="ai-title">Persönliche Analyse per E-Mail</div>
+        <div class="ai-sub">Erhalte eine motivierende, auf deine Angaben zugeschnittene Auswertung mit konkreten Impulsen für mehr Vitalität — kostenlos per E-Mail.</div>
+        <input type="email" id="ai_email" placeholder="deine@email.de" />
+        <div class="ai-consent">
+          <div class="checkbox-row">
+            <input type="checkbox" id="consent_ai_analysis" />
+            <label for="consent_ai_analysis">Ich willige ein, dass meine Angaben für eine KI-gestützte individuelle Auswertung verarbeitet werden. Dazu werden meine Angaben an Anthropic PBC (USA) übermittelt — ausschließlich zur Erstellung der Auswertung, nicht zum Training von KI-Modellen. Die Übermittlung erfolgt auf Basis von Standardvertragsklauseln (Art. 46 DSGVO).</label>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="consent_email_delivery" />
+            <label for="consent_email_delivery">Ich willige ein, dass mir die Auswertung per E-Mail zugesendet wird.</label>
+          </div>
+        </div>
+        <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">✦ Individuelle Auswertung per E-Mail anfordern →</button>
+        <div id="ai-status"></div>
+      </div>`;
+
     html += renderHintBoxes(score, result.bmi, result.submission?.goal_key || personalData.goal_key, bloodtestShown);
 
     // Antworten-Übersicht — aufklappbar
@@ -1028,25 +1048,7 @@
         </div>`;
     }
 
-    html += `
-      <div class="ai-box">
-        <div class="ai-badge">✦ Individuelle Auswertung</div>
-        <div class="ai-title">Persönliche Analyse per E-Mail</div>
-        <div class="ai-sub">Erhalte eine motivierende, auf deine Angaben zugeschnittene Auswertung mit konkreten Impulsen für mehr Vitalität — kostenlos per E-Mail.</div>
-        <input type="email" id="ai_email" placeholder="deine@email.de" />
-        <div class="ai-consent">
-          <div class="checkbox-row">
-            <input type="checkbox" id="consent_ai_analysis" />
-            <label for="consent_ai_analysis">Ich willige ein, dass meine Angaben für eine KI-gestützte individuelle Auswertung verarbeitet werden. Dazu werden meine Angaben an Anthropic PBC (USA) übermittelt — ausschließlich zur Erstellung der Auswertung, nicht zum Training von KI-Modellen. Die Übermittlung erfolgt auf Basis von Standardvertragsklauseln (Art. 46 DSGVO).</label>
-          </div>
-          <div class="checkbox-row">
-            <input type="checkbox" id="consent_email_delivery" />
-            <label for="consent_email_delivery">Ich willige ein, dass mir die Auswertung per E-Mail zugesendet wird.</label>
-          </div>
-        </div>
-        <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">✦ Individuelle Auswertung per E-Mail anfordern →</button>
-        <div id="ai-status"></div>
-      </div>`;
+
 
     html += `<button class="secondary-btn" onclick="window.print()">↓ Auswertung als PDF speichern</button>`;
 
