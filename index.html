@@ -360,7 +360,7 @@
       <div class="card" style="text-align:center;padding:32px 24px;">
         <div style="font-size:40px;margin-bottom:16px;">🌿</div>
         <div style="font-family:'DM Serif Display',serif;font-size:26px;font-weight:700;color:var(--text-primary);margin-bottom:10px;line-height:1.3;">Wie vital bist du wirklich?</div>
-        <div style="font-size:15px;color:var(--text-secondary);line-height:1.7;margin-bottom:28px;max-width:480px;margin-left:auto;margin-right:auto;">In ca. 5 Minuten erfährst du deinen persönlichen Vitalitäts-Index — und was du heute konkret tun kannst, um länger fit, energiegeladen und gesund zu bleiben.</div>
+        <div style="font-size:15px;color:var(--text-secondary);line-height:1.7;margin-bottom:28px;max-width:480px;margin-left:auto;margin-right:auto;">Finde in 5 Minuten heraus, welche Hebel bei Schlaf, Energie, Ernährung oder Bewegung bei dir am stärksten wirken — kostenlos, sofort, ohne Anmeldung.</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px;text-align:left;">
           <div style="background:var(--accent-green-dim);border:1px solid rgba(34,201,122,0.2);border-radius:var(--radius-sm);padding:14px;">
             <div style="font-size:18px;margin-bottom:6px;">⚡</div>
@@ -383,36 +383,8 @@
             <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Deine persönliche KI-Auswertung — kostenlos per E-Mail.</div>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:28px;">
-          <div style="display:flex;align-items:center;gap:10px;text-align:left;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:var(--radius-sm);border:1px solid var(--border);">
-            <span style="font-size:18px;flex-shrink:0;">🔬</span>
-            <div>
-              <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Wissenschaftlich orientiert</div>
-              <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Das Modell basiert auf wissenschaftlich anerkannten Gesundheitsdeterminanten (Schlaf, Bewegung, Ernährung, Stress, Tageslicht). Der Vitalitäts-Index ist ein Orientierungswert — kein medizinisches Messinstrument.</div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;text-align:left;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:var(--radius-sm);border:1px solid var(--border);">
-            <span style="font-size:18px;flex-shrink:0;">🔒</span>
-            <div>
-              <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Datenschutz bewusst umgesetzt</div>
-              <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Deine Angaben werden gemäß unseren Datenschutzhinweisen verarbeitet. Du entscheidest separat, ob du eine KI-gestützte E-Mail-Auswertung anforderst.</div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;text-align:left;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:var(--radius-sm);border:1px solid var(--border);">
-            <span style="font-size:18px;flex-shrink:0;">🎁</span>
-            <div>
-              <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Kostenlos & unverbindlich</div>
-              <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Keine Anmeldung, keine Verpflichtung — einfach starten und sofort Ergebnisse sehen.</div>
-            </div>
-          </div>
-        </div>
-        <button class="next-btn" onclick="nextStep()" style="font-size:17px;padding:18px;">Jetzt starten →</button>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:10px;">Ca. 5 Minuten · Kostenlos · Unverbindlich</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:6px;line-height:1.7;">
-          LeVITA · Therapie · Gesundheit · Fitness<br>
-          Grüsener Str. 14 · 35285 Gemünden (Wohra)<br>
-          <a href="https://www.le-vita.com" target="_blank" style="color:var(--accent-green);text-decoration:none;">www.le-vita.com</a>
-        </div>
+        <button class="next-btn" onclick="nextStep()" style="font-size:17px;padding:18px;">Kostenlos starten →</button>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:10px;">Ca. 5 Minuten · Kostenlos · Datenschutz beachtet</div>
       </div>`;
   }
 
@@ -555,11 +527,10 @@
       // Fisch-Frage: initial ausgeblendet, nur bei omnivor/pescetarisch einblenden
       if (currentQ?.question_key === "nutrition_type" || currentQ?.question_key === "diet_type") {
         const fishQuestionKeys = ["omega3_fish", "fish_frequency", "fish_consumption", "fish_intake"];
-        // Prüfe über option_key (c=Vegetarisch, d=Vegan) UND option_text als Fallback
+        // Prüfe über option_text (stabil gegenüber DB-Änderungen)
         const selectedOpt = currentQ.options?.find(o => o.option_id === selectedAnswers[selectedAnswers.length - 1]?.option_id);
         const optText = (selectedOpt?.option_text || "").toLowerCase();
-        const isPlantBased = optionKey === "c" || optionKey === "d"
-          || optText.includes("vegan") || optText.includes("vegetar");
+        const isPlantBased = optText.includes("vegan") || optText.includes("vegetar");
         if (!isPlantBased) {
           // Omnivor/Mischkost — Fisch-Frage einblenden
           const hasFish = groupedQuestions.some(q => fishQuestionKeys.some(fk => q.question_key?.includes(fk)));
@@ -579,13 +550,17 @@
         }
       }
 
-      // NEU: alcohol_amount überspringen wenn alcohol_frequency = "a" (Nie) oder "occasion" (Nur zu Anlässen)
-      if (currentQ?.question_key === "alcohol_frequency" && (optionKey === "a" || optionKey === "occasion")) {
+      // alcohol_amount überspringen wenn alcohol_frequency = "Nie" oder "Nur zu besonderen Anlässen"
+      // Prüfung über option_text (stabil) mit optionKey als Fallback
+      const alcoholOptText = (currentQ?.options?.find(o => o.option_id === selectedAnswers[selectedAnswers.length - 1]?.option_id)?.option_text || "").toLowerCase();
+      const alcoholIsNever = optionKey === "a" || optionKey === "occasion"
+        || alcoholOptText.includes("nie") || alcoholOptText.includes("anlässen") || alcoholOptText.includes("anlass");
+      if (currentQ?.question_key === "alcohol_frequency" && alcoholIsNever) {
         groupedQuestions = groupedQuestions.filter(q => q.question_key !== "alcohol_amount");
         buildSteps(currentStep);
       }
       // Wiederherstellen wenn zurückgegangen und anders gewählt
-      if (currentQ?.question_key === "alcohol_frequency" && optionKey !== "a" && optionKey !== "occasion") {
+      if (currentQ?.question_key === "alcohol_frequency" && !alcoholIsNever) {
         const hasAmount = groupedQuestions.some(q => q.question_key === "alcohol_amount");
         if (!hasAmount) {
           const amountQ = questions.find(q => q.question_key === "alcohol_amount");
@@ -597,10 +572,13 @@
         }
       }
 
-      // NEU: muscle_cramps einblenden wenn strength_training = "a" oder "b"
+      // muscle_cramps einblenden wenn strength_training ≥ 2x/Woche
+      // Prüfung über option_text (stabil) mit optionKey als Fallback
       if (currentQ?.question_key === "strength_training") {
-        const triggerKeys = ["a", "b"];
-        const shouldShow = triggerKeys.includes(optionKey);
+        const strengthOptText = (currentQ?.options?.find(o => o.option_id === selectedAnswers[selectedAnswers.length - 1]?.option_id)?.option_text || "").toLowerCase();
+        const strengthIs2Plus = optionKey === "a" || optionKey === "b"
+          || strengthOptText.includes("2") || strengthOptText.includes("3") || strengthOptText.includes("täglich") || strengthOptText.includes("öfter");
+        const shouldShow = strengthIs2Plus;
         const hasCramps = groupedQuestions.some(q => q.question_key === "muscle_cramps");
         if (shouldShow && !hasCramps) {
           const crampsQ = questions.find(q => q.question_key === "muscle_cramps");
@@ -615,10 +593,15 @@
         }
       }
 
-      // NEU: social_connection einblenden wenn low_mood ODER low_interest = c/d/e
+      // social_connection einblenden wenn low_mood ODER low_interest = häufig/meistens/fast täglich
+      // Prüfung über risk_points (≥ 2) ODER option_text ODER optionKey als Fallback
       if (currentQ?.question_key === "low_mood" || currentQ?.question_key === "low_interest") {
+        const moodOptText = (currentQ?.options?.find(o => o.option_id === selectedAnswers[selectedAnswers.length - 1]?.option_id)?.option_text || "").toLowerCase();
+        const moodRisk = Number(currentQ?.options?.find(o => o.option_id === selectedAnswers[selectedAnswers.length - 1]?.option_id)?.risk_points || 0);
         const triggerKeys = ["c", "d", "e"];
-        const shouldShow = triggerKeys.includes(optionKey);
+        const shouldShow = triggerKeys.includes(optionKey)
+          || moodRisk >= 2
+          || moodOptText.includes("hälfte") || moodOptText.includes("meist") || moodOptText.includes("täglich");
         // Prüfen ob die andere Frage bereits einen Trigger gesetzt hat
         const otherKey = currentQ.question_key === "low_mood" ? "low_interest" : "low_mood";
         const otherAnswer = selectedAnswers.slice(0, -1).find(a => {
@@ -946,9 +929,9 @@
     html += supportHtml;
     html += `
       <div class="ai-box">
-        <div class="ai-badge">✦ Individuelle Auswertung</div>
-        <div class="ai-title">Persönliche Analyse per E-Mail</div>
-        <div class="ai-sub">Erhalte eine motivierende, auf deine Angaben zugeschnittene Auswertung mit konkreten Impulsen für mehr Vitalität — kostenlos per E-Mail.</div>
+        <div class="ai-badge">✦ Deine persönliche Auswertung</div>
+        <div class="ai-title">Was bedeuten deine Ergebnisse für dich — konkret?</div>
+        <div class="ai-sub">Wir fassen zusammen was bei dir wirklich wichtig ist und welche 1–2 Schritte heute den größten Unterschied machen. Kostenlos, direkt in dein Postfach.</div>
         <input type="email" id="ai_email" placeholder="deine@email.de" />
         <div class="ai-consent">
           <div class="checkbox-row">
@@ -1070,7 +1053,7 @@
         <button class="next-btn" onclick="openGoogleForm()">Feedback geben</button>
       </div>`;
 
-    html += `<div class="disclaimer"><strong>Wichtiger Hinweis:</strong> Diese Auswertung ist keine Diagnose und ersetzt keine medizinische Beratung. Sie dient der Orientierung und Hilfe zur Selbsthilfe. Die Schwerpunkte basieren auf Empfehlungen von WHO, DGE und dem Bundesinstitut für Risikobewertung.<br><br>powered by <strong>LogiVita</strong><br><br><span style="font-size:11px;color:var(--text-muted);">Möchtest du deine gespeicherten Daten löschen? <button onclick="deletMyData()" style="background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;text-decoration:underline;padding:0;">Daten löschen</button></span></div>`;
+    html += `<div class="disclaimer"><strong>Wichtiger Hinweis:</strong> Diese Auswertung ist keine Diagnose und ersetzt keine medizinische Beratung. Sie dient der Orientierung und Hilfe zur Selbsthilfe. Die Schwerpunkte basieren auf Empfehlungen von WHO, DGE und dem Bundesinstitut für Risikobewertung.<br><br>powered by <strong>LogiVita</strong><br><br><span style="font-size:11px;color:var(--text-muted);">Möchtest du deine gespeicherten Daten löschen? <button onclick="deleteMyData()" style="background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;text-decoration:underline;padding:0;">Daten löschen</button></span></div>`;
 
     html += `
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
@@ -1747,7 +1730,7 @@
         </span><br><br>
         <a href="https://le-vita.com/probetraining" target="_blank"
            style="display:inline-block;padding:9px 20px;background:rgba(255,160,0,0.15);color:#ffb347;border:1px solid rgba(255,160,0,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">
-          Beratungsgespräch vereinbaren →
+          Stressgespräch vereinbaren →
         </a>
       </div>`;
     }
@@ -1778,7 +1761,7 @@
         </span><br><br>
         <a href="https://le-vita.com/probetraining" target="_blank"
            style="display:inline-block;padding:9px 20px;background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">
-          Beratungsgespräch vereinbaren →
+          Schlaf besprechen →
         </a>
       </div>`;
     }
@@ -1813,7 +1796,7 @@
         </span><br><br>
         <a href="https://le-vita.com/probetraining" target="_blank"
            style="display:inline-block;padding:9px 20px;background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">
-          Beratungsgespräch vereinbaren →
+          Schlaf besprechen →
         </a>
       </div>`;
     }
@@ -1840,19 +1823,19 @@
       const gk = goalKey || "";
       let coachingText = "";
       if (gk === "goal_longevity") {
-        coachingText = `🌿 <strong>Longevity-Einstieg</strong><br>Eine Körperanalyse und ein Trockenbluttest geben dir konkrete Werte — Muskelmasse, Biomarker, Vitalitäts-Alter im Vergleich. Die Präventionskurse §20 im LeVITA Studio werden von vielen Krankenkassen bezuschusst.<br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Beratungsgespräch vereinbaren →</a>`;
+        coachingText = `🌿 <strong>Longevity-Einstieg</strong><br>Eine Körperanalyse und ein Trockenbluttest geben dir konkrete Werte — Muskelmasse, Biomarker, Vitalitäts-Alter im Vergleich. Die Präventionskurse §20 im LeVITA Studio werden von vielen Krankenkassen bezuschusst.<br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Vitalitätsgespräch vereinbaren →</a>`;
       } else if (gk === "goal_prevention") {
-        coachingText = `🛡️ <strong>Prävention mit Plan</strong><br>Unsere Präventionskurse §20 helfen dir, gezielt an deiner Gesundheit zu arbeiten — strukturiert, betreut und von vielen Krankenkassen bezuschusst.<br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Beratungsgespräch vereinbaren →</a>`;
+        coachingText = `🛡️ <strong>Prävention mit Plan</strong><br>Unsere Präventionskurse §20 helfen dir, gezielt an deiner Gesundheit zu arbeiten — strukturiert, betreut und von vielen Krankenkassen bezuschusst.<br><br><a href="https://le-vita.com/praeventionskurse-gemuenden-wohra" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Präventionskurs anfragen →</a>`;
       } else if (gk === "goal_fitness") {
-        coachingText = `💪 <strong>Probetraining</strong><br>Ein kostenloser Einstieg ins LeVITA — unverbindlich, mit Trainer-Begleitung.<br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Beratungsgespräch vereinbaren →</a>`;
+        coachingText = `💪 <strong>Probetraining</strong><br>Ein kostenloser Einstieg ins LeVITA — unverbindlich, mit Trainer-Begleitung.<br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Kostenlos reinschnuppern →</a>`;
       } else if (gk === "goal_weight") {
-        coachingText = `⚖️ <strong>Figur &amp; Abnehmen</strong><br>Betreutes Training kombiniert mit Ernährungsberatung im LeVITA — ein kostenloser Einstieg zeigt dir wie es funktioniert.<br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Beratungsgespräch vereinbaren →</a>`;
+        coachingText = `⚖️ <strong>Figur &amp; Abnehmen</strong><br>Betreutes Training kombiniert mit Ernährungsberatung im LeVITA — ein kostenloser Einstieg zeigt dir wie es funktioniert.<br><br><a href="https://le-vita.com/abnehmen-ernaehrung-und-fitness-gemuenden-wohra" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Ernährungsberatung anfragen →</a>`;
       } else if (gk === "goal_energy") {
-        coachingText = `⚡ <strong>Energie &amp; Regeneration</strong><br>VELUS JET® Wellness im LeVITA — gezielt für Entspannung, Regeneration und neue Energie im Alltag.<br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Beratungsgespräch vereinbaren →</a>`;
+        coachingText = `⚡ <strong>Energie &amp; Regeneration</strong><br>VELUS JET® Wellness im LeVITA — gezielt für Entspannung, Regeneration und neue Energie im Alltag.<br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Kostenlos reinschnuppern →</a>`;
       } else if (gk === "goal_supplements") {
-        coachingText = `💉 <strong>Nährstoffstatus gezielt klären</strong><br>Ein Trockenbluttest gibt dir konkrete Werte statt Vermutungen — Vitamin D, B12, Ferritin, Omega-3. Bequem von zuhause oder direkt bei uns im Studio. Wir beraten dich, welches Paket für dich sinnvoll ist.<br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Beratungsgespräch vereinbaren →</a>`;
+        coachingText = `💉 <strong>Nährstoffstatus gezielt klären</strong><br>Ein Trockenbluttest gibt dir konkrete Werte statt Vermutungen — Vitamin D, B12, Ferritin, Omega-3. Bequem von zuhause oder direkt bei uns im Studio. Wir beraten dich, welches Paket für dich sinnvoll ist.<br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Testergebnisse besprechen →</a>`;
       } else {
-        coachingText = `🤝 <strong>Kostenloses Orientierungsgespräch</strong><br>Ein kostenloses Gespräch, ein betreuter Trainingsplan oder eine Körperanalyse — alles unter einem Dach im LeVITA Studio Gemünden.<br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Beratungsgespräch vereinbaren →</a>`;
+        coachingText = `🤝 <strong>Kostenloses Orientierungsgespräch</strong><br>Ein kostenloses Gespräch, ein betreuter Trainingsplan oder eine Körperanalyse — alles unter einem Dach im LeVITA Studio Gemünden.<br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Kostenlos beraten lassen →</a>`;
       }
       html += `<div class="hint-box box-success">${coachingText}</div>`;
     }
@@ -1903,7 +1886,7 @@
     btn.textContent = isHidden ? "Ausblenden" : "Einblenden";
   }
 
-  async function deletMyData() {
+  async function deleteMyData() {
     if (!latestResult?.public_code) {
       alert("Keine aktive Auswertung gefunden. Bitte lade die Seite neu oder wende dich an info@le-vita.com mit deiner Pilot-ID.");
       return;
@@ -1921,7 +1904,7 @@
     if (!confirmed) return;
 
     try {
-      const deleteBtn = document.querySelector('[onclick="deletMyData()"]');
+      const deleteBtn = document.querySelector('[onclick="deleteMyData()"]');
       if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.textContent = "⏳ Wird gelöscht…"; }
 
       const result = await callFunction({
@@ -1960,6 +1943,6 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.21</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.22</footer>
 </body>
 </html>
