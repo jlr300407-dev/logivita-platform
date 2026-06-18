@@ -1691,8 +1691,9 @@
       hints.push(`<strong>Langzeit-Blutzucker (HbA1c)</strong> — bei ${bmiNumHba >= 26 ? "erhöhtem BMI und wenig Bewegung" : "Alter ab 45 mit Stoffwechsel-Signalen"} ein sinnvoller Orientierungswert. Kein Nüchternblut nötig — bequem als Trockenbluttest von zuhause.`);
     }
 
-    // Trockenbluttest in Hints erkannt? → Flag für renderHintBoxes
-    const bloodtestShown = hints.some(h => h.includes("Trockenbluttest") || h.includes("Blutwert-Check") || h.includes("HbA1c"));
+    // Trockenbluttest in Hints erkannt? → nur wenn tatsächlich angezeigt (slice 0-3)
+    const visibleHints = hints.slice(0, 3);
+    const bloodtestShown = visibleHints.some(h => h.includes("Trockenbluttest") || h.includes("Blutwert-Check") || h.includes("HbA1c"));
 
     const html = `
       <div class="support-box">
