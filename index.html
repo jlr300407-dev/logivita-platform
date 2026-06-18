@@ -944,9 +944,12 @@
         <input type="email" id="ai_email" placeholder="deine@email.de" />
         <div class="ai-consent">
           <div class="checkbox-row">
-            <input type="checkbox" id="consent_ai_analysis" onchange="document.getElementById('consent_email_delivery').checked=this.checked" />
-            <input type="checkbox" id="consent_email_delivery" style="display:none" />
-            <label for="consent_ai_analysis" style="font-size:12px;color:var(--text-muted);line-height:1.5;">Ich willige ein, dass meine Angaben für eine KI-gestützte Auswertung verarbeitet und mir per E-Mail zugesendet werden. Die Verarbeitung erfolgt über Anthropic PBC (USA) auf Basis von Standardvertragsklauseln (Art. 46 DSGVO) — nicht zum Training von KI-Modellen. <a href="https://www.le-vita.com/datenschutz" target="_blank" style="color:var(--accent-green);text-decoration:none;">Datenschutz</a></label>
+            <input type="checkbox" id="consent_ai_analysis" />
+            <label for="consent_ai_analysis">Ich willige ein, dass meine Angaben für eine KI-gestützte individuelle Auswertung verarbeitet werden. Dazu werden meine Angaben an Anthropic PBC (USA) übermittelt — ausschließlich zur Erstellung der Auswertung, nicht zum Training von KI-Modellen. Die Übermittlung erfolgt auf Basis von Standardvertragsklauseln (Art. 46 DSGVO).</label>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="consent_email_delivery" />
+            <label for="consent_email_delivery">Ich willige ein, dass mir die Auswertung per E-Mail zugesendet wird.</label>
           </div>
         </div>
         <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">✦ Meine persönliche Auswertung anfordern →</button>
