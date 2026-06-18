@@ -1164,9 +1164,9 @@
         ${bmiHtml}
         <div class="area-detail" id="detail-${area.key}">
           <div class="insight-label">⚡ Sofort umsetzen</div>
-          <div class="insight-text">${getInsightNow(area.key, area.score, result?.bmi)}</div>
+          <div class="insight-text">${getInsightNow(area.key, area.score, result?.bmi, result)}</div>
           <div class="insight-label">📅 Mittelfristig</div>
-          <div class="insight-text">${getInsightSoon(area.key, area.score, result?.bmi)}</div>
+          <div class="insight-text">${getInsightSoon(area.key, area.score, result?.bmi, result)}</div>
         </div>
         <div class="tap-hint">Tippen für Details</div>
       </div>`;
@@ -1190,7 +1190,7 @@
     return "high";
   }
 
-  function getInsightNow(key, score, bmiValue) {
+  function getInsightNow(key, score, bmiValue, result) {
     if (key === "bmi" && bmiValue !== undefined) {
       const cat = getBmiCategory(bmiValue);
       if (cat === "low")      return "Heute eine zusätzliche eiweißreiche Mahlzeit einplanen — z.B. Joghurt, Eier, Hülsenfrüchte oder Quark. Fokus auf Energie und Regeneration, nicht auf Kalorienverbrauch.";
@@ -1199,7 +1199,7 @@
       return "Nicht alles gleichzeitig ändern — eine kleine, realistische Routine wählen und konsequent beibehalten.";
     }
     const l = getLevel(score);
-    const ans = latestResult?.answers || [];
+    const ans = (result?.answers || latestResult?.answers || []);
     const getA = (k) => ans.find(a => a.question_key === k);
     const getRisk = (k) => Number(getA(k)?.risk_points || 0);
     const getText = (k) => getA(k)?.answer_text || "";
@@ -1375,7 +1375,7 @@
     return m[key]?.[l] || "Diese Kategorie gibt dir eine erste Orientierung.";
   }
 
-  function getInsightSoon(key, score, bmiValue) {
+  function getInsightSoon(key, score, bmiValue, result) {
     if (key === "bmi" && bmiValue !== undefined) {
       const cat = getBmiCategory(bmiValue);
       if (cat === "low")      return "Regelmäßige Mahlzeiten, ausreichend Eiweiß und bewusste Regeneration als Priorität setzen. Eine Körperanalyse im Studio kann helfen, Muskelmasse und Energieversorgung besser einzuordnen.";
@@ -1384,7 +1384,7 @@
       return "Betreutes Training und eine Körperanalyse im Studio als strukturierten Einstieg prüfen — gemeinsam mit Ernährungsoptimierung.";
     }
     const l = getLevel(score);
-    const ans = latestResult?.answers || [];
+    const ans = (result?.answers || latestResult?.answers || []);
     const getA = (k) => ans.find(a => a.question_key === k);
     const getRisk = (k) => Number(getA(k)?.risk_points || 0);
     const getText = (k) => getA(k)?.answer_text || "";
