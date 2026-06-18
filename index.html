@@ -1680,7 +1680,7 @@
     const answersHba = result?.answers || [];
     const activityAnswerHba = answersHba.find(a => a.question_key === "activity_days");
     const activityRiskHba = Number(activityAnswerHba?.risk_points || 0);
-    const bmiNumHba = Number(bmiValue || 0);
+    const bmiNumHba = Number(result?.bmi || bmiNum || 0);
     const ageNumHba = Number(result?.submission?.age || 0);
     const metabolicScoreHba = Number(result?.score?.score_payload?.metabolic?.score || 100);
     const hba1cTrigger = (bmiNumHba >= 26 && activityRiskHba >= 2) || (ageNumHba >= 45 && metabolicScoreHba < 80);
