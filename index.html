@@ -1677,7 +1677,8 @@
     if (hints.length === 0) hints.push("Deine Angaben zeigen in vielen Bereichen bereits eine gute Grundlage. Der wichtigste Hebel ist jetzt, stabile Routinen beizubehalten.");
 
     // HbA1c-Trigger: BMI >= 26 + wenig Bewegung ODER Alter >= 45 + metabolic niedrig
-    const activityAnswerHba = answers.find(a => a.question_key === "activity_days");
+    const answersHba = result?.answers || [];
+    const activityAnswerHba = answersHba.find(a => a.question_key === "activity_days");
     const activityRiskHba = Number(activityAnswerHba?.risk_points || 0);
     const bmiNumHba = Number(bmiValue || 0);
     const ageNumHba = Number(result?.submission?.age || 0);
