@@ -899,7 +899,7 @@
 
     html += renderVitalIndexBox(totalScore, scoreLabel);
 
-    // TEASER: KI-Mail direkt unter Score
+    // Teaser KI-Mail direkt unter Score
     html += `<div onclick="document.querySelector('.ai-box').scrollIntoView({behavior:'smooth',block:'center'})"
       style="margin-bottom:16px;padding:12px 16px;background:linear-gradient(135deg,rgba(34,201,122,0.07),rgba(59,158,255,0.07));border:1px solid rgba(34,201,122,0.25);border-radius:var(--radius-sm);text-align:center;cursor:pointer;">
       <div style="font-size:11px;font-weight:700;color:var(--accent-green);letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px;">✦ Kostenlose KI-Auswertung</div>
@@ -967,7 +967,7 @@
           <div class="checkbox-row">
             <input type="checkbox" id="consent_ai_analysis" />
             <input type="checkbox" id="consent_email_delivery" style="display:none" />
-            <label for="consent_ai_analysis" style="font-size:12px;color:var(--text-muted);line-height:1.5;">Ich willige ein, dass meine Angaben per E-Mail als KI-Auswertung zugesendet werden. Die Verarbeitung erfolgt über Anthropic PBC (USA) auf Basis von SCCs (Art. 46 DSGVO) — nicht zum Training von KI-Modellen. <a href="https://www.le-vita.com/datenschutz" target="_blank" style="color:var(--accent-green);text-decoration:none;">Datenschutz</a></label>
+            <label for="consent_ai_analysis" style="font-size:12px;color:var(--text-muted);line-height:1.5;">Ich willige ein, dass meine Angaben per E-Mail als KI-Auswertung zugesendet werden. Die Verarbeitung erfolgt über Anthropic PBC (USA) auf Basis von Standardvertragsklauseln (Art. 46 DSGVO) — nicht zum Training von KI-Modellen. <a href="https://www.le-vita.com/datenschutz" target="_blank" style="color:var(--accent-green);text-decoration:none;">Datenschutz</a></label>
           </div>
         </div>
         <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">✦ Meine persönliche Auswertung anfordern →</button>
