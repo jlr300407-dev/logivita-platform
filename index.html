@@ -1709,7 +1709,10 @@
     const bmiNumHba = Number(result?.bmi || bmiNum || 0);
     const ageNumHba = Number(result?.submission?.age || 0);
     const metabolicScoreHba = Number(result?.score?.score_payload?.metabolic?.score || 100);
-    const hba1cTrigger = (bmiNumHba >= 26 && activityRiskHba >= 2) || (ageNumHba >= 45 && metabolicScoreHba < 80);
+    const lifestyleScoreHba = Number(result?.score?.score_payload?.lifestyle?.score || 100);
+    const hba1cTrigger = (bmiNumHba >= 26 && activityRiskHba >= 2)       // Trigger 1: BMI + wenig Bewegung
+                      || (ageNumHba >= 45 && metabolicScoreHba < 80)     // Trigger 2: Alter + Stoffwechsel
+                      || (ageNumHba >= 65 && lifestyleScoreHba < 50);    // Trigger 3: Alter + Nikotin/Alkohol (LEV-140)
     if (hba1cTrigger && !hints.some(h => h.includes("HbA1c") || h.includes("Blutzucker"))) {
       hints.push(`<strong>Langzeit-Blutzucker (HbA1c)</strong> — bei ${bmiNumHba >= 26 ? "erhöhtem BMI und wenig Bewegung" : "Alter ab 45 mit Stoffwechsel-Signalen"} ein sinnvoller Orientierungswert. Kein Nüchternblut nötig — bequem als Trockenbluttest von zuhause.`);
     }
