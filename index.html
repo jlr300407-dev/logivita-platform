@@ -192,6 +192,20 @@
     .feedback-box h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
     .feedback-box p { font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.5; }
     .disclaimer { font-size: 12px; color: var(--text-muted); text-align: center; line-height: 1.6; padding: 16px; margin-top: 8px; }
+    /* ── PIN-Screen ── */
+    .pin-screen { text-align: center; padding: 32px 24px; }
+    .pin-icon { font-size: 48px; margin-bottom: 16px; }
+    .pin-title { font-family: 'DM Serif Display', serif; font-size: 24px; font-weight: 700; margin-bottom: 10px; }
+    .pin-sub { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 28px; }
+    .pin-code-display { font-size: 13px; color: var(--text-muted); background: var(--brand-card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; display: inline-block; margin-bottom: 24px; letter-spacing: 0.5px; }
+    .pin-input-wrap { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
+    .pin-digit { width: 52px; height: 64px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 28px; font-weight: 800; text-align: center; transition: border-color 0.18s; -webkit-appearance: none; }
+    .pin-digit:focus { outline: none; border-color: var(--accent-green); background: var(--accent-green-dim); }
+    .pin-digit.filled { border-color: rgba(34,201,122,0.4); }
+    .pin-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
+    .pin-error { background: rgba(255,92,92,0.08); border: 1px solid rgba(255,92,92,0.25); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px; color: var(--accent-red); margin-bottom: 16px; line-height: 1.5; }
+    .pin-new-check { margin-top: 20px; font-size: 13px; color: var(--text-muted); }
+    .pin-new-check a { color: var(--accent-green); font-weight: 600; text-decoration: none; cursor: pointer; }
     .status-msg { padding: 12px 14px; border-radius: var(--radius-sm); font-size: 13px; margin-top: 10px; line-height: 1.5; }
     @media print {
       body { background: white !important; color: #1a1a2e !important; padding: 0; }
@@ -272,6 +286,106 @@
   let questions = [], groupedQuestions = [], currentStep = 0, selectedAnswers = [], latestResult = null, radarChart = null, showComparison = false;
   const personalData = { age:null, gender:"", height_cm:null, weight_kg:null, first_name:"", last_name:"", consent_privacy:false, consent_storage:false, goal_key:"", goal_option_id:"" };
 
+  // ── PIN-Screen bauen ──────────────────────────────────
+  function buildPinScreen(publicCode) {
+    return `
+      <div class="card pin-screen">
+        <div class="pin-icon">🔐</div>
+        <div class="pin-title">Deine Auswertung aufrufen</div>
+        <div class="pin-sub">Gib deinen 6-stelligen PIN ein.<br>Du hast ihn zusammen mit deiner KI-Auswertung per E-Mail erhalten.</div>
+        <div class="pin-code-display">Pilot-ID: ${publicCode}</div>
+        <div class="pin-input-wrap" id="pinInputWrap">
+          <input class="pin-digit" type="number" maxlength="1" min="0" max="9" id="pin0" oninput="pinInput(0)" onkeydown="pinKey(event,0)" />
+          <input class="pin-digit" type="number" maxlength="1" min="0" max="9" id="pin1" oninput="pinInput(1)" onkeydown="pinKey(event,1)" />
+          <input class="pin-digit" type="number" maxlength="1" min="0" max="9" id="pin2" oninput="pinInput(2)" onkeydown="pinKey(event,2)" />
+          <input class="pin-digit" type="number" maxlength="1" min="0" max="9" id="pin3" oninput="pinInput(3)" onkeydown="pinKey(event,3)" />
+          <input class="pin-digit" type="number" maxlength="1" min="0" max="9" id="pin4" oninput="pinInput(4)" onkeydown="pinKey(event,4)" />
+          <input class="pin-digit" type="number" maxlength="1" min="0" max="9" id="pin5" oninput="pinInput(5)" onkeydown="pinKey(event,5)" />
+        </div>
+        <div class="pin-hint">Tipp: Sieh nach in der E-Mail mit dem Betreff "dein Vital-Check ist da"</div>
+        <div id="pinError" class="pin-error hidden"></div>
+        <button class="next-btn" id="pinSubmitBtn" onclick="loadResultWithPin('${publicCode}')" disabled style="opacity:0.4;">
+          Auswertung laden →
+        </button>
+        <div class="pin-new-check">
+          Noch keinen PIN? <a onclick="window.location.href=window.location.pathname">Neuen Check starten →</a>
+        </div>
+      </div>`;
+  }
+
+  function pinInput(index) {
+    const input = document.getElementById('pin' + index);
+    // Nur eine Ziffer erlauben
+    const val = input.value.replace(/[^0-9]/g, '').slice(-1);
+    input.value = val;
+    input.classList.toggle('filled', val !== '');
+    // Zum nächsten Feld springen
+    if (val && index < 5) {
+      document.getElementById('pin' + (index + 1)).focus();
+    }
+    // Submit-Button aktivieren wenn alle 6 Felder gefüllt
+    const allFilled = Array.from({length: 6}, (_, i) =>
+      document.getElementById('pin' + i)?.value
+    ).every(v => v && v.length === 1);
+    const btn = document.getElementById('pinSubmitBtn');
+    if (btn) { btn.disabled = !allFilled; btn.style.opacity = allFilled ? '1' : '0.4'; }
+    // Fehler zurücksetzen
+    document.getElementById('pinError')?.classList.add('hidden');
+  }
+
+  function pinKey(event, index) {
+    // Backspace: zurück zum vorherigen Feld
+    if (event.key === 'Backspace' && !document.getElementById('pin' + index).value && index > 0) {
+      document.getElementById('pin' + (index - 1)).focus();
+    }
+    // Enter: absenden
+    if (event.key === 'Enter') {
+      const urlParams = new URLSearchParams(window.location.search);
+      loadResultWithPin(urlParams.get('code'));
+    }
+  }
+
+  async function loadResultWithPin(publicCode) {
+    const pin = Array.from({length: 6}, (_, i) =>
+      document.getElementById('pin' + i)?.value || ''
+    ).join('');
+
+    if (pin.length !== 6) return;
+
+    const btn = document.getElementById('pinSubmitBtn');
+    const errEl = document.getElementById('pinError');
+    if (btn) { btn.disabled = true; btn.textContent = 'Wird geladen…'; }
+    if (errEl) errEl.classList.add('hidden');
+
+    try {
+      const result = await callFunction({ mode: 'load_result', public_code: publicCode, pin });
+
+      if (result && result.success) {
+        latestResult = result;
+        personalData.age = result.submission?.age || null;
+        personalData.gender = result.submission?.gender || '';
+        personalData.height_cm = result.submission?.height_cm || null;
+        personalData.weight_kg = result.submission?.weight_kg || null;
+        personalData.first_name = result.contact?.first_name || '';
+        personalData.last_name = result.contact?.last_name || '';
+        document.getElementById('quiz-flow').innerHTML = '';
+        document.getElementById('loading').classList.add('hidden');
+        showResult(result);
+      }
+    } catch (e) {
+      const msg = e.message || '';
+      let userMsg = 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.';
+      if (msg.includes('PIN_INVALID')) {
+        userMsg = 'Der PIN ist nicht korrekt. Bitte prüfe deine E-Mail mit der KI-Auswertung.';
+      } else if (msg.includes('PIN_REQUIRED')) {
+        userMsg = 'Für diese Auswertung ist kein PIN hinterlegt. Bitte fordere eine neue KI-Auswertung an.';
+      }
+      if (errEl) { errEl.textContent = userMsg; errEl.classList.remove('hidden'); }
+      if (btn) { btn.disabled = false; btn.textContent = 'Auswertung laden →'; btn.style.opacity = '1'; }
+    }
+  }
+  // ── Ende PIN-System ────────────────────────────────────
+
   function initLogo() {
     const el = document.getElementById("logoDisplay");
     if (LOGO_URL) { el.innerHTML = `<div class="logo-img-wrap"><img src="${LOGO_URL}" alt="LeVITA Logo" /></div>`; }
@@ -280,31 +394,18 @@
 
   async function init() {
     initLogo();
-    // ── ?code= URL-Zugriff DEAKTIVIERT (Stand: 23.06.2026) ──
-    // Reaktivierung nach PIN-System: public_code + PIN kombiniert (PIN per KI-Mail)
-    // TODO: mode:"load_result" + pin-Validierung in Edge Function
-    //
-    // const urlParams = new URLSearchParams(window.location.search);
-    // const codeParam = urlParams.get("code");
-    // if (codeParam) {
-    //   document.getElementById("loading").textContent = "Deine Auswertung wird geladen…";
-    //   try {
-    //     const result = await callFunction({ mode: "load_result", public_code: codeParam });
-    //     if (result && result.success) {
-    //       latestResult = result;
-    //       personalData.age = result.submission?.age || null;
-    //       personalData.gender = result.submission?.gender || "";
-    //       personalData.height_cm = result.submission?.height_cm || null;
-    //       personalData.weight_kg = result.submission?.weight_kg || null;
-    //       personalData.first_name = result.contact?.first_name || "";
-    //       personalData.last_name = result.contact?.last_name || "";
-    //       document.getElementById("loading").classList.add("hidden");
-    //       document.getElementById("progressWrap").style.display = "none";
-    //       showResult(result);
-    //       return;
-    //     }
-    //   } catch (e) { console.warn("Code-Parameter konnte nicht geladen werden:", e.message); }
-    // }
+
+    // ── ?code= URL-Zugriff MIT PIN-VALIDIERUNG (ab 23.06.2026) ──
+    const urlParams = new URLSearchParams(window.location.search);
+    const codeParam = urlParams.get("code");
+    if (codeParam) {
+      // PIN-Eingabe-Screen anzeigen
+      document.getElementById("loading").classList.add("hidden");
+      document.getElementById("progressWrap").style.display = "none";
+      document.getElementById("quiz-flow").innerHTML = buildPinScreen(codeParam);
+      return;
+    }
+
     try {
       await loadQuestions();
       buildSteps(0);
