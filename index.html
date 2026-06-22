@@ -221,6 +221,98 @@
     letter-spacing: 0.03em;
     user-select: none;
   }
+
+  /* ── TAB NAVIGATION ───────────────────────────────── */
+  .result-tabs {
+    display: flex; gap: 0;
+    background: var(--brand-card);
+    border: 0.5px solid var(--border-subtle);
+    border-radius: 14px; padding: 4px;
+    margin: 0 0 16px;
+  }
+  .result-tab {
+    flex: 1; padding: 10px 6px;
+    text-align: center; font-size: 13px; font-weight: 500;
+    color: var(--text-secondary); cursor: pointer;
+    border-radius: 10px; transition: all .2s;
+    border: none; background: none;
+  }
+  .result-tab.active {
+    background: var(--accent-green);
+    color: #0a1628; font-weight: 700;
+  }
+  .result-tab-content { display: none; }
+  .result-tab-content.active { display: block; }
+  .t3-info-banner {
+    background: rgba(122,143,168,0.08); border: 1px solid rgba(122,143,168,0.2);
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;
+    font-size: 12px; color: var(--text-secondary); line-height: 1.6;
+  }
+  .t3-info-banner strong { color: var(--text-primary); }
+  .t3-zone-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .8px; color: var(--text-muted);
+    margin: 20px 0 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .t3-zone-title::after { content: ''; flex: 1; height: 1px; background: var(--border-subtle); }
+  .t3-test-card {
+    background: var(--brand-card); border: 0.5px solid var(--border-subtle);
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 10px;
+  }
+  .t3-test-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+  .t3-test-title { font-size: 14px; font-weight: 600; }
+  .t3-test-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px; }
+  .t3-test-btn {
+    display: inline-block;
+    background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.3);
+    color: var(--accent-amber); border-radius: 8px;
+    padding: 7px 14px; font-size: 12px; font-weight: 700;
+    cursor: pointer; text-decoration: none;
+  }
+  .t3-coming-soon {
+    display: inline-block; font-size: 10px;
+    background: rgba(122,143,168,0.15); border: 1px solid rgba(122,143,168,0.25);
+    color: var(--text-muted); padding: 2px 8px; border-radius: 10px;
+    font-weight: 600; margin-left: 6px; vertical-align: middle;
+  }
+  .t3-leistung-row {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--brand-card); border: 0.5px solid var(--border-subtle);
+    border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+  }
+  .t3-leistung-icon { font-size: 22px; flex-shrink: 0; }
+  .t3-leistung-body { flex: 1; }
+  .t3-leistung-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .t3-leistung-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+  .t3-usp-badge {
+    font-size: 10px; background: var(--accent-green-dim);
+    border: 1px solid rgba(34,201,122,0.25); color: var(--accent-green);
+    padding: 2px 7px; border-radius: 10px; font-weight: 600; white-space: nowrap;
+  }
+  .t3-kk-badge {
+    font-size: 10px; background: rgba(59,158,255,0.1);
+    border: 1px solid rgba(59,158,255,0.2); color: #3b9eff;
+    padding: 2px 7px; border-radius: 10px; font-weight: 600; white-space: nowrap;
+  }
+  .t3-link { font-size: 12px; color: var(--accent-green); font-weight: 600; text-decoration: none; flex-shrink: 0; }
+  .bereiche-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+  }
+  .bereiche-header-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .7px; color: var(--text-muted);
+  }
+  .bereiche-wachstum-badge {
+    font-size: 11px; color: var(--accent-amber); font-weight: 600;
+    background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.25);
+    padding: 2px 9px; border-radius: 10px;
+  }
+  .bereiche-staerken-sep {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .7px; color: rgba(34,201,122,0.6);
+    margin: 14px 0 8px; display: flex; align-items: center; gap: 8px;
+  }
+  .bereiche-staerken-sep::after { content: ''; flex: 1; height: 1px; background: rgba(34,201,122,0.15); }
 </style>
 </head>
 <body>
@@ -809,6 +901,20 @@
     return result;
   }
 
+
+  function switchResultTab(id) {
+    document.querySelectorAll('.result-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.result-tab-content').forEach(t => t.classList.remove('active'));
+    const tab = document.getElementById('rtab-' + id);
+    const content = document.getElementById('rtc-' + id);
+    if (tab) tab.classList.add('active');
+    if (content) content.classList.add('active');
+    // Radar-Chart neu rendern wenn Tab 2 geöffnet wird
+    if (id === 'bereiche' && window._lastResultData) {
+      setTimeout(() => renderRadarChart(window._lastResultData.areas), 50);
+    }
+  }
+
   function showResult(result) {
     document.getElementById("quiz-flow").style.display = "none";
     document.getElementById("progressWrap").style.display = "none";
@@ -852,8 +958,55 @@
     html += `<div class="pilot-code-box">Deine Pilot-ID: <strong>${result.public_code}</strong></div>`;
 
     const sc = getScoreColor(totalScore);
+    const weakCount = areas.filter(a => a.score < 75).length;
+    const bioColor = bioAge && bioAge < personalData.age ? "var(--accent-green)" : "var(--accent-amber)";
+
+    const capName = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
+    const name = [capName(personalData.first_name), capName(personalData.last_name)].filter(Boolean).join(" ");
+    const goalLabels = { goal_energy:"⚡ Mehr Energie", goal_weight:"⚖️ Abnehmen / Figur", goal_fitness:"💪 Fitter werden", goal_prevention:"🛡️ Vorsorge", goal_longevity:"🌿 Longevity", goal_curious:"🔍 Neugier" };
+    const goalLabel = personalData.goal_key && goalLabels[personalData.goal_key] ? goalLabels[personalData.goal_key] : "";
+
+    // ── KPI-Bar (immer sichtbar, über Tabs) ──────────────
     html += `
-      <div class="score-hero">
+      <div class="kpi-row" style="margin-bottom:10px;">
+        <div class="kpi-card"><span class="kpi-icon">⚡</span><div class="kpi-val" style="color:${sc}">${totalScore}</div><div class="kpi-lbl">Vitalitäts-Index</div></div>
+        <div class="kpi-card"><span class="kpi-icon">🧬</span><div class="kpi-val" style="color:${bioColor}">${bioAge||"–"}</div><div class="kpi-lbl">Vitalitäts-Alter</div></div>
+        <div class="kpi-card" onclick="switchResultTab('bereiche')" style="cursor:pointer;border-color:rgba(245,166,35,${weakCount>0?'0.3':'0.1'});">
+          <span class="kpi-icon">📊</span>
+          <div class="kpi-val" style="color:var(--accent-amber)">${weakCount}</div>
+          <div class="kpi-lbl" style="color:${weakCount>0?'var(--accent-amber)':'var(--text-muted)'}">
+            ${weakCount>0?'Wachstumsbereiche →':'Bereiche'}
+          </div>
+        </div>
+      </div>`;
+
+    // Level-Badge
+    html += `
+      <div style="background:var(--brand-card);border:0.5px solid var(--border-subtle);border-radius:14px;
+           padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:${sc};">✦ ${scoreLabel}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${name?name+' · ':''}${personalData.age?personalData.age+' J. · ':''}${goalLabel}</div>
+        </div>
+        <div style="font-size:22px;">⚡</div>
+      </div>`;
+
+    // ── TABS ─────────────────────────────────────────────
+    html += `
+      <div class="result-tabs">
+        <button class="result-tab active" id="rtab-ergebnis" onclick="switchResultTab('ergebnis')">Mein Ergebnis</button>
+        <button class="result-tab" id="rtab-bereiche" onclick="switchResultTab('bereiche')">Meine Bereiche</button>
+        <button class="result-tab" id="rtab-empfehlungen" onclick="switchResultTab('empfehlungen')">Empfehlungen</button>
+      </div>`;
+
+    // ════════════════════════════════════════════
+    // TAB 1 — MEIN ERGEBNIS
+    // ════════════════════════════════════════════
+    html += `<div class="result-tab-content active" id="rtc-ergebnis">`;
+
+    // Score-Ring
+    html += `
+      <div class="score-hero" style="margin-bottom:14px;">
         <div class="score-ring-wrap">
           <svg class="score-ring-svg" viewBox="0 0 190 190">
             <circle class="score-ring-bg" cx="95" cy="95" r="82"/>
@@ -871,27 +1024,13 @@
         ${bioAge ? `
           <div class="score-bio-age">Vitalitäts-Alter: <strong>${bioAge} Jahre</strong>${personalData.age ? ` <span style="color:var(--text-muted);">&nbsp;·&nbsp; Kalendarisch: ${personalData.age} Jahre</span>` : ""}</div>
           <div class="score-bio-age-disclaimer">Orientierungswert aus Lebensstilantworten — kein medizinischer Biomarker</div>
-      <div onclick="document.querySelector('.ai-box').scrollIntoView({behavior:'smooth',block:'center'})"
-           style="cursor:pointer;font-size:12px;color:var(--accent-green);font-weight:600;margin-top:6px;text-align:center;">
-        Was bedeutet das für dich? → Kostenlose KI-Analyse anfordern
-      </div>
+          <div onclick="switchResultTab('bereiche')" style="cursor:pointer;font-size:12px;color:var(--accent-green);font-weight:600;margin-top:6px;text-align:center;">
+            Was bedeutet das für dich? → Meine Bereiche ansehen
+          </div>
         ` : ""}
       </div>`;
 
-    const weakCount = areas.filter(a => a.score < 75).length;
-    const bioColor = bioAge && bioAge < personalData.age ? "var(--accent-green)" : "var(--accent-amber)";
-    html += `
-      <div class="kpi-row">
-        <div class="kpi-card"><span class="kpi-icon">⚡</span><div class="kpi-val" style="color:${sc};">${Math.round(totalScore)}</div><div class="kpi-label">Vitalitätsindex</div></div>
-        <div class="kpi-card"><span class="kpi-icon">🧬</span><div class="kpi-val" style="color:${bioColor};">${bioAge||"–"}</div><div class="kpi-label">Vitalitäts-Alter</div></div>
-        <div class="kpi-card"><span class="kpi-icon">📊</span><div class="kpi-val" style="color:var(--accent-amber);">${weakCount}</div><div class="kpi-label">Optimierungsfelder</div></div>
-      </div>`;
-
-    const capName = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
-    const name = [capName(personalData.first_name), capName(personalData.last_name)].filter(Boolean).join(" ");
-    const goalLabels = { goal_energy:"⚡ Mehr Energie", goal_weight:"⚖️ Abnehmen / Figur", goal_fitness:"💪 Fitter werden", goal_supplements:"💊 Supplements klären", goal_longevity:"🌿 Longevity", goal_prevention:"🛡️ Vorsorge", goal_curious:"✨ Neugier" };
-    const goalPill = personalData.goal_key && goalLabels[personalData.goal_key]
-      ? `<span class="pill" style="background:var(--accent-green-dim);border-color:rgba(34,201,122,0.2);color:var(--accent-green);">🎯 ${goalLabels[personalData.goal_key]}</span>` : "";
+    // Basisdaten
     html += `<div class="basisdaten-box">
       ${name ? `<span class="pill">👤 ${name}</span>` : ""}
       <span class="pill">Alter: ${personalData.age}</span>
@@ -900,28 +1039,13 @@
       <span class="pill">Gewicht: ${personalData.weight_kg} kg</span>
       <span class="pill">BMI: ${result.bmi}</span>
       ${bioAge ? `<span class="pill">Vitalitäts-Alter: ${bioAge} J.</span>` : ""}
-      ${goalPill}
+      ${goalLabel ? `<span class="pill" style="background:var(--accent-green-dim);border-color:rgba(34,201,122,0.3);">${goalLabel}</span>` : ""}
     </div>`;
 
+    // Level-Erklärung
     html += renderVitalIndexBox(totalScore, scoreLabel);
 
-    // Teaser KI-Mail direkt unter Score
-    html += `<div onclick="document.querySelector('.ai-box').scrollIntoView({behavior:'smooth',block:'center'})"
-      style="margin-bottom:16px;padding:12px 16px;background:linear-gradient(135deg,rgba(34,201,122,0.07),rgba(59,158,255,0.07));border:1px solid rgba(34,201,122,0.25);border-radius:var(--radius-sm);text-align:center;cursor:pointer;">
-      <div style="font-size:11px;font-weight:700;color:var(--accent-green);letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px;">✦ Kostenlose KI-Auswertung</div>
-<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;">Was bedeutet dein Vitalitäts-Alter konkret — und was kannst du <strong style="color:var(--text-primary);">diese Woche</strong> ändern? Deine persönliche KI-Analyse mit 3 konkreten Schritten. Kostenlos per E-Mail.</div>
-      <div style="font-size:12px;color:var(--accent-green);margin-top:5px;font-weight:600;">Jetzt kostenlos anfordern → weiter unten</div>
-    </div>`;
-
-    html += `<div class="section-card">
-      <div class="section-header">
-        <div class="section-title">Vitalitäts-Spinne</div>
-        <button class="toggle-btn" id="compareToggleBtn" onclick="toggleRadarComparison()">Verlauf einblenden</button>
-      </div>
-      <canvas id="vitalChart" height="300"></canvas>
-    </div>`;
-    html += renderRadarExplanation(areas);
-
+    // Haupthebel
     const bmiNum = Number(result.bmi);
     const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
     const areasForHebel = areas.filter(a => {
@@ -929,9 +1053,6 @@
       if (bmiIsLow && a.key === "activity") return false;
       return true;
     });
-
-    // Schlaf-Ausnahmeregel: bei kritisch wenig Schlaf (< 5h) immer Schlaf als Haupthebel
-    // unabhängig vom numerischen Score — medizinisch eindeutig kritischer
     const sleepArea = areas.find(a => a.key === "sleep");
     const hasCriticalSleep = result.answers?.some(a =>
       a.question_key === "sleep_duration" && a.answer_text?.includes("Weniger als 5")
@@ -953,21 +1074,20 @@
       html += `<div class="hebel-box"><div class="hebel-icon">💡</div><div>
         <div class="hebel-title">Dein wichtigster Hebel heute</div>
         <div class="hebel-text"><strong>${AREA_ICONS[worst.key]||""} ${worst.label}</strong> ist dein stärkster Ansatzpunkt. Kleine Verbesserungen hier wirken sich auf alle anderen Bereiche aus.</div>
+        ${worst.score < 55 ? `
+          <div style="margin-top:10px;background:var(--brand-card);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;">
+            ⚡ <strong style="color:var(--accent-green)">Sofort:</strong> ${getInsightNow(worst.key, result.answers||[])}<br><br>
+            📅 <strong style="color:var(--accent-amber)">Diese Woche:</strong> ${getInsightSoon(worst.key, result.answers||[])}
+          </div>` : ""}
       </div></div>`;
     }
 
-    html += `<div class="areas-grid">`;
-    areas.forEach(area => { html += renderAreaCard(area, result); });
-    html += `</div>`;
-
-    html += renderRedFlagBox(score, totalScore);
-    const { html: supportHtml, bloodtestShown } = renderVitalitySupportBox(areas, result, suppFocus);
-    html += supportHtml;
+    // KI-Mail Box — direkt sichtbar auf Tab 1
     html += `
       <div class="ai-box">
         <div class="ai-badge">✦ Deine kostenlose KI-Auswertung</div>
         <div class="ai-title">Was bedeutet dein Vitalitäts-Alter für dich — konkret?</div>
-        <div class="ai-sub">Du hast deinen Score — aber was steckt dahinter? Deine persönliche KI-Analyse erklärt <strong>warum</strong> und gibt dir konkrete Schritte für die nächsten 6 Wochen. Kostenlos, direkt ins Postfach.</div>
+        <div class="ai-sub">Deine persönliche KI-Analyse mit 3 konkreten Schritten für die nächsten 6 Wochen. Kostenlos, direkt ins Postfach.</div>
         <input type="email" id="ai_email" placeholder="deine@email.de" />
         <div class="ai-consent">
           <div class="checkbox-row">
@@ -983,9 +1103,49 @@
         <div id="ai-status"></div>
       </div>`;
 
-    html += renderHintBoxes(score, result.bmi, result.submission?.goal_key || personalData.goal_key, bloodtestShown);
+    html += `</div>`; // Ende Tab 1
 
-    // Antworten-Übersicht — aufklappbar
+    // ════════════════════════════════════════════
+    // TAB 2 — MEINE BEREICHE
+    // ════════════════════════════════════════════
+    html += `<div class="result-tab-content" id="rtc-bereiche">`;
+
+    // Radar-Spinne
+    html += `<div class="section-card">
+      <div class="section-header">
+        <div class="section-title">Vitalitäts-Spinne</div>
+        <button class="toggle-btn" id="compareToggleBtn" onclick="toggleRadarComparison()">Verlauf einblenden</button>
+      </div>
+      <canvas id="vitalChart" height="300"></canvas>
+    </div>`;
+    html += renderRadarExplanation(areas);
+
+    // Bereiche gerankt — Wachstumsbereiche zuerst, dann Stärken
+    const sortedAreas = [...areas].sort((a, b) => a.score - b.score);
+    const wachstumAreas = sortedAreas.filter(a => a.score < 75);
+    const staerkenAreas = sortedAreas.filter(a => a.score >= 75);
+
+    if (wachstumAreas.length > 0) {
+      html += `<div class="bereiche-header">
+        <div class="bereiche-header-label">Deine größten Hebel zuerst</div>
+        <div class="bereiche-wachstum-badge">${wachstumAreas.length} Wachstumsbereich${wachstumAreas.length>1?'e':''}</div>
+      </div>`;
+      html += `<div class="areas-grid">`;
+      wachstumAreas.forEach(area => { html += renderAreaCard(area, result); });
+      html += `</div>`;
+    }
+
+    if (staerkenAreas.length > 0) {
+      html += `<div class="bereiche-staerken-sep">✓ Deine Stärken</div>`;
+      html += `<div class="areas-grid">`;
+      staerkenAreas.forEach(area => { html += renderAreaCard(area, result); });
+      html += `</div>`;
+    }
+
+    // Red-Flag Box
+    html += renderRedFlagBox(score, totalScore);
+
+    // Antworten-Übersicht
     if (answers && answers.length > 0) {
       const areaLabels = {
         activity: "Bewegung & Kraft", sleep: "Schlaf & Regeneration",
@@ -995,58 +1155,7 @@
         metabolic: "Energie & Stoffwechsel", general: "Allgemein"
       };
       const questionLabels = {
-        // Bewegung & Kraft
-        activity_days:             "Wie viele Tage pro Woche bist du körperlich aktiv?",
-        activity_intensity:        "Wie intensiv ist deine Bewegung?",
-        strength_training:         "Wie oft trainierst du gezielt Kraft?",
-        muscle_cramps:             "Hast du beim Sport Muskelkrämpfe?",
-        sitting_hours:             "Wie viele Stunden sitzt du täglich?",
-        // Schlaf & Regeneration
-        sleep_duration:            "Wie viele Stunden schläfst du pro Nacht?",
-        sleep_quality:             "Wie erholsam ist dein Schlaf?",
-        sleep_problems:            "Hast du Einschlaf- oder Durchschlafschwierigkeiten?",
-        sleep_latency:             "Wie lange brauchst du zum Einschlafen?",
-        daytime_sleepiness:        "Bist du tagsüber müde oder schläfrig?",
-        // Ernährung
-        nutrition_type:            "Wie ernährst du dich?",
-        diet_type:                 "Wie ernährst du dich?",
-        omega3_fish:               "Wie oft isst du fettreichen Seefisch?",
-        fish_frequency:            "Wie oft isst du fettreichen Seefisch?",
-        vegetable_fruit:           "Wie oft isst du Gemüse und Obst?",
-        vegetables_fruit:          "Wie oft isst du Gemüse und Obst?",
-        protein_frequency:         "Wie oft isst du bewusst eiweißreiche Lebensmittel?",
-        protein_intake:            "Wie oft isst du bewusst eiweißreiche Lebensmittel?",
-        meal_regularity:           "Isst du regelmäßig zu festen Zeiten?",
-        water_intake:              "Wie viel trinkst du täglich?",
-        // Vitamin D & Tageslicht
-        sunlight_exposure:         "Wie viel Zeit verbringst du täglich im Freien?",
-        sun_exposure_winter:       "Wie viel Tageslicht bekommst du im Winter?",
-        sun_exposure_summer:       "Wie viel Tageslicht bekommst du im Sommer?",
-        // Alkohol / Nikotin
-        alcohol_frequency:         "Wie häufig trinkst du Alkohol?",
-        alcohol_amount:            "Wie viele alkoholische Getränke pro Monat?",
-        smoking:                   "Rauchst du?",
-        nicotine_use:              "Rauchst du oder nutzt du Nikotin?",
-        // Mentale Balance & Stress
-        stress_level:              "Wie gestresst fühlst du dich im Alltag?",
-        low_mood:                  "Wie oft fühlst du dich niedergeschlagen?",
-        low_interest:              "Wie oft verlierst du die Freude an Dingen?",
-        social_connection:         "Wie gut bist du sozial eingebunden?",
-        // Energie & Stoffwechsel
-        energy_level:              "Wie ist dein Energielevel im Alltag?",
-        appetite_change:           "Hast du Veränderungen beim Appetit?",
-        appetite_changes:          "Hast du Veränderungen beim Appetit?",
-        weight_changes:            "Hast du ungewollte Gewichtsveränderungen?",
-        unintentional_weight_loss: "Hast du ungewollte Gewichtsveränderungen?",
-        // Mikronährstoffe
-        supplement_usage:          "Nimmst du Nahrungsergänzungsmittel?",
-        supplement_types:          "Welche Supplements nimmst du?",
-        hormonal_transition:       "Befindest du dich in den Wechseljahren?",
-        period_bleeding:           "Wie ist deine Regelblutung?",
-        dizziness_pale_nails:      "Hast du Symptome wie Schwindel oder blasse Nägel?",
-        iron_symptoms:             "Hast du Symptome wie Müdigkeit oder Blässe?",
-        // Allgemein
-        vital_goal:                "Was ist dein wichtigstes Ziel?"
+        activity_days:"Wie viele Tage pro Woche bist du körperlich aktiv?",activity_intensity:"Wie intensiv ist deine Bewegung?",strength_training:"Wie oft trainierst du gezielt Kraft?",muscle_cramps:"Hast du beim Sport Muskelkrämpfe?",sitting_hours:"Wie viele Stunden sitzt du täglich?",sleep_duration:"Wie viele Stunden schläfst du pro Nacht?",sleep_quality:"Wie erholsam ist dein Schlaf?",sleep_problems:"Hast du Einschlaf- oder Durchschlafschwierigkeiten?",sleep_latency:"Wie lange brauchst du zum Einschlafen?",daytime_sleepiness:"Bist du tagsüber müde oder schläfrig?",nutrition_type:"Wie ernährst du dich?",diet_type:"Wie ernährst du dich?",omega3_fish:"Wie oft isst du fettreichen Seefisch?",fish_frequency:"Wie oft isst du fettreichen Seefisch?",vegetable_fruit:"Wie oft isst du Gemüse und Obst?",vegetables_fruit:"Wie oft isst du Gemüse und Obst?",protein_frequency:"Wie oft isst du bewusst eiweißreiche Lebensmittel?",protein_intake:"Wie oft isst du bewusst eiweißreiche Lebensmittel?",meal_regularity:"Isst du regelmäßig zu festen Zeiten?",water_intake:"Wie viel trinkst du täglich?",sunlight_exposure:"Wie viel Zeit verbringst du täglich im Freien?",sun_exposure_winter:"Wie viel Tageslicht bekommst du im Winter?",sun_exposure_summer:"Wie viel Tageslicht bekommst du im Sommer?",alcohol_frequency:"Wie häufig trinkst du Alkohol?",alcohol_amount:"Wie viele alkoholische Getränke pro Monat?",smoking:"Rauchst du?",nicotine_use:"Rauchst du oder nutzt du Nikotin?",stress_level:"Wie gestresst fühlst du dich im Alltag?",low_mood:"Wie oft fühlst du dich niedergeschlagen?",low_interest:"Wie oft verlierst du die Freude an Dingen?",social_connection:"Wie gut bist du sozial eingebunden?",energy_level:"Wie ist dein Energielevel im Alltag?",appetite_change:"Hast du Veränderungen beim Appetit?",appetite_changes:"Hast du Veränderungen beim Appetit?",weight_changes:"Hast du ungewollte Gewichtsveränderungen?",unintentional_weight_loss:"Hast du ungewollte Gewichtsveränderungen?",supplement_usage:"Nimmst du Nahrungsergänzungsmittel?",supplement_types:"Welche Supplements nimmst du?",hormonal_transition:"Befindest du dich in den Wechseljahren?",period_bleeding:"Wie ist deine Regelblutung?",dizziness_pale_nails:"Hast du Symptome wie Schwindel oder blasse Nägel?",iron_symptoms:"Hast du Symptome wie Müdigkeit oder Blässe?",vital_goal:"Was ist dein wichtigstes Ziel?"
       };
       const grouped = {};
       answers.forEach(a => {
@@ -1056,11 +1165,11 @@
       });
       const answersHtml = Object.entries(grouped).map(([area, ans]) => `
         <div style="margin-bottom:14px;">
-          <div style="font-size:11px;font-weight:700;color:var(--accent-green);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">${areaLabels[area] || area}</div>
+          <div style="font-size:11px;font-weight:700;color:var(--accent-green);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">${areaLabels[area]||area}</div>
           ${ans.map(a => `
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:0.5px solid var(--border);gap:12px;">
-              <div style="font-size:12px;color:var(--text-secondary);flex:1;">${questionLabels[a.question_key] || a.question_key}</div>
-              <div style="font-size:12px;color:var(--text-primary);font-weight:500;text-align:right;max-width:50%;">${a.answer_text}</div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:0.5px solid var(--border-subtle);">
+              <div style="font-size:12px;color:var(--text-secondary);flex:1;">${questionLabels[a.question_key]||a.question_key}</div>
+              <div style="font-size:12px;color:var(--text-primary);font-weight:500;text-align:right;margin-left:12px;max-width:55%;">${a.answer_text}</div>
             </div>`).join("")}
         </div>`).join("");
 
@@ -1070,31 +1179,125 @@
             <div class="section-title">📋 Meine Antworten aus diesem Check</div>
             <button class="toggle-btn" id="answersToggleBtn">Einblenden</button>
           </div>
-          <div id="answersPanel" style="display:none;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);">
-            <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;">Hier siehst du alle deine Antworten aus diesem Vital-Check. Beim nächsten Check kannst du direkt vergleichen was sich verändert hat.</div>
+          <div id="answersPanel" style="display:none;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border-subtle);">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;">
+              Interaktive Auswertung — Spinne, Cards und alle Details oben sichtbar.
+            </div>
             ${answersHtml}
           </div>
         </div>`;
     }
 
+    html += `</div>`; // Ende Tab 2
 
+    // ════════════════════════════════════════════
+    // TAB 3 — EMPFEHLUNGEN
+    // ════════════════════════════════════════════
+    html += `<div class="result-tab-content" id="rtc-empfehlungen">`;
 
-    html += `<button class="secondary-btn" onclick="window.print()">↓ Auswertung als PDF speichern</button>`;
-
-    /* NEU: Feedback ohne "Entwicklungsphase" */
+    // Info-Banner: Was wird sukzessive aufgebaut
     html += `
-      <div class="feedback-box">
+      <div class="t3-info-banner">
+        <strong>Hinweis:</strong> Einige Angebote befinden sich aktuell im Aufbau —
+        darunter der Trockenbluttest-Direktkauf und §20-Präventionskurse online.
+        Wir erweitern das Angebot sukzessive. Im Studio beraten wir dich gerne zu allen Optionen.
+      </div>`;
+
+    // Zone 1: Wichtigster nächster Schritt (goal-spezifisch)
+    html += renderHintBoxes(score, result.bmi, result.submission?.goal_key || personalData.goal_key, result.answers||[], suppFocus);
+
+    // Supplement-Support-Box
+    const { html: supportHtml, bloodtestShown } = renderVitalitySupportBox(areas, result, suppFocus);
+    html += supportHtml;
+
+    // Zone 2: Trockenbluttest
+    if (bloodtestShown || score.bloodtest_hint) {
+      html += `<div class="t3-zone-title">💉 Laborwerte & Tests</div>`;
+      html += `
+        <div class="t3-test-card">
+          <div class="t3-test-header">
+            <div class="t3-test-title">Trockenbluttest — gezielter Gesundheits-Check <span class="t3-coming-soon">Buchung in Kürze</span></div>
+          </div>
+          <div class="t3-test-desc">
+            Bequem von zuhause oder direkt im LeVITA Studio — kleines Set, kurze Blutprobe,
+            Ergebnis per E-Mail. Kein Nüchternblut nötig. Tests u.a.: HbA1c, Vitamin D,
+            Ferritin/Eisen, Vitamin B12, Omega-3.
+          </div>
+          <a class="t3-test-btn" href="https://le-vita.com/probetraining" target="_blank">Im Studio besprechen →</a>
+        </div>`;
+    }
+
+    // Zone 3: Studioleistungen
+    html += `<div class="t3-zone-title">🏥 Leistungen im LeVITA Studio</div>`;
+
+    html += `
+      <div class="t3-leistung-row">
+        <div class="t3-leistung-icon">🫧</div>
+        <div class="t3-leistung-body">
+          <div class="t3-leistung-title">VELUS JET Wasserstrahlmassage</div>
+          <div class="t3-leistung-desc">Tiefe Muskelentspannung, Regeneration, Stressabbau</div>
+        </div>
+        <span class="t3-usp-badge">Alleinstellung</span>
+      </div>
+      <div class="t3-leistung-row">
+        <div class="t3-leistung-icon">📊</div>
+        <div class="t3-leistung-body">
+          <div class="t3-leistung-title">Tanita Körperanalyse</div>
+          <div class="t3-leistung-desc">Muskelmasse, Körperfett, Viszeral-Fett als Basiswert</div>
+        </div>
+        <a class="t3-link" href="https://le-vita.com/probetraining" target="_blank">→</a>
+      </div>
+      <div class="t3-leistung-row">
+        <div class="t3-leistung-icon">🌿</div>
+        <div class="t3-leistung-body">
+          <div class="t3-leistung-title">Ernährungsberatung</div>
+          <div class="t3-leistung-desc">Erstgespräch kostenlos — individueller Ernährungsplan</div>
+        </div>
+        <a class="t3-link" href="https://le-vita.com/probetraining" target="_blank">→</a>
+      </div>
+      <div class="t3-leistung-row">
+        <div class="t3-leistung-icon">🧘</div>
+        <div class="t3-leistung-body">
+          <div class="t3-leistung-title">Physiotherapie</div>
+          <div class="t3-leistung-desc">Manuelle Therapie, Kinesiotaping, Bobath — nahezu vollständiges Angebot</div>
+        </div>
+        <a class="t3-link" href="https://le-vita.com/physiotherapie-anja-lerch-gemuenden-wohra" target="_blank">→</a>
+      </div>
+      <div class="t3-leistung-row">
+        <div class="t3-leistung-icon">🏃</div>
+        <div class="t3-leistung-body">
+          <div class="t3-leistung-title">Reha-Sport</div>
+          <div class="t3-leistung-desc">Betreut, langfristig, sanfter Einstieg</div>
+        </div>
+        <span class="t3-kk-badge">KK-Zuschuss</span>
+      </div>
+      <div class="t3-leistung-row">
+        <div class="t3-leistung-icon">📋</div>
+        <div class="t3-leistung-body">
+          <div class="t3-leistung-title">§20 Präventionskurse <span class="t3-coming-soon">In Planung</span></div>
+          <div class="t3-leistung-desc">Online-Kurse werden sukzessive ausgebaut — von der Krankenkasse bezuschusst</div>
+        </div>
+      </div>`;
+
+    // Feedback + PDF + Reset
+    html += `
+      <div class="feedback-box" style="margin-top:16px;">
         <h3>Hilf uns, den Vital-Check zu verbessern 🚀</h3>
         <p>Dein Feedback zählt — teile uns kurz mit, wie hilfreich die Auswertung für dich war.</p>
         <button class="next-btn" onclick="openGoogleForm()">Feedback geben</button>
       </div>`;
 
-    html += `<div class="disclaimer"><strong>Wichtiger Hinweis:</strong> Diese Auswertung ist keine Diagnose und ersetzt keine medizinische Beratung. Sie dient der Orientierung und Hilfe zur Selbsthilfe. Die Schwerpunkte basieren auf Empfehlungen von WHO, DGE und dem Bundesinstitut für Risikobewertung.<br><br>powered by <strong>LogiVita</strong><br><br><span style="font-size:11px;color:var(--text-muted);">Möchtest du deine gespeicherten Daten löschen? <button onclick="deleteMyData()" style="background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;text-decoration:underline;padding:0;">Daten löschen</button></span></div>`;
+    html += `<button class="secondary-btn" onclick="window.print()" style="margin-top:12px;">↓ Auswertung als PDF speichern</button>`;
+
+    html += `<div class="disclaimer"><strong>Wichtiger Hinweis:</strong> Diese Auswertung ist keine Diagnose und ersetzt keine medizinische Beratung. Sie dient der Orientierung und Hilfe zur Selbsthilfe. Die Schwerpunkte basieren auf Empfehlungen von WHO, DGE und dem Bundesinstitut für Risikobewertung.</div>`;
 
     html += `
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+        <button class="danger-btn" onclick="deleteMyData()">🗑 Daten löschen</button>
         <button class="danger-btn" onclick="resetVitalCheck()">🔄 Erneut testen →</button>
       </div>`;
+
+    html += `</div>`; // Ende Tab 3
     return html;
   }
 
@@ -1152,20 +1355,36 @@
     const focusTxt = focus.length > 0
       ? `Bei dir liegen besonders <strong>${focus.join(", ")}</strong> weiter innen — das zeigt, wo kleine Hebel aktuell den größten Nutzen bringen.`
       : "Deine Bereiche wirken insgesamt stabil. Der Fokus liegt auf Erhalt und Feinschliff.";
+    const uid = "radarExp_" + Date.now();
     return `
-      <div class="radar-explain-box">
-        <div class="section-title" style="margin-bottom:14px;">So liest du dein Vitalitäts-Profil</div>
-        <div class="radar-explain-grid">
-          <div class="radar-explain-card"><strong>Was die Grafik zeigt</strong>Je weiter außen ein Punkt liegt, desto stabiler wirkt dieser Bereich. Innen liegende Bereiche zeigen mögliche Ansatzpunkte. Die Grafik ist keine medizinische Bewertung.</div>
-          <div class="radar-explain-card"><strong>Einordnung der Werte</strong>
-            <div class="score-scale-item ssi-green"><span>85–100</span>sehr stabile Grundlage</div>
-            <div class="score-scale-item ssi-lgreen"><span>70–84</span>gute Basis mit Potenzial</div>
-            <div class="score-scale-item ssi-amber"><span>55–69</span>sichtbare Stellschrauben</div>
-            <div class="score-scale-item ssi-amber"><span>40–54</span>klarer Fokusbereich</div>
-            <div class="score-scale-item ssi-red"><span>0–39</span>besonderer Orientierungsbereich</div>
+      <div style="margin-bottom:12px;">
+        <button onclick="
+          const p=document.getElementById('${uid}');
+          const b=this;
+          if(p.style.display==='none'){p.style.display='block';b.textContent='So liest du dein Vitalitäts-Profil ▲';}
+          else{p.style.display='none';b.textContent='So liest du dein Vitalitäts-Profil ▼';}
+        " style="width:100%;background:var(--brand-card);border:0.5px solid var(--border-subtle);
+          border-radius:10px;padding:10px 14px;color:var(--text-secondary);font-size:13px;
+          font-weight:500;cursor:pointer;text-align:left;display:flex;align-items:center;
+          justify-content:space-between;">
+          <span>So liest du dein Vitalitäts-Profil</span>
+          <span style="font-size:11px;">▼</span>
+        </button>
+        <div id="${uid}" style="display:none;margin-top:6px;">
+          <div class="radar-explain-box">
+            <div class="radar-explain-grid">
+              <div class="radar-explain-card"><strong>Was die Grafik zeigt</strong>Je weiter außen ein Punkt liegt, desto stabiler wirkt dieser Bereich. Innen liegende Bereiche zeigen mögliche Ansatzpunkte. Die Grafik ist keine medizinische Bewertung.</div>
+              <div class="radar-explain-card"><strong>Einordnung der Werte</strong>
+                <div class="score-scale-item ssi-green"><span>85–100</span>sehr stabile Grundlage</div>
+                <div class="score-scale-item ssi-lgreen"><span>70–84</span>gute Basis mit Potenzial</div>
+                <div class="score-scale-item ssi-amber"><span>55–69</span>sichtbare Stellschrauben</div>
+                <div class="score-scale-item ssi-amber"><span>40–54</span>klarer Fokusbereich</div>
+                <div class="score-scale-item ssi-red"><span>0–39</span>besonderer Orientierungsbereich</div>
+              </div>
+            </div>
+            <div class="info-box box-info" style="font-size:13px;">${focusTxt}</div>
           </div>
         </div>
-        <div class="info-box box-info" style="font-size:13px;">${focusTxt}</div>
       </div>`;
   }
 
@@ -1995,6 +2214,6 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.25.1</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.25.2</footer>
 </body>
 </html>
