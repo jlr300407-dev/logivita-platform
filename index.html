@@ -280,27 +280,31 @@
 
   async function init() {
     initLogo();
-    const urlParams = new URLSearchParams(window.location.search);
-    const codeParam = urlParams.get("code");
-    if (codeParam) {
-      document.getElementById("loading").textContent = "Deine Auswertung wird geladen…";
-      try {
-        const result = await callFunction({ mode: "load_result", public_code: codeParam });
-        if (result && result.success) {
-          latestResult = result;
-          personalData.age = result.submission?.age || null;
-          personalData.gender = result.submission?.gender || "";
-          personalData.height_cm = result.submission?.height_cm || null;
-          personalData.weight_kg = result.submission?.weight_kg || null;
-          personalData.first_name = result.contact?.first_name || "";
-          personalData.last_name = result.contact?.last_name || "";
-          document.getElementById("loading").classList.add("hidden");
-          document.getElementById("progressWrap").style.display = "none";
-          showResult(result);
-          return;
-        }
-      } catch (e) { console.warn("Code-Parameter konnte nicht geladen werden:", e.message); }
-    }
+    // ── ?code= URL-Zugriff DEAKTIVIERT (Stand: 23.06.2026) ──
+    // Reaktivierung nach PIN-System: public_code + PIN kombiniert (PIN per KI-Mail)
+    // TODO: mode:"load_result" + pin-Validierung in Edge Function
+    //
+    // const urlParams = new URLSearchParams(window.location.search);
+    // const codeParam = urlParams.get("code");
+    // if (codeParam) {
+    //   document.getElementById("loading").textContent = "Deine Auswertung wird geladen…";
+    //   try {
+    //     const result = await callFunction({ mode: "load_result", public_code: codeParam });
+    //     if (result && result.success) {
+    //       latestResult = result;
+    //       personalData.age = result.submission?.age || null;
+    //       personalData.gender = result.submission?.gender || "";
+    //       personalData.height_cm = result.submission?.height_cm || null;
+    //       personalData.weight_kg = result.submission?.weight_kg || null;
+    //       personalData.first_name = result.contact?.first_name || "";
+    //       personalData.last_name = result.contact?.last_name || "";
+    //       document.getElementById("loading").classList.add("hidden");
+    //       document.getElementById("progressWrap").style.display = "none";
+    //       showResult(result);
+    //       return;
+    //     }
+    //   } catch (e) { console.warn("Code-Parameter konnte nicht geladen werden:", e.message); }
+    // }
     try {
       await loadQuestions();
       buildSteps(0);
