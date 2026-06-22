@@ -942,7 +942,7 @@
     // ── KPI-Bar ──
     html += `
       <div class="kpi-row" style="margin-bottom:10px;">
-        <div class="kpi-card"><span class="kpi-icon">⚡</span><div class="kpi-val" style="color:${sc}">${totalScore}</div><div class="kpi-label">Vitalitäts-Index</div></div>
+        <div class="kpi-card"><span class="kpi-icon">⚡</span><div class="kpi-val" style="color:${sc}">${Math.round(totalScore)}</div><div class="kpi-label">Vitalitäts-Index</div></div>
         <div class="kpi-card"><span class="kpi-icon">🧬</span><div class="kpi-val" style="color:${bioColor}">${bioAge||"–"}</div><div class="kpi-label">Vitalitäts-Alter</div></div>
         <div class="kpi-card" onclick="switchResultTab('bereiche')" style="cursor:pointer;border-color:rgba(245,166,35,${weakCount>0?'0.3':'0.1'});">
           <span class="kpi-icon">📊</span>
@@ -999,7 +999,6 @@
           </div>
         </div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:17px;font-weight:700;color:${sc};margin-bottom:6px;">✦ ${scoreLabel}</div>
           ${bioAge ? `
             <div style="font-size:13px;color:var(--text-secondary);margin-bottom:2px;">
               Vitalitäts-Alter: <strong style="color:${bioColor};">${bioAge} J.</strong>
@@ -1057,6 +1056,10 @@
         <div class="ai-badge">✦ Deine kostenlose KI-Auswertung</div>
         <div class="ai-title">Was bedeutet dein Vitalitäts-Alter für dich — konkret?</div>
         <div class="ai-sub">Deine persönliche KI-Analyse mit 3 konkreten Schritten für die nächsten 6 Wochen. Kostenlos, direkt ins Postfach.</div>
+        <div style="display:flex;align-items:center;gap:8px;background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--accent-amber);line-height:1.5;">
+          <span style="font-size:16px;flex-shrink:0;">🔐</span>
+          <span>Du erhältst mit der Auswertung einen persönlichen <strong>PIN</strong> — damit kannst du deine Ergebnisse jederzeit wieder aufrufen.</span>
+        </div>
         <input type="email" id="ai_email" placeholder="deine@email.de" />
         <div class="ai-consent">
           <div class="checkbox-row">
