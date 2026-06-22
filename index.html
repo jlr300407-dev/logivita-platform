@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LeVITA Vital-Check powered by LogiVita</title>
-  <!-- ── META PIXEL ── -->
-  <!-- Pixel-ID: 162833051672814 eintragen (Facebook Werbeanzeigenmanager → Einstellungen → Pixel) -->
   <script>
     !function(f,b,e,v,n,t,s)
     {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -18,11 +16,8 @@
     fbq('init', '162833051672814');
     fbq('track', 'PageView');
   </script>
-  <noscript>
-    <img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=162833051672814&ev=PageView&noscript=1"/>
-  </noscript>
-  <!-- ── ENDE META PIXEL ── -->
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=162833051672814&ev=PageView&noscript=1"/></noscript>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -92,6 +87,8 @@
     .checkbox-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
     .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; margin-top: 3px; flex-shrink: 0; accent-color: var(--accent-green); }
     .checkbox-row label { font-size: 14px; color: var(--text-secondary); line-height: 1.5; cursor: pointer; }
+    /* ── PATCH 5: KI-Consent kleiner ── */
+    .ai-box .checkbox-row label { font-size: 10.5px; color: var(--text-muted); line-height: 1.5; }
     .info-box { padding: 16px 18px; border-radius: var(--radius-sm); margin-top: 16px; line-height: 1.6; font-size: 14px; }
     .box-info { background: var(--accent-blue-dim); border-left: 4px solid var(--accent-blue); color: var(--text-secondary); }
     .box-success { background: var(--accent-green-dim); border-left: 4px solid var(--accent-green); color: var(--text-secondary); }
@@ -103,6 +100,7 @@
     .pilot-code-box { text-align: center; background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 20px; margin-bottom: 20px; font-size: 13px; color: var(--text-muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
     .pilot-code-box strong { color: var(--text-primary); font-size: 15px; }
     .score-hero { display: flex; flex-direction: column; align-items: center; margin-bottom: 28px; }
+    /* Legacy score-ring styles (kept for print) */
     .score-ring-wrap { position: relative; width: 190px; height: 190px; margin-bottom: 16px; }
     .score-ring-svg { width: 190px; height: 190px; transform: rotate(-90deg); }
     .score-ring-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 13; }
@@ -111,7 +109,6 @@
     .score-number { font-family: 'DM Serif Display', serif; font-size: 54px; line-height: 1; margin-bottom: 2px; transition: color 0.5s; }
     .score-of { font-size: 12px; color: var(--text-muted); font-weight: 500; }
     .score-level-badge { display: inline-flex; align-items: center; gap: 6px; padding: 7px 18px; border-radius: 30px; font-size: 13px; font-weight: 700; margin-bottom: 10px; }
-    /* NEU: Bio-Alter mit Disclaimer-Subtext */
     .score-bio-age { font-size: 14px; color: var(--text-secondary); font-weight: 500; text-align: center; }
     .score-bio-age strong { color: var(--accent-green); font-weight: 700; }
     .score-bio-age-disclaimer { font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 3px; }
@@ -200,9 +197,6 @@
       body { background: white !important; color: #1a1a2e !important; padding: 0; }
       .ai-box, .feedback-box, .danger-btn, #quiz-flow, .progress-wrap, .toggle-btn { display: none !important; }
       .result-area { display: block !important; }
-      .card, .section-card, .vital-index-box, .radar-explain-box, .areas-grid, .support-box, .hebel-box, .basisdaten-box { background: #f8f9fa !important; border-color: #dee2e6 !important; break-inside: avoid; }
-      .score-number, .kpi-val { color: #1a1a2e !important; }
-      .text-secondary, .vital-index-label, .help-text { color: #555 !important; }
     }
     @media (max-width: 600px) {
       .areas-grid { grid-template-columns: 1fr; }
@@ -211,109 +205,37 @@
       .score-number { font-size: 46px; }
       .form-grid { grid-template-columns: 1fr; }
     }
-    /* ── Versions-Footer */
-  .app-footer {
-    text-align: center;
-    padding: 12px 0 20px;
-    font-size: 11px;
-    color: var(--text-muted);
-    opacity: 0.5;
-    letter-spacing: 0.03em;
-    user-select: none;
-  }
-
-  /* ── TAB NAVIGATION ───────────────────────────────── */
-  .result-tabs {
-    display: flex; gap: 0;
-    background: var(--brand-card);
-    border: 0.5px solid var(--border-subtle);
-    border-radius: 14px; padding: 4px;
-    margin: 0 0 16px;
-  }
-  .result-tab {
-    flex: 1; padding: 10px 6px;
-    text-align: center; font-size: 13px; font-weight: 500;
-    color: var(--text-secondary); cursor: pointer;
-    border-radius: 10px; transition: all .2s;
-    border: none; background: none;
-  }
-  .result-tab.active {
-    background: var(--accent-green);
-    color: #0a1628; font-weight: 700;
-  }
-  .result-tab-content { display: none; }
-  .result-tab-content.active { display: block; }
-  .t3-info-banner {
-    background: rgba(122,143,168,0.08); border: 1px solid rgba(122,143,168,0.2);
-    border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;
-    font-size: 12px; color: var(--text-secondary); line-height: 1.6;
-  }
-  .t3-info-banner strong { color: var(--text-primary); }
-  .t3-zone-title {
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .8px; color: var(--text-muted);
-    margin: 20px 0 10px; display: flex; align-items: center; gap: 8px;
-  }
-  .t3-zone-title::after { content: ''; flex: 1; height: 1px; background: var(--border-subtle); }
-  .t3-test-card {
-    background: var(--brand-card); border: 0.5px solid var(--border-subtle);
-    border-radius: 14px; padding: 14px 16px; margin-bottom: 10px;
-  }
-  .t3-test-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
-  .t3-test-title { font-size: 14px; font-weight: 600; }
-  .t3-test-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px; }
-  .t3-test-btn {
-    display: inline-block;
-    background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.3);
-    color: var(--accent-amber); border-radius: 8px;
-    padding: 7px 14px; font-size: 12px; font-weight: 700;
-    cursor: pointer; text-decoration: none;
-  }
-  .t3-coming-soon {
-    display: inline-block; font-size: 10px;
-    background: rgba(122,143,168,0.15); border: 1px solid rgba(122,143,168,0.25);
-    color: var(--text-muted); padding: 2px 8px; border-radius: 10px;
-    font-weight: 600; margin-left: 6px; vertical-align: middle;
-  }
-  .t3-leistung-row {
-    display: flex; align-items: center; gap: 12px;
-    background: var(--brand-card); border: 0.5px solid var(--border-subtle);
-    border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
-  }
-  .t3-leistung-icon { font-size: 22px; flex-shrink: 0; }
-  .t3-leistung-body { flex: 1; }
-  .t3-leistung-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
-  .t3-leistung-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
-  .t3-usp-badge {
-    font-size: 10px; background: var(--accent-green-dim);
-    border: 1px solid rgba(34,201,122,0.25); color: var(--accent-green);
-    padding: 2px 7px; border-radius: 10px; font-weight: 600; white-space: nowrap;
-  }
-  .t3-kk-badge {
-    font-size: 10px; background: rgba(59,158,255,0.1);
-    border: 1px solid rgba(59,158,255,0.2); color: #3b9eff;
-    padding: 2px 7px; border-radius: 10px; font-weight: 600; white-space: nowrap;
-  }
-  .t3-link { font-size: 12px; color: var(--accent-green); font-weight: 600; text-decoration: none; flex-shrink: 0; }
-  .bereiche-header {
-    display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
-  }
-  .bereiche-header-label {
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .7px; color: var(--text-muted);
-  }
-  .bereiche-wachstum-badge {
-    font-size: 11px; color: var(--accent-amber); font-weight: 600;
-    background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.25);
-    padding: 2px 9px; border-radius: 10px;
-  }
-  .bereiche-staerken-sep {
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .7px; color: rgba(34,201,122,0.6);
-    margin: 14px 0 8px; display: flex; align-items: center; gap: 8px;
-  }
-  .bereiche-staerken-sep::after { content: ''; flex: 1; height: 1px; background: rgba(34,201,122,0.15); }
-</style>
+    .app-footer { text-align: center; padding: 12px 0 20px; font-size: 11px; color: var(--text-muted); opacity: 0.5; letter-spacing: 0.03em; user-select: none; }
+    .result-tabs { display: flex; gap: 0; background: var(--brand-card); border: 0.5px solid var(--border); border-radius: 14px; padding: 4px; margin: 0 0 16px; }
+    .result-tab { flex: 1; padding: 10px 6px; text-align: center; font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-radius: 10px; transition: all .2s; border: none; background: none; }
+    .result-tab.active { background: var(--accent-green); color: #0a1628; font-weight: 700; }
+    .result-tab-content { display: none; }
+    .result-tab-content.active { display: block; }
+    .t3-info-banner { background: rgba(122,143,168,0.08); border: 1px solid rgba(122,143,168,0.2); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+    .t3-info-banner strong { color: var(--text-primary); }
+    .t3-zone-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; }
+    .t3-zone-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .t3-test-card { background: var(--brand-card); border: 0.5px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+    .t3-test-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+    .t3-test-title { font-size: 14px; font-weight: 600; }
+    .t3-test-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px; }
+    .t3-test-btn { display: inline-block; background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.3); color: var(--accent-amber); border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: none; }
+    .t3-coming-soon { display: inline-block; font-size: 10px; background: rgba(122,143,168,0.15); border: 1px solid rgba(122,143,168,0.25); color: var(--text-muted); padding: 2px 8px; border-radius: 10px; font-weight: 600; margin-left: 6px; vertical-align: middle; }
+    .t3-leistung-row { display: flex; align-items: center; gap: 12px; background: var(--brand-card); border: 0.5px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; }
+    .t3-leistung-icon { font-size: 22px; flex-shrink: 0; }
+    .t3-leistung-body { flex: 1; }
+    .t3-leistung-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .t3-leistung-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+    .t3-usp-badge { font-size: 10px; background: var(--accent-green-dim); border: 1px solid rgba(34,201,122,0.25); color: var(--accent-green); padding: 2px 7px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
+    .t3-kk-badge { font-size: 10px; background: rgba(59,158,255,0.1); border: 1px solid rgba(59,158,255,0.2); color: #3b9eff; padding: 2px 7px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
+    .t3-link { font-size: 12px; color: var(--accent-green); font-weight: 600; text-decoration: none; flex-shrink: 0; }
+    .bereiche-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .bereiche-header-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--text-muted); }
+    .bereiche-wachstum-badge { font-size: 11px; color: var(--accent-amber); font-weight: 600; background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.25); padding: 2px 9px; border-radius: 10px; }
+    /* ── PATCH 4: Stärken-Separator stärker differenziert ── */
+    .bereiche-staerken-sep { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--accent-green); margin: 18px 0 10px; display: flex; align-items: center; gap: 8px; opacity: 0.75; }
+    .bereiche-staerken-sep::after { content: ''; flex: 1; height: 1px; background: rgba(34,201,122,0.2); }
+  </style>
 </head>
 <body>
 <div class="container">
@@ -409,7 +331,6 @@
     questions = allQuestions.filter(q => q.question_key !== "vital_goal");
     const goalQuestion = allQuestions.find(q => q.question_key === "vital_goal") || null;
     window._goalQuestion = goalQuestion;
-    // Fisch-Frage initial ausblenden — wird nur bei omnivor eingeblendet
     const fishQuestionKeys = ["omega3_fish", "fish_frequency", "fish_consumption", "fish_intake"];
     groupedQuestions = [
       { type:"intro" },
@@ -436,7 +357,6 @@
       if (!showFemale && isFemaleSpecific(q)) return false;
       if (q.min_age !== null && age < q.min_age) return false;
       if (q.max_age !== null && age > q.max_age) return false;
-      // Fisch-Frage initial immer ausblenden — wird nur bei omnivor/pescetarisch eingeblendet
       if (fishQuestionKeys.some(fk => q.question_key?.includes(fk))) return false;
       return true;
     });
@@ -589,11 +509,8 @@
     const height_cm = Number(document.getElementById("height_cm").value);
     const weight_kg = Number(document.getElementById("weight_kg").value);
     if (!age || age < 16 || age > 100) {
-      if (age < 16) {
-        alert("Der LeVITA Vital-Check richtet sich an Personen ab 16 Jahren. Für Jüngere ist eine Einwilligung der Erziehungsberechtigten erforderlich — bitte wende dich an info@le-vita.com.");
-      } else {
-        alert("Bitte ein gültiges Alter eingeben.");
-      }
+      if (age < 16) { alert("Der LeVITA Vital-Check richtet sich an Personen ab 16 Jahren. Für Jüngere ist eine Einwilligung der Erziehungsberechtigten erforderlich — bitte wende dich an info@le-vita.com."); }
+      else { alert("Bitte ein gültiges Alter eingeben."); }
       return;
     }
     if (!gender) return alert("Bitte Geschlecht auswählen.");
@@ -628,49 +545,36 @@
       selectedAnswers.push({ option_id: optionId });
       const optionKey = getOptionKeyById(optionId);
       const currentQ = groupedQuestions[currentStep];
-
-      // Bestehende Logik: supplement_types überspringen
       if (currentQ?.question_key === "supplement_usage" && optionKey === "supp_none") {
         groupedQuestions = groupedQuestions.filter(q => q.question_key !== "supplement_types");
         buildSteps(currentStep);
       }
-
-      // Fisch-Frage: initial ausgeblendet, nur bei omnivor/pescetarisch einblenden
       if (currentQ?.question_key === "nutrition_type" || currentQ?.question_key === "diet_type") {
         const fishQuestionKeys = ["omega3_fish", "fish_frequency", "fish_consumption", "fish_intake"];
-        // Prüfe über option_text (stabil gegenüber DB-Änderungen)
         const selectedOpt = currentQ.options?.find(o => o.option_id === selectedAnswers[selectedAnswers.length - 1]?.option_id);
         const optText = (selectedOpt?.option_text || "").toLowerCase();
         const isPlantBased = optText.includes("vegan") || optText.includes("vegetar");
         if (!isPlantBased) {
-          // Omnivor/Mischkost — Fisch-Frage einblenden
           const hasFish = groupedQuestions.some(q => fishQuestionKeys.some(fk => q.question_key?.includes(fk)));
           if (!hasFish) {
             const fishQ = questions.find(q => fishQuestionKeys.some(fk => q.question_key?.includes(fk)));
             if (fishQ) {
-              const nutritionIdx = groupedQuestions.findIndex(q =>
-                q.question_key === "nutrition_type" || q.question_key === "diet_type");
+              const nutritionIdx = groupedQuestions.findIndex(q => q.question_key === "nutrition_type" || q.question_key === "diet_type");
               groupedQuestions.splice(nutritionIdx + 1, 0, fishQ);
               buildSteps(currentStep);
             }
           }
         } else {
-          // Vegan/Vegetarisch — Fisch-Frage ausblenden
           groupedQuestions = groupedQuestions.filter(q => !fishQuestionKeys.some(fk => q.question_key?.includes(fk)));
           buildSteps(currentStep);
         }
       }
-
-      // alcohol_amount überspringen wenn alcohol_frequency = "Nie" oder "Nur zu besonderen Anlässen"
-      // Prüfung über option_text (stabil) mit optionKey als Fallback
       const alcoholOptText = (currentQ?.options?.find(o => o.option_id === selectedAnswers[selectedAnswers.length - 1]?.option_id)?.option_text || "").toLowerCase();
-      const alcoholIsNever = optionKey === "a" || optionKey === "occasion"
-        || alcoholOptText.includes("nie") || alcoholOptText.includes("anlässen") || alcoholOptText.includes("anlass");
+      const alcoholIsNever = optionKey === "a" || optionKey === "occasion" || alcoholOptText.includes("nie") || alcoholOptText.includes("anlässen") || alcoholOptText.includes("anlass");
       if (currentQ?.question_key === "alcohol_frequency" && alcoholIsNever) {
         groupedQuestions = groupedQuestions.filter(q => q.question_key !== "alcohol_amount");
         buildSteps(currentStep);
       }
-      // Wiederherstellen wenn zurückgegangen und anders gewählt
       if (currentQ?.question_key === "alcohol_frequency" && !alcoholIsNever) {
         const hasAmount = groupedQuestions.some(q => q.question_key === "alcohol_amount");
         if (!hasAmount) {
@@ -682,64 +586,43 @@
           }
         }
       }
-
-      // muscle_cramps einblenden wenn strength_training ≥ 2x/Woche
-      // Prüfung über option_text (stabil) mit optionKey als Fallback
       if (currentQ?.question_key === "strength_training") {
         const strengthOptText = (currentQ?.options?.find(o => o.option_id === selectedAnswers[selectedAnswers.length - 1]?.option_id)?.option_text || "").toLowerCase();
-        const strengthIs2Plus = optionKey === "a" || optionKey === "b"
-          || strengthOptText.includes("2") || strengthOptText.includes("3") || strengthOptText.includes("täglich") || strengthOptText.includes("öfter");
-        const shouldShow = strengthIs2Plus;
+        const strengthIs2Plus = optionKey === "a" || optionKey === "b" || strengthOptText.includes("2") || strengthOptText.includes("3") || strengthOptText.includes("täglich") || strengthOptText.includes("öfter");
         const hasCramps = groupedQuestions.some(q => q.question_key === "muscle_cramps");
-        if (shouldShow && !hasCramps) {
+        if (strengthIs2Plus && !hasCramps) {
           const crampsQ = questions.find(q => q.question_key === "muscle_cramps");
           if (crampsQ) {
             const strengthIdx = groupedQuestions.findIndex(q => q.question_key === "strength_training");
             groupedQuestions.splice(strengthIdx + 1, 0, crampsQ);
             buildSteps(currentStep);
           }
-        } else if (!shouldShow && hasCramps) {
+        } else if (!strengthIs2Plus && hasCramps) {
           groupedQuestions = groupedQuestions.filter(q => q.question_key !== "muscle_cramps");
           buildSteps(currentStep);
         }
       }
-
-      // social_connection einblenden wenn low_mood ODER low_interest = häufig/meistens/fast täglich
-      // Prüfung über risk_points (≥ 2) ODER option_text ODER optionKey als Fallback
       if (currentQ?.question_key === "low_mood" || currentQ?.question_key === "low_interest") {
         const moodOptText = (currentQ?.options?.find(o => o.option_id === selectedAnswers[selectedAnswers.length - 1]?.option_id)?.option_text || "").toLowerCase();
         const moodRisk = Number(currentQ?.options?.find(o => o.option_id === selectedAnswers[selectedAnswers.length - 1]?.option_id)?.risk_points || 0);
         const triggerKeys = ["c", "d", "e"];
-        const shouldShow = triggerKeys.includes(optionKey)
-          || moodRisk >= 2
-          || moodOptText.includes("hälfte") || moodOptText.includes("meist") || moodOptText.includes("täglich");
-        // Prüfen ob die andere Frage bereits einen Trigger gesetzt hat
+        const shouldShow = triggerKeys.includes(optionKey) || moodRisk >= 2 || moodOptText.includes("hälfte") || moodOptText.includes("meist") || moodOptText.includes("täglich");
         const otherKey = currentQ.question_key === "low_mood" ? "low_interest" : "low_mood";
-        const otherAnswer = selectedAnswers.slice(0, -1).find(a => {
-          const key = getOptionKeyById(a.option_id);
-          const q = questions.find(q2 => q2.options.some(o => o.option_id === a.option_id));
-          return q?.question_key === otherKey;
-        });
+        const otherAnswer = selectedAnswers.slice(0, -1).find(a => { const q = questions.find(q2 => q2.options.some(o => o.option_id === a.option_id)); return q?.question_key === otherKey; });
         const otherOptionKey = otherAnswer ? getOptionKeyById(otherAnswer.option_id) : null;
         const otherTriggers = otherOptionKey && triggerKeys.includes(otherOptionKey);
         const hasSocial = groupedQuestions.some(q => q.question_key === "social_connection");
-
         if ((shouldShow || otherTriggers) && !hasSocial) {
           const socialQ = questions.find(q => q.question_key === "social_connection");
           if (socialQ) {
-            // Nach low_interest einfügen (sort_order 225 liegt nach 220)
             const interestIdx = groupedQuestions.findIndex(q => q.question_key === "low_interest");
-            if (interestIdx !== -1) {
-              groupedQuestions.splice(interestIdx + 1, 0, socialQ);
-              buildSteps(currentStep);
-            }
+            if (interestIdx !== -1) { groupedQuestions.splice(interestIdx + 1, 0, socialQ); buildSteps(currentStep); }
           }
         } else if (!shouldShow && !otherTriggers && hasSocial) {
           groupedQuestions = groupedQuestions.filter(q => q.question_key !== "social_connection");
           buildSteps(currentStep);
         }
       }
-
       nextStep();
     }, 200);
   }
@@ -756,49 +639,28 @@
       const hasSupplTypes = groupedQuestions.some(q => q.question_key === "supplement_types");
       if (!hasSupplTypes) {
         const supplTypes = questions.find(q => q.question_key === "supplement_types");
-        if (supplTypes) {
-          const usageIdx = groupedQuestions.findIndex(q => q.question_key === "supplement_usage");
-          groupedQuestions.splice(usageIdx + 1, 0, supplTypes);
-          buildSteps(currentStep);
-        }
+        if (supplTypes) { const usageIdx = groupedQuestions.findIndex(q => q.question_key === "supplement_usage"); groupedQuestions.splice(usageIdx + 1, 0, supplTypes); buildSteps(currentStep); }
       }
     }
-    // NEU: muscle_cramps wiederherstellen wenn zurück zu strength_training
     if (backQ?.question_key === "strength_training") {
       const hasCramps = groupedQuestions.some(q => q.question_key === "muscle_cramps");
       if (!hasCramps) {
         const crampsQ = questions.find(q => q.question_key === "muscle_cramps");
-        if (crampsQ) {
-          const strengthIdx = groupedQuestions.findIndex(q => q.question_key === "strength_training");
-          groupedQuestions.splice(strengthIdx + 1, 0, crampsQ);
-          buildSteps(currentStep);
-        }
+        if (crampsQ) { const strengthIdx = groupedQuestions.findIndex(q => q.question_key === "strength_training"); groupedQuestions.splice(strengthIdx + 1, 0, crampsQ); buildSteps(currentStep); }
       }
     }
-    // NEU: alcohol_amount wiederherstellen wenn zurück zu alcohol_frequency
     if (backQ?.question_key === "alcohol_frequency") {
       const hasAmount = groupedQuestions.some(q => q.question_key === "alcohol_amount");
       if (!hasAmount) {
         const amountQ = questions.find(q => q.question_key === "alcohol_amount");
-        if (amountQ) {
-          const freqIdx = groupedQuestions.findIndex(q => q.question_key === "alcohol_frequency");
-          groupedQuestions.splice(freqIdx + 1, 0, amountQ);
-          buildSteps(currentStep);
-        }
+        if (amountQ) { const freqIdx = groupedQuestions.findIndex(q => q.question_key === "alcohol_frequency"); groupedQuestions.splice(freqIdx + 1, 0, amountQ); buildSteps(currentStep); }
       }
     }
-    // NEU: social_connection wiederherstellen wenn zurück zu low_mood oder low_interest
     if (backQ?.question_key === "low_mood" || backQ?.question_key === "low_interest") {
       const hasSocial = groupedQuestions.some(q => q.question_key === "social_connection");
       if (!hasSocial) {
         const socialQ = questions.find(q => q.question_key === "social_connection");
-        if (socialQ) {
-          const interestIdx = groupedQuestions.findIndex(q => q.question_key === "low_interest");
-          if (interestIdx !== -1) {
-            groupedQuestions.splice(interestIdx + 1, 0, socialQ);
-            buildSteps(currentStep);
-          }
-        }
+        if (socialQ) { const interestIdx = groupedQuestions.findIndex(q => q.question_key === "low_interest"); if (interestIdx !== -1) { groupedQuestions.splice(interestIdx + 1, 0, socialQ); buildSteps(currentStep); } }
       }
     }
     const prev = document.getElementById(`step-${currentStep}`);
@@ -852,7 +714,6 @@
     try {
       const result = await callFunction({ age:personalData.age, gender:personalData.gender, height_cm:personalData.height_cm, weight_kg:personalData.weight_kg, first_name:personalData.first_name||null, last_name:personalData.last_name||null, goal_key:personalData.goal_key||null, consent_privacy:true, consent_storage:true, answers:selectedAnswers });
       latestResult = result;
-      // Meta Pixel: Check abgeschlossen
       if (typeof fbq !== 'undefined') fbq('track', 'CompleteRegistration', { content_name: 'check_complete', goal: personalData.goal_key || 'unknown' });
       showResult(result);
     } catch (error) {
@@ -871,10 +732,8 @@
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) return alert("Bitte eine gültige E-Mail-Adresse eingeben — z.B. name@beispiel.de");
     if (!ca || !cm) return alert("Bitte beide Einwilligungen bestätigen.");
-    // Meta Pixel: KI-Mail angefordert
     if (typeof fbq !== 'undefined') fbq('track', 'Subscribe', { content_name: 'ai_mail_requested' });
-    btn.disabled = true;
-    btn.innerText = "Auswertung wird erstellt…";
+    btn.disabled = true; btn.innerText = "Auswertung wird erstellt…";
     const hintTimer = setTimeout(() => {
       statusEl.innerHTML = `<div class="status-msg info-box box-info">⏳ Die KI-Auswertung wird gerade erstellt — das kann bis zu 30 Sekunden dauern. Bitte warte kurz…</div>`;
     }, 8000);
@@ -888,9 +747,8 @@
       }
     } catch (error) {
       clearTimeout(hintTimer);
-      statusEl.innerHTML = `<div class="status-msg info-box box-warning">Die Verbindung hat etwas länger gedauert — es ist nicht sicher, ob die Anfrage angekommen ist.<br><strong>Bitte prüfe dein Postfach in den nächsten Minuten.</strong><br><small style="color:var(--text-muted);">Falls keine E-Mail ankommt, versuche es erneut oder melde dich bei uns: info@le-vita.com</small></div>`;
-      btn.disabled = false;
-      btn.innerText = "Individuelle Auswertung per E-Mail anfordern →";
+      statusEl.innerHTML = `<div class="status-msg info-box box-warning">Die Verbindung hat etwas länger gedauert.<br><strong>Bitte prüfe dein Postfach in den nächsten Minuten.</strong><br><small style="color:var(--text-muted);">Falls keine E-Mail ankommt: info@le-vita.com</small></div>`;
+      btn.disabled = false; btn.innerText = "Individuelle Auswertung per E-Mail anfordern →";
     }
   }
 
@@ -901,7 +759,6 @@
     return result;
   }
 
-
   function switchResultTab(id) {
     document.querySelectorAll('.result-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.result-tab-content').forEach(t => t.classList.remove('active'));
@@ -909,7 +766,6 @@
     const content = document.getElementById('rtc-' + id);
     if (tab) tab.classList.add('active');
     if (content) content.classList.add('active');
-    // Radar-Chart neu rendern wenn Tab 2 geöffnet wird
     if (id === 'bereiche' && window._lastResultData) {
       setTimeout(() => renderRadarChart(window._lastResultData.areas), 50);
     }
@@ -935,8 +791,6 @@
       personalData.weight_kg = result.submission.weight_kg || personalData.weight_kg;
       personalData.goal_key = result.submission.goal_key || personalData.goal_key;
     }
-    // TODO V1-Fix: score_label vom Backend bei Grenzwert 85 korrigieren (Supabase RPC)
-    // Frontend-Workaround aktiv bis Backend gefixt ist — danach diese Zeilen entfernen
     const correctedScoreLabel = totalScore >= 85 ? "Vital & Stabil"
       : totalScore >= 70 ? "Aktiv mit Momentum"
       : totalScore >= 55 ? "Auf dem Weg"
@@ -952,7 +806,7 @@
   function buildResultHtml(result, areas, totalScore, bioAge, suppFocus, correctedScoreLabel) {
     const score = result.score;
     const scoreLabel = correctedScoreLabel || score.score_label;
-    const answers = result.answers || [];
+    const answersData = result.answers || [];
     let html = "";
     html += `<div class="info-box box-success" style="margin-bottom:20px;"><strong>Dein Vital-Check wurde erfolgreich erstellt.</strong><br>Hier siehst du deine persönliche Auswertung. Eine individuelle Analyse per E-Mail kannst du weiter unten anfordern.</div>`;
     html += `<div class="pilot-code-box">Deine Pilot-ID: <strong>${result.public_code}</strong></div>`;
@@ -966,15 +820,29 @@
     const goalLabels = { goal_energy:"⚡ Mehr Energie", goal_weight:"⚖️ Abnehmen / Figur", goal_fitness:"💪 Fitter werden", goal_prevention:"🛡️ Vorsorge", goal_longevity:"🌿 Longevity", goal_curious:"🔍 Neugier" };
     const goalLabel = personalData.goal_key && goalLabels[personalData.goal_key] ? goalLabels[personalData.goal_key] : "";
 
-    // ── KPI-Bar (immer sichtbar, über Tabs) ──────────────
+    // Haupthebel berechnen (für Tab 3 Hero-Card verfügbar)
+    const bmiNum = Number(result.bmi);
+    const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
+    const areasForHebel = areas.filter(a => {
+      if (a.key === "bmi") return false;
+      if (bmiIsLow && a.key === "activity") return false;
+      return true;
+    });
+    const sleepArea = areas.find(a => a.key === "sleep");
+    const hasCriticalSleep = result.answers?.some(a => a.question_key === "sleep_duration" && a.answer_text?.includes("Weniger als 5"));
+    const worst = areasForHebel.length > 0
+      ? (hasCriticalSleep && sleepArea ? sleepArea : [...areasForHebel].sort((a,b) => a.score - b.score)[0])
+      : null;
+
+    // ── KPI-Bar ──
     html += `
       <div class="kpi-row" style="margin-bottom:10px;">
-        <div class="kpi-card"><span class="kpi-icon">⚡</span><div class="kpi-val" style="color:${sc}">${totalScore}</div><div class="kpi-lbl">Vitalitäts-Index</div></div>
-        <div class="kpi-card"><span class="kpi-icon">🧬</span><div class="kpi-val" style="color:${bioColor}">${bioAge||"–"}</div><div class="kpi-lbl">Vitalitäts-Alter</div></div>
+        <div class="kpi-card"><span class="kpi-icon">⚡</span><div class="kpi-val" style="color:${sc}">${totalScore}</div><div class="kpi-label">Vitalitäts-Index</div></div>
+        <div class="kpi-card"><span class="kpi-icon">🧬</span><div class="kpi-val" style="color:${bioColor}">${bioAge||"–"}</div><div class="kpi-label">Vitalitäts-Alter</div></div>
         <div class="kpi-card" onclick="switchResultTab('bereiche')" style="cursor:pointer;border-color:rgba(245,166,35,${weakCount>0?'0.3':'0.1'});">
           <span class="kpi-icon">📊</span>
           <div class="kpi-val" style="color:var(--accent-amber)">${weakCount}</div>
-          <div class="kpi-lbl" style="color:${weakCount>0?'var(--accent-amber)':'var(--text-muted)'}">
+          <div class="kpi-label" style="color:${weakCount>0?'var(--accent-amber)':'var(--text-muted)'}">
             ${weakCount>0?'Wachstumsbereiche →':'Bereiche'}
           </div>
         </div>
@@ -982,7 +850,7 @@
 
     // Level-Badge
     html += `
-      <div style="background:var(--brand-card);border:0.5px solid var(--border-subtle);border-radius:14px;
+      <div style="background:var(--brand-card);border:0.5px solid var(--border);border-radius:14px;
            padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
         <div>
           <div style="font-size:16px;font-weight:700;color:${sc};">✦ ${scoreLabel}</div>
@@ -991,7 +859,7 @@
         <div style="font-size:22px;">⚡</div>
       </div>`;
 
-    // ── TABS ─────────────────────────────────────────────
+    // ── TABS ──
     html += `
       <div class="result-tabs">
         <button class="result-tab active" id="rtab-ergebnis" onclick="switchResultTab('ergebnis')">Mein Ergebnis</button>
@@ -1004,30 +872,43 @@
     // ════════════════════════════════════════════
     html += `<div class="result-tab-content active" id="rtc-ergebnis">`;
 
-    // Score-Ring
+    // ── PATCH 6: Score-Ring kompakt (links Ring, rechts Meta) wie Prototyp ──
     html += `
-      <div class="score-hero" style="margin-bottom:14px;">
-        <div class="score-ring-wrap">
-          <svg class="score-ring-svg" viewBox="0 0 190 190">
-            <circle class="score-ring-bg" cx="95" cy="95" r="82"/>
-            <circle class="score-ring-fill" id="scoreRingFill" cx="95" cy="95" r="82"/>
-            <defs><linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <div style="display:flex;align-items:center;gap:16px;background:var(--brand-card);
+           border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:12px;">
+        <div style="position:relative;width:110px;height:110px;flex-shrink:0;">
+          <svg style="width:110px;height:110px;transform:rotate(-90deg);" viewBox="0 0 110 110">
+            <circle cx="55" cy="55" r="47" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="9"/>
+            <circle cx="55" cy="55" r="47" fill="none" id="scoreRingFill"
+              stroke-width="9" stroke-linecap="round"
+              stroke-dasharray="295" stroke-dashoffset="295"/>
+            <defs><linearGradient id="ringGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stop-color="#22c97a"/><stop offset="100%" stop-color="#3b9eff"/>
             </linearGradient></defs>
           </svg>
-          <div class="score-ring-inner">
-            <div class="score-number" id="scoreDisplayNum" style="color:${sc};">0</div>
-            <div class="score-of">von 100</div>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;
+               align-items:center;justify-content:center;text-align:center;">
+            <div id="scoreDisplayNum" style="font-family:'DM Serif Display',serif;
+                 font-size:32px;line-height:1;color:${sc};">0</div>
+            <div style="font-size:11px;color:var(--text-muted);">von 100</div>
           </div>
         </div>
-        <div class="score-level-badge" style="background:${sc}22;color:${sc};">✦ ${scoreLabel}</div>
-        ${bioAge ? `
-          <div class="score-bio-age">Vitalitäts-Alter: <strong>${bioAge} Jahre</strong>${personalData.age ? ` <span style="color:var(--text-muted);">&nbsp;·&nbsp; Kalendarisch: ${personalData.age} Jahre</span>` : ""}</div>
-          <div class="score-bio-age-disclaimer">Orientierungswert aus Lebensstilantworten — kein medizinischer Biomarker</div>
-          <div onclick="switchResultTab('bereiche')" style="cursor:pointer;font-size:12px;color:var(--accent-green);font-weight:600;margin-top:6px;text-align:center;">
-            Was bedeutet das für dich? → Meine Bereiche ansehen
-          </div>
-        ` : ""}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:17px;font-weight:700;color:${sc};margin-bottom:6px;">✦ ${scoreLabel}</div>
+          ${bioAge ? `
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:2px;">
+              Vitalitäts-Alter: <strong style="color:${bioColor};">${bioAge} J.</strong>
+              ${personalData.age ? ` <span style="color:var(--text-muted);">· ${personalData.age} J. kalendarisch</span>` : ""}
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);line-height:1.5;margin-bottom:8px;">
+              Orientierungswert aus Lebensstilantworten — kein medizinischer Biomarker
+            </div>
+            <div onclick="switchResultTab('bereiche')" style="cursor:pointer;font-size:12px;
+                 color:var(--accent-green);font-weight:600;">
+              Was bedeutet das für dich? → Meine Bereiche ansehen
+            </div>
+          ` : ""}
+        </div>
       </div>`;
 
     // Basisdaten
@@ -1046,23 +927,6 @@
     html += renderVitalIndexBox(totalScore, scoreLabel);
 
     // Haupthebel
-    const bmiNum = Number(result.bmi);
-    const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
-    const areasForHebel = areas.filter(a => {
-      if (a.key === "bmi") return false;
-      if (bmiIsLow && a.key === "activity") return false;
-      return true;
-    });
-    const sleepArea = areas.find(a => a.key === "sleep");
-    const hasCriticalSleep = result.answers?.some(a =>
-      a.question_key === "sleep_duration" && a.answer_text?.includes("Weniger als 5")
-    );
-    const worst = areasForHebel.length > 0
-      ? (hasCriticalSleep && sleepArea
-          ? sleepArea
-          : [...areasForHebel].sort((a,b) => a.score - b.score)[0])
-      : null;
-
     if (totalScore >= 85) {
       if (worst && worst.score < 90) {
         html += `<div class="hebel-box"><div class="hebel-icon">✨</div><div>
@@ -1076,13 +940,13 @@
         <div class="hebel-text"><strong>${AREA_ICONS[worst.key]||""} ${worst.label}</strong> ist dein stärkster Ansatzpunkt. Kleine Verbesserungen hier wirken sich auf alle anderen Bereiche aus.</div>
         ${worst.score < 55 ? `
           <div style="margin-top:10px;background:var(--brand-card);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;">
-            ⚡ <strong style="color:var(--accent-green)">Sofort:</strong> ${getInsightNow(worst.key, result.answers||[])}<br><br>
-            📅 <strong style="color:var(--accent-amber)">Diese Woche:</strong> ${getInsightSoon(worst.key, result.answers||[])}
+            ⚡ <strong style="color:var(--accent-green)">Sofort:</strong> ${getInsightNow(worst.key, worst.score, result.bmi, result)}<br><br>
+            📅 <strong style="color:var(--accent-amber)">Diese Woche:</strong> ${getInsightSoon(worst.key, worst.score, result.bmi, result)}
           </div>` : ""}
       </div></div>`;
     }
 
-    // KI-Mail Box — direkt sichtbar auf Tab 1
+    // KI-Mail Box
     html += `
       <div class="ai-box">
         <div class="ai-badge">✦ Deine kostenlose KI-Auswertung</div>
@@ -1110,7 +974,6 @@
     // ════════════════════════════════════════════
     html += `<div class="result-tab-content" id="rtc-bereiche">`;
 
-    // Radar-Spinne
     html += `<div class="section-card">
       <div class="section-header">
         <div class="section-title">Vitalitäts-Spinne</div>
@@ -1120,7 +983,6 @@
     </div>`;
     html += renderRadarExplanation(areas);
 
-    // Bereiche gerankt — Wachstumsbereiche zuerst, dann Stärken
     const sortedAreas = [...areas].sort((a, b) => a.score - b.score);
     const wachstumAreas = sortedAreas.filter(a => a.score < 75);
     const staerkenAreas = sortedAreas.filter(a => a.score >= 75);
@@ -1142,47 +1004,29 @@
       html += `</div>`;
     }
 
-    // Red-Flag Box
     html += renderRedFlagBox(score, totalScore);
 
-    // Antworten-Übersicht
-    if (answers && answers.length > 0) {
-      const areaLabels = {
-        activity: "Bewegung & Kraft", sleep: "Schlaf & Regeneration",
-        nutrition: "Ernährung", mental: "Mentale Balance & Stress",
-        vitamin_d: "Vitamin D & Tageslicht", bmi: "BMI",
-        lifestyle: "Alkohol / Nikotin", micronutrients: "Mikronährstoffe",
-        metabolic: "Energie & Stoffwechsel", general: "Allgemein"
-      };
-      const questionLabels = {
-        activity_days:"Wie viele Tage pro Woche bist du körperlich aktiv?",activity_intensity:"Wie intensiv ist deine Bewegung?",strength_training:"Wie oft trainierst du gezielt Kraft?",muscle_cramps:"Hast du beim Sport Muskelkrämpfe?",sitting_hours:"Wie viele Stunden sitzt du täglich?",sleep_duration:"Wie viele Stunden schläfst du pro Nacht?",sleep_quality:"Wie erholsam ist dein Schlaf?",sleep_problems:"Hast du Einschlaf- oder Durchschlafschwierigkeiten?",sleep_latency:"Wie lange brauchst du zum Einschlafen?",daytime_sleepiness:"Bist du tagsüber müde oder schläfrig?",nutrition_type:"Wie ernährst du dich?",diet_type:"Wie ernährst du dich?",omega3_fish:"Wie oft isst du fettreichen Seefisch?",fish_frequency:"Wie oft isst du fettreichen Seefisch?",vegetable_fruit:"Wie oft isst du Gemüse und Obst?",vegetables_fruit:"Wie oft isst du Gemüse und Obst?",protein_frequency:"Wie oft isst du bewusst eiweißreiche Lebensmittel?",protein_intake:"Wie oft isst du bewusst eiweißreiche Lebensmittel?",meal_regularity:"Isst du regelmäßig zu festen Zeiten?",water_intake:"Wie viel trinkst du täglich?",sunlight_exposure:"Wie viel Zeit verbringst du täglich im Freien?",sun_exposure_winter:"Wie viel Tageslicht bekommst du im Winter?",sun_exposure_summer:"Wie viel Tageslicht bekommst du im Sommer?",alcohol_frequency:"Wie häufig trinkst du Alkohol?",alcohol_amount:"Wie viele alkoholische Getränke pro Monat?",smoking:"Rauchst du?",nicotine_use:"Rauchst du oder nutzt du Nikotin?",stress_level:"Wie gestresst fühlst du dich im Alltag?",low_mood:"Wie oft fühlst du dich niedergeschlagen?",low_interest:"Wie oft verlierst du die Freude an Dingen?",social_connection:"Wie gut bist du sozial eingebunden?",energy_level:"Wie ist dein Energielevel im Alltag?",appetite_change:"Hast du Veränderungen beim Appetit?",appetite_changes:"Hast du Veränderungen beim Appetit?",weight_changes:"Hast du ungewollte Gewichtsveränderungen?",unintentional_weight_loss:"Hast du ungewollte Gewichtsveränderungen?",supplement_usage:"Nimmst du Nahrungsergänzungsmittel?",supplement_types:"Welche Supplements nimmst du?",hormonal_transition:"Befindest du dich in den Wechseljahren?",period_bleeding:"Wie ist deine Regelblutung?",dizziness_pale_nails:"Hast du Symptome wie Schwindel oder blasse Nägel?",iron_symptoms:"Hast du Symptome wie Müdigkeit oder Blässe?",vital_goal:"Was ist dein wichtigstes Ziel?"
-      };
+    if (answersData && answersData.length > 0) {
+      const areaLabels = { activity:"Bewegung & Kraft", sleep:"Schlaf & Regeneration", nutrition:"Ernährung", mental:"Mentale Balance & Stress", vitamin_d:"Vitamin D & Tageslicht", bmi:"BMI", lifestyle:"Alkohol / Nikotin", micronutrients:"Mikronährstoffe", metabolic:"Energie & Stoffwechsel", general:"Allgemein" };
+      const questionLabels = { activity_days:"Wie viele Tage pro Woche bist du körperlich aktiv?",activity_intensity:"Wie intensiv ist deine Bewegung?",strength_training:"Wie oft trainierst du gezielt Kraft?",muscle_cramps:"Hast du beim Sport Muskelkrämpfe?",sitting_hours:"Wie viele Stunden sitzt du täglich?",sleep_duration:"Wie viele Stunden schläfst du pro Nacht?",sleep_quality:"Wie erholsam ist dein Schlaf?",sleep_problems:"Hast du Einschlaf- oder Durchschlafschwierigkeiten?",sleep_latency:"Wie lange brauchst du zum Einschlafen?",daytime_sleepiness:"Bist du tagsüber müde oder schläfrig?",nutrition_type:"Wie ernährst du dich?",diet_type:"Wie ernährst du dich?",omega3_fish:"Wie oft isst du fettreichen Seefisch?",vegetable_fruit:"Wie oft isst du Gemüse und Obst?",protein_frequency:"Wie oft isst du bewusst eiweißreiche Lebensmittel?",meal_regularity:"Isst du regelmäßig zu festen Zeiten?",water_intake:"Wie viel trinkst du täglich?",sunlight_exposure:"Wie viel Zeit verbringst du täglich im Freien?",alcohol_frequency:"Wie häufig trinkst du Alkohol?",alcohol_amount:"Wie viele alkoholische Getränke pro Monat?",smoking:"Rauchst du?",nicotine_use:"Rauchst du oder nutzt du Nikotin?",stress_level:"Wie gestresst fühlst du dich im Alltag?",low_mood:"Wie oft fühlst du dich niedergeschlagen?",low_interest:"Wie oft verlierst du die Freude an Dingen?",social_connection:"Wie gut bist du sozial eingebunden?",energy_level:"Wie ist dein Energielevel im Alltag?",appetite_change:"Hast du Veränderungen beim Appetit?",weight_changes:"Hast du ungewollte Gewichtsveränderungen?",supplement_usage:"Nimmst du Nahrungsergänzungsmittel?",supplement_types:"Welche Supplements nimmst du?",vital_goal:"Was ist dein wichtigstes Ziel?" };
       const grouped = {};
-      answers.forEach(a => {
-        const area = a.area_key || "general";
-        if (!grouped[area]) grouped[area] = [];
-        grouped[area].push(a);
-      });
+      answersData.forEach(a => { const area = a.area_key || "general"; if (!grouped[area]) grouped[area] = []; grouped[area].push(a); });
       const answersHtml = Object.entries(grouped).map(([area, ans]) => `
         <div style="margin-bottom:14px;">
           <div style="font-size:11px;font-weight:700;color:var(--accent-green);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">${areaLabels[area]||area}</div>
           ${ans.map(a => `
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:0.5px solid var(--border-subtle);">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:0.5px solid var(--border);">
               <div style="font-size:12px;color:var(--text-secondary);flex:1;">${questionLabels[a.question_key]||a.question_key}</div>
               <div style="font-size:12px;color:var(--text-primary);font-weight:500;text-align:right;margin-left:12px;max-width:55%;">${a.answer_text}</div>
             </div>`).join("")}
         </div>`).join("");
-
       html += `
         <div class="section-card" style="margin-bottom:16px;">
           <div class="section-header" onclick="toggleAnswers()" style="cursor:pointer;user-select:none;">
             <div class="section-title">📋 Meine Antworten aus diesem Check</div>
             <button class="toggle-btn" id="answersToggleBtn">Einblenden</button>
           </div>
-          <div id="answersPanel" style="display:none;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border-subtle);">
-            <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;">
-              Interaktive Auswertung — Spinne, Cards und alle Details oben sichtbar.
-            </div>
+          <div id="answersPanel" style="display:none;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);">
             ${answersHtml}
           </div>
         </div>`;
@@ -1195,22 +1039,47 @@
     // ════════════════════════════════════════════
     html += `<div class="result-tab-content" id="rtc-empfehlungen">`;
 
-    // Info-Banner: Was wird sukzessive aufgebaut
+    // ── PATCH 7: Gradient-Hero-Card als emotionaler Einstieg (Prototyp-Style) ──
+    const heroGoalKey3 = result.submission?.goal_key || personalData.goal_key || "";
+    const heroGoalTitles = {
+      goal_longevity:"Länger vital leben", goal_prevention:"Vorsorge aktiv gestalten",
+      goal_fitness:"Fitter & stärker werden", goal_weight:"Figur & Gewicht",
+      goal_energy:"Mehr Energie im Alltag", goal_supplements:"Nährstoffstatus klären",
+      goal_curious:"Deine Neugier als Antrieb"
+    };
+    const heroTitle3 = heroGoalTitles[heroGoalKey3] || "Dein nächster Schritt";
+    const heroDesc3 = worst
+      ? `${AREA_ICONS[worst.key]||""} <strong>${worst.label}</strong> ist laut deinem Check dein stärkster Ansatzpunkt. Kleine Verbesserungen hier wirken sich auf alle anderen Bereiche aus — ein kostenloses Gespräch im Studio zeigt dir den passenden Einstieg.`
+      : `Deine Basis wirkt bereits stabil. Im LeVITA Studio helfen wir dir, das weiterzuentwickeln — individuell und ohne Druck.`;
     html += `
-      <div class="t3-info-banner">
-        <strong>Hinweis:</strong> Einige Angebote befinden sich aktuell im Aufbau —
-        darunter der Trockenbluttest-Direktkauf und §20-Präventionskurse online.
-        Wir erweitern das Angebot sukzessive. Im Studio beraten wir dich gerne zu allen Optionen.
+      <div style="background:linear-gradient(135deg,rgba(34,201,122,0.12),rgba(59,158,255,0.08));
+           border:1px solid rgba(34,201,122,0.3);border-radius:var(--radius);padding:18px;margin-bottom:16px;">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+             color:var(--accent-green);margin-bottom:8px;">✦ Dein wichtigster nächster Schritt</div>
+        <div style="font-size:17px;font-weight:700;margin-bottom:8px;line-height:1.3;">${heroTitle3}</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px;">${heroDesc3}</div>
+        <a href="https://le-vita.com/probetraining" target="_blank"
+           onclick="if(typeof fbq!=='undefined') fbq('track','Contact',{content_name:'empfehlung_hero_cta'})"
+           style="display:block;background:var(--accent-green);color:#0a1628;border-radius:10px;
+           padding:13px;font-size:14px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;">
+          Kostenloses Vitalitätsgespräch vereinbaren →
+        </a>
       </div>`;
 
-    // Zone 1: Wichtigster nächster Schritt (goal-spezifisch)
+    // Kompakter Aufbau-Hinweis
+    html += `
+      <div class="t3-info-banner" style="margin-bottom:14px;font-size:11.5px;">
+        <strong>Hinweis:</strong> Trockenbluttest-Direktkauf und §20-Kurse online befinden sich im Aufbau — im Studio beraten wir dich bereits jetzt zu allen Optionen.
+      </div>`;
+
+    // Ziel-spezifische CTAs
     html += renderHintBoxes(score, result.bmi, result.submission?.goal_key || personalData.goal_key, result.answers||[], suppFocus);
 
     // Supplement-Support-Box
     const { html: supportHtml, bloodtestShown } = renderVitalitySupportBox(areas, result, suppFocus);
     html += supportHtml;
 
-    // Zone 2: Trockenbluttest
+    // Trockenbluttest
     if (bloodtestShown || score.bloodtest_hint) {
       html += `<div class="t3-zone-title">💉 Laborwerte & Tests</div>`;
       html += `
@@ -1220,16 +1089,14 @@
           </div>
           <div class="t3-test-desc">
             Bequem von zuhause oder direkt im LeVITA Studio — kleines Set, kurze Blutprobe,
-            Ergebnis per E-Mail. Kein Nüchternblut nötig. Tests u.a.: HbA1c, Vitamin D,
-            Ferritin/Eisen, Vitamin B12, Omega-3.
+            Ergebnis per E-Mail. Kein Nüchternblut nötig. Tests u.a.: HbA1c, Vitamin D, Ferritin, B12, Omega-3.
           </div>
           <a class="t3-test-btn" href="https://le-vita.com/probetraining" target="_blank">Im Studio besprechen →</a>
         </div>`;
     }
 
-    // Zone 3: Studioleistungen
+    // Studio-Leistungen
     html += `<div class="t3-zone-title">🏥 Leistungen im LeVITA Studio</div>`;
-
     html += `
       <div class="t3-leistung-row">
         <div class="t3-leistung-icon">🫧</div>
@@ -1279,7 +1146,6 @@
         </div>
       </div>`;
 
-    // Feedback + PDF + Reset
     html += `
       <div class="feedback-box" style="margin-top:16px;">
         <h3>Hilf uns, den Vital-Check zu verbessern 🚀</h3>
@@ -1288,9 +1154,7 @@
       </div>`;
 
     html += `<button class="secondary-btn" onclick="window.print()" style="margin-top:12px;">↓ Auswertung als PDF speichern</button>`;
-
     html += `<div class="disclaimer"><strong>Wichtiger Hinweis:</strong> Diese Auswertung ist keine Diagnose und ersetzt keine medizinische Beratung. Sie dient der Orientierung und Hilfe zur Selbsthilfe. Die Schwerpunkte basieren auf Empfehlungen von WHO, DGE und dem Bundesinstitut für Risikobewertung.</div>`;
-
     html += `
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
         <button class="danger-btn" onclick="deleteMyData()">🗑 Daten löschen</button>
@@ -1309,14 +1173,15 @@
     return "#ff5c5c";
   }
 
+  // ── PATCH 2+3: animateScoreRing — angepasst auf r=47 (C≈295) ──
   function animateScoreRing(target) {
     const el = document.getElementById("scoreDisplayNum");
     const ring = document.getElementById("scoreRingFill");
     if (!el || !ring) return;
-    const C = 2 * Math.PI * 82;
+    const C = 2 * Math.PI * 47;
     ring.setAttribute("stroke-dasharray", C);
     ring.setAttribute("stroke-dashoffset", C);
-    ring.setAttribute("stroke", "url(#ringGrad)");
+    ring.setAttribute("stroke", "url(#ringGrad2)");
     let current = 0;
     const dur = 1400, start = performance.now();
     function step(now) {
@@ -1363,7 +1228,7 @@
           const b=this;
           if(p.style.display==='none'){p.style.display='block';b.textContent='So liest du dein Vitalitäts-Profil ▲';}
           else{p.style.display='none';b.textContent='So liest du dein Vitalitäts-Profil ▼';}
-        " style="width:100%;background:var(--brand-card);border:0.5px solid var(--border-subtle);
+        " style="width:100%;background:var(--brand-card);border:0.5px solid var(--border);
           border-radius:10px;padding:10px 14px;color:var(--text-secondary);font-size:13px;
           font-weight:500;cursor:pointer;text-align:left;display:flex;align-items:center;
           justify-content:space-between;">
@@ -1434,17 +1299,17 @@
   function getBmiCategory(bmiValue) {
     const bmi = Number(bmiValue);
     if (bmi < 18.5) return "low";
-    if (bmi < 25)   return "normal";
-    if (bmi < 30)   return "elevated";
+    if (bmi < 25) return "normal";
+    if (bmi < 30) return "elevated";
     return "high";
   }
 
   function getInsightNow(key, score, bmiValue, result) {
     if (key === "bmi" && bmiValue !== undefined) {
       const cat = getBmiCategory(bmiValue);
-      if (cat === "low")      return "Heute eine zusätzliche eiweißreiche Mahlzeit einplanen — z.B. Joghurt, Eier, Hülsenfrüchte oder Quark. Fokus auf Energie und Regeneration, nicht auf Kalorienverbrauch.";
-      if (cat === "normal")   return "Ernährung, Bewegung und Regeneration ausgewogen beibehalten — du bist in einem stabilen Bereich.";
-      if (cat === "elevated") return "Heute 10 Minuten leichte Bewegung nach einer Mahlzeit einplanen — z.B. ein kurzer Spaziergang. Kein Druck, kein Extremprogramm.";
+      if (cat === "low") return "Heute eine zusätzliche eiweißreiche Mahlzeit einplanen — z.B. Joghurt, Eier, Hülsenfrüchte oder Quark.";
+      if (cat === "normal") return "Ernährung, Bewegung und Regeneration ausgewogen beibehalten — du bist in einem stabilen Bereich.";
+      if (cat === "elevated") return "Heute 10 Minuten leichte Bewegung nach einer Mahlzeit einplanen — z.B. ein kurzer Spaziergang.";
       return "Nicht alles gleichzeitig ändern — eine kleine, realistische Routine wählen und konsequent beibehalten.";
     }
     const l = getLevel(score);
@@ -1453,184 +1318,65 @@
     const getRisk = (k) => Number(getA(k)?.risk_points || 0);
     const getText = (k) => getA(k)?.answer_text || "";
     const bmiIsLow = Number(bmiValue) < 18.5;
-
-    // ── SCHLAF: nach Ursache differenzieren
     if (key === "sleep") {
-      const dur = getText("sleep_duration");
-      const lat = getRisk("sleep_latency");   // 0-4
-      const day = getRisk("daytime_sleepiness"); // 0-4
-      if (l === "low") {
-        if (dur.includes("Weniger als 5") || dur.includes("5–6"))
-          return "Heute feste Schlafenszeit wählen und 30 Min. vorher Bildschirm aus.";
-        if (lat >= 2)
-          return "Entspannungsroutine vor dem Schlafen einbauen — kein Bildschirm, kein Handy.";
-        return "Heute feste Schlafenszeit wählen und 30 Min. vorher Bildschirm aus.";
-      }
-      if (l === "medium") {
-        if (day >= 3 && !dur.includes("Weniger als 5") && !dur.includes("5–6"))
-          return "Tagesmüdigkeit trotz ausreichend Schlaf — Schlafqualität, Stress oder Rhythmus prüfen.";
-        if (lat >= 2)
-          return "Einschlafroutine verbessern: kühl, dunkel, kein Bildschirm 30 Min. vorher.";
-        return "Kurze Abendroutine festlegen — z.B. Tee, Lesen oder ruhiges Dehnen.";
-      }
+      const dur = getText("sleep_duration"); const lat = getRisk("sleep_latency"); const day = getRisk("daytime_sleepiness");
+      if (l === "low") { if (dur.includes("Weniger als 5") || dur.includes("5–6")) return "Heute feste Schlafenszeit wählen und 30 Min. vorher Bildschirm aus."; if (lat >= 2) return "Entspannungsroutine vor dem Schlafen einbauen — kein Bildschirm, kein Handy."; return "Heute feste Schlafenszeit wählen und 30 Min. vorher Bildschirm aus."; }
+      if (l === "medium") { if (day >= 3 && !dur.includes("Weniger als 5") && !dur.includes("5–6")) return "Tagesmüdigkeit trotz ausreichend Schlaf — Schlafqualität, Stress oder Rhythmus prüfen."; if (lat >= 2) return "Einschlafroutine verbessern: kühl, dunkel, kein Bildschirm 30 Min. vorher."; return "Kurze Abendroutine festlegen — z.B. Tee, Lesen oder ruhiges Dehnen."; }
       return "Regelmäßige Schlafzeiten aktiv schützen.";
     }
-
-    // ── BEWEGUNG: nach Muster differenzieren + BMI-Schutz
     if (key === "activity") {
-      const actDays = getRisk("activity_days");    // 0-4 (höher = seltener)
-      const strength = getRisk("strength_training"); // 0-4
-      const sitting = getRisk("sitting_hours");      // 0-4
-      if (l === "low" || l === "medium") {
-        if (bmiIsLow)
-          return "Sanfte Alltagsbewegung wie kurze Spaziergänge — Fokus auf Energie und Regeneration.";
-        if (actDays >= 3 && strength >= 3)
-          return "Einen festen Trainingstag einplanen — 30 Minuten reichen als Einstieg.";
-        if (actDays <= 1 && strength >= 3)
-          return "Kraft ergänzen — 2 kurze Krafteinheiten pro Woche stärken Muskelmasse und Stoffwechsel.";
-        if (sitting >= 3)
-          return "Stehpause alle 60–90 Minuten einbauen — kurz aufstehen und 2 Minuten bewegen.";
-        return "Einen konkreten Bewegungstermin in den Kalender setzen.";
-      }
+      const actDays = getRisk("activity_days"); const strength = getRisk("strength_training"); const sitting = getRisk("sitting_hours");
+      if (l === "low" || l === "medium") { if (bmiIsLow) return "Sanfte Alltagsbewegung wie kurze Spaziergänge — Fokus auf Energie und Regeneration."; if (actDays >= 3 && strength >= 3) return "Einen festen Trainingstag einplanen — 30 Minuten reichen als Einstieg."; if (actDays <= 1 && strength >= 3) return "Kraft ergänzen — 2 kurze Krafteinheiten pro Woche stärken Muskelmasse und Stoffwechsel."; if (sitting >= 3) return "Stehpause alle 60–90 Minuten einbauen — kurz aufstehen und 2 Minuten bewegen."; return "Einen konkreten Bewegungstermin in den Kalender setzen."; }
       return "Mischung aus Alltag, Ausdauer und Kraft beibehalten.";
     }
-
-    // ── ERNÄHRUNG: nach Einzelantworten differenzieren
     if (key === "nutrition") {
-      const veg = getText("vegetable_fruit") || getText("vegetables_fruit");
-      const water = getText("water_intake");
-      const protein = getText("protein_intake") || getText("protein_frequency");
-      if (l === "low")
-        return "Heute eine Mahlzeit bewusst mit Eiweiß, Gemüse und Flüssigkeit planen.";
-      if (l === "medium") {
-        if (veg.includes("täglich")) {
-          if (water.includes("Unregelmäßig") || water.includes("Wenig"))
-            return "Flüssigkeit gleichmäßiger über den Tag verteilen — Konzentration und Energie profitieren direkt.";
-          if (protein.includes("Selten") || protein.includes("Einige Male"))
-            return "Bei jeder Hauptmahlzeit eine Eiweißquelle einplanen — Hülsenfrüchte, Eier, Quark oder Nüsse.";
-          return "Mahlzeitenqualität und Eiweißanteil bewusster einplanen — Gemüse ist bereits stark.";
-        }
-        return "Eine zusätzliche Portion Gemüse oder Obst einbauen.";
-      }
+      const veg = getText("vegetable_fruit") || getText("vegetables_fruit"); const water = getText("water_intake"); const protein = getText("protein_intake") || getText("protein_frequency");
+      if (l === "low") return "Heute eine Mahlzeit bewusst mit Eiweiß, Gemüse und Flüssigkeit planen.";
+      if (l === "medium") { if (veg.includes("täglich")) { if (water.includes("Unregelmäßig") || water.includes("Wenig")) return "Flüssigkeit gleichmäßiger über den Tag verteilen — Konzentration und Energie profitieren direkt."; if (protein.includes("Selten") || protein.includes("Einige Male")) return "Bei jeder Hauptmahlzeit eine Eiweißquelle einplanen — Hülsenfrüchte, Eier, Quark oder Nüsse."; return "Mahlzeitenqualität und Eiweißanteil bewusster einplanen."; } return "Eine zusätzliche Portion Gemüse oder Obst einbauen."; }
       return "Regelmäßige Mahlzeiten und Lebensmittelqualität beibehalten.";
     }
-
-    // ── VITAMIN D: nach tatsächlicher Tageslicht-Häufigkeit
     if (key === "vitamin_d") {
       const sun = getText("sunlight_exposure") || getText("sun_exposure_winter");
-      if (l === "low") {
-        if (sun.includes("Selten") || sun.includes("Kaum") || sun.includes("Fast nie"))
-          return "Heute 10–15 Minuten Tageslicht im Freien einplanen — möglichst am Vormittag.";
-        return "Heute 10–15 Minuten Tageslicht im Freien einplanen — möglichst am Vormittag.";
-      }
-      if (l === "medium") {
-        if (sun.includes("täglich") || sun.includes("Täglich"))
-          return "Im Winter auch an bewölkten Tagen kurz raus — diffuses Tageslicht zählt.";
-        return "Tageslicht täglich einplanen — besonders morgens reguliert es den Schlaf-Wach-Rhythmus.";
-      }
+      if (l === "low") return "Heute 10–15 Minuten Tageslicht im Freien einplanen — möglichst am Vormittag.";
+      if (l === "medium") { if (sun.includes("täglich") || sun.includes("Täglich")) return "Im Winter auch an bewölkten Tagen kurz raus — diffuses Tageslicht zählt."; return "Tageslicht täglich einplanen — besonders morgens reguliert es den Schlaf-Wach-Rhythmus."; }
       return "Besonders in Herbst und Winter bewusst rausgehen.";
     }
-
-    // ── MENTAL: nach dominantem Signal differenzieren
     if (key === "mental") {
-      const stress = getRisk("stress_level");
-      const mood = getRisk("low_mood");
-      const interest = getRisk("low_interest");
-      const social = getRisk("social_connection");
-      if (l === "low") {
-        if (stress >= 3)
-          return "Heute eine feste 5-Minuten-Erholungsinsel einplanen — ohne Handy, ohne To-do.";
-        if (mood >= 2 || interest >= 2)
-          return "Ein kurzes Gespräch mit jemandem dem du vertraust kann Erleichterung bringen.";
-        return "Heute eine feste 5-Minuten-Erholungsinsel einplanen — ohne Handy, ohne To-do.";
-      }
-      if (l === "medium") {
-        if (stress >= 3)
-          return "Einen festen Erholungsanker pro Tag setzen — zur gleichen Zeit, ohne Ausnahme.";
-        if (social >= 2)
-          return "Sozialer Kontakt schützt die mentale Gesundheit — eine Nachricht oder ein Anruf reicht.";
-        return "10 Minuten ohne Handy — spazieren oder bewusst atmen.";
-      }
+      const stress = getRisk("stress_level"); const mood = getRisk("low_mood"); const interest = getRisk("low_interest"); const social = getRisk("social_connection");
+      if (l === "low") { if (stress >= 3) return "Heute eine feste 5-Minuten-Erholungsinsel einplanen — ohne Handy, ohne To-do."; if (mood >= 2 || interest >= 2) return "Ein kurzes Gespräch mit jemandem dem du vertraust kann Erleichterung bringen."; return "Heute eine feste 5-Minuten-Erholungsinsel einplanen — ohne Handy, ohne To-do."; }
+      if (l === "medium") { if (stress >= 3) return "Einen festen Erholungsanker pro Tag setzen — zur gleichen Zeit, ohne Ausnahme."; if (social >= 2) return "Sozialer Kontakt schützt die mentale Gesundheit — eine Nachricht oder ein Anruf reicht."; return "10 Minuten ohne Handy — spazieren oder bewusst atmen."; }
       return "Erholung aktiv schützen und nicht als Luxus betrachten.";
     }
-
-    // ── LIFESTYLE: nach Nikotin vs. Alkohol differenzieren
     if (key === "lifestyle") {
-      const nicotine = getRisk("nicotine_use");
-      const alcohol = getRisk("alcohol_frequency");
-      const alcoholAmt = getRisk("alcohol_amount");
-      if (l === "low") {
-        if (nicotine >= 3)
-          return "Jede Reduktion zählt — auch ein Nichtrauchtag pro Woche ist ein echter Schritt.";
-        if (alcohol >= 3)
-          return "Alkoholfreie Tage bewusst einplanen — unterstützt Schlaf und Regeneration direkt.";
-        return "Den Zusammenhang zwischen Konsum, Schlaf und Energie heute bewusst beobachten.";
-      }
-      if (l === "medium") {
-        if (nicotine >= 2)
-          return "Einen rauchfreien Tag pro Woche als Experiment einplanen — Wirkung auf Energie beobachten.";
-        if (alcohol >= 2 && alcoholAmt >= 2)
-          return "Alkoholfreie Abende bewusst einbauen — Schlaf und Regeneration verbessern sich messbar.";
-        return "Konsum nicht bewerten, sondern Muster erkennen — wann, warum, wie viel.";
-      }
+      const nicotine = getRisk("nicotine_use"); const alcohol = getRisk("alcohol_frequency");
+      if (l === "low") { if (nicotine >= 3) return "Jede Reduktion zählt — auch ein Nichtrauchtag pro Woche ist ein echter Schritt."; if (alcohol >= 3) return "Alkoholfreie Tage bewusst einplanen — unterstützt Schlaf und Regeneration direkt."; return "Den Zusammenhang zwischen Konsum, Schlaf und Energie heute bewusst beobachten."; }
+      if (l === "medium") { if (nicotine >= 2) return "Einen rauchfreien Tag pro Woche als Experiment einplanen."; return "Alkoholfreie Abende bewusst einbauen — Schlaf und Regeneration verbessern sich messbar."; }
       return "Diese Routine unterstützt Schlaf und Trainingsfortschritt aktiv.";
     }
-
-    // ── MIKRONÄHRSTOFFE: nach Symptomen und Ernährungsweise
     if (key === "micronutrients") {
-      const dizzy = getRisk("dizziness_pale_nails");
-      const supps = getText("supplement_usage");
-      const nutType = getText("nutrition_type") || getText("diet_type");
-      const gender = latestResult?.submission?.gender || "";
-      const isPlant = nutType.includes("vegan") || nutType.includes("Vegan") ||
-                      nutType.includes("vegetar") || nutType.includes("Vegetar");
-      const isFemale = gender === "female" || gender === "weiblich";
-      if (l === "low") {
-        if (dizzy >= 2 && isPlant && isFemale)
-          return "Eisenreiche Lebensmittel mit Vitamin C kombinieren — Hülsenfrüchte + Paprika oder Orangensaft.";
-        if (dizzy >= 2)
-          return "Schwindel oder blasse Nägel können auf Nährstoffmangel hinweisen — gezielte Abklärung prüfen.";
-        return "Ernährung nicht pauschal supplementieren — zuerst Muster und Qualität der Mahlzeiten prüfen.";
-      }
-      if (l === "medium") {
-        if (dizzy >= 2 && isPlant)
-          return "Eisenreiche Lebensmittel immer mit Vitamin C kombinieren — verbessert die Aufnahme deutlich.";
-        if (supps.includes("Ja") || supps.includes("ja"))
-          return "Aktuelle Supplements auf Qualität und Dosierung prüfen — gezielt statt pauschal.";
-        return "Eiweiß, Eisenquellen, Omega-3 und B12 im Alltag bewusster einbauen.";
-      }
+      const dizzy = getRisk("dizziness_pale_nails"); const nutType = getText("nutrition_type") || getText("diet_type"); const gender = latestResult?.submission?.gender || "";
+      const isPlant = nutType.includes("vegan") || nutType.includes("vegetar"); const isFemale = gender === "female" || gender === "weiblich";
+      if (l === "low") { if (dizzy >= 2 && isPlant && isFemale) return "Eisenreiche Lebensmittel mit Vitamin C kombinieren — Hülsenfrüchte + Paprika oder Orangensaft."; if (dizzy >= 2) return "Schwindel oder blasse Nägel können auf Nährstoffmangel hinweisen — gezielte Abklärung prüfen."; return "Ernährung nicht pauschal supplementieren — zuerst Muster und Qualität der Mahlzeiten prüfen."; }
+      if (l === "medium") { if (dizzy >= 2 && isPlant) return "Eisenreiche Lebensmittel immer mit Vitamin C kombinieren."; return "Eiweiß, Eisenquellen, Omega-3 und B12 im Alltag bewusster einbauen."; }
       return "Abwechslungsreiche Ernährung bleibt die beste Basis — Supplemente nur gezielt.";
     }
-
-    // ── METABOLIC: nach Symptomen
     if (key === "metabolic") {
-      const weightLoss = getRisk("unintentional_weight_loss");
-      const appetite = getRisk("appetite_change");
-      if (l === "low") {
-        if (weightLoss >= 2 || appetite >= 3)
-          return "Regelmäßige Mahlzeiten und ausreichend Eiweiß als Basis sicherstellen.";
-        return "Veränderungen im Alltag bewusst notieren: Appetit, Energie, Gewicht, Schlaf.";
-      }
-      if (l === "medium")
-        return "Regelmäßige Mahlzeiten und ausreichend Trinken als Basis sicherstellen.";
+      const weightLoss = getRisk("unintentional_weight_loss"); const appetite = getRisk("appetite_change");
+      if (l === "low") { if (weightLoss >= 2 || appetite >= 3) return "Regelmäßige Mahlzeiten und ausreichend Eiweiß als Basis sicherstellen."; return "Veränderungen im Alltag bewusst notieren: Appetit, Energie, Gewicht, Schlaf."; }
+      if (l === "medium") return "Regelmäßige Mahlzeiten und ausreichend Trinken als Basis sicherstellen.";
       return "Energie und Wohlbefinden über die Woche aktiv beobachten.";
     }
-
-    // ── FALLBACK für alle anderen Bereiche (BMI wird separat behandelt)
-    const m = {
-      sleep:{ low:"Heute feste Schlafenszeit wählen und 30 Min. vorher Bildschirm aus.", medium:"Kurze Abendroutine festlegen — z.B. Tee, Lesen oder ruhiges Dehnen.", good:"Regelmäßige Schlafzeiten aktiv schützen." },
-      activity:{ low:"Heute 10 Minuten zügig gehen.", medium:"Einen konkreten Bewegungstermin setzen.", good:"Mischung aus Alltag, Ausdauer und Kraft beibehalten." },
-    };
-    return m[key]?.[l] || "Diese Kategorie gibt dir eine erste Orientierung.";
+    const m = { sleep:{ low:"Heute feste Schlafenszeit wählen.", medium:"Kurze Abendroutine festlegen.", good:"Regelmäßige Schlafzeiten aktiv schützen." }, activity:{ low:"Heute 10 Minuten zügig gehen.", medium:"Einen konkreten Bewegungstermin setzen.", good:"Mischung aus Alltag, Ausdauer und Kraft beibehalten." } };
+    return m[key]?.[getLevel(score)] || "Diese Kategorie gibt dir eine erste Orientierung.";
   }
 
   function getInsightSoon(key, score, bmiValue, result) {
     if (key === "bmi" && bmiValue !== undefined) {
       const cat = getBmiCategory(bmiValue);
-      if (cat === "low")      return "Regelmäßige Mahlzeiten, ausreichend Eiweiß und bewusste Regeneration als Priorität setzen. Eine Körperanalyse im Studio kann helfen, Muskelmasse und Energieversorgung besser einzuordnen.";
-      if (cat === "normal")   return "Körpergefühl und Leistungsfähigkeit wichtiger nehmen als den Zahlenwert allein.";
-      if (cat === "elevated") return "Eiweiß, Gemüse und Alltagsbewegung bewusster kombinieren — kleine Schritte sind nachhaltiger als kurzfristige Programme.";
-      return "Betreutes Training und eine Körperanalyse im Studio als strukturierten Einstieg prüfen — gemeinsam mit Ernährungsoptimierung.";
+      if (cat === "low") return "Regelmäßige Mahlzeiten, ausreichend Eiweiß und bewusste Regeneration als Priorität setzen.";
+      if (cat === "normal") return "Körpergefühl und Leistungsfähigkeit wichtiger nehmen als den Zahlenwert allein.";
+      if (cat === "elevated") return "Eiweiß, Gemüse und Alltagsbewegung bewusster kombinieren — kleine Schritte sind nachhaltiger.";
+      return "Betreutes Training und eine Körperanalyse im Studio als strukturierten Einstieg prüfen.";
     }
     const l = getLevel(score);
     const ans = (result?.answers || latestResult?.answers || []);
@@ -1638,294 +1384,125 @@
     const getRisk = (k) => Number(getA(k)?.risk_points || 0);
     const getText = (k) => getA(k)?.answer_text || "";
     const bmiIsLow = Number(bmiValue) < 18.5;
-
-    // ── SCHLAF mittelfristig
     if (key === "sleep") {
-      const lat = getRisk("sleep_latency");
-      const dur = getText("sleep_duration");
-      if (l === "low") {
-        if (lat >= 3)
-          return "Koffein nach 14 Uhr konsequent reduzieren und Schlafumgebung optimieren — kühl, dunkel, ruhig.";
-        return "Jeden Morgen möglichst zur gleichen Zeit aufstehen — Rhythmus ist wichtiger als Schlafdauer.";
-      }
-      if (l === "medium")
-        return "Koffein nach 14 Uhr bewusst reduzieren und Wirkung eine Woche beobachten.";
+      const lat = getRisk("sleep_latency"); const dur = getText("sleep_duration");
+      if (l === "low") { if (lat >= 3) return "Koffein nach 14 Uhr konsequent reduzieren und Schlafumgebung optimieren — kühl, dunkel, ruhig."; return "Jeden Morgen möglichst zur gleichen Zeit aufstehen — Rhythmus ist wichtiger als Schlafdauer."; }
+      if (l === "medium") return "Koffein nach 14 Uhr bewusst reduzieren und Wirkung eine Woche beobachten.";
       return "Erholung auch an stressigen Tagen aktiv einplanen — nicht verschieben.";
     }
-
-    // ── BEWEGUNG mittelfristig + BMI-Schutz
     if (key === "activity") {
-      const strength = getRisk("strength_training");
-      const sitting = getRisk("sitting_hours");
-      if (l === "low") {
-        if (bmiIsLow)
-          return "Sanfte Routine aufbauen — Spaziergänge, Dehnen, leichte Bewegung. Erst Ernährung stabilisieren.";
-        if (strength >= 3)
-          return "Zwei feste Bewegungstermine pro Woche einplanen — betreutes Training hilft beim Einstieg.";
-        return "Zwei feste Termine pro Woche für Bewegung einplanen — betreutes Training kann den Einstieg festigen.";
-      }
-      if (l === "medium") {
-        if (bmiIsLow)
-          return "Alltagsbewegung beibehalten — kein intensives Kraft- oder Ausdauertraining bei diesem Gewicht.";
-        if (strength >= 2 && sitting >= 2)
-          return "Krafttraining und Stehpausen kombinieren — 2 Einheiten Kraft + regelmäßige Bewegungspausen.";
-        if (strength >= 2)
-          return "2 kurze Kraft- oder Stabilitätsübungen ergänzen — 15 Minuten reichen als Start.";
-        return "Alltagsbewegung erhöhen — Treppe, kurze Wege zu Fuß, Mittagspause aktiv nutzen.";
-      }
+      const strength = getRisk("strength_training"); const sitting = getRisk("sitting_hours");
+      if (l === "low") { if (bmiIsLow) return "Sanfte Routine aufbauen — Spaziergänge, Dehnen, leichte Bewegung. Erst Ernährung stabilisieren."; if (strength >= 3) return "Zwei feste Bewegungstermine pro Woche einplanen — betreutes Training hilft beim Einstieg."; return "Zwei feste Termine pro Woche für Bewegung einplanen."; }
+      if (l === "medium") { if (bmiIsLow) return "Alltagsbewegung beibehalten — kein intensives Kraft- oder Ausdauertraining bei diesem Gewicht."; if (strength >= 2 && sitting >= 2) return "Krafttraining und Stehpausen kombinieren — 2 Einheiten Kraft + regelmäßige Bewegungspausen."; return "Alltagsbewegung erhöhen — Treppe, kurze Wege zu Fuß, Mittagspause aktiv nutzen."; }
       return "Regeneration und Belastung bewusst ausbalancieren — Übertraining vermeiden.";
     }
-
-    // ── ERNÄHRUNG mittelfristig
     if (key === "nutrition") {
-      const veg = getText("vegetable_fruit") || getText("vegetables_fruit");
-      const water = getText("water_intake");
-      const protein = getText("protein_intake") || getText("protein_frequency");
-      if (l === "low")
-        return "Frühstück oder Mittagessen als feste Basis-Mahlzeit stabilisieren — Rhythmus vor Perfektion.";
-      if (l === "medium") {
-        if (veg.includes("täglich") && protein.includes("Selten"))
-          return "Eiweißquelle bei jeder Hauptmahlzeit gezielt einplanen — Basis ist bereits gut.";
-        if (water.includes("Unregelmäßig"))
-          return "Trinkroutine aufbauen — morgens ein Glas Wasser als fester Start hilft.";
-        return "Bei jeder Hauptmahlzeit eine Eiweißquelle prüfen und bewusst einbauen.";
-      }
+      const veg = getText("vegetable_fruit") || getText("vegetables_fruit"); const water = getText("water_intake"); const protein = getText("protein_intake") || getText("protein_frequency");
+      if (l === "low") return "Frühstück oder Mittagessen als feste Basis-Mahlzeit stabilisieren — Rhythmus vor Perfektion.";
+      if (l === "medium") { if (veg.includes("täglich") && protein.includes("Selten")) return "Eiweißquelle bei jeder Hauptmahlzeit gezielt einplanen — Basis ist bereits gut."; if (water.includes("Unregelmäßig")) return "Trinkroutine aufbauen — morgens ein Glas Wasser als fester Start hilft."; return "Bei jeder Hauptmahlzeit eine Eiweißquelle prüfen und bewusst einbauen."; }
       return "Omega-3-Quellen und Trinkmenge regelmäßig im Blick behalten.";
     }
-
-    // ── VITAMIN D mittelfristig
     if (key === "vitamin_d") {
       const sun = getText("sunlight_exposure") || getText("sun_exposure_winter");
-      if (l === "low") {
-        if (sun.includes("Selten") || sun.includes("Kaum"))
-          return "3 kurze Tageslicht-Spaziergänge pro Woche als Gewohnheit aufbauen. Bei Müdigkeit: Vitamin-D-Wert prüfen lassen.";
-        return "Tageslicht mit Bewegung koppeln — Spaziergang nach dem Mittagessen ist ideal.";
-      }
-      if (l === "medium")
-        return "Tageslicht mit Bewegung koppeln — z.B. Spaziergang nach dem Mittagessen.";
+      if (l === "low") { if (sun.includes("Selten") || sun.includes("Kaum")) return "3 kurze Tageslicht-Spaziergänge pro Woche als Gewohnheit aufbauen. Bei Müdigkeit: Vitamin-D-Wert prüfen lassen."; return "Tageslicht mit Bewegung koppeln — Spaziergang nach dem Mittagessen ist ideal."; }
+      if (l === "medium") return "Tageslicht mit Bewegung koppeln — z.B. Spaziergang nach dem Mittagessen.";
       return "Tageslicht möglichst früh am Tag nutzen — stärkt den Schlaf-Wach-Rhythmus.";
     }
-
-    // ── MENTAL mittelfristig
     if (key === "mental") {
-      const stress = getRisk("stress_level");
-      const mood = getRisk("low_mood");
-      const interest = getRisk("low_interest");
-      const social = getRisk("social_connection");
-      if (l === "low") {
-        if (stress >= 3)
-          return "Stressquellen identifizieren — was lässt sich langfristig reduzieren oder delegieren?";
-        if (mood >= 2 || interest >= 2)
-          return "Professionelle Unterstützung kann helfen wenn Niedergeschlagenheit anhält — kein Luxus, sondern Pflege.";
-        return "Nur eine Routine wählen und 7 Tage konsequent durchhalten — Perfektion ist nicht das Ziel.";
-      }
-      if (l === "medium") {
-        if (social >= 2)
-          return "Regelmäßige soziale Kontakte einplanen — einmal pro Woche reicht als Anker.";
-        return "Einen festen Pausenanker pro Tag setzen — zur gleichen Zeit, ohne Ausnahme.";
-      }
+      const stress = getRisk("stress_level"); const mood = getRisk("low_mood"); const social = getRisk("social_connection");
+      if (l === "low") { if (stress >= 3) return "Stressquellen identifizieren — was lässt sich langfristig reduzieren oder delegieren?"; if (mood >= 2) return "Professionelle Unterstützung kann helfen wenn Niedergeschlagenheit anhält."; return "Nur eine Routine wählen und 7 Tage konsequent durchhalten."; }
+      if (l === "medium") { if (social >= 2) return "Regelmäßige soziale Kontakte einplanen — einmal pro Woche reicht als Anker."; return "Einen festen Pausenanker pro Tag setzen — zur gleichen Zeit, ohne Ausnahme."; }
       return "Bewegung und Schlaf als aktive Schutzfaktoren für mentale Balance nutzen.";
     }
-
-    // ── LIFESTYLE mittelfristig
     if (key === "lifestyle") {
-      const nicotine = getRisk("nicotine_use");
-      const alcohol = getRisk("alcohol_frequency");
-      if (l === "low") {
-        if (nicotine >= 3)
-          return "Professionelle Unterstützung beim Rauchstopp erhöht die Erfolgsquote deutlich — Hausarzt oder Telefonberatung.";
-        if (alcohol >= 3)
-          return "Einen alkoholfreien Tag pro Woche als feste Gewohnheit einbauen — Wirkung auf Schlaf beobachten.";
-        return "Einen alkohol- oder nikotinfreien Tag pro Woche einplanen und Wirkung auf Schlaf beobachten.";
-      }
-      if (l === "medium") {
-        if (nicotine >= 2)
-          return "Reduktionsplan entwickeln — weniger ist ein gültiger erster Schritt.";
-        return "Einen Abend ohne Alkohol oder Nikotin als Regenerations-Test nutzen.";
-      }
+      const nicotine = getRisk("nicotine_use"); const alcohol = getRisk("alcohol_frequency");
+      if (l === "low") { if (nicotine >= 3) return "Professionelle Unterstützung beim Rauchstopp erhöht die Erfolgsquote deutlich."; if (alcohol >= 3) return "Einen alkoholfreien Tag pro Woche als feste Gewohnheit einbauen."; return "Einen alkohol- oder nikotinfreien Tag pro Woche einplanen."; }
+      if (l === "medium") { if (nicotine >= 2) return "Reduktionsplan entwickeln — weniger ist ein gültiger erster Schritt."; return "Einen Abend ohne Alkohol oder Nikotin als Regenerations-Test nutzen."; }
       return "Positive Wirkung auf Energie und Erholung weiter bewusst wahrnehmen.";
     }
-
-    // ── MIKRONÄHRSTOFFE mittelfristig
     if (key === "micronutrients") {
-      const dizzy = getRisk("dizziness_pale_nails");
-      const nutType = getText("nutrition_type") || getText("diet_type");
-      const isPlant = nutType.includes("vegan") || nutType.includes("Vegan") ||
-                      nutType.includes("vegetar") || nutType.includes("Vegetar");
-      if (l === "low") {
-        if (dizzy >= 2 && isPlant)
-          return "Bei anhaltenden Mangelzeichen und pflanzlicher Ernährung: Trockenbluttest für Eisen, B12 und Vitamin D prüfen lassen.";
-        return "Bei anhaltender Müdigkeit oder pflanzlicher Ernährung gezielte Blutwerte prüfen — kein blindes Supplementieren.";
-      }
-      if (l === "medium") {
-        if (isPlant)
-          return "B12, Jod und Eisen bei pflanzlicher Ernährung gezielt im Blick behalten — Trockenbluttest gibt Klarheit.";
-        return "Bei anhaltender Müdigkeit gezielte Abklärung vor Supplement-Kauf prüfen.";
-      }
+      const dizzy = getRisk("dizziness_pale_nails"); const nutType = getText("nutrition_type") || getText("diet_type");
+      const isPlant = nutType.includes("vegan") || nutType.includes("vegetar");
+      if (l === "low") { if (dizzy >= 2 && isPlant) return "Bei anhaltenden Mangelzeichen: Trockenbluttest für Eisen, B12 und Vitamin D prüfen lassen."; return "Bei anhaltender Müdigkeit gezielte Blutwerte prüfen — kein blindes Supplementieren."; }
+      if (l === "medium") { if (isPlant) return "B12, Jod und Eisen bei pflanzlicher Ernährung gezielt im Blick behalten — Trockenbluttest gibt Klarheit."; return "Bei anhaltender Müdigkeit gezielte Abklärung vor Supplement-Kauf prüfen."; }
       return "Supplemente nur gezielt, sinnvoll und nach Bedarf einsetzen.";
     }
-
-    // ── METABOLIC mittelfristig
     if (key === "metabolic") {
       const weightLoss = getRisk("unintentional_weight_loss");
-      if (l === "low") {
-        if (weightLoss >= 3)
-          return "Bei deutlich ungewolltem Gewichtsverlust ärztliche Einschätzung einholen — nicht abwarten.";
-        return "Schlaf, Bewegung und Mahlzeitenrhythmus als zusammenhängendes System betrachten.";
-      }
-      if (l === "medium")
-        return "Schlaf, Bewegung und Mahlzeitenrhythmus als zusammenhängendes System betrachten.";
+      if (l === "low") { if (weightLoss >= 3) return "Bei deutlich ungewolltem Gewichtsverlust ärztliche Einschätzung einholen — nicht abwarten."; return "Schlaf, Bewegung und Mahlzeitenrhythmus als zusammenhängendes System betrachten."; }
+      if (l === "medium") return "Schlaf, Bewegung und Mahlzeitenrhythmus als zusammenhängendes System betrachten.";
       return "Energielevel und Wohlbefinden über die Woche regelmäßig beobachten.";
     }
-
-    // ── FALLBACK
-    const m = {
-      sleep:{ low:"Jeden Morgen zur gleichen Zeit aufstehen.", medium:"Koffein nach 14 Uhr reduzieren.", good:"Erholung aktiv einplanen." },
-    };
-    return m[key]?.[l] || "Mittelfristig: Fortschritt beim nächsten Re-Check vergleichen.";
+    return "Mittelfristig: Fortschritt beim nächsten Re-Check vergleichen.";
   }
 
   function renderRedFlagBox(score, totalScore) {
     if (score.doctor_hint) {
-      return `<div class="redflag-box"><strong>⚠ RED FLAGS – bitte ernst nehmen</strong><br><br>Einige deiner Angaben zeigen stärkere Auffälligkeiten. Der LeVITA Vital-Check stellt keine Diagnose, aber in dieser Situation kann eine ärztliche Abklärung sinnvoll sein.<br><br><strong>Empfehlung:</strong> Bitte besprich auffällige Symptome, deutlichen ungewollten Gewichtsverlust, starke Erschöpfung oder anhaltende Niedergeschlagenheit mit einer Ärztin oder einem Arzt.</div>`;
+      return `<div class="redflag-box"><strong>⚠ RED FLAGS – bitte ernst nehmen</strong><br><br>Einige deiner Angaben zeigen stärkere Auffälligkeiten. Der LeVITA Vital-Check stellt keine Diagnose, aber in dieser Situation kann eine ärztliche Abklärung sinnvoll sein.<br><br><strong>Empfehlung:</strong> Bitte besprich auffällige Symptome mit einer Ärztin oder einem Arzt.</div>`;
     }
     if (totalScore < 55) {
-      return `<div class="info-box box-info" style="margin-bottom:16px;"><strong>RED-FLAG-Check</strong><br>Aus deinen Angaben ergibt sich aktuell kein besonderer Hinweis auf stärkere Auffälligkeiten. Bei akuten Beschwerden oder anhaltend starker Belastung bitte immer medizinischen Rat einholen.</div>`;
+      return `<div class="info-box box-info" style="margin-bottom:16px;"><strong>RED-FLAG-Check</strong><br>Aus deinen Angaben ergibt sich aktuell kein besonderer Hinweis auf stärkere Auffälligkeiten. Bei akuten Beschwerden bitte immer medizinischen Rat einholen.</div>`;
     }
     return "";
   }
 
-  /* NEU: renderVitalitySupportBox mit direkteren Formulierungen + Jod-Trigger */
   function renderVitalitySupportBox(areas, result, suppFocus) {
     const scoreOf = key => { const a = areas.find(x => x.key === key); return a ? Number(a.score) : 100; };
     const bmiNum = Number(result?.bmi);
     const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
     const hints = [];
-
-    // Ernährungsweise aus suppFocus rule_keys ableiten — zuverlässiger als _answers
-    // b12_vegan, omega3_no_fish etc. verraten die Ernährungsweise direkt
     const allRuleKeys = suppFocus.map(item => (item.rule_key || item.label || "").toLowerCase());
     const isVegan = allRuleKeys.some(k => k.includes("vegan") || k.includes("b12_vegan"));
     const isVegetarian = !isVegan && allRuleKeys.some(k => k.includes("vegetar") || k.includes("b12_vegetar"));
-    const isPlantBased = isVegan || isVegetarian;
-    const noFish = allRuleKeys.some(k => k.includes("no_fish") || k.includes("kein_fisch") || k.includes("omega3_no") || k.includes("omega3_rare"));
-
-    // Fallback: Antworten wenn vorhanden
+    const noFish = allRuleKeys.some(k => k.includes("no_fish") || k.includes("omega3_no") || k.includes("omega3_rare"));
     const answerTexts = (result._answers || []).map(a => (a.answer_text || "").toLowerCase());
-    const isVeganFromAnswers = answerTexts.some(t => t.includes("vegan"));
-    const isVegetarianFromAnswers = answerTexts.some(t => t.includes("vegetar"));
-    const noFishFromAnswers = answerTexts.some(t => t.includes("kein fisch") || t.includes("esse keinen fisch"));
-    const isVeganFinal = isVegan || isVeganFromAnswers;
-    const isVegetarianFinal = isVegetarian || (!isVeganFinal && isVegetarianFromAnswers);
+    const isVeganFinal = isVegan || answerTexts.some(t => t.includes("vegan"));
+    const isVegetarianFinal = isVegetarian || (!isVeganFinal && answerTexts.some(t => t.includes("vegetar")));
     const isPlantBasedFinal = isVeganFinal || isVegetarianFinal;
-    const noFishFinal = noFish || noFishFromAnswers;
+    const noFishFinal = noFish || answerTexts.some(t => t.includes("kein fisch") || t.includes("esse keinen fisch"));
 
-    /* NEU: suppFocus mit direkteren Formulierungen rendern */
     suppFocus.slice(0, 3).forEach(item => {
       if (!item?.label) return;
       const key = (item.rule_key || item.label || "").toLowerCase();
-      const reason = item.reason || "";
-
-      // Jod — NEU, höchste Priorität bei pflanzlicher Kost ohne Fisch
-      if (key.includes("jod") || key.includes("iod")) {
-        hints.push(`<strong>Jod</strong> — bei vegetarischer Ernährung ohne Fisch oft unterschätzt. Jodiertes Speisesalz konsequent verwenden ist die einfachste Lösung.`);
-      }
-      // B12 — bei vegan: DGE-Empfehlung sachlich
-      else if (key.includes("b12") && isVeganFinal) {
-        hints.push(`<strong>Vitamin B12</strong> — bei veganer Ernährung empfiehlt die DGE nach aktuellem Kenntnisstand eine zuverlässige Ergänzung, da pflanzliche Lebensmittel kein verwertbares B12 liefern. Eine Blutwertkontrolle gibt zusätzliche Orientierung.`);
-      }
-      // B12 — bei vegetarisch nur bei Symptomen
-      else if (key.includes("b12") && isVegetarianFinal) {
-        hints.push(`<strong>Vitamin B12</strong> — bei vegetarischer Ernährung meist über Milchprodukte gedeckt. Bei Müdigkeit oder Konzentrationsproblemen lohnt eine Kontrolle.`);
-      }
-      // Omega-3 — nur bei fehlendem Fisch und Risikofaktor, nicht pauschal
-      else if (key.includes("omega") || key.includes("omega3")) {
-        if (noFishFinal || isPlantBasedFinal) {
-          hints.push(`<strong>Omega-3</strong> — kein Fisch in der Ernährung. Gute pflanzliche Quellen: Leinöl, Walnüsse, Chiasamen. ${isVeganFinal ? "Algenöl liefert direkt EPA und DHA." : "Bei Bedarf Algenöl als Alternative zu Fischöl."}`);
-        }
-      }
-      // Eisen — mit Bioverfügbarkeitshinweis
-      else if (key.includes("eisen") || key.includes("iron")) {
-        hints.push(`<strong>Eisen</strong> — pflanzliches Eisen wird schlechter aufgenommen als tierisches. Tipp: Eisenreiche Lebensmittel (Linsen, Hülsenfrüchte) immer mit Vitamin C kombinieren, z.B. etwas Zitronensaft oder Paprika dazu.`);
-      }
-      // Vitamin D — nur bei klarer Indikation
-      else if (key.includes("vitamin_d") || key.includes("vitamin d")) {
-        hints.push(`<strong>Vitamin D</strong> — bei wenig Tageslicht besonders relevant. ${isVeganFinal ? "Auf pflanzliches D3 aus Flechten achten." : "Trockenbluttest gibt Klarheit über den tatsächlichen Wert."}`);
-      }
-      // Protein — ernährungsweise-spezifisch, nie pauschal veganen Text bei omnivor
+      if (key.includes("jod") || key.includes("iod")) { hints.push(`<strong>Jod</strong> — bei vegetarischer Ernährung ohne Fisch oft unterschätzt. Jodiertes Speisesalz konsequent verwenden ist die einfachste Lösung.`); }
+      else if (key.includes("b12") && isVeganFinal) { hints.push(`<strong>Vitamin B12</strong> — bei veganer Ernährung empfiehlt die DGE eine zuverlässige Ergänzung, da pflanzliche Lebensmittel kein verwertbares B12 liefern.`); }
+      else if (key.includes("b12") && isVegetarianFinal) { hints.push(`<strong>Vitamin B12</strong> — bei vegetarischer Ernährung meist über Milchprodukte gedeckt. Bei Müdigkeit oder Konzentrationsproblemen lohnt eine Kontrolle.`); }
+      else if (key.includes("omega")) { if (noFishFinal || isPlantBasedFinal) { hints.push(`<strong>Omega-3</strong> — kein Fisch in der Ernährung. Gute pflanzliche Quellen: Leinöl, Walnüsse, Chiasamen. ${isVeganFinal ? "Algenöl liefert direkt EPA und DHA." : "Bei Bedarf Algenöl als Alternative."}`); } }
+      else if (key.includes("eisen") || key.includes("iron")) { hints.push(`<strong>Eisen</strong> — pflanzliches Eisen wird schlechter aufgenommen. Tipp: Eisenreiche Lebensmittel immer mit Vitamin C kombinieren.`); }
+      else if (key.includes("vitamin_d") || key.includes("vitamin d")) { hints.push(`<strong>Vitamin D</strong> — bei wenig Tageslicht besonders relevant. ${isVeganFinal ? "Auf pflanzliches D3 aus Flechten achten." : "Trockenbluttest gibt Klarheit über den tatsächlichen Wert."}`); }
       else if (key.includes("protein")) {
-        if (isVeganFinal) {
-          hints.push(`<strong>Protein</strong> — pflanzliches Protein ist vollwertig wenn die Quellen kombiniert werden: Hülsenfrüchte, Nüsse, Tofu und Vollkornprodukte ergänzen sich optimal.`);
-        } else if (isVegetarianFinal) {
-          hints.push(`<strong>Protein</strong> — eine Eiweißquelle zu jeder Mahlzeit einplanen: Eier, Quark, Hüttenkäse, Hülsenfrüchte oder Nüsse sind gute Helfer.`);
-        } else {
-          hints.push(`<strong>Protein</strong> — eine Eiweißquelle zu jeder Mahlzeit bewusst einplanen: Eier, Quark, Fisch, mageres Fleisch oder Hülsenfrüchte unterstützen Sättigung und Regeneration.`);
-        }
+        if (isVeganFinal) { hints.push(`<strong>Protein</strong> — pflanzliches Protein ist vollwertig wenn die Quellen kombiniert werden: Hülsenfrüchte, Nüsse, Tofu und Vollkornprodukte.`); }
+        else if (isVegetarianFinal) { hints.push(`<strong>Protein</strong> — eine Eiweißquelle zu jeder Mahlzeit einplanen: Eier, Quark, Hüttenkäse, Hülsenfrüchte.`); }
+        else { hints.push(`<strong>Protein</strong> — eine Eiweißquelle zu jeder Mahlzeit bewusst einplanen: Eier, Quark, Fisch, mageres Fleisch oder Hülsenfrüchte unterstützen Sättigung und Regeneration.`); }
       }
-      // Ernährung zuerst — BfR-Prinzip
-      else if (key.includes("nutrition_first") || key.includes("ernaehrung")) {
-        hints.push(`<strong>Ernährung zuerst</strong> — viele Nährstoffdefizite lassen sich über gezielte Ernährungsoptimierung lösen. Das Bundesinstitut für Risikobewertung bestätigt: Bei ausgewogener Ernährung sind Supplements in der Regel nicht nötig.`);
-      }
-      // Fallback für unbekannte Regeln — Kreatin nur bei vegan/vegetarisch + Kontraindikationen prüfen
-      else if (item.label) {
-        const labelLower = item.label.toLowerCase();
-        const userAge = result?.submission?.age ? Number(result.submission.age) : 99;
-        const doctorHint = result?.score?.doctor_hint === true;
-        const bmiLow = bmiNum < 18.5;
-        // Kreatin NIE bei Alter < 18, BMI < 18.5 oder doctor_hint
-        if (labelLower.includes("creatin") || labelLower.includes("kreatin")) {
-          if (userAge < 18 || bmiLow || doctorHint) return;
-          // Kreatin NUR bei veganer oder vegetarischer Ernährung
-          if (!isVeganFinal && !isVegetarianFinal) return;
-        }
-        hints.push(`<strong>${item.label}</strong>${reason ? ` — ${reason}` : ""}.`);
-      }
+      else if (key.includes("nutrition_first") || key.includes("ernaehrung")) { hints.push(`<strong>Ernährung zuerst</strong> — viele Nährstoffdefizite lassen sich über gezielte Ernährungsoptimierung lösen — Supplements erst wenn wirklich nötig.`); }
+      else if (item.label) { hints.push(`<strong>${item.label}</strong>${item.reason ? ` — ${item.reason}` : ""}.`); }
     });
 
-    /* NEU: Jod-Trigger direkt aus Ernährungsweise wenn nicht schon in suppFocus */
     if (hints.length < 3 && isPlantBasedFinal && noFishFinal && !hints.some(h => h.includes("Jod"))) {
       hints.push(`<strong>Jod</strong> — bei vegetarischer Ernährung ohne Fisch oft die größte Versorgungslücke. Jodiertes Speisesalz konsequent verwenden ist die einfachste und wirksamste Lösung.`);
     }
 
-    if (bmiIsLow && hints.length < 3) {
-      hints.push("Deine Körperkomposition zeigt einen niedrigen Orientierungsbereich. Fokus auf regelmäßige Mahlzeiten, ausreichend Eiweiß und bewusste Regeneration — nicht auf mehr Kalorienverbrauch.");
-    }
-
     const fb = [
-      { key:"sleep",          max:75, bmiLowSafe:true,  text:"Schlaf und Abendroutine könnten deine Regeneration spürbar unterstützen. Schon ein stabiler Rhythmus kann ein guter erster Hebel sein." },
-      { key:"mental",         max:75, bmiLowSafe:true,  text:"Mentale Balance und Erholung könnten deine Vitalität unterstützen. Oft hilft ein kleiner fester Pausenanker mehr als alles gleichzeitig zu verändern." },
-      { key:"nutrition",      max:75, bmiLowSafe:true,  text:"Ernährung und Nährstoffqualität könnten ein guter Ansatzpunkt sein — besonders Eiweiß, Gemüse, Flüssigkeit und hochwertige Fettquellen." },
-      { key:"micronutrients", max:75, bmiLowSafe:true,  text:"Bestimmte Nährstoff-Themen könnten eine bewusste Einordnung verdienen. Sinnvoll ist zuerst Ernährung — bei Bedarf ein Blutwert-Check." },
-      { key:"vitamin_d",      max:75, bmiLowSafe:true,  text:"Regelmäßiges Tageslicht ist bei dir aktuell ein besonders sinnvoller Hebel für Energie, Schlafrhythmus und Vitamin-D-Orientierung." },
-      { key:"activity",       max:75, bmiLowSafe:false, text:"Bewegung, Kraft und Regeneration können aktuell ein guter Hebel sein. Entscheidend ist ein kleiner, wiederholbarer Schritt." },
-      { key:"lifestyle",      max:75, bmiLowSafe:true,  text:"Alkohol oder Nikotin können Schlaf und Regeneration beeinflussen. Ein bewusster Testtag hilft, den eigenen Zusammenhang besser zu erkennen." }
+      { key:"sleep", max:75, bmiLowSafe:true, text:"Schlaf und Abendroutine könnten deine Regeneration spürbar unterstützen. Schon ein stabiler Rhythmus kann ein guter erster Hebel sein." },
+      { key:"mental", max:75, bmiLowSafe:true, text:"Mentale Balance und Erholung könnten deine Vitalität unterstützen. Oft hilft ein kleiner fester Pausenanker mehr als alles gleichzeitig zu verändern." },
+      { key:"nutrition", max:75, bmiLowSafe:true, text:"Ernährung und Nährstoffqualität könnten ein guter Ansatzpunkt sein — besonders Eiweiß, Gemüse, Flüssigkeit und hochwertige Fettquellen." },
+      { key:"micronutrients", max:75, bmiLowSafe:true, text:"Bestimmte Nährstoff-Themen könnten eine bewusste Einordnung verdienen. Sinnvoll ist zuerst Ernährung — bei Bedarf ein Blutwert-Check." },
+      { key:"vitamin_d", max:75, bmiLowSafe:true, text:"Regelmäßiges Tageslicht ist bei dir aktuell ein besonders sinnvoller Hebel für Energie, Schlafrhythmus und Vitamin-D-Orientierung." },
+      { key:"activity", max:75, bmiLowSafe:false, text:"Bewegung, Kraft und Regeneration können aktuell ein guter Hebel sein. Entscheidend ist ein kleiner, wiederholbarer Schritt." },
+      { key:"lifestyle", max:75, bmiLowSafe:true, text:"Alkohol oder Nikotin können Schlaf und Regeneration beeinflussen. Ein bewusster Testtag hilft, den eigenen Zusammenhang besser zu erkennen." }
     ];
 
-    // Prüfen ob Ernährungs-Hinweis bereits in suppFocus — dann Fallback überspringen
-    // Prüft sowohl rule_key als auch supplement_label (Label wurde auf "Ernährung zuerst optimieren" gesetzt)
-    const hasNutritionFirst = suppFocus.some(item => {
-      const key = (item.rule_key || "").toLowerCase();
-      const label = (item.label || item.supplement_label || "").toLowerCase();
-      return key.includes("nutrition_first") || key.includes("ernaehrung") ||
-             key.includes("rule_nutrition") || label.includes("ernährung zuerst") ||
-             label.includes("ernaehrung zuerst");
-    });
-    const hasNutritionHint = hasNutritionFirst || hints.some(h =>
-      h.includes("Ernährung zuerst") ||
-      h.includes("Nährstoffdefizite lassen sich über gezielte Ernährung")
-    );
-
+    const hasNutritionHint = hints.some(h => h.includes("Ernährung zuerst") || h.includes("Nährstoffdefizite lassen sich über gezielte Ernährung"));
     for (const r of fb) {
       if (hints.length >= 3) break;
       if (bmiIsLow && !r.bmiLowSafe) continue;
-      // Ernährungs-Fallback überspringen wenn bereits ein Ernährungs-Hint aus suppFocus vorhanden
       if (r.key === "nutrition" && hasNutritionHint) continue;
       if (scoreOf(r.key) < r.max) hints.push(r.text);
     }
 
     if (hints.length === 0) hints.push("Deine Angaben zeigen in vielen Bereichen bereits eine gute Grundlage. Der wichtigste Hebel ist jetzt, stabile Routinen beizubehalten.");
 
-    // HbA1c-Trigger: BMI >= 26 + wenig Bewegung ODER Alter >= 45 + metabolic niedrig
     const answersHba = result?.answers || [];
     const activityAnswerHba = answersHba.find(a => a.question_key === "activity_days");
     const activityRiskHba = Number(activityAnswerHba?.risk_points || 0);
@@ -1933,14 +1510,11 @@
     const ageNumHba = Number(result?.submission?.age || 0);
     const metabolicScoreHba = Number(result?.score?.score_payload?.metabolic?.score || 100);
     const lifestyleScoreHba = Number(result?.score?.score_payload?.lifestyle?.score || 100);
-    const hba1cTrigger = (bmiNumHba >= 26 && activityRiskHba >= 2)       // Trigger 1: BMI + wenig Bewegung
-                      || (ageNumHba >= 45 && metabolicScoreHba < 80)     // Trigger 2: Alter + Stoffwechsel
-                      || (ageNumHba >= 65 && lifestyleScoreHba < 50);    // Trigger 3: Alter + Nikotin/Alkohol (LEV-140)
+    const hba1cTrigger = (bmiNumHba >= 26 && activityRiskHba >= 2) || (ageNumHba >= 45 && metabolicScoreHba < 80) || (ageNumHba >= 65 && lifestyleScoreHba < 50);
     if (hba1cTrigger && !hints.some(h => h.includes("HbA1c") || h.includes("Blutzucker"))) {
       hints.push(`<strong>Langzeit-Blutzucker (HbA1c)</strong> — bei ${bmiNumHba >= 26 ? "erhöhtem BMI und wenig Bewegung" : "Alter ab 45 mit Stoffwechsel-Signalen"} ein sinnvoller Orientierungswert. Kein Nüchternblut nötig — bequem als Trockenbluttest von zuhause.`);
     }
 
-    // Trockenbluttest in Hints erkannt? → nur wenn tatsächlich angezeigt (slice 0-3)
     const visibleHints = hints.slice(0, 3);
     const bloodtestShown = visibleHints.some(h => h.includes("Trockenbluttest") || h.includes("Blutwert-Check") || h.includes("HbA1c"));
 
@@ -1954,172 +1528,69 @@
     return { html, bloodtestShown };
   }
 
-  /* renderHintBoxes — vollständige Sicherheits- und Wellness-Hinweise */
-  function renderHintBoxes(score, bmi, goalKey, bloodtestShown = false) {
+  function renderHintBoxes(score, bmi, goalKey, answersArg, bloodtestShown = false) {
     let html = "";
     const bmiNum = Number(bmi);
     const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
-    const answers = latestResult?.answers || [];
-
+    const answers = answersArg || latestResult?.answers || [];
     const getAnswer = (key) => answers.find(a => a.question_key === key);
     const getRisk = (key) => Number(getAnswer(key)?.risk_points || 0);
 
-    // ── 1. GEWICHTSVERLUST + APPETIT (kritisch)
-    const weightRisk = getRisk("unintentional_weight_loss");
-    const appetiteRisk = getRisk("appetite_change");
+    const weightRisk = getRisk("unintentional_weight_loss"); const appetiteRisk = getRisk("appetite_change");
     if (weightRisk >= 3 || appetiteRisk >= 3 || (weightRisk >= 2 && appetiteRisk >= 2)) {
-      html += `<div class="hint-box" style="background:rgba(255,92,92,0.08);border:1px solid rgba(255,92,92,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;">
-        <strong style="color:#ff8a8a;">⚠️ Körpergewicht &amp; Appetit</strong><br>
-        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
-          Du hast ungewollten Gewichtsverlust oder deutliche Veränderungen beim Appetit angegeben.
-          Diese Signale sind es wert, mit einem Arzt zu besprechen — besonders wenn sie länger anhalten.
-          Die individuelle E-Mail-Auswertung gibt dir weitere Orientierung.
-        </span>
-      </div>`;
+      html += `<div class="hint-box" style="background:rgba(255,92,92,0.08);border:1px solid rgba(255,92,92,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#ff8a8a;">⚠️ Körpergewicht & Appetit</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Du hast ungewollten Gewichtsverlust oder deutliche Veränderungen beim Appetit angegeben. Diese Signale sind es wert, mit einem Arzt zu besprechen — besonders wenn sie länger anhalten.</span></div>`;
     }
-
-    // ── 2. TAGESMÜDIGKEIT (Schlafapnoe-Signal)
     if (getRisk("daytime_sleepiness") >= 3) {
-      html += `<div class="hint-box" style="background:rgba(255,160,0,0.08);border:1px solid rgba(255,160,0,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;">
-        <strong style="color:#ffb347;">😴 Starke Tagesmüdigkeit</strong><br>
-        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
-          Du fühlst dich häufig oder täglich tagsüber müde — auch wenn du nachts schläfst.
-          Das kann ein Hinweis auf unruhigen Schlaf oder andere Faktoren sein.
-          Ein Gespräch mit dem Arzt oder eine Schlafanalyse kann Klarheit bringen.
-        </span>
-      </div>`;
+      html += `<div class="hint-box" style="background:rgba(255,160,0,0.08);border:1px solid rgba(255,160,0,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#ffb347;">😴 Starke Tagesmüdigkeit</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Du fühlst dich häufig tagsüber müde — auch wenn du nachts schläfst. Das kann ein Hinweis auf unruhigen Schlaf oder andere Faktoren sein.</span></div>`;
     }
-
-    // ── 3. CHRONISCHER STRESS
     if (getRisk("stress_level") >= 3) {
-      html += `<div class="hint-box" style="background:rgba(255,160,0,0.08);border:1px solid rgba(255,160,0,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;">
-        <strong style="color:#ffb347;">🧠 Hoher Stresslevel</strong><br>
-        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
-          Du gibst einen hohen oder sehr hohen Stresslevel an. Chronischer Stress wirkt sich
-          langfristig auf Schlaf, Immunsystem und Herzgesundheit aus — einer der wichtigsten
-          Hebel für deine Vitalität.
-        </span><br><br>
-        <a href="https://le-vita.com/probetraining" onclick="if(typeof fbq!=='undefined') fbq('track','Contact',{content_name:'stressgespräch_vereinbaren'})" target="_blank"
-           style="display:inline-block;padding:9px 20px;background:rgba(255,160,0,0.15);color:#ffb347;border:1px solid rgba(255,160,0,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">
-          Stressgespräch vereinbaren →
-        </a>
-      </div>`;
+      html += `<div class="hint-box" style="background:rgba(255,160,0,0.08);border:1px solid rgba(255,160,0,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#ffb347;">🧠 Hoher Stresslevel</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Du gibst einen hohen oder sehr hohen Stresslevel an. Chronischer Stress wirkt sich langfristig auf Schlaf, Immunsystem und Herzgesundheit aus.</span><br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:rgba(255,160,0,0.15);color:#ffb347;border:1px solid rgba(255,160,0,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Stressgespräch vereinbaren →</a></div>`;
     }
-
-    // ── 4. SCHWINDEL / BLASSE NÄGEL (Mangelzeichen)
     if (getRisk("dizziness_pale_nails") >= 3 && !bloodtestShown) {
-      html += `<div class="hint-box box-warning" style="margin-bottom:12px;">
-        <strong>💉 Mögliche Mangelzeichen</strong><br>
-        <span style="font-size:13px;line-height:1.6;">
-          Du hast häufigen Schwindel oder blasse Nägel angegeben — das können Hinweise auf
-          Nährstoffmangel sein (z.B. Eisen oder B12). Ein Trockenbluttest gibt hier konkrete Werte.
-        </span><br><br>
-        <a href="https://le-vita.com/probetraining" onclick="if(typeof fbq!=='undefined') fbq('track','Contact',{content_name:'trockenbluttest_besprechen'})" target="_blank"
-           style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">
-          Trockenbluttest besprechen →
-        </a>
-      </div>`;
+      html += `<div class="hint-box box-warning" style="margin-bottom:12px;"><strong>💉 Mögliche Mangelzeichen</strong><br><span style="font-size:13px;line-height:1.6;">Du hast häufigen Schwindel oder blasse Nägel angegeben — das können Hinweise auf Nährstoffmangel sein. Ein Trockenbluttest gibt hier konkrete Werte.</span><br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Trockenbluttest besprechen →</a></div>`;
     }
-
-    // ── 5. EINSCHLAFSCHWIERIGKEITEN > 1 Stunde
     if (getRisk("sleep_latency") >= 3) {
-      html += `<div class="hint-box" style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;">
-        <strong style="color:#a78bfa;">🌙 Starke Einschlafschwierigkeiten</strong><br>
-        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
-          Mehr als eine Stunde zum Einschlafen zu brauchen ist ein relevantes Signal.
-          Häufig stecken Stress, Bildschirmzeit oder ein unregelmäßiger Rhythmus dahinter —
-          manchmal auch andere Faktoren. Die E-Mail-Auswertung gibt dir konkrete Tipps.
-        </span><br><br>
-        <a href="https://le-vita.com/probetraining" onclick="if(typeof fbq!=='undefined') fbq('track','Contact',{content_name:'schlaf_besprechen'})" target="_blank"
-           style="display:inline-block;padding:9px 20px;background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">
-          Schlaf besprechen →
-        </a>
-      </div>`;
+      html += `<div class="hint-box" style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#a78bfa;">🌙 Starke Einschlafschwierigkeiten</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Mehr als eine Stunde zum Einschlafen zu brauchen ist ein relevantes Signal. Häufig stecken Stress, Bildschirmzeit oder ein unregelmäßiger Rhythmus dahinter.</span><br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Schlaf besprechen →</a></div>`;
     }
-
-    // ── 6. NIKOTIN täglich/regelmäßig
     if (getRisk("nicotine_use") >= 3) {
-      html += `<div class="hint-box" style="background:rgba(255,92,92,0.06);border:1px solid rgba(255,92,92,0.2);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;">
-        <strong style="color:#ff8a8a;">🚬 Nikotin &amp; Gesundheit</strong><br>
-        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
-          Regelmäßiger Nikotinkonsum ist einer der stärksten beeinflussbaren Risikofaktoren
-          für Herz, Gefäße und Lunge. Jede Reduktion zählt — auch kleine Schritte wirken.
-          Sprich uns gerne an wenn du Unterstützung möchtest.
-        </span>
-      </div>`;
+      html += `<div class="hint-box" style="background:rgba(255,92,92,0.06);border:1px solid rgba(255,92,92,0.2);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#ff8a8a;">🚬 Nikotin & Gesundheit</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Regelmäßiger Nikotinkonsum ist einer der stärksten beeinflussbaren Risikofaktoren. Jede Reduktion zählt — auch kleine Schritte wirken.</span></div>`;
     }
-
-    // ── 7. MENTALES WOHLBEFINDEN
-    const lowInterest = getAnswer("low_interest");
-    const lowMood = getAnswer("low_mood");
-    const isCriticalMood = (a) => a?.answer_text &&
-      (a.answer_text.includes("Hälfte") || a.answer_text.includes("Fast täglich") ||
-       a.answer_text.includes("Jeden Tag") || Number(a.risk_points) >= 2);
-
+    const lowInterest = getAnswer("low_interest"); const lowMood = getAnswer("low_mood");
+    const isCriticalMood = (a) => a?.answer_text && (a.answer_text.includes("Hälfte") || a.answer_text.includes("Fast täglich") || a.answer_text.includes("Jeden Tag") || Number(a.risk_points) >= 2);
     if (isCriticalMood(lowInterest) || isCriticalMood(lowMood)) {
-      html += `<div class="hint-box" style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;">
-        <strong style="color:#a78bfa;">🌱 Mentales Wohlbefinden</strong><br>
-        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
-          Deine Angaben zeigen, dass du an manchen Tagen weniger Freude oder Energie empfindest
-          als du dir wünschen würdest. Das ist ein Signal das es wert ist, aufmerksam zu bleiben —
-          manchmal helfen kleine Alltagsveränderungen, manchmal ist ein Gespräch mit jemandem
-          dem du vertraust der beste nächste Schritt.
-        </span><br><br>
-        <a href="https://le-vita.com/probetraining" onclick="if(typeof fbq!=='undefined') fbq('track','Contact',{content_name:'schlaf_besprechen'})" target="_blank"
-           style="display:inline-block;padding:9px 20px;background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">
-          Schlaf besprechen →
-        </a>
-      </div>`;
+      html += `<div class="hint-box" style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#a78bfa;">🌱 Mentales Wohlbefinden</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Deine Angaben zeigen, dass du an manchen Tagen weniger Freude oder Energie empfindest als du dir wünschen würdest. Das ist ein Signal das es wert ist, aufmerksam zu bleiben.</span></div>`;
     }
 
-    // ── TROCKENBLUTTEST
-    const lifestyleScore = score.score_payload?.lifestyle?.score
-      ? Number(score.score_payload.lifestyle.score) : 100;
-    const vitaminDScore = score.score_payload?.vitamin_d?.score
-      ? Number(score.score_payload.vitamin_d.score) : 100;
-    const frontendBloodtestRelevant = score.bloodtest_hint
-      || lifestyleScore < 50
-      || (bmiNum >= 28 && vitaminDScore < 80);
-
-    if (frontendBloodtestRelevant && !bloodtestShown && getRisk("dizziness_pale_nails") < 3) {
-      const btReason = lifestyleScore < 50 && !score.bloodtest_hint
-        ? "Regelmäßiger Alkohol- oder Nikotinkonsum kann bestimmte Nährstoffwerte beeinflussen — ein gezielter Test gibt Klarheit."
-        : "Auf Basis deiner Angaben könnte ein Trockenbluttest zusätzliche Hinweise liefern — z.B. zu Vitamin D, Ferritin oder B12.";
-      html += `<div class="hint-box box-warning"><strong>💉 Trockenbluttest</strong><br>${btReason}<br><br><a href="https://le-vita.com/probetraining" target="_blank" onclick="if(typeof fbq!=='undefined') fbq('track','Contact',{content_name:'trockenbluttest_cta'});" style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Trockenbluttest besprechen →</a></div>`;
-    }
-
-    // ── CTA
     const showCTA = (score.coaching_hint || goalKey) && !bmiIsLow;
     if (showCTA) {
       const gk = goalKey || "";
       let coachingText = "";
-      if (gk === "goal_longevity") {
-        coachingText = `🌿 <strong>Longevity-Einstieg</strong><br>Eine Körperanalyse und ein Trockenbluttest geben dir konkrete Werte — Muskelmasse, Biomarker, Vitalitäts-Alter im Vergleich. Die Präventionskurse §20 im LeVITA Studio werden von vielen Krankenkassen bezuschusst.<br><br><a href="https://le-vita.com/probetraining" onclick="if(typeof fbq!=='undefined') fbq('track','Contact',{content_name:'vitalitätsgespräch_vereinbaren'})" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Vitalitätsgespräch vereinbaren →</a>`;
-      } else if (gk === "goal_prevention") {
-        coachingText = `🛡️ <strong>Prävention mit Plan</strong><br>Unsere Präventionskurse §20 helfen dir, gezielt an deiner Gesundheit zu arbeiten — strukturiert, betreut und von vielen Krankenkassen bezuschusst.<br><br><a href="https://le-vita.com/praeventionskurse-gemuenden-wohra" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Präventionskurs anfragen →</a>`;
-      } else if (gk === "goal_fitness") {
-        coachingText = `💪 <strong>Probetraining</strong><br>Ein kostenloser Einstieg ins LeVITA — unverbindlich, mit Trainer-Begleitung.<br><br><a href="https://le-vita.com/probetraining" onclick="if(typeof fbq!=='undefined') fbq('track','Contact',{content_name:'kostenlos_reinschnuppern'})" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Kostenlos reinschnuppern →</a>`;
-      } else if (gk === "goal_weight") {
-        coachingText = `⚖️ <strong>Figur &amp; Abnehmen</strong><br>Betreutes Training kombiniert mit Ernährungsberatung im LeVITA — ein kostenloser Einstieg zeigt dir wie es funktioniert.<br><br><a href="https://le-vita.com/abnehmen-ernaehrung-und-fitness-gemuenden-wohra" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Ernährungsberatung anfragen →</a>`;
-      } else if (gk === "goal_energy") {
-        coachingText = `⚡ <strong>Energie &amp; Regeneration</strong><br>VELUS JET® Wellness im LeVITA — gezielt für Entspannung, Regeneration und neue Energie im Alltag.<br><br><a href="https://le-vita.com/probetraining" onclick="if(typeof fbq!=='undefined') fbq('track','Contact',{content_name:'kostenlos_reinschnuppern'})" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Kostenlos reinschnuppern →</a>`;
-      } else if (gk === "goal_supplements") {
-        coachingText = `💉 <strong>Nährstoffstatus gezielt klären</strong><br>Ein Trockenbluttest gibt dir konkrete Werte statt Vermutungen — Vitamin D, B12, Ferritin, Omega-3. Bequem von zuhause oder direkt bei uns im Studio. Wir beraten dich, welches Paket für dich sinnvoll ist.<br><br><a href="https://le-vita.com/probetraining" onclick="if(typeof fbq!=='undefined') fbq('track','Contact',{content_name:'testergebnisse_besprechen'})" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Testergebnisse besprechen →</a>`;
-      } else {
-        coachingText = `🤝 <strong>Kostenloses Orientierungsgespräch</strong><br>Ein kostenloses Gespräch, ein betreuter Trainingsplan oder eine Körperanalyse — alles unter einem Dach im LeVITA Studio Gemünden.<br><br><a href="https://le-vita.com/probetraining" onclick="if(typeof fbq!=='undefined') fbq('track','Contact',{content_name:'kostenlos_beraten_lassen'})" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Kostenlos beraten lassen →</a>`;
-      }
+      if (gk === "goal_longevity") { coachingText = `🌿 <strong>Longevity-Einstieg</strong><br>Eine Körperanalyse und ein Trockenbluttest geben dir konkrete Werte — Muskelmasse, Biomarker, Vitalitäts-Alter im Vergleich.<br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Vitalitätsgespräch vereinbaren →</a>`; }
+      else if (gk === "goal_prevention") { coachingText = `🛡️ <strong>Prävention mit Plan</strong><br>Unsere Präventionskurse §20 helfen dir, gezielt an deiner Gesundheit zu arbeiten — strukturiert und von vielen Krankenkassen bezuschusst.<br><br><a href="https://le-vita.com/praeventionskurse-gemuenden-wohra" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Präventionskurs anfragen →</a>`; }
+      else if (gk === "goal_fitness") { coachingText = `💪 <strong>Probetraining</strong><br>Ein kostenloser Einstieg ins LeVITA — unverbindlich, mit Trainer-Begleitung.<br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Kostenlos reinschnuppern →</a>`; }
+      else if (gk === "goal_weight") { coachingText = `⚖️ <strong>Figur & Abnehmen</strong><br>Betreutes Training kombiniert mit Ernährungsberatung im LeVITA.<br><br><a href="https://le-vita.com/abnehmen-ernaehrung-und-fitness-gemuenden-wohra" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Ernährungsberatung anfragen →</a>`; }
+      else if (gk === "goal_energy") { coachingText = `⚡ <strong>Energie & Regeneration</strong><br>VELUS JET® Wellness im LeVITA — gezielt für Entspannung, Regeneration und neue Energie.<br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Kostenlos reinschnuppern →</a>`; }
+      else if (gk === "goal_supplements") { coachingText = `💉 <strong>Nährstoffstatus gezielt klären</strong><br>Ein Trockenbluttest gibt dir konkrete Werte statt Vermutungen — Vitamin D, B12, Ferritin, Omega-3.<br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Testergebnisse besprechen →</a>`; }
+      else { coachingText = `🤝 <strong>Kostenloses Orientierungsgespräch</strong><br>Ein kostenloses Gespräch, ein betreuter Trainingsplan oder eine Körperanalyse — alles unter einem Dach im LeVITA Studio Gemünden.<br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Kostenlos beraten lassen →</a>`; }
       html += `<div class="hint-box box-success">${coachingText}</div>`;
     }
     return html;
   }
+
+  // ── PATCH 1: Radar-Chart mit Kurznamen ──
   function renderRadarChart(areas) {
     const ctx = document.getElementById("vitalChart");
     if (!ctx) return;
     if (radarChart) radarChart.destroy();
+    const shortLabels = {
+      sleep:"Schlaf", activity:"Bewegung", nutrition:"Ernährung",
+      vitamin_d:"Vit. D", bmi:"BMI", mental:"Mental",
+      lifestyle:"Lifestyle", micronutrients:"Mikro", metabolic:"Energie"
+    };
     radarChart = new Chart(ctx, {
       type:"radar",
       data:{
-        labels: areas.map(a => a.label),
+        labels: areas.map(a => shortLabels[a.key] || a.label),
         datasets:[{ label:"Aktueller Check", data: areas.map(a => Math.round(a.score)), backgroundColor:"rgba(59,158,255,0.15)", borderColor:"#3b9eff", borderWidth:2.5, pointBackgroundColor:"#3b9eff", pointRadius:4 }]
       },
       options:{
@@ -2158,45 +1629,17 @@
   }
 
   async function deleteMyData() {
-    if (!latestResult?.public_code) {
-      alert("Keine aktive Auswertung gefunden. Bitte lade die Seite neu oder wende dich an info@le-vita.com mit deiner Pilot-ID.");
-      return;
-    }
-    const confirmed = confirm(
-      `Möchtest du wirklich alle gespeicherten Daten zu Pilot-ID ${latestResult.public_code} löschen?\n\n` +
-      `Folgende Daten werden sofort gelöscht:\n` +
-      `- Deine Antworten und Angaben\n` +
-      `- Dein Score und alle Bereichswerte\n` +
-      `- Deine Kontaktdaten\n` +
-      `- Deine KI-Auswertung\n\n` +
-      `Das E-Mail-Protokoll wird innerhalb von 30 Tagen entfernt.\n\n` +
-      `Diese Aktion kann nicht rückgängig gemacht werden.`
-    );
+    if (!latestResult?.public_code) { alert("Keine aktive Auswertung gefunden. Bitte wende dich an info@le-vita.com mit deiner Pilot-ID."); return; }
+    const confirmed = confirm(`Möchtest du wirklich alle gespeicherten Daten zu Pilot-ID ${latestResult.public_code} löschen?\n\nFolgende Daten werden sofort gelöscht:\n- Deine Antworten und Angaben\n- Dein Score und alle Bereichswerte\n- Deine Kontaktdaten\n- Deine KI-Auswertung\n\nDas E-Mail-Protokoll wird innerhalb von 30 Tagen entfernt.\n\nDiese Aktion kann nicht rückgängig gemacht werden.`);
     if (!confirmed) return;
-
     try {
       const deleteBtn = document.querySelector('[onclick="deleteMyData()"]');
       if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.textContent = "⏳ Wird gelöscht…"; }
-
-      const result = await callFunction({
-        mode: "delete_submission",
-        public_code: latestResult.public_code,
-        send_confirmation_email: true
-      });
-
-      if (result?.success) {
-        alert(`✓ Deine Daten wurden erfolgreich gelöscht.\n\nFalls eine E-Mail-Adresse hinterlegt war, erhältst du eine Bestätigung.\n\nDu wirst jetzt zur Startseite weitergeleitet.`);
-        resetVitalCheck();
-      } else {
-        alert("Beim Löschen ist ein Fehler aufgetreten. Bitte wende dich an info@le-vita.com mit deiner Pilot-ID: " + latestResult.public_code);
-        if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = "🗑 Meine gespeicherten Daten löschen"; }
-      }
-    } catch (err) {
-      console.error("Löschfehler:", err);
-      alert("Verbindungsfehler. Bitte versuche es erneut oder kontaktiere uns: info@le-vita.com");
-    }
+      const result = await callFunction({ mode: "delete_submission", public_code: latestResult.public_code, send_confirmation_email: true });
+      if (result?.success) { alert(`✓ Deine Daten wurden erfolgreich gelöscht.\n\nDu wirst jetzt zur Startseite weitergeleitet.`); resetVitalCheck(); }
+      else { alert("Beim Löschen ist ein Fehler aufgetreten. Bitte wende dich an info@le-vita.com mit deiner Pilot-ID: " + latestResult.public_code); if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = "🗑 Meine gespeicherten Daten löschen"; } }
+    } catch (err) { console.error("Löschfehler:", err); alert("Verbindungsfehler. Bitte versuche es erneut oder kontaktiere uns: info@le-vita.com"); }
   }
-
 
   function resetVitalCheck() {
     if (!confirm("Möchtest du wirklich alle Eingaben zurücksetzen? Bereits übermittelte Daten in der Datenbank werden nicht gelöscht.")) return;
