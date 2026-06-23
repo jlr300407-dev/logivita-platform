@@ -829,6 +829,16 @@
     }
   }
 
+  function toggleConsent1(e) {
+    e.preventDefault(); e.stopPropagation();
+    const detail = document.getElementById('consentDetail1');
+    const toggle = document.getElementById('consentToggle1');
+    if (!detail || !toggle) return;
+    const isHidden = detail.style.display === 'none' || detail.style.display === '';
+    detail.style.display = isHidden ? 'block' : 'none';
+    toggle.textContent = isHidden ? 'Weniger' : 'Details';
+  }
+
   async function requestIndividualAnalysis() {
     const email = document.getElementById("ai_email").value.trim();
     const ca = document.getElementById("consent_ai_analysis").checked;
@@ -1076,7 +1086,7 @@
             </div>
             <div style="display:flex;align-items:flex-start;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
               <span style="color:var(--accent-amber);font-size:15px;flex-shrink:0;margin-top:-1px;">★</span>
-              <span><strong style="color:var(--accent-amber);">Bonus beim Re-Check:</strong> kostenlose VELUS JET Session im LeVITA Studio</span>
+              <span><strong style="color:var(--accent-amber);">Bonus beim Re-Check:</strong> kostenlose VELUS JET Wellness-Session im LeVITA Studio</span>
             </div>
           </div>
         </div>
@@ -1084,11 +1094,14 @@
         <div class="ai-consent">
           <div class="checkbox-row">
             <input type="checkbox" id="consent_ai_analysis" />
-            <label for="consent_ai_analysis">Ich willige ein, dass meine Angaben für eine KI-gestützte individuelle Auswertung verarbeitet werden. Dazu werden meine Angaben an Anthropic PBC (USA) übermittelt — ausschließlich zur Erstellung der Auswertung, nicht zum Training von KI-Modellen. Die Übermittlung erfolgt auf Basis von Standardvertragsklauseln (Art. 46 DSGVO).</label>
+            <label for="consent_ai_analysis">Ja, ich möchte meine persönliche KI-Auswertung erhalten.
+              <span id="consentDetail1" style="display:none;color:var(--text-muted);font-size:10px;line-height:1.5;display:block;margin-top:4px;">Deine Angaben werden zur Erstellung der Auswertung an Anthropic PBC (USA) übermittelt — ausschließlich für diesen Zweck, nicht zum Training von KI-Modellen. Grundlage: Standardvertragsklauseln (Art. 46 DSGVO).</span>
+              <span onclick="toggleConsent1(event)" style="color:var(--text-muted);font-size:10px;cursor:pointer;text-decoration:underline;margin-left:4px;" id="consentToggle1">Details</span>
+            </label>
           </div>
           <div class="checkbox-row">
             <input type="checkbox" id="consent_email_delivery" />
-            <label for="consent_email_delivery">Ich willige ein, dass mir die Auswertung per E-Mail zugesendet wird.</label>
+            <label for="consent_email_delivery">Ja, die Auswertung darf mir per E-Mail zugeschickt werden.</label>
           </div>
         </div>
         <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">✦ Meine KI-Auswertung jetzt kostenlos anfordern →</button>
