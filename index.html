@@ -199,7 +199,7 @@
     .pin-sub { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 28px; }
     .pin-code-display { font-size: 13px; color: var(--text-muted); background: var(--brand-card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; display: inline-block; margin-bottom: 24px; letter-spacing: 0.5px; }
     .pin-input-wrap { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
-    .pin-digit { width: 52px; height: 64px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 28px; font-weight: 800; text-align: center; transition: border-color 0.18s; -webkit-appearance: none; }
+    .pin-digit { width: 40px; height: 52px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-primary); font-family: monospace; font-size: 22px; font-weight: 800; text-align: center; transition: border-color 0.18s; -webkit-appearance: none; text-transform: uppercase; }
     .pin-digit:focus { outline: none; border-color: var(--accent-green); background: var(--accent-green-dim); }
     .pin-digit.filled { border-color: rgba(34,201,122,0.4); }
     .pin-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
@@ -295,12 +295,14 @@
         <div class="pin-sub">Gib deinen 6-stelligen PIN ein.<br>Du hast ihn zusammen mit deiner KI-Auswertung per E-Mail erhalten.</div>
         <div class="pin-code-display">Pilot-ID: ${publicCode}</div>
         <div class="pin-input-wrap" id="pinInputWrap">
-          <input class="pin-digit" type="number" maxlength="1" min="0" max="9" id="pin0" oninput="pinInput(0)" onkeydown="pinKey(event,0)" />
-          <input class="pin-digit" type="number" maxlength="1" min="0" max="9" id="pin1" oninput="pinInput(1)" onkeydown="pinKey(event,1)" />
-          <input class="pin-digit" type="number" maxlength="1" min="0" max="9" id="pin2" oninput="pinInput(2)" onkeydown="pinKey(event,2)" />
-          <input class="pin-digit" type="number" maxlength="1" min="0" max="9" id="pin3" oninput="pinInput(3)" onkeydown="pinKey(event,3)" />
-          <input class="pin-digit" type="number" maxlength="1" min="0" max="9" id="pin4" oninput="pinInput(4)" onkeydown="pinKey(event,4)" />
-          <input class="pin-digit" type="number" maxlength="1" min="0" max="9" id="pin5" oninput="pinInput(5)" onkeydown="pinKey(event,5)" />
+          <input class="pin-digit" type="text" maxlength="1" id="pin0" oninput="pinInput(0)" onkeydown="pinKey(event,0)" autocomplete="off" autocapitalize="characters" />
+          <input class="pin-digit" type="text" maxlength="1" id="pin1" oninput="pinInput(1)" onkeydown="pinKey(event,1)" autocomplete="off" autocapitalize="characters" />
+          <input class="pin-digit" type="text" maxlength="1" id="pin2" oninput="pinInput(2)" onkeydown="pinKey(event,2)" autocomplete="off" autocapitalize="characters" />
+          <input class="pin-digit" type="text" maxlength="1" id="pin3" oninput="pinInput(3)" onkeydown="pinKey(event,3)" autocomplete="off" autocapitalize="characters" />
+          <input class="pin-digit" type="text" maxlength="1" id="pin4" oninput="pinInput(4)" onkeydown="pinKey(event,4)" autocomplete="off" autocapitalize="characters" />
+          <input class="pin-digit" type="text" maxlength="1" id="pin5" oninput="pinInput(5)" onkeydown="pinKey(event,5)" autocomplete="off" autocapitalize="characters" />
+          <input class="pin-digit" type="text" maxlength="1" id="pin6" oninput="pinInput(6)" onkeydown="pinKey(event,6)" autocomplete="off" autocapitalize="characters" />
+          <input class="pin-digit" type="text" maxlength="1" id="pin7" oninput="pinInput(7)" onkeydown="pinKey(event,7)" autocomplete="off" autocapitalize="characters" />
         </div>
         <div class="pin-hint">Tipp: Sieh nach in der E-Mail mit dem Betreff "dein Vital-Check ist da"</div>
         <div id="pinError" class="pin-error hidden"></div>
@@ -316,7 +318,7 @@
   function pinInput(index) {
     const input = document.getElementById('pin' + index);
     // Nur eine Ziffer erlauben
-    const val = input.value.replace(/[^0-9]/g, '').slice(-1);
+    const val = input.value.replace(/[^A-Za-z0-9]/g, '').slice(-1).toUpperCase();
     input.value = val;
     input.classList.toggle('filled', val !== '');
     // Zum nächsten Feld springen
@@ -324,7 +326,7 @@
       document.getElementById('pin' + (index + 1)).focus();
     }
     // Submit-Button aktivieren wenn alle 6 Felder gefüllt
-    const allFilled = Array.from({length: 6}, (_, i) =>
+    const allFilled = Array.from({length: 8}, (_, i) =>
       document.getElementById('pin' + i)?.value
     ).every(v => v && v.length === 1);
     const btn = document.getElementById('pinSubmitBtn');
@@ -346,11 +348,11 @@
   }
 
   async function loadResultWithPin(publicCode) {
-    const pin = Array.from({length: 6}, (_, i) =>
+    const pin = Array.from({length: 8}, (_, i) =>
       document.getElementById('pin' + i)?.value || ''
     ).join('');
 
-    if (pin.length !== 6) return;
+    if (pin.length !== 8) return;
 
     const btn = document.getElementById('pinSubmitBtn');
     const errEl = document.getElementById('pinError');
@@ -1056,9 +1058,27 @@
         <div class="ai-badge">✦ Deine kostenlose KI-Auswertung</div>
         <div class="ai-title">Was bedeutet dein Vitalitäts-Alter für dich — konkret?</div>
         <div class="ai-sub">Deine persönliche KI-Analyse mit 3 konkreten Schritten für die nächsten 6 Wochen. Kostenlos, direkt ins Postfach.</div>
-        <div style="display:flex;align-items:center;gap:8px;background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--accent-amber);line-height:1.5;">
-          <span style="font-size:16px;flex-shrink:0;">🔐</span>
-          <span>Du erhältst mit der Auswertung einen persönlichen <strong>PIN</strong> — damit kannst du deine Ergebnisse jederzeit wieder aufrufen.</span>
+
+        <div style="background:rgba(34,201,122,0.06);border:1px solid rgba(34,201,122,0.18);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent-green);margin-bottom:10px;">Mit deiner Auswertung erhältst du</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
+              <span style="color:var(--accent-green);font-size:15px;flex-shrink:0;margin-top:-1px;">✓</span>
+              <span><strong style="color:var(--text-primary);">Persönlicher PIN</strong> — ruf deine Auswertung jederzeit wieder auf</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
+              <span style="color:var(--accent-green);font-size:15px;flex-shrink:0;margin-top:-1px;">✓</span>
+              <span><strong style="color:var(--text-primary);">Dein stärkster Hebel</strong> — konkret, auf dein Profil zugeschnitten</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
+              <span style="color:var(--accent-green);font-size:15px;flex-shrink:0;margin-top:-1px;">✓</span>
+              <span><strong style="color:var(--text-primary);">10% Rabatt auf Verisana-Bluttests</strong> — gezielt testen statt raten (Code LEVITA10)</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
+              <span style="color:var(--accent-amber);font-size:15px;flex-shrink:0;margin-top:-1px;">★</span>
+              <span><strong style="color:var(--accent-amber);">Bonus beim Re-Check:</strong> kostenlose VELUS JET Session im LeVITA Studio</span>
+            </div>
+          </div>
         </div>
         <input type="email" id="ai_email" placeholder="deine@email.de" />
         <div class="ai-consent">
@@ -1193,13 +1213,17 @@
       html += `
         <div class="t3-test-card">
           <div class="t3-test-header">
-            <div class="t3-test-title">Trockenbluttest — gezielter Gesundheits-Check <span class="t3-coming-soon">Buchung in Kürze</span></div>
+            <div class="t3-test-title">Trockenbluttest — gezielter Gesundheits-Check</div>
+            <div style="margin-top:10px;">
+              <button onclick="document.querySelector('.ai-box').scrollIntoView({behavior:'smooth'});setTimeout(()=>document.getElementById('ai_email')?.focus(),400);" style="padding:10px 20px;background:var(--accent-green);color:#0a1628;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;width:100%;">🩸 Bluttest mit 10% Rabatt anfordern →</button>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center;">Persönlicher Verisana-Rabattcode LEVITA10 kommt mit deiner KI-Auswertung per Mail</div>
+            </div>
           </div>
           <div class="t3-test-desc">
             Bequem von zuhause oder direkt im LeVITA Studio — kleines Set, kurze Blutprobe,
             Ergebnis per E-Mail. Kein Nüchternblut nötig. Tests u.a.: HbA1c, Vitamin D, Ferritin, B12, Omega-3.
           </div>
-          <a class="t3-test-btn" href="https://le-vita.com/probetraining" target="_blank">Im Studio besprechen →</a>
+          <a class="t3-test-btn" href="https://le-vita.com/probetraining" target="_blank" style="margin-top:6px;display:inline-block;">Ergebnis im Studio besprechen →</a>
         </div>`;
     }
 
@@ -1464,7 +1488,7 @@
     if (key === "micronutrients") {
       const dizzy = getRisk("dizziness_pale_nails"); const nutType = getText("nutrition_type") || getText("diet_type"); const gender = latestResult?.submission?.gender || "";
       const isPlant = nutType.includes("vegan") || nutType.includes("vegetar"); const isFemale = gender === "female" || gender === "weiblich";
-      if (l === "low") { if (dizzy >= 2 && isPlant && isFemale) return "Eisenreiche Lebensmittel mit Vitamin C kombinieren — Hülsenfrüchte + Paprika oder Orangensaft."; if (dizzy >= 2) return "Schwindel oder blasse Nägel können auf Nährstoffmangel hinweisen — gezielte Abklärung prüfen."; return "Ernährung nicht pauschal supplementieren — zuerst Muster und Qualität der Mahlzeiten prüfen."; }
+      if (l === "low") { if (dizzy >= 2 && isPlant && isFemale) return "Eisenreiche Lebensmittel mit Vitamin C kombinieren — Hülsenfrüchte + Paprika oder Orangensaft."; if (dizzy >= 2) return "Schwindel oder blasse Nägel sind mögliche Signale — ein Bluttest kann dir hier mehr Klarheit geben."; return "Ernährung nicht pauschal supplementieren — zuerst Muster und Qualität der Mahlzeiten prüfen."; }
       if (l === "medium") { if (dizzy >= 2 && isPlant) return "Eisenreiche Lebensmittel immer mit Vitamin C kombinieren."; return "Eiweiß, Eisenquellen, Omega-3 und B12 im Alltag bewusster einbauen."; }
       return "Abwechslungsreiche Ernährung bleibt die beste Basis — Supplemente nur gezielt.";
     }
@@ -1531,7 +1555,7 @@
     if (key === "micronutrients") {
       const dizzy = getRisk("dizziness_pale_nails"); const nutType = getText("nutrition_type") || getText("diet_type");
       const isPlant = nutType.includes("vegan") || nutType.includes("vegetar");
-      if (l === "low") { if (dizzy >= 2 && isPlant) return "Bei anhaltenden Mangelzeichen: Trockenbluttest für Eisen, B12 und Vitamin D prüfen lassen."; return "Bei anhaltender Müdigkeit gezielte Blutwerte prüfen — kein blindes Supplementieren."; }
+      if (l === "low") { if (dizzy >= 2 && isPlant) return "Ein Bluttest für Eisen, B12 und Vitamin D gibt dir konkrete Werte statt Vermutungen."; return "Gezielte Blutwerte geben dir Orientierung — sinnvoller als blindes Supplementieren."; }
       if (l === "medium") { if (isPlant) return "B12, Jod und Eisen bei pflanzlicher Ernährung gezielt im Blick behalten — Trockenbluttest gibt Klarheit."; return "Bei anhaltender Müdigkeit gezielte Abklärung vor Supplement-Kauf prüfen."; }
       return "Supplemente nur gezielt, sinnvoll und nach Bedarf einsetzen.";
     }
@@ -1546,10 +1570,10 @@
 
   function renderRedFlagBox(score, totalScore) {
     if (score.doctor_hint) {
-      return `<div class="redflag-box"><strong>⚠ RED FLAGS – bitte ernst nehmen</strong><br><br>Einige deiner Angaben zeigen stärkere Auffälligkeiten. Der LeVITA Vital-Check stellt keine Diagnose, aber in dieser Situation kann eine ärztliche Abklärung sinnvoll sein.<br><br><strong>Empfehlung:</strong> Bitte besprich auffällige Symptome mit einer Ärztin oder einem Arzt.</div>`;
+      return `<div class="redflag-box"><strong>⚠ RED FLAGS – bitte ernst nehmen</strong><br><br>Einige deiner Angaben zeigen stärkere Auffälligkeiten. Der LeVITA Vital-Check stellt keine Diagnose, aber in dieser Situation kann eine ärztliche Abklärung sinnvoll sein.<br><br><strong>Hinweis:</strong> Bei Fragen zu deiner Gesundheit lohnt sich ein Gespräch mit einer Ärztin oder einem Arzt.</div>`;
     }
     if (totalScore < 55) {
-      return `<div class="info-box box-info" style="margin-bottom:16px;"><strong>RED-FLAG-Check</strong><br>Aus deinen Angaben ergibt sich aktuell kein besonderer Hinweis auf stärkere Auffälligkeiten. Bei akuten Beschwerden bitte immer medizinischen Rat einholen.</div>`;
+      return "";
     }
     return "";
   }
@@ -1620,7 +1644,7 @@
     const lifestyleScoreHba = Number(result?.score?.score_payload?.lifestyle?.score || 100);
     const hba1cTrigger = (bmiNumHba >= 26 && activityRiskHba >= 2) || (ageNumHba >= 45 && metabolicScoreHba < 80) || (ageNumHba >= 65 && lifestyleScoreHba < 50);
     if (hba1cTrigger && !hints.some(h => h.includes("HbA1c") || h.includes("Blutzucker"))) {
-      hints.push(`<strong>Langzeit-Blutzucker (HbA1c)</strong> — bei ${bmiNumHba >= 26 ? "erhöhtem BMI und wenig Bewegung" : "Alter ab 45 mit Stoffwechsel-Signalen"} ein sinnvoller Orientierungswert. Kein Nüchternblut nötig — bequem als Trockenbluttest von zuhause.`);
+      hints.push(`<strong>Langzeit-Blutzucker (HbA1c)</strong> — ein Orientierungswert den viele Menschen noch nie gemessen haben. Kein Nüchternblut nötig, bequem von zuhause.`);
     }
 
     const visibleHints = hints.slice(0, 3);
@@ -1655,7 +1679,7 @@
       html += `<div class="hint-box" style="background:rgba(255,160,0,0.08);border:1px solid rgba(255,160,0,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#ffb347;">🧠 Hoher Stresslevel</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Du gibst einen hohen oder sehr hohen Stresslevel an. Chronischer Stress wirkt sich langfristig auf Schlaf, Immunsystem und Herzgesundheit aus.</span><br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:rgba(255,160,0,0.15);color:#ffb347;border:1px solid rgba(255,160,0,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Stressgespräch vereinbaren →</a></div>`;
     }
     if (getRisk("dizziness_pale_nails") >= 3 && !bloodtestShown) {
-      html += `<div class="hint-box box-warning" style="margin-bottom:12px;"><strong>💉 Mögliche Mangelzeichen</strong><br><span style="font-size:13px;line-height:1.6;">Du hast häufigen Schwindel oder blasse Nägel angegeben — das können Hinweise auf Nährstoffmangel sein. Ein Trockenbluttest gibt hier konkrete Werte.</span><br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Trockenbluttest besprechen →</a></div>`;
+      html += `<div class="hint-box box-warning" style="margin-bottom:12px;"><strong>💉 Bluttest-Empfehlung</strong><br><span style="font-size:13px;line-height:1.6;">Auf Basis deiner Angaben könnte ein gezielter Bluttest interessante Werte liefern — z.B. Eisen, B12 oder Vitamin D. Gezielt testen statt raten.</span><br><br><button onclick="document.querySelector('.ai-box').scrollIntoView({behavior:'smooth'});setTimeout(()=>document.getElementById('ai_email')?.focus(),400);" style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;border:none;cursor:pointer;margin-top:4px;">🩸 Bluttest mit 10% Rabatt anfordern →</button></div>`;
     }
     if (getRisk("sleep_latency") >= 3) {
       html += `<div class="hint-box" style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#a78bfa;">🌙 Starke Einschlafschwierigkeiten</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Mehr als eine Stunde zum Einschlafen zu brauchen ist ein relevantes Signal. Häufig stecken Stress, Bildschirmzeit oder ein unregelmäßiger Rhythmus dahinter.</span><br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Schlaf besprechen →</a></div>`;
@@ -1765,6 +1789,6 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.25.2</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.26.0</footer>
 </body>
 </html>
