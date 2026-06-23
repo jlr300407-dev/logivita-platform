@@ -829,6 +829,18 @@
     }
   }
 
+  function scrollToAiBox() {
+    const tab1Btn = document.querySelector('.result-tab-btn');
+    if (tab1Btn) tab1Btn.click();
+    setTimeout(() => {
+      const aiBox = document.querySelector('.ai-box');
+      if (aiBox) {
+        aiBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => document.getElementById('ai_email')?.focus(), 400);
+      }
+    }, 150);
+  }
+
   function toggleConsent1(e) {
     e.preventDefault(); e.stopPropagation();
     const detail = document.getElementById('consentDetail1');
@@ -1228,7 +1240,7 @@
           <div class="t3-test-header">
             <div class="t3-test-title">Trockenbluttest — gezielter Gesundheits-Check</div>
             <div style="margin-top:10px;">
-              <button onclick="document.querySelector('.ai-box').scrollIntoView({behavior:'smooth'});setTimeout(()=>document.getElementById('ai_email')?.focus(),400);" style="padding:10px 20px;background:var(--accent-green);color:#0a1628;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;width:100%;">🩸 Bluttest mit 10% Rabatt anfordern →</button>
+              <button onclick="scrollToAiBox();" style="padding:10px 20px;background:var(--accent-green);color:#0a1628;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;width:100%;">🩸 Bluttest mit 10% Rabatt anfordern →</button>
               <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center;">Persönlicher Verisana-Rabattcode LEVITA10 kommt mit deiner KI-Auswertung per Mail</div>
             </div>
           </div>
@@ -1692,7 +1704,7 @@
       html += `<div class="hint-box" style="background:rgba(255,160,0,0.08);border:1px solid rgba(255,160,0,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#ffb347;">🧠 Hoher Stresslevel</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Du gibst einen hohen oder sehr hohen Stresslevel an. Chronischer Stress wirkt sich langfristig auf Schlaf, Immunsystem und Herzgesundheit aus.</span><br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:rgba(255,160,0,0.15);color:#ffb347;border:1px solid rgba(255,160,0,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Stressgespräch vereinbaren →</a></div>`;
     }
     if (getRisk("dizziness_pale_nails") >= 3 && !bloodtestShown) {
-      html += `<div class="hint-box box-warning" style="margin-bottom:12px;"><strong>💉 Bluttest-Empfehlung</strong><br><span style="font-size:13px;line-height:1.6;">Auf Basis deiner Angaben könnte ein gezielter Bluttest interessante Werte liefern — z.B. Eisen, B12 oder Vitamin D. Gezielt testen statt raten.</span><br><br><button onclick="document.querySelector('.ai-box').scrollIntoView({behavior:'smooth'});setTimeout(()=>document.getElementById('ai_email')?.focus(),400);" style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;border:none;cursor:pointer;margin-top:4px;">🩸 Bluttest mit 10% Rabatt anfordern →</button></div>`;
+      html += `<div class="hint-box box-warning" style="margin-bottom:12px;"><strong>💉 Bluttest-Empfehlung</strong><br><span style="font-size:13px;line-height:1.6;">Auf Basis deiner Angaben könnte ein gezielter Bluttest interessante Werte liefern — z.B. Eisen, B12 oder Vitamin D. Gezielt testen statt raten.</span><br><br><button onclick="scrollToAiBox();" style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;border:none;cursor:pointer;margin-top:4px;">🩸 Bluttest mit 10% Rabatt anfordern →</button></div>`;
     }
     if (getRisk("sleep_latency") >= 3) {
       html += `<div class="hint-box" style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#a78bfa;">🌙 Starke Einschlafschwierigkeiten</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Mehr als eine Stunde zum Einschlafen zu brauchen ist ein relevantes Signal. Häufig stecken Stress, Bildschirmzeit oder ein unregelmäßiger Rhythmus dahinter.</span><br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Schlaf besprechen →</a></div>`;
