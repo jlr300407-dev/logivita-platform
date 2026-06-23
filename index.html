@@ -830,15 +830,17 @@
   }
 
   function scrollToAiBox() {
-    const tab1Btn = document.querySelector('.result-tab-btn');
+    // Tab 1 "Mein Ergebnis" aktivieren
+    const tab1Btn = document.getElementById('rtab-ergebnis');
     if (tab1Btn) tab1Btn.click();
+    // Dann zur ai-box scrollen
     setTimeout(() => {
       const aiBox = document.querySelector('.ai-box');
       if (aiBox) {
         aiBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
         setTimeout(() => document.getElementById('ai_email')?.focus(), 400);
       }
-    }, 150);
+    }, 200);
   }
 
   function toggleConsent1(e) {
@@ -1094,7 +1096,7 @@
             </div>
             <div style="display:flex;align-items:flex-start;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
               <span style="color:var(--accent-green);font-size:15px;flex-shrink:0;margin-top:-1px;">✓</span>
-              <span><strong style="color:var(--text-primary);">10% Rabatt auf Verisana-Bluttests</strong> — gezielt testen statt raten (Code LEVITA10)</span>
+              <span><strong style="color:var(--text-primary);">10% Rabatt auf Verisana-Bluttests</strong> — gezielt testen statt raten</span>
             </div>
             <div style="display:flex;align-items:flex-start;gap:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
               <span style="color:var(--accent-amber);font-size:15px;flex-shrink:0;margin-top:-1px;">★</span>
@@ -1222,7 +1224,7 @@
     // Kompakter Aufbau-Hinweis
     html += `
       <div class="t3-info-banner" style="margin-bottom:14px;font-size:11.5px;">
-        <strong>Hinweis:</strong> Trockenbluttest-Direktkauf und §20-Kurse online befinden sich im Aufbau — im Studio beraten wir dich bereits jetzt zu allen Optionen.
+        <strong>Tipp:</strong> Verisana-Bluttests kannst du bequem von zuhause bestellen — deinen persönlichen Rabattcode erhältst du mit deiner kostenlosen KI-Auswertung per Mail.
       </div>`;
 
     // Ziel-spezifische CTAs
@@ -1241,7 +1243,7 @@
             <div class="t3-test-title">Trockenbluttest — gezielter Gesundheits-Check</div>
             <div style="margin-top:10px;">
               <button onclick="scrollToAiBox();" style="padding:10px 20px;background:var(--accent-green);color:#0a1628;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;width:100%;">🩸 Bluttest mit 10% Rabatt anfordern →</button>
-              <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center;">Persönlicher Verisana-Rabattcode LEVITA10 kommt mit deiner KI-Auswertung per Mail</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center;">Dein persönlicher Rabattcode kommt mit deiner KI-Auswertung per Mail</div>
             </div>
           </div>
           <div class="t3-test-desc">
