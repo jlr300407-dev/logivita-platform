@@ -1109,7 +1109,7 @@
           <div class="checkbox-row">
             <input type="checkbox" id="consent_ai_analysis" />
             <label for="consent_ai_analysis">Ja, ich möchte meine persönliche KI-Auswertung erhalten.
-              <span id="consentDetail1" style="display:none;color:var(--text-muted);font-size:10px;line-height:1.5;display:block;margin-top:4px;">Deine Angaben werden zur Erstellung der Auswertung an Anthropic PBC (USA) übermittelt — ausschließlich für diesen Zweck, nicht zum Training von KI-Modellen. Grundlage: Standardvertragsklauseln (Art. 46 DSGVO).</span>
+              <span id="consentDetail1" style="display:none;color:var(--text-muted);font-size:10px;line-height:1.5;margin-top:4px;">Deine Angaben werden zur Erstellung der Auswertung an Anthropic PBC (USA) übermittelt — ausschließlich für diesen Zweck, nicht zum Training von KI-Modellen. Grundlage: Standardvertragsklauseln (Art. 46 DSGVO).</span>
               <span onclick="toggleConsent1(event)" style="color:var(--text-muted);font-size:10px;cursor:pointer;text-decoration:underline;margin-left:4px;" id="consentToggle1">Details</span>
             </label>
           </div>
@@ -1235,7 +1235,7 @@
     html += supportHtml;
 
     // Trockenbluttest
-    if (bloodtestShown || score.bloodtest_hint) {
+    if (bloodtestShown || score.bloodtest_hint === true) {
       html += `<div class="t3-zone-title">💉 Laborwerte & Tests</div>`;
       html += `
         <div class="t3-test-card">
@@ -1705,8 +1705,18 @@
     if (getRisk("stress_level") >= 3) {
       html += `<div class="hint-box" style="background:rgba(255,160,0,0.08);border:1px solid rgba(255,160,0,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#ffb347;">🧠 Hoher Stresslevel</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Du gibst einen hohen oder sehr hohen Stresslevel an. Chronischer Stress wirkt sich langfristig auf Schlaf, Immunsystem und Herzgesundheit aus.</span><br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:rgba(255,160,0,0.15);color:#ffb347;border:1px solid rgba(255,160,0,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Stressgespräch vereinbaren →</a></div>`;
     }
+    // Verisana-Hinweis in Tab 1 — wenn bloodtest_hint aber noch kein Button gezeigt
+    if (score.bloodtest_hint === true && !bloodtestShown) {
+      html += `<div class="hint-box box-info" style="margin-bottom:12px;">
+        <strong>🔬 Bluttest-Orientierung</strong><br>
+        <span style="font-size:13px;line-height:1.6;">Auf Basis deines Profils könnte ein gezielter Bluttest weitere Klarheit bringen. Welcher Test für dich am sinnvollsten wäre, erfährst du in deiner persönlichen KI-Auswertung per Mail.</span>
+        <br><br><button onclick="scrollToAiBox();" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;border:none;cursor:pointer;margin-top:4px;">🩸 Bluttest mit 10% Rabatt anfordern →</button>
+      </div>`;
+      bloodtestShown = true;
+    }
+
     if (getRisk("dizziness_pale_nails") >= 3 && !bloodtestShown) {
-      html += `<div class="hint-box box-warning" style="margin-bottom:12px;"><strong>💉 Bluttest-Empfehlung</strong><br><span style="font-size:13px;line-height:1.6;">Auf Basis deiner Angaben könnte ein gezielter Bluttest interessante Werte liefern — z.B. Eisen, B12 oder Vitamin D. Gezielt testen statt raten.</span><br><br><button onclick="scrollToAiBox();" style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;border:none;cursor:pointer;margin-top:4px;">🩸 Bluttest mit 10% Rabatt anfordern →</button></div>`;
+      html += `<div class="hint-box box-warning" style="margin-bottom:12px;"><strong>💉 Bluttest-Empfehlung</strong><br><span style="font-size:13px;line-height:1.6;">Auf Basis deiner Angaben könnte ein gezielter Bluttest bei Bedarf zusätzliche Orientierung geben — z.B. zu Eisen, B12 oder Vitamin D.</span><br><br><button onclick="scrollToAiBox();" style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;border:none;cursor:pointer;margin-top:4px;">🩸 Bluttest mit 10% Rabatt anfordern →</button></div>`;
     }
     if (getRisk("sleep_latency") >= 3) {
       html += `<div class="hint-box" style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#a78bfa;">🌙 Starke Einschlafschwierigkeiten</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Mehr als eine Stunde zum Einschlafen zu brauchen ist ein relevantes Signal. Häufig stecken Stress, Bildschirmzeit oder ein unregelmäßiger Rhythmus dahinter.</span><br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Schlaf besprechen →</a></div>`;
@@ -1816,6 +1826,6 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.26.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.26.1</footer>
 </body>
 </html>
