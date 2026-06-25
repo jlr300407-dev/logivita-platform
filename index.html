@@ -318,10 +318,10 @@
     input.value = val;
     input.classList.toggle('filled', val !== '');
     // Zum nächsten Feld springen
-    if (val && index < 5) {
+    if (val && index < 7) {
       document.getElementById('pin' + (index + 1)).focus();
     }
-    // Submit-Button aktivieren wenn alle 6 Felder gefüllt
+    // Submit-Button aktivieren wenn alle 8 Felder gefüllt
     const allFilled = Array.from({length: 8}, (_, i) =>
       document.getElementById('pin' + i)?.value
     ).every(v => v && v.length === 1);
