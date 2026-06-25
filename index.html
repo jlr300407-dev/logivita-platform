@@ -265,7 +265,7 @@
     <div style="margin-bottom:26px;font-size:12px;color:rgba(255,255,255,0.50);letter-spacing:0.3px;">
       ⏱ ca. 5 Min.&nbsp;&nbsp;·&nbsp;&nbsp;📱 Smartphone&nbsp;&nbsp;·&nbsp;&nbsp;✉ KI-Auswertung
     </div>
-    <button onclick="scrollToAiBox();" style="display:block;width:100%;max-width:340px;margin:0 auto 14px;padding:16px 24px;background:#3ddc84;color:#0d1a14;font-size:17px;font-weight:800;border:none;border-radius:12px;cursor:pointer;">Jetzt kostenlos starten →</button>
+    <button onclick="document.getElementById('quiz-flow').scrollIntoView({behavior:'smooth'});" style="display:block;width:100%;max-width:340px;margin:0 auto 14px;padding:16px 24px;background:#3ddc84;color:#0d1a14;font-size:17px;font-weight:800;border:none;border-radius:12px;cursor:pointer;">Jetzt kostenlos starten →</button>
     <p style="margin:0 0 14px;font-size:11px;color:rgba(255,255,255,0.35);">Keine Registrierung · Keine Kosten · Kein Abo</p>
     <div id="hero-social-proof" style="font-size:12px;color:rgba(255,255,255,0.45);">
       <span style="color:#f5a623;">★★★★★</span>&nbsp; Bereits von <span id="hero-count" style="font-weight:700;color:rgba(255,255,255,0.75);">100+</span> Personen getestet
@@ -555,7 +555,7 @@
             <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Deine persönliche KI-Auswertung — kostenlos per E-Mail.</div>
           </div>
         </div>
-        <button class="next-btn" onclick="if(typeof fbq!=='undefined') fbq('track','Lead',{content_name:'check_start'}); nextStep();" style="font-size:17px;padding:18px;">Kostenlos starten →</button>
+        <button class="next-btn" onclick="if(typeof fbq!=='undefined') fbq('track','Lead',{content_name:'check_start'}); nextStep();" style="font-size:17px;padding:18px;">Check starten →</button>
         <div style="font-size:12px;color:var(--text-muted);margin-top:10px;">Ca. 5 Minuten · Kostenlos · Datenschutz beachtet</div>
       </div>`;
   }
@@ -1863,6 +1863,6 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.26.8</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.26.9</footer>
 </body>
 </html>
