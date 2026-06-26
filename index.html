@@ -956,16 +956,23 @@
       if (result.email_sent) {
         trackEvent('mail_sent_success');
         statusEl.innerHTML = `<div class="status-msg info-box box-success">✓ Deine individuelle Auswertung wurde per E-Mail versendet. Schau gleich in dein Postfach!</div>`;
+        btn.disabled = true; btn.innerText = "✓ Auswertung wurde versendet";
       } else {
-        trackEvent('mail_sent_success'); // Edge Function hat Auswertung erstellt auch ohne email_sent flag
+        trackEvent('mail_sent_success');
         statusEl.innerHTML = `<div class="status-msg info-box box-warning">Die Auswertung wurde erstellt — die E-Mail ist unterwegs. Falls sie nicht ankommt, prüfe deinen Spam-Ordner.</div>`;
+        btn.disabled = true; btn.innerText = "✓ Auswertung wurde versendet";
       }
     } catch (error) {
       clearTimeout(hintTimer);
-      // Mail wurde wahrscheinlich trotzdem gesendet — Edge Function wirft manchmal Fehler obwohl Mail ankam
-      trackEvent('mail_sent_success');
-      statusEl.innerHTML = `<div class="status-msg info-box box-warning">Die Verbindung hat etwas länger gedauert.<br><strong>Bitte prüfe dein Postfach in den nächsten Minuten.</strong><br><small style="color:var(--text-muted);">Falls keine E-Mail ankommt: info@le-vita.com</small></div>`;
-      btn.disabled = false; btn.innerText = "Individuelle Auswertung per E-Mail anfordern →";
+      // already_sent = Auswertung wurde bereits früher versendet
+      if (error.message && error.message.includes('bereits versendet')) {
+        statusEl.innerHTML = `<div class="status-msg info-box box-info">✓ Deine Auswertung wurde bereits per Mail versendet. Schau in dein Postfach — auch im Spam-Ordner.</div>`;
+        btn.disabled = true; btn.innerText = "✓ Bereits versendet";
+      } else {
+        trackEvent('mail_sent_success');
+        statusEl.innerHTML = `<div class="status-msg info-box box-warning">Die Verbindung hat etwas länger gedauert.<br><strong>Bitte prüfe dein Postfach in den nächsten Minuten.</strong><br><small style="color:var(--text-muted);">Falls keine E-Mail ankommt: info@le-vita.com</small></div>`;
+        btn.disabled = false; btn.innerText = "Individuelle Auswertung per E-Mail anfordern →";
+      }
     }
   }
 
@@ -1977,7 +1984,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.27.8</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.27.9</footer>
 
 
 </body>
