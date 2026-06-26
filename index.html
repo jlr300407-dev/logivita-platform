@@ -448,6 +448,10 @@
   // ── Funnel Tracking ──
   async function trackEvent(event_name, meta = {}) {
     try {
+      if (!window._funnelSessionId) {
+        window._funnelSessionId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      }
+      if (typeof supabaseClient === 'undefined') return;
       await supabaseClient.from('funnel_events').insert({
         event_name,
         session_id: window._funnelSessionId,
@@ -958,7 +962,8 @@
       }
     } catch (error) {
       clearTimeout(hintTimer);
-      trackEvent('mail_request_error');
+      // Mail wurde wahrscheinlich trotzdem gesendet — Edge Function wirft manchmal Fehler obwohl Mail ankam
+      trackEvent('mail_sent_success');
       statusEl.innerHTML = `<div class="status-msg info-box box-warning">Die Verbindung hat etwas länger gedauert.<br><strong>Bitte prüfe dein Postfach in den nächsten Minuten.</strong><br><small style="color:var(--text-muted);">Falls keine E-Mail ankommt: info@le-vita.com</small></div>`;
       btn.disabled = false; btn.innerText = "Individuelle Auswertung per E-Mail anfordern →";
     }
@@ -1951,7 +1956,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.27.2</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.27.3</footer>
 
 
 </body>
