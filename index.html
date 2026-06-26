@@ -425,6 +425,7 @@
         document.getElementById('quiz-flow').innerHTML = '';
         document.getElementById('loading').classList.add('hidden');
         showResult(result);
+        setTimeout(initStickyCta, 800);
       }
     } catch (e) {
       const msg = e.message || '';
@@ -1938,7 +1939,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.26.12</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.26.13</footer>
 
 <div id="sticky-cta">
   <div id="sticky-cta-inner">
