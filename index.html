@@ -82,7 +82,7 @@
     .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; margin-top: 3px; flex-shrink: 0; accent-color: var(--accent-green); }
     .checkbox-row label { font-size: 14px; color: var(--text-secondary); line-height: 1.5; cursor: pointer; }
     /* ── PATCH 5: KI-Consent kleiner ── */
-    .ai-box .checkbox-row label { font-size: 10.5px; color: var(--text-muted); line-height: 1.5; }
+    .ai-box .checkbox-row label { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
     .info-box { padding: 16px 18px; border-radius: var(--radius-sm); margin-top: 16px; line-height: 1.6; font-size: 14px; }
     .box-info { background: var(--accent-blue-dim); border-left: 4px solid var(--accent-blue); color: var(--text-secondary); }
     .box-success { background: var(--accent-green-dim); border-left: 4px solid var(--accent-green); color: var(--text-secondary); }
@@ -91,40 +91,8 @@
     .hidden { display: none !important; }
     .loading { text-align: center; padding: 40px; font-size: 16px; color: var(--text-secondary); font-weight: 500; }
     .result-area { display: none; }
-    .pilot-code-box { text-align: center; background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 20px; margin-bottom: 20px; font-size: 13px; color: var(--text-muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
-    .pilot-code-box strong { color: var(--text-primary); font-size: 15px; }
     .score-hero { display: flex; flex-direction: column; align-items: center; margin-bottom: 28px; }
 
-    /* ── Sticky CTA ── */
-    #sticky-cta {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 999;
-      background: #0d1a14;
-      box-shadow: 0 -4px 20px rgba(0,0,0,0.35);
-      padding: 12px 16px 16px;
-      display: none;
-      opacity: 0;
-      transform: translateY(10px);
-      transition: opacity 0.4s ease, transform 0.4s ease;
-    }
-    #sticky-cta.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    #sticky-cta-inner {
-      display: flex; align-items: center; gap: 12px; max-width: 480px; margin: 0 auto;
-    }
-    #sticky-cta-text {
-      flex: 1; min-width: 0;
-      font-size: 13px; font-weight: 600; color: #fff; line-height: 1.3;
-    }
-    #sticky-cta-sub {
-      font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 2px; font-weight: 400;
-    }
-    #sticky-cta-btn {
-      background: #3ddc84; color: #0d1a14; border: none; border-radius: 10px;
-      padding: 11px 16px; font-size: 13px; font-weight: 800; cursor: pointer;
-      white-space: nowrap; flex-shrink: 0;
-    }
     /* Legacy score-ring styles (kept for print) */
     .score-ring-wrap { position: relative; width: 190px; height: 190px; margin-bottom: 16px; }
     .score-ring-svg { width: 190px; height: 190px; transform: rotate(-90deg); }
@@ -990,39 +958,15 @@
   }
 
 
-  // ── Sticky CTA Logik ──
+  // ── mail_box_view Tracking ──
   function initStickyCta() {
-    const cta = document.getElementById('sticky-cta');
     const emailInput = document.getElementById('ai_email');
-    if (!cta) return;
-
-    // mail_box_view tracken wenn E-Mail-Feld sichtbar wird
-    const emailInputObs = document.getElementById('ai_email');
-    if (emailInputObs) {
+    if (emailInput) {
       const mailObserver = new IntersectionObserver((entries) => {
         entries.forEach(e => { if(e.isIntersecting) { trackEvent('mail_box_view'); mailObserver.disconnect(); } });
       }, { threshold: 0.5 });
-      mailObserver.observe(emailInputObs);
+      mailObserver.observe(emailInput);
     }
-
-    // Einblenden
-    cta.style.display = 'block';
-    setTimeout(() => cta.classList.add('visible'), 100);
-
-    // Ausblenden wenn E-Mail-Feld sichtbar ist
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          cta.classList.remove('visible');
-          setTimeout(() => { cta.style.display = 'none'; }, 400);
-        } else {
-          cta.style.display = 'block';
-          setTimeout(() => cta.classList.add('visible'), 50);
-        }
-      });
-    }, { threshold: 0.5 });
-
-    if (emailInput) observer.observe(emailInput);
   }
 
   function showResult(result) {
@@ -1063,8 +1007,6 @@
     const scoreLabel = correctedScoreLabel || score.score_label;
     const answersData = result.answers || [];
     let html = "";
-    html += `<div class="info-box box-success" style="margin-bottom:20px;"><strong>Dein Vital-Check wurde erfolgreich erstellt.</strong><br>Hier siehst du deine persönliche Auswertung. Eine individuelle Analyse per E-Mail kannst du weiter unten anfordern.</div>`;
-    html += `<div class="pilot-code-box">Deine Pilot-ID: <strong>${result.public_code}</strong></div>`;
 
     const sc = getScoreColor(totalScore);
     const weakCount = areas.filter(a => a.score < 75).length;
@@ -1119,7 +1061,7 @@
       <div class="result-tabs">
         <button class="result-tab active" id="rtab-ergebnis" onclick="switchResultTab('ergebnis')">Mein Ergebnis</button>
         <button class="result-tab" id="rtab-bereiche" onclick="switchResultTab('bereiche')">Meine Bereiche</button>
-        <button class="result-tab" id="rtab-empfehlungen" onclick="switchResultTab('empfehlungen')">Empfehlungen</button>
+        <button class="result-tab" id="rtab-empfehlungen" onclick="switchResultTab('empfehlungen')">Nächste Schritte</button>
       </div>`;
 
     // ════════════════════════════════════════════
@@ -1165,36 +1107,41 @@
         </div>
       </div>`;
 
-    // Basisdaten
-    html += `<div class="basisdaten-box">
-      ${name ? `<span class="pill">👤 ${name}</span>` : ""}
-      <span class="pill">Alter: ${personalData.age}</span>
-      <span class="pill">Geschlecht: ${personalData.gender}</span>
-      <span class="pill">Größe: ${personalData.height_cm} cm</span>
-      <span class="pill">Gewicht: ${personalData.weight_kg} kg</span>
-      <span class="pill">BMI: ${result.bmi}</span>
-      ${bioAge ? `<span class="pill">Vitalitäts-Alter: ${bioAge} J.</span>` : ""}
-      ${goalLabel ? `<span class="pill" style="background:var(--accent-green-dim);border-color:rgba(34,201,122,0.3);">${goalLabel}</span>` : ""}
-    </div>`;
-
-    // Level-Erklärung
-    html += renderVitalIndexBox(totalScore, scoreLabel);
-
-
-    // KI-Box Vorschau (vor Hebel) — kompakte Version
+    // Basisdaten — aufklappbar
+    const basisdatenId = 'basisdaten_' + Date.now();
     html += `
-      <div style="background:rgba(34,201,122,0.06);border:1px solid rgba(34,201,122,0.25);
-           border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;text-align:center;">
-        <div style="font-size:12px;font-weight:700;color:var(--accent-green);letter-spacing:0.5px;
-             text-transform:uppercase;margin-bottom:6px;">✦ Deine kostenlose KI-Auswertung wartet</div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;line-height:1.5;">
-          Was bedeutet dein Score konkret für dich — mit 3 personalisierten Schritten für die nächsten 6 Wochen.
-        </div>
-        <button onclick="scrollToAiBox()" style="background:var(--accent-green);color:#0d1a14;
-          border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:800;cursor:pointer;">
-          Auswertung anfordern →
+      <div style="margin-bottom:10px;">
+        <button onclick="const p=document.getElementById('${basisdatenId}');const b=this;p.style.display=p.style.display==='none'?'flex':'none';b.textContent=p.style.display==='none'?'Meine Angaben anzeigen ↓':'Meine Angaben ausblenden ↑';"
+          style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;padding:0;text-decoration:underline;">
+          Meine Angaben anzeigen ↓
         </button>
+        <div id="${basisdatenId}" style="display:none;flex-wrap:wrap;gap:6px;margin-top:8px;" class="basisdaten-box">
+          ${name ? `<span class="pill">👤 ${name}</span>` : ""}
+          <span class="pill">Alter: ${personalData.age}</span>
+          <span class="pill">Geschlecht: ${personalData.gender}</span>
+          <span class="pill">Größe: ${personalData.height_cm} cm</span>
+          <span class="pill">Gewicht: ${personalData.weight_kg} kg</span>
+          <span class="pill">BMI: ${result.bmi}</span>
+          ${bioAge ? `<span class="pill">Vitalitäts-Alter: ${bioAge} J.</span>` : ""}
+          ${goalLabel ? `<span class="pill" style="background:var(--accent-green-dim);border-color:rgba(34,201,122,0.3);">${goalLabel}</span>` : ""}
+        </div>
       </div>`;
+
+    // Level-Erklärung — aufklappbar
+    const vitalIndexId = 'vitalindex_' + Date.now();
+    html += `
+      <div style="margin-bottom:12px;">
+        <button onclick="const p=document.getElementById('${vitalIndexId}');const b=this;p.style.display=p.style.display==='none'?'block':'none';b.textContent=p.style.display==='none'?'Was bedeutet mein Level? ↓':'Was bedeutet mein Level? ↑';"
+          style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;padding:0;text-decoration:underline;">
+          Was bedeutet mein Level? ↓
+        </button>
+        <div id="${vitalIndexId}" style="display:none;margin-top:8px;">
+          ${renderVitalIndexBox(totalScore, scoreLabel)}
+        </div>
+      </div>`;
+
+
+
 
     // Haupthebel
     if (totalScore >= 85) {
@@ -1208,20 +1155,19 @@
       html += `<div class="hebel-box"><div class="hebel-icon">💡</div><div>
         <div class="hebel-title">Dein wichtigster Hebel heute</div>
         <div class="hebel-text"><strong>${AREA_ICONS[worst.key]||""} ${worst.label}</strong> ist dein stärkster Ansatzpunkt. Kleine Verbesserungen hier wirken sich auf alle anderen Bereiche aus.</div>
-        ${worst.score < 55 ? `
-          <div style="margin-top:10px;background:var(--brand-card);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;">
+        <div style="margin-top:10px;background:var(--brand-card);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;">
             ⚡ <strong style="color:var(--accent-green)">Sofort:</strong> ${getInsightNow(worst.key, worst.score, result.bmi, result)}<br><br>
             📅 <strong style="color:var(--accent-amber)">Diese Woche:</strong> ${getInsightSoon(worst.key, worst.score, result.bmi, result)}
-          </div>` : ""}
+          </div>
       </div></div>`;
     }
 
     // KI-Mail Box
     html += `
       <div class="ai-box">
-        <div class="ai-badge">✦ Deine kostenlose KI-Auswertung</div>
-        <div class="ai-title">Was bedeutet dein Vitalitäts-Alter für dich — konkret?</div>
-        <div class="ai-sub">Deine persönliche KI-Analyse mit 3 konkreten Schritten für die nächsten 6 Wochen. Kostenlos, direkt ins Postfach.</div>
+        <div class="ai-badge">✦ Dein persönlicher Vital-Plan</div>
+        <div class="ai-title">Meinen persönlichen Vital-Plan sichern</div>
+        <div class="ai-sub">Auf der Seite siehst du deinen Überblick. Per Mail bekommst du deinen persönlichen 6-Wochen-Plan, deine genauen nächsten Schritte, deinen PIN zum Wiederaufruf und deinen Re-Check-Plan.</div>
 
         <div style="background:rgba(34,201,122,0.06);border:1px solid rgba(34,201,122,0.18);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
           <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent-green);margin-bottom:10px;">Mit deiner Auswertung erhältst du</div>
@@ -1255,11 +1201,19 @@
           </div>
           <div class="checkbox-row">
             <input type="checkbox" id="consent_email_delivery" />
-            <label for="consent_email_delivery">Ja, die Auswertung darf mir per E-Mail zugeschickt werden.</label>
+            <label for="consent_email_delivery">Ja, mein Vital-Plan darf mir per E-Mail zugesendet werden. Kein Spam, Abmeldung jederzeit möglich.</label>
           </div>
         </div>
-        <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">✦ Meine KI-Auswertung jetzt kostenlos anfordern →</button>
+        <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">Meinen 6-Wochen-Vital-Plan per Mail sichern →</button>
         <div id="ai-status"></div>
+      </div>`;
+
+    // Feedback-Box nach Vital-Plan-Box
+    html += `
+      <div class="feedback-box" style="margin-top:8px;margin-bottom:4px;">
+        <h3>Wie hilfreich war der Check für dich? 🚀</h3>
+        <p>Dein Feedback hilft uns, den Vital-Check zu verbessern.</p>
+        <button class="next-btn" onclick="openGoogleForm()">Kurzes Feedback geben</button>
       </div>`;
 
     html += `</div>`; // Ende Tab 1
@@ -1394,8 +1348,16 @@
         </div>`;
     }
 
-    // Studio-Leistungen
-    html += `<div class="t3-zone-title">🏥 Leistungen im LeVITA Studio</div>`;
+    // Studio-Leistungen — aufklappbar
+    const studioId = 'studio_' + Date.now();
+    html += `
+      <div style="margin-bottom:12px;">
+        <button onclick="const p=document.getElementById('${studioId}');const b=this;p.style.display=p.style.display==='none'?'block':'none';b.textContent=p.style.display==='none'?'Leistungen im LeVITA Studio ansehen ↓':'Leistungen ausblenden ↑';"
+          style="width:100%;padding:12px 16px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-secondary);font-size:13px;font-weight:600;cursor:pointer;text-align:left;">
+          Leistungen im LeVITA Studio ansehen ↓
+        </button>
+        <div id="${studioId}" style="display:none;">
+    `;
     html += `
       <div class="t3-leistung-row">
         <div class="t3-leistung-icon">🫧</div>
@@ -1445,14 +1407,11 @@
         </div>
       </div>`;
 
-    html += `
-      <div class="feedback-box" style="margin-top:16px;">
-        <h3>Hilf uns, den Vital-Check zu verbessern 🚀</h3>
-        <p>Dein Feedback zählt — teile uns kurz mit, wie hilfreich die Auswertung für dich war.</p>
-        <button class="next-btn" onclick="openGoogleForm()">Feedback geben</button>
-      </div>`;
 
-    html += `<button class="secondary-btn" onclick="window.print()" style="margin-top:12px;">↓ Auswertung als PDF speichern</button>`;
+
+
+    html += `</div></div>`; // Ende aufklappbare Studio-Leistungen
+
     html += `<div class="disclaimer"><strong>Wichtiger Hinweis:</strong> Diese Auswertung ist keine Diagnose und ersetzt keine medizinische Beratung. Sie dient der Orientierung und Hilfe zur Selbsthilfe. Die Schwerpunkte basieren auf Empfehlungen von WHO, DGE und dem Bundesinstitut für Risikobewertung.</div>`;
     html += `
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
@@ -1966,17 +1925,8 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.26.14</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.27.0</footer>
 
-<div id="sticky-cta">
-  <div id="sticky-cta-inner">
-    <div id="sticky-cta-text">
-      ✦ Deine persönliche KI-Auswertung
-      <div id="sticky-cta-sub">+ 10% Rabatt auf Verisana-Bluttest inklusive</div>
-    </div>
-    <button id="sticky-cta-btn" onclick="scrollToAiBox()">Jetzt anfordern →</button>
-  </div>
-</div>
 
 </body>
 </html>
