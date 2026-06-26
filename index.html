@@ -371,6 +371,7 @@
   }
 
   async function loadResultWithPin(publicCode) {
+    window._isReviewMode = true; // Wiederaufruf — kein Funnel-Tracking
     const pin = Array.from({length: 8}, (_, i) =>
       document.getElementById('pin' + i)?.value || ''
     ).join('');
@@ -448,6 +449,7 @@
   // ── Funnel Tracking ──
   async function trackEvent(event_name, meta = {}) {
     try {
+      if (window._isReviewMode) return; // Wiederaufruf — nicht tracken
       if (!window._funnelSessionId) {
         window._funnelSessionId = Math.random().toString(36).slice(2) + Date.now().toString(36);
       }
@@ -1984,7 +1986,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.27.9</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.27.10</footer>
 
 
 </body>
