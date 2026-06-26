@@ -1243,8 +1243,16 @@
     html += `
       <div class="feedback-box" style="margin-top:8px;margin-bottom:4px;">
         <h3>Wie hilfreich war der Check für dich? 🚀</h3>
-        <p>Dein Feedback hilft uns, den Vital-Check zu verbessern.</p>
-        <button class="next-btn" onclick="openGoogleForm()">Kurzes Feedback geben</button>
+        <p>Dein Feedback hilft uns, den Vital-Check zu verbessern.<br>
+        Als Dankeschön erhältst du einen exklusiven Vorteil:</p>
+        <div style="background:rgba(34,201,122,0.08);border:1px solid rgba(34,201,122,0.25);border-radius:10px;padding:12px 14px;margin-bottom:14px;text-align:left;">
+          <div style="font-size:11px;font-weight:700;color:var(--accent-green);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">✦ Exklusiv für Feedback-Geber</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">5x VELUS JET für nur 50 €</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">statt 75 € (5 × 15 €) — 33% Ersparnis<br>
+          Angebot bis <strong>15.07.2026</strong> · Einlösen bis 30.09.2026 im LeVITA Studio</div>
+        </div>
+        <button class="next-btn" onclick="openGoogleForm()">Feedback geben & Vorteil sichern →</button>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">Nach dem Feedback erhältst du den Gutschein-Code per E-Mail.</div>
       </div>`;
 
     html += `</div>`; // Ende Tab 1
@@ -1968,7 +1976,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.27.6</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.27.7</footer>
 
 
 </body>
