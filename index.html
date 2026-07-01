@@ -396,7 +396,8 @@
         personalData.last_name = result.contact?.last_name || '';
         document.getElementById('quiz-flow').innerHTML = '';
         document.getElementById('loading').classList.add('hidden');
-        trackEvent('check_submitted', { score: result.score?.total_score });
+        window._currentPublicCode = result.public_code || null;
+      trackEvent('check_submitted', { score: result.score?.total_score, public_code: result.public_code || null });
       showResult(result);
         setTimeout(initStickyCta, 800);
       }
@@ -449,15 +450,21 @@
   // ── Funnel Tracking ──
   async function trackEvent(event_name, meta = {}) {
     try {
-      if (window._isReviewMode) return; // Wiederaufruf — nicht tracken
+      if (window._isReviewMode) return;
       if (!window._funnelSessionId) {
         window._funnelSessionId = Math.random().toString(36).slice(2) + Date.now().toString(36);
       }
       if (typeof supabaseClient === 'undefined') return;
+      const enriched = {
+        ...meta,
+        public_code: window._currentPublicCode || null,
+        source: document.referrer ? (document.referrer.includes('facebook') ? 'facebook' : document.referrer.includes('instagram') ? 'instagram' : 'other') : 'direct',
+        device: window.innerWidth < 600 ? 'mobile' : 'desktop'
+      };
       await supabaseClient.from('funnel_events').insert({
         event_name,
         session_id: window._funnelSessionId,
-        meta: Object.keys(meta).length ? meta : null
+        meta: enriched
       });
     } catch(e) { /* silent */ }
   }
@@ -608,8 +615,7 @@
         <div class="question-text">Deine persönlichen Angaben</div>
         <div class="help-text">Diese Angaben helfen uns, deinen Vitalitätsindex korrekt zu berechnen. Name ist optional.</div>
         <div class="form-grid">
-          <div class="form-field"><label>Vorname</label><input type="text" id="first_name" placeholder="optional" /></div>
-          <div class="form-field"><label>Nachname</label><input type="text" id="last_name" placeholder="optional" /></div>
+
           <div class="form-field"><label>Alter *</label><input type="number" id="age" placeholder="z.B. 38" min="14" max="100" /></div>
           <div class="form-field"><label>Geschlecht *</label>
             <select id="gender">
@@ -669,7 +675,12 @@
       const btns = activeStep.querySelectorAll(".option-btn");
       btns.forEach(btn => { if (btn.getAttribute("onclick") && btn.getAttribute("onclick").includes(optionId)) btn.classList.add("selected-flash"); });
     }
-    setTimeout(() => { personalData.goal_key = optionKey; personalData.goal_option_id = optionId; nextStep(); }, 200);
+    setTimeout(() => {
+      personalData.goal_key = optionKey;
+      personalData.goal_option_id = optionId;
+      trackEvent('step_answered', { step_index: currentStep, step_key: 'vital_goal', answer_key: optionKey || null });
+      nextStep();
+    }, 200);
   }
 
   function savePersonalData() {
@@ -685,9 +696,8 @@
     if (!gender) return alert("Bitte Geschlecht auswählen.");
     if (!height_cm || height_cm < 120 || height_cm > 230) return alert("Bitte eine gültige Größe eingeben.");
     if (!weight_kg || weight_kg < 35 || weight_kg > 250) return alert("Bitte ein gültiges Gewicht eingeben.");
-    personalData.first_name = document.getElementById("first_name").value.trim();
-    personalData.last_name = document.getElementById("last_name").value.trim();
     personalData.age = age; personalData.gender = gender; personalData.height_cm = height_cm; personalData.weight_kg = weight_kg;
+    trackEvent('personal_completed', { step_index: currentStep, age: personalData.age, gender: personalData.gender });
     const nextStepIndex = currentStep + 1;
     buildGroupedQuestionsForGender();
     buildSteps(nextStepIndex);
@@ -714,6 +724,13 @@
       selectedAnswers.push({ option_id: optionId });
       const optionKey = getOptionKeyById(optionId);
       const currentQ = groupedQuestions[currentStep];
+      // step_answered tracken
+      trackEvent('step_answered', {
+        step_index: currentStep,
+        step_key: currentQ?.question_key || null,
+        area_key: currentQ?.area_key || null,
+        answer_key: optionKey || null
+      });
       if (currentQ?.question_key === "supplement_usage" && optionKey === "supp_none") {
         groupedQuestions = groupedQuestions.filter(q => q.question_key !== "supplement_types");
         buildSteps(currentStep);
@@ -857,7 +874,6 @@
   }
 
   function nextStep() {
-    // Hero-Block ausblenden, Logo einblenden
     const hero = document.getElementById('hero-block');
     if (hero) hero.style.display = 'none';
     const logoArea = document.getElementById('logoArea');
@@ -866,9 +882,20 @@
     if (cur) cur.classList.remove("active");
     currentStep++;
     const nxt = document.getElementById(`step-${currentStep}`);
-    if (nxt) nxt.classList.add("active");
-    updateProgress();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (nxt) {
+      nxt.classList.add("active");
+      updateProgress();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      // step_view tracken
+      const stepQ = groupedQuestions[currentStep];
+      if (stepQ && stepQ.type !== 'intro' && stepQ.type !== 'consent') {
+        trackEvent('step_view', {
+          step_index: currentStep,
+          step_type: stepQ.type || 'question',
+          step_key: stepQ.question_key || stepQ.type || null
+        });
+      }
+    }
   }
 
   function updateProgress() {
@@ -1229,6 +1256,10 @@
               <span><strong style="color:var(--accent-amber);">Bonus beim Re-Check:</strong> kostenlose VELUS JET Wellness-Session im LeVITA Studio</span>
             </div>
           </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <input type="text" id="ai_firstname" placeholder="Dein Vorname" style="font-size:14px;" />
+          <input type="text" id="ai_lastname" placeholder="Nachname (optional)" style="font-size:14px;" />
         </div>
         <input type="email" id="ai_email" placeholder="deine@email.de" />
         <div class="ai-consent">
@@ -1986,7 +2017,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.27.10</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.0</footer>
 
 
 </body>
