@@ -397,8 +397,7 @@
         document.getElementById('quiz-flow').innerHTML = '';
         document.getElementById('loading').classList.add('hidden');
         window._currentPublicCode = result.public_code || null;
-      trackEvent('check_submitted', { score: result.score?.total_score, public_code: result.public_code || null });
-      showResult(result);
+        showResult(result);
         setTimeout(initStickyCta, 800);
       }
     } catch (e) {
@@ -889,10 +888,11 @@
       // step_view tracken
       const stepQ = groupedQuestions[currentStep];
       if (stepQ && stepQ.type !== 'intro' && stepQ.type !== 'consent') {
+        const svKey = stepQ.question_key || (stepQ.type === 'goal' ? 'vital_goal' : stepQ.type) || null;
         trackEvent('step_view', {
           step_index: currentStep,
           step_type: stepQ.type || 'question',
-          step_key: stepQ.question_key || stepQ.type || null
+          step_key: svKey
         });
       }
     }
@@ -931,8 +931,11 @@
     try {
       const result = await callFunction({ age:personalData.age, gender:personalData.gender, height_cm:personalData.height_cm, weight_kg:personalData.weight_kg, first_name:personalData.first_name||null, last_name:personalData.last_name||null, goal_key:personalData.goal_key||null, consent_privacy:true, consent_storage:true, answers:selectedAnswers });
       latestResult = result;
+      window._currentPublicCode = result.public_code || null;
+      trackEvent('check_submitted', { score: result.score?.total_score, public_code: result.public_code || null });
       if (typeof fbq !== 'undefined') fbq('track', 'CompleteRegistration', { content_name: 'check_complete', goal: personalData.goal_key || 'unknown' });
       showResult(result);
+      setTimeout(initStickyCta, 800);
     } catch (error) {
       alert("Fehler: " + error.message);
       btn.disabled = false; btn.innerText = "Auswertung erstellen →";
@@ -2018,7 +2021,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.1</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.2</footer>
 
 
 </body>
