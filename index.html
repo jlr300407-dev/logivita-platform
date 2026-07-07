@@ -265,7 +265,7 @@
     <h1 style="margin:0 0 12px;font-size:30px;font-weight:800;color:#ffffff;line-height:1.2;letter-spacing:-0.5px;">Wie vital bist du wirklich?</h1>
     <p style="margin:0 auto 22px;font-size:16px;color:rgba(255,255,255,0.72);line-height:1.55;max-width:340px;">Der kostenlose Vitalitäts-Check zeigt dir in ca. 5 Minuten, wo du heute stehst.</p>
     <div style="margin-bottom:26px;font-size:12px;color:rgba(255,255,255,0.50);letter-spacing:0.3px;">
-      ⏱ ca. 5 Min.&nbsp;&nbsp;·&nbsp;&nbsp;📱 Smartphone&nbsp;&nbsp;·&nbsp;&nbsp;✉ KI-Auswertung
+      🔬 Wissenschaftlich fundiert&nbsp;&nbsp;·&nbsp;&nbsp;🔒 Datenschutz&nbsp;&nbsp;·&nbsp;&nbsp;✉ Vital-Plan
     </div>
     <button onclick="startDirectCheck();" style="display:block;width:100%;max-width:340px;margin:0 auto 14px;padding:16px 24px;background:#3ddc84;color:#0d1a14;font-size:17px;font-weight:800;border:none;border-radius:12px;cursor:pointer;">Jetzt kostenlos starten →</button>
     <p style="margin:0 0 14px;font-size:11px;color:rgba(255,255,255,0.35);">Keine Registrierung · Keine Kosten · Kein Abo</p>
@@ -281,7 +281,7 @@
     <div class="logo-name">Le<span>VITA</span></div>
     <div class="logo-sub">powered by <strong>LogiVita</strong></div>
   </div>
-  <div class="progress-wrap" id="progressWrap">
+  <div class="progress-wrap hidden" id="progressWrap">
     <div class="progress-meta">
       <div class="progress-left">
         <button class="progress-back-btn hidden" id="backBtn" onclick="goBack()" title="Zurück">←</button>
@@ -291,8 +291,8 @@
     </div>
     <div class="progress-track"><div id="progress-fill"></div></div>
   </div>
-  <div id="loading" class="loading">Fragen werden geladen…</div>
-  <div id="quiz-flow"></div>
+  <div id="loading" class="loading hidden">Fragen werden geladen…</div>
+  <div id="quiz-flow" class="hidden"></div>
   <div id="result-area" class="result-area">
     <div id="result-content"></div>
   </div>
@@ -428,8 +428,11 @@
     const codeParam = urlParams.get("code");
     if (codeParam) {
       // PIN-Eingabe-Screen anzeigen
+      const heroEl = document.getElementById('hero-block');
+      if (heroEl) heroEl.style.display = 'none';
       document.getElementById("loading").classList.add("hidden");
       document.getElementById("progressWrap").style.display = "none";
+      document.getElementById("quiz-flow").classList.remove("hidden");
       document.getElementById("quiz-flow").innerHTML = buildPinScreen(codeParam);
       return;
     }
@@ -441,6 +444,7 @@
       document.getElementById("loading").classList.add("hidden");
       updateProgress();
     } catch (error) {
+      document.getElementById("loading").classList.remove("hidden");
       document.getElementById("loading").innerHTML = `<div class="info-box box-danger"><strong>Fehler beim Laden</strong><br>${error.message}</div>`;
     }
   }
@@ -508,7 +512,6 @@
     window._goalQuestion = goalQuestion;
     const fishQuestionKeys = ["omega3_fish", "fish_frequency", "fish_consumption", "fish_intake"];
     groupedQuestions = [
-      { type:"intro" },
       goalQuestion ? { type:"goal", question:goalQuestion } : null,
       { type:"personal" },
       ...questions.filter(q => !fishQuestionKeys.some(fk => q.question_key?.includes(fk))),
@@ -537,7 +540,6 @@
     });
     const goalQuestion = window._goalQuestion || null;
     groupedQuestions = [
-      { type:"intro" },
       goalQuestion ? { type:"goal", question:goalQuestion } : null,
       { type:"personal" },
       ...filtered,
@@ -552,46 +554,12 @@
       const div = document.createElement("div");
       div.className = `question-step${index === activeIndex ? " active" : ""}`;
       div.id = `step-${index}`;
-      if (step.type === "intro") div.innerHTML = introStepHtml();
-      else if (step.type === "goal") div.innerHTML = goalStepHtml(step.question);
+      if (step.type === "goal") div.innerHTML = goalStepHtml(step.question);
       else if (step.type === "personal") div.innerHTML = personalStepHtml();
       else if (step.type === "consent") div.innerHTML = consentStepHtml();
       else div.innerHTML = questionStepHtml(step);
       flow.appendChild(div);
     });
-  }
-
-  function introStepHtml() {
-    return `
-      <div class="card" style="text-align:center;padding:32px 24px;">
-        <div style="font-size:40px;margin-bottom:16px;">🌿</div>
-        <div style="font-family:'DM Serif Display',serif;font-size:26px;font-weight:700;color:var(--text-primary);margin-bottom:10px;line-height:1.3;">Dein persönlicher Vitalitäts-Check</div>
-        <div style="font-size:15px;color:var(--text-secondary);line-height:1.7;margin-bottom:28px;max-width:480px;margin-left:auto;margin-right:auto;">Finde in 5 Minuten heraus, welche Hebel bei Schlaf, Energie, Ernährung oder Bewegung bei dir am stärksten wirken — kostenlos, sofort, ohne Anmeldung.</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px;text-align:left;">
-          <div style="background:var(--accent-green-dim);border:1px solid rgba(34,201,122,0.2);border-radius:var(--radius-sm);padding:14px;">
-            <div style="font-size:18px;margin-bottom:6px;">⚡</div>
-            <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Vitalitäts-Index</div>
-            <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Dein persönlicher Score von 0–100 — sofort nach dem Test.</div>
-          </div>
-          <div style="background:var(--accent-green-dim);border:1px solid rgba(34,201,122,0.2);border-radius:var(--radius-sm);padding:14px;">
-            <div style="font-size:18px;margin-bottom:6px;">🧬</div>
-            <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Vitalitäts-Alter</div>
-            <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Ein Orientierungswert basierend auf deinen Lebensgewohnheiten — überrascht oft.</div>
-          </div>
-          <div style="background:var(--accent-blue-dim);border:1px solid rgba(59,158,255,0.2);border-radius:var(--radius-sm);padding:14px;">
-            <div style="font-size:18px;margin-bottom:6px;">🎯</div>
-            <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Deine Hebel</div>
-            <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Wo du mit kleinem Aufwand den größten Unterschied machst.</div>
-          </div>
-          <div style="background:var(--accent-blue-dim);border:1px solid rgba(59,158,255,0.2);border-radius:var(--radius-sm);padding:14px;">
-            <div style="font-size:18px;margin-bottom:6px;">📧</div>
-            <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Individuelle Analyse</div>
-            <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Deine persönliche KI-Auswertung — kostenlos per E-Mail.</div>
-          </div>
-        </div>
-        <button class="next-btn" onclick="if(typeof fbq!=='undefined') fbq('track','Lead',{content_name:'check_start'}); window._isReviewMode = false; trackEvent('check_start_click'); nextStep();" style="font-size:17px;padding:18px;">Check starten →</button>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:10px;">Ca. 5 Minuten · Kostenlos · Datenschutz beachtet</div>
-      </div>`;
   }
 
   function goalStepHtml(q) {
@@ -612,7 +580,7 @@
       <div class="card">
         <div class="area-badge">👤 Basisdaten</div>
         <div class="question-text">Deine persönlichen Angaben</div>
-        <div class="help-text">Diese Angaben helfen uns, deinen Vitalitätsindex korrekt zu berechnen. Name ist optional.</div>
+        <div class="help-text">Für deinen persönlichen Vitalitäts-Index brauchen wir noch drei Angaben — mehr nicht. Name ist optional.</div>
         <div class="form-grid">
 
           <div class="form-field"><label>Alter *</label><input type="number" id="age" placeholder="z.B. 38" min="14" max="100" /></div>
@@ -813,6 +781,19 @@
   }
 
   function goBack() {
+    if (currentStep === 0) {
+      // Ganz zurück — zur Hero-Seite, nicht in den Fragen-Flow
+      const step0 = document.getElementById('step-0');
+      if (step0) step0.classList.remove('active');
+      document.getElementById('quiz-flow')?.classList.add('hidden');
+      document.getElementById('progressWrap')?.classList.add('hidden');
+      const logoArea = document.getElementById('logoArea');
+      if (logoArea) logoArea.style.display = 'none';
+      const hero = document.getElementById('hero-block');
+      if (hero) hero.style.display = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     if (currentStep < 1) return;
     const cur = document.getElementById(`step-${currentStep}`);
     if (cur) cur.classList.remove("active");
@@ -862,12 +843,11 @@
     if (hero) hero.style.display = 'none';
     const logoArea = document.getElementById('logoArea');
     if (logoArea) logoArea.style.display = '';
-    // step-0 (intro) deaktivieren, step-1 aktivieren
-    const step0 = document.getElementById('step-0');
-    if (step0) step0.classList.remove('active');
-    currentStep = 1;
-    const step1 = document.getElementById('step-1');
-    if (step1) step1.classList.add('active');
+    document.getElementById('progressWrap')?.classList.remove('hidden');
+    document.getElementById('quiz-flow')?.classList.remove('hidden');
+    document.getElementById('step-0')?.classList.add('active');
+    // Kein Intro-Step mehr: step-0 (Ziel-Frage) ist bereits aktiv durch buildSteps(0)
+    currentStep = 0;
     updateProgress();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -905,7 +885,7 @@
     const backBtn = document.getElementById("backBtn");
     const q = groupedQuestions[currentStep];
     if (backBtn) {
-      const showBack = currentStep >= 1 && q && q.type !== "consent" && q.type !== "intro";
+      const showBack = q && q.type !== "consent";
       backBtn.classList.toggle("hidden", !showBack);
     }
     if (!q) return;
@@ -2017,8 +1997,10 @@
     Object.assign(personalData, { age:null, gender:"", height_cm:null, weight_kg:null, email:"", first_name:"", last_name:"", consent_privacy:false, consent_storage:false, goal_key:"", goal_option_id:"" });
     document.getElementById("result-area").style.display = "none";
     document.getElementById("result-content").innerHTML = "";
-    document.getElementById("quiz-flow").style.display = "block";
-    document.getElementById("progressWrap").style.display = "block";
+    document.getElementById("quiz-flow").style.display = "";
+    document.getElementById("quiz-flow").classList.remove("hidden");
+    document.getElementById("progressWrap").style.display = "";
+    document.getElementById("progressWrap").classList.remove("hidden");
     document.getElementById("loading").classList.remove("hidden");
     document.getElementById("loading").textContent = "Fragen werden geladen…";
     init();
