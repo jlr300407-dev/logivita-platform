@@ -511,7 +511,8 @@
         ...meta,
         public_code: window._currentPublicCode || null,
         source: document.referrer ? (document.referrer.includes('facebook') ? 'facebook' : document.referrer.includes('instagram') ? 'instagram' : 'other') : 'direct',
-        device: window.innerWidth < 600 ? 'mobile' : 'desktop'
+        device: window.innerWidth < 600 ? 'mobile' : 'desktop',
+        ...(window._utm || {})
       };
       await supabaseClient.from('funnel_events').insert({
         event_name,
@@ -525,6 +526,19 @@
   // Session-ID sofort beim Laden setzen
   if (!window._funnelSessionId) {
     window._funnelSessionId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+
+  // UTM-Parameter einmalig beim Laden erfassen (persistent für die gesamte Session)
+  if (typeof window._utm === 'undefined') {
+    try {
+      const p = new URLSearchParams(window.location.search);
+      const utm = {};
+      ['utm_source','utm_medium','utm_campaign','utm_content','utm_term'].forEach(k => {
+        const v = p.get(k);
+        if (v) utm[k] = String(v).slice(0, 100); // Länge begrenzen zur Sicherheit
+      });
+      window._utm = utm;
+    } catch(e) { window._utm = {}; }
   }
 
   async function loadHeroCount() {
@@ -2061,7 +2075,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.8</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.9</footer>
 
 
 </body>
