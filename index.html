@@ -254,13 +254,17 @@
   <style>
     #hero-img-mobile { display:block; }
     #hero-img-desktop { display:none; }
+    /* Lesbarkeit auf Bild-Hintergrund: Text-Shadow für alle Hero-Textblöcke */
+    #hero-title, #hero-subline, #hero-features {
+      text-shadow: 0 2px 12px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.55);
+    }
     @media(min-width:640px) {
       #hero-img-mobile { display:none; }
       #hero-img-desktop { display:block; }
       #hero-block { min-height: 580px !important; }
       #hero-title { font-size: 46px !important; letter-spacing: -1px !important; }
       #hero-subline { max-width: 480px !important; font-size: 18px !important; }
-      #hero-features { color: rgba(255,255,255,0.85) !important; font-size: 13px !important; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+      #hero-features { color: rgba(255,255,255,0.85) !important; font-size: 13px !important; }
       #hero-cta { max-width: 480px !important; }
     }
   </style>
@@ -316,8 +320,8 @@
     </div>
     <div class="vp-item">
       <div class="vp-icon">📧</div>
-      <div class="vp-title">Individuelle Analyse</div>
-      <div class="vp-desc">Deine persönliche KI-Auswertung — kostenlos per E-Mail.</div>
+      <div class="vp-title">Dein Vital-Plan</div>
+      <div class="vp-desc">Dein persönlicher Vital-Plan — direkt per E-Mail.</div>
     </div>
   </div>
 </section>
@@ -2075,7 +2079,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.9</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.10</footer>
 
 
 </body>
