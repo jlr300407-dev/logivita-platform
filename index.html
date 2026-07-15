@@ -66,6 +66,12 @@
     .option-btn::before { content: ''; width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.15); flex-shrink: 0; transition: all 0.18s; }
     .option-btn:hover { border-color: var(--accent-green); background: var(--accent-green-dim); transform: translateX(2px); }
     .option-btn:hover::before { border-color: var(--accent-green); background: var(--accent-green); }
+    /* Multi-Choice (Sofort-Fix 2): Checkbox-Optik statt Radio-Kreis */
+    .option-btn.multi-option input { display: none; }
+    .option-btn.multi-option::before { border-radius: 5px; }
+    .option-btn.multi-option:hover::before { background: transparent; }
+    .option-btn.multi-option.checked { border-color: var(--accent-green); background: var(--accent-green-dim); }
+    .option-btn.multi-option.checked::before { border-color: var(--accent-green); background: var(--accent-green); content: '✓'; color: #0a1628; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
     .form-field { display: flex; flex-direction: column; gap: 5px; }
     .form-field label { font-size: 11px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.8px; text-transform: uppercase; }
@@ -516,6 +522,7 @@
         public_code: window._currentPublicCode || null,
         source: document.referrer ? (document.referrer.includes('facebook') ? 'facebook' : document.referrer.includes('instagram') ? 'instagram' : 'other') : 'direct',
         device: window.innerWidth < 600 ? 'mobile' : 'desktop',
+        is_internal: window._isInternal === true ? true : undefined, // Sofort-Fix 5: Testdaten markieren (undefined wird von JSON.stringify entfernt)
         ...(window._utm || {})
       };
       await supabaseClient.from('funnel_events').insert({
@@ -544,6 +551,25 @@
       window._utm = utm;
     } catch(e) { window._utm = {}; }
   }
+
+  // ── Sofort-Fix 5: Internes Test-Flag (?internal=1) ──
+  // Markiert alle Funnel-Events dieser Browser-Session als is_internal=true,
+  // damit eigene Tests (Deploy-Verifikation, Debugging) das Dashboard nicht verzerren.
+  try {
+    const _ip = new URLSearchParams(window.location.search);
+    if (_ip.get('internal') === '1') sessionStorage.setItem('levita_internal', '1');
+    window._isInternal = sessionStorage.getItem('levita_internal') === '1';
+  } catch(e) { window._isInternal = false; }
+
+  // ── Sofort-Fix 3: landingpage_view — Funnel-Stufe VOR dem Check-Start ──
+  // Feuert genau einmal pro Seitenladen (= einmal pro session_id, konsistent zu allen anderen Events).
+  // Nicht beim Wiederaufruf per ?code= (Review-Modus, kein Funnel).
+  try {
+    const _lp = new URLSearchParams(window.location.search);
+    if (!_lp.get('code')) {
+      trackEvent('landingpage_view');
+    }
+  } catch(e) { /* silent */ }
 
   async function loadHeroCount() {
     try {
@@ -667,14 +693,53 @@
       </div>`;
   }
 
+  // ── Multi-Choice (Sofort-Fix 2): supplement_types als echte Mehrfachauswahl ──
+  // Erweiterbar über question_type='multi_choice' in der DB (Anhang F) oder die Key-Liste hier.
+  const MULTI_CHOICE_KEYS = ["supplement_types", "supplement_types_detail"];
+  function isMultiChoice(q) {
+    return q && (q.question_type === "multi_choice" || MULTI_CHOICE_KEYS.includes(q.question_key));
+  }
+
   function questionStepHtml(q) {
     const icon = AREA_ICONS[q.area_key] || "●";
     let html = `<div class="card"><div class="area-badge">${icon} ${q.area_label || q.area_key}</div><div class="question-text">${q.question_text}</div>`;
     if (q.help_text) html += `<div class="help-text">${q.help_text}</div>`;
+    if (isMultiChoice(q)) {
+      html += `<div class="help-text" style="margin-bottom:10px;">Mehrfachauswahl möglich — wähle alles Zutreffende aus.</div>`;
+      html += `<div class="options-grid">`;
+      q.options.forEach(opt => {
+        html += `<label class="option-btn multi-option"><input type="checkbox" value="${opt.option_id}" onchange="toggleMultiOption(this)">${opt.option_text}</label>`;
+      });
+      html += `</div><button class="next-btn" style="margin-top:16px;" onclick="saveMultiAnswer()">Weiter →</button></div>`;
+      return html;
+    }
     html += `<div class="options-grid">`;
     q.options.forEach(opt => { html += `<button class="option-btn" onclick="saveAnswer('${opt.option_id}')">${opt.option_text}</button>`; });
     html += `</div></div>`;
     return html;
+  }
+
+  function toggleMultiOption(input) {
+    const label = input.closest('label');
+    if (label) label.classList.toggle('checked', input.checked);
+  }
+
+  function saveMultiAnswer() {
+    const activeStep = document.getElementById(`step-${currentStep}`);
+    if (!activeStep) return;
+    const checked = Array.from(activeStep.querySelectorAll('input[type="checkbox"]:checked'));
+    if (checked.length === 0) { alert("Bitte wähle mindestens eine Option aus."); return; }
+    const currentQ = groupedQuestions[currentStep];
+    const optionIds = checked.map(c => c.value);
+    optionIds.forEach(id => selectedAnswers.push({ option_id: id, question_key: currentQ?.question_key || null }));
+    trackEvent('step_answered', {
+      step_index: currentStep,
+      step_key: currentQ?.question_key || null,
+      area_key: currentQ?.area_key || null,
+      answer_key: optionIds.map(id => getOptionKeyById(id)).filter(Boolean).join(',') || null,
+      multi_count: optionIds.length
+    });
+    nextStep();
   }
 
   function consentStepHtml() {
@@ -755,7 +820,7 @@
       btns.forEach(btn => { if (btn.getAttribute("onclick") && btn.getAttribute("onclick").includes(optionId)) btn.classList.add("selected-flash"); });
     }
     setTimeout(() => {
-      selectedAnswers.push({ option_id: optionId });
+      selectedAnswers.push({ option_id: optionId, question_key: groupedQuestions[currentStep]?.question_key || null });
       const optionKey = getOptionKeyById(optionId);
       const currentQ = groupedQuestions[currentStep];
       // step_answered tracken
@@ -868,7 +933,14 @@
     if (cur) cur.classList.remove("active");
     currentStep--;
     const prevQ = groupedQuestions[currentStep];
-    if (prevQ && prevQ.type !== "intro" && prevQ.type !== "goal" && prevQ.type !== "personal" && prevQ.type !== "consent") selectedAnswers.pop();
+    if (prevQ && prevQ.type !== "intro" && prevQ.type !== "goal" && prevQ.type !== "personal" && prevQ.type !== "consent") {
+      // Multi-Choice-fähig: ALLE Antworten dieser Frage entfernen (bei Single-Choice ist das genau eine)
+      if (prevQ.question_key && selectedAnswers.some(a => a.question_key === prevQ.question_key)) {
+        selectedAnswers = selectedAnswers.filter(a => a.question_key !== prevQ.question_key);
+      } else {
+        selectedAnswers.pop(); // Fallback für Alt-Einträge ohne question_key
+      }
+    }
     const backQ = groupedQuestions[currentStep];
     if (backQ?.question_key === "supplement_usage") {
       const hasSupplTypes = groupedQuestions.some(q => q.question_key === "supplement_types");
@@ -2054,7 +2126,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.12</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.13</footer>
 
 
 </body>
