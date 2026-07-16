@@ -1080,6 +1080,12 @@
     }, 200);
   }
 
+  // Feedback-Box erst nach bestätigtem Mail-Versand zeigen (v1.28.14)
+  function showFeedbackBox() {
+    const fb = document.getElementById('feedbackBox');
+    if (fb) fb.style.display = '';
+  }
+
   function toggleConsent1(e) {
     e.preventDefault(); e.stopPropagation();
     const detail = document.getElementById('consentDetail1');
@@ -1108,14 +1114,17 @@
     try {
       const result = await callFunction({ mode:"request_ai_analysis", public_code:latestResult.public_code, email, consent_ai_analysis:true, consent_email_delivery:true });
       clearTimeout(hintTimer);
+      // Ehrliches Event-Reporting (v1.28.14, Post-Mortem 11.07.):
+      // mail_sent_success NUR bei bestätigtem email_sent:true — nie optimistisch.
       if (result.email_sent) {
-        trackEvent('mail_sent_success');
-        statusEl.innerHTML = `<div class="status-msg info-box box-success">✓ Deine individuelle Auswertung wurde per E-Mail versendet. Schau gleich in dein Postfach!</div>`;
-        btn.disabled = true; btn.innerText = "✓ Auswertung wurde versendet";
+        trackEvent('mail_sent_success', { email_sent: true });
+        statusEl.innerHTML = `<div class="status-msg info-box box-success">✓ Dein Vital-Plan wurde an <strong>${email}</strong> versendet. Schau gleich in dein Postfach — ggf. auch im Spam-Ordner.</div>`;
+        btn.disabled = true; btn.innerText = "✓ Vital-Plan wurde versendet";
+        showFeedbackBox();
       } else {
-        trackEvent('mail_sent_success');
-        statusEl.innerHTML = `<div class="status-msg info-box box-warning">Die Auswertung wurde erstellt — die E-Mail ist unterwegs. Falls sie nicht ankommt, prüfe deinen Spam-Ordner.</div>`;
-        btn.disabled = true; btn.innerText = "✓ Auswertung wurde versendet";
+        trackEvent('mail_sent_unconfirmed', { email_sent: false });
+        statusEl.innerHTML = `<div class="status-msg info-box box-warning">Deine Auswertung wurde erstellt, aber der E-Mail-Versand konnte nicht bestätigt werden. Bitte prüfe in ein paar Minuten dein Postfach (auch Spam). Falls nichts ankommt: <strong>info@le-vita.com</strong></div>`;
+        btn.disabled = false; btn.innerText = "Erneut versuchen →";
       }
     } catch (error) {
       clearTimeout(hintTimer);
@@ -1123,10 +1132,12 @@
       if (error.message && error.message.includes('bereits versendet')) {
         statusEl.innerHTML = `<div class="status-msg info-box box-info">✓ Deine Auswertung wurde bereits per Mail versendet. Schau in dein Postfach — auch im Spam-Ordner.</div>`;
         btn.disabled = true; btn.innerText = "✓ Bereits versendet";
+        showFeedbackBox();
       } else {
-        trackEvent('mail_sent_success');
-        statusEl.innerHTML = `<div class="status-msg info-box box-warning">Die Verbindung hat etwas länger gedauert.<br><strong>Bitte prüfe dein Postfach in den nächsten Minuten.</strong><br><small style="color:var(--text-muted);">Falls keine E-Mail ankommt: info@le-vita.com</small></div>`;
-        btn.disabled = false; btn.innerText = "Individuelle Auswertung per E-Mail anfordern →";
+        // Ehrliche Fehlermeldung statt beschwichtigendem "prüfe dein Postfach" (v1.28.14)
+        trackEvent('mail_send_error', { error_message: String(error.message || '').slice(0, 200) });
+        statusEl.innerHTML = `<div class="status-msg info-box box-danger">Beim Versand ist etwas schiefgelaufen — deine Auswertung wurde <strong>nicht</strong> versendet.<br>Bitte versuche es in ein paar Minuten erneut oder melde dich bei uns: <strong>info@le-vita.com</strong></div>`;
+        btn.disabled = false; btn.innerText = "Erneut versuchen →";
       }
     }
   }
@@ -1355,16 +1366,38 @@
       </div></div>`;
     }
 
-    // KI-Mail Box
+    // KI-Mail Box mit Vital-Plan-Teaser (v1.28.14):
+    // Statt abstrakter Beschreibung das konkrete Inhaltsverzeichnis DIESES Plans —
+    // regelbasiert aus dem Ergebnis generiert, jede Zeile beschreibt echten Mail-Inhalt.
+    const goalTeaserLabels = {
+      goal_energy: "Mehr Energie im Alltag", goal_weight: "Figur & Wohlfühlgewicht",
+      goal_fitness: "Mehr Kraft & Fitness", goal_supplements: "Klarheit bei Nährstoffen",
+      goal_longevity: "Gesund älter werden", goal_prevention: "Vorsorge & Prävention",
+      goal_curious: "deinen Standort bestimmen"
+    };
+    const goalKeyForTeaser = personalData.goal_key || result.submission?.goal_key || "";
+    const goalTeaser = goalTeaserLabels[goalKeyForTeaser] || "deine wichtigsten Ziele";
+    const topPrio = (result.score?.top_priorities || [])[0] || null;
+    const teaserRow = (icon, strong, rest) =>
+      `<div style="display:flex;gap:10px;align-items:flex-start;text-align:left;">
+        <span style="flex:none;font-size:15px;line-height:1.5;">${icon}</span>
+        <span style="font-size:13.5px;line-height:1.55;color:var(--text-secondary);"><strong style="color:var(--text-primary);">${strong}</strong> — ${rest}</span>
+      </div>`;
+    let teaserRows = "";
+    if (topPrio && topPrio.label) {
+      teaserRows += teaserRow("📌", `Dein größter Hebel: ${topPrio.label} (${Math.round(Number(topPrio.score))}/100)`, "die eine Änderung, die bei dir den größten Unterschied macht");
+    }
+    teaserRows += teaserRow("🎯", `Dein 6-Wochen-Fahrplan für „${goalTeaser}“`, "konkret, Schritt für Schritt");
+    if (result.score?.bloodtest_hint) {
+      teaserRows += teaserRow("🩸", "Welche Blutwerte für dich sinnvoll wären", "und welche du dir sparen kannst");
+    }
+    teaserRows += teaserRow("🔑", "Dein persönlicher PIN", "ruf deine Auswertung jederzeit wieder auf und vergleiche beim nächsten Check in 8–12 Wochen, was sich verändert hat");
     html += `
       <div class="ai-box">
         <div class="ai-badge">✦ Dein persönlicher Vital-Plan</div>
-        <div class="ai-title">Meinen persönlichen Vital-Plan sichern</div>
-        <div class="ai-sub">Dein 6-Wochen-Plan mit deinen konkreten nächsten Schritten — plus PIN, um deine Auswertung jederzeit wieder aufzurufen und beim Re-Check deine Entwicklung zu vergleichen.</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-          <input type="text" id="ai_firstname" placeholder="Dein Vorname" style="font-size:14px;" />
-          <input type="text" id="ai_lastname" placeholder="Nachname (optional)" style="font-size:14px;" />
-        </div>
+        <div class="ai-title">Das steht in deinem Vital-Plan:</div>
+        <div style="display:flex;flex-direction:column;gap:9px;margin:12px 0 16px;">${teaserRows}</div>
+        <div class="ai-sub" style="margin-bottom:8px;">Wohin dürfen wir deinen Plan schicken?</div>
         <input type="email" id="ai_email" placeholder="deine@email.de" />
         <div class="ai-consent">
           <div class="checkbox-row">
@@ -1379,27 +1412,21 @@
             <label for="consent_email_delivery">Ja, mein Vital-Plan darf mir per E-Mail zugesendet werden. Kein Spam, Abmeldung jederzeit möglich.</label>
           </div>
         </div>
-        <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">Vital-Plan per Mail sichern →</button>
+        <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">Vital-Plan zusenden →</button>
         <div id="ai-status"></div>
-        <div style="margin-top:10px;font-size:11.5px;color:var(--text-secondary);text-align:center;">💡 Ohne Mail kein Verlauf: Nur mit deinem PIN kannst du beim nächsten Check deinen Fortschritt sehen.</div>
         <div style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center;"><span style="color:var(--accent-green);">✓</span> Keine Werbung, keine Weitergabe an Dritte, jederzeit löschbar</div>
       </div>`;
 
-    // Feedback-Box nach Vital-Plan-Box
+    // Feedback-Box — erscheint erst NACH erfolgreicher Mail-Anforderung (v1.28.14):
+    // konkurriert sonst mit der Vital-Plan-Box um denselben Moment.
+    // VELUS-JET-Gutschein entfernt (Angebot war am 15.07.2026 abgelaufen).
     html += `
-      <div class="feedback-box" style="margin-top:8px;margin-bottom:4px;">
+      <div class="feedback-box" id="feedbackBox" style="margin-top:8px;margin-bottom:4px;display:none;">
         <h3>Wie hilfreich war der Check für dich? 🚀</h3>
-        <p>Dein Feedback hilft uns, den Vital-Check zu verbessern.<br>
-        Als Dankeschön erhältst du einen exklusiven Vorteil:</p>
-        <div style="background:rgba(34,201,122,0.08);border:1px solid rgba(34,201,122,0.25);border-radius:10px;padding:12px 14px;margin-bottom:14px;text-align:left;">
-          <div style="font-size:11px;font-weight:700;color:var(--accent-green);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">✦ Exklusiv für Feedback-Geber</div>
-          <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">5x VELUS JET für nur 50 €</div>
-          <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">statt 75 € (5 × 15 €) — 33% Ersparnis<br>
-          Angebot bis <strong>15.07.2026</strong> · Einlösen bis 30.09.2026 im LeVITA Studio<br>
-          <span style="font-size:11px;color:var(--text-muted);">1 Rabatt-Gutschein pro Person</span></div>
-        </div>
-        <button class="next-btn" onclick="openGoogleForm()">Feedback geben & Vorteil sichern →</button>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">Nach dem Feedback erhältst du den Gutschein-Code per E-Mail.</div>
+        <p>Dein Vital-Plan ist unterwegs. Magst du uns kurz sagen, wie der Check für dich war?<br>
+        Dein Feedback fließt direkt in die Weiterentwicklung ein.</p>
+        <button class="next-btn" onclick="openGoogleForm()">Feedback geben →</button>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">Dauert keine 2 Minuten.</div>
       </div>`;
 
     html += `</div>`; // Ende Tab 1
@@ -1889,7 +1916,7 @@
       if (l === "medium") return "Schlaf, Bewegung und Mahlzeitenrhythmus als zusammenhängendes System betrachten.";
       return "Energielevel und Wohlbefinden über die Woche regelmäßig beobachten.";
     }
-    return "Mittelfristig: Fortschritt beim nächsten Re-Check vergleichen.";
+    return "Mittelfristig: Wiederhole den Check in 8–12 Wochen und vergleiche deinen Fortschritt.";
   }
 
   function renderRedFlagBox(score, totalScore) {
@@ -2077,7 +2104,7 @@
         const note = document.createElement("div");
         note.id = "compareNote";
         note.style.cssText = "font-size:12px;color:var(--text-muted);text-align:center;margin-top:8px;";
-        note.textContent = "Verlaufsvergleich wird mit der Re-Check-Funktion in V2 verfügbar.";
+        note.textContent = "Der Verlaufsvergleich mit deinem nächsten Check kommt in einer künftigen Version.";
         radarChart.canvas.parentNode.appendChild(note);
       }
     } else { if (existing) existing.remove(); }
@@ -2126,7 +2153,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.13</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.14</footer>
 
 
 </body>
