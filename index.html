@@ -371,7 +371,11 @@
   const LOGO_URL = "";
   const AREA_ICONS = { sleep:"🌙", activity:"⚡", nutrition:"🥗", vitamin_d:"☀️", bmi:"⚖️", mental:"🧘", lifestyle:"🍃", micronutrients:"💊", metabolic:"🔥" };
 
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // v1.28.20: Der öffentliche Check nutzt IMMER den Anon-Key — niemals gespeicherte
+  // Login-Sitzungen (Trainer-Dashboard/Funnel teilen sich dieselbe Browser-Domain).
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+  });
   let questions = [], groupedQuestions = [], currentStep = 0, selectedAnswers = [], latestResult = null, radarChart = null, showComparison = false;
   const personalData = { age:null, gender:"", height_cm:null, weight_kg:null, first_name:"", last_name:"", consent_privacy:false, consent_storage:false, goal_key:"", goal_option_id:"" };
 
@@ -2190,7 +2194,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.19</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.20</footer>
 
 
 </body>
