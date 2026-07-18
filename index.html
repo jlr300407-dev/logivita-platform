@@ -866,7 +866,9 @@
       done();
     };
     el.addEventListener('click', finish); // Tippen überspringt
-    setTimeout(finish, 1600);
+    // v1.28.22: Anzeigedauer an Leselänge koppeln (1,6s war zu kurz für ungeübte Nutzer)
+    const readMs = Math.min(4500, 2200 + b.framing_text.length * 25);
+    setTimeout(finish, readMs);
   }
 
   function saveAnswer(optionId) {
@@ -2232,7 +2234,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.21</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.22</footer>
 
 
 </body>
