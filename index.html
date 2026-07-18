@@ -444,6 +444,7 @@
       const result = await callFunction({ mode: 'load_result', public_code: publicCode, pin });
 
       if (result && result.success) {
+        window._accessPin = pin; // Für spätere Aktionen merken (z.B. Datenlöschung, v1.28.17)
         latestResult = result;
         personalData.age = result.submission?.age || null;
         personalData.gender = result.submission?.gender || '';
@@ -2132,10 +2133,31 @@
     try {
       const deleteBtn = document.querySelector('[onclick="deleteMyData()"]');
       if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.textContent = "⏳ Wird gelöscht…"; }
-      const result = await callFunction({ mode: "delete_submission", public_code: latestResult.public_code, send_confirmation_email: true });
+      // Lösch-Schutz (v1.28.17): PIN mitschicken, falls bekannt (Wiederaufruf) — bei Bedarf nachfragen
+      let pinForDelete = window._accessPin || null;
+      let result;
+      try {
+        result = await callFunction({ mode: "delete_submission", public_code: latestResult.public_code, pin: pinForDelete, send_confirmation_email: true });
+      } catch (innerErr) {
+        if (innerErr.message === "PIN_REQUIRED") {
+          const entered = prompt("Zum Löschen benötigen wir deinen 8-stelligen Zugangs-PIN aus deiner Auswertungs-Mail.\n\nFalls du ihn nicht mehr hast: Löschanfrage an datenschutz@le-vita.com mit deiner Pilot-ID " + latestResult.public_code + " genügt.");
+          if (!entered) {
+            if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = "🗑 Daten löschen"; }
+            return;
+          }
+          result = await callFunction({ mode: "delete_submission", public_code: latestResult.public_code, pin: entered.trim(), send_confirmation_email: true });
+        } else {
+          throw innerErr;
+        }
+      }
       if (result?.success) { alert(`✓ Deine Daten wurden erfolgreich gelöscht.\n\nDu wirst jetzt zur Startseite weitergeleitet.`); resetVitalCheck(); }
-      else { alert("Beim Löschen ist ein Fehler aufgetreten. Bitte wende dich an info@le-vita.com mit deiner Pilot-ID: " + latestResult.public_code); if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = "🗑 Meine gespeicherten Daten löschen"; } }
-    } catch (err) { console.error("Löschfehler:", err); alert("Verbindungsfehler. Bitte versuche es erneut oder kontaktiere uns: info@le-vita.com"); }
+      else { alert("Beim Löschen ist ein Fehler aufgetreten. Bitte wende dich an info@le-vita.com mit deiner Pilot-ID: " + latestResult.public_code); if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = "🗑 Daten löschen"; } }
+    } catch (err) {
+      console.error("Löschfehler:", err);
+      const deleteBtn = document.querySelector('[onclick="deleteMyData()"]');
+      if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = "🗑 Daten löschen"; }
+      alert(err.message && err.message.length > 30 ? err.message : "Verbindungsfehler. Bitte versuche es erneut oder kontaktiere uns: info@le-vita.com");
+    }
   }
 
   function resetVitalCheck() {
@@ -2157,7 +2179,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.16</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.17</footer>
 
 
 </body>
