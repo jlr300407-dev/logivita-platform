@@ -301,7 +301,7 @@
       🔬 Wissenschaftlich fundiert&nbsp;&nbsp;·&nbsp;&nbsp;🔒 Datenschutz&nbsp;&nbsp;·&nbsp;&nbsp;✉ Vital-Plan
     </div>
     <button id="hero-cta" onclick="startDirectCheck();" style="display:block;width:100%;max-width:340px;margin:0 auto 14px;padding:16px 24px;background:#3ddc84;color:#0d1a14;font-size:17px;font-weight:800;border:none;border-radius:12px;cursor:pointer;">Jetzt kostenlos starten →</button>
-    <p style="margin:0 0 14px;font-size:11px;color:rgba(255,255,255,0.35);">Keine Registrierung · Keine Kosten · Kein Abo</p>
+    <p style="margin:0 0 14px;font-size:11px;color:rgba(255,255,255,0.35);">Ab 18 Jahren · Keine Registrierung · Keine Kosten · Kein Abo</p>
     <div id="hero-social-proof" style="font-size:12px;color:rgba(255,255,255,0.45);">
       <span style="color:#f5a623;">★★★★★</span>&nbsp; Bereits von <span id="hero-count" style="font-weight:700;color:rgba(255,255,255,0.75);">100+</span> Personen getestet
     </div>
@@ -569,7 +569,7 @@
     try {
       const p = new URLSearchParams(window.location.search);
       const utm = {};
-      ['utm_source','utm_medium','utm_campaign','utm_content','utm_term'].forEach(k => {
+      ['utm_source','utm_medium','utm_campaign','utm_content'].forEach(k => { // utm_term entfernt (Pilotfreigabe 4.4: nur definierte Parameter)
         const v = p.get(k);
         if (v) utm[k] = String(v).slice(0, 100); // Länge begrenzen zur Sicherheit
       });
@@ -585,6 +585,24 @@
     if (_ip.get('internal') === '1') sessionStorage.setItem('levita_internal', '1');
     window._isInternal = sessionStorage.getItem('levita_internal') === '1';
   } catch(e) { window._isInternal = false; }
+
+  // ── Kurz-Modus (V1.29-Weiche vorgezogen, 19.07.2026) ──
+  // Nur per Link-Kontext (?modus=kurz, gedacht für Social-Media-Anzeigen).
+  // Ohne Parameter bleibt alles beim bestehenden Voll-Check — kein Einfluss auf laufende Messungen.
+  try {
+    const _mm = new URLSearchParams(window.location.search);
+    window._checkMode = _mm.get('modus') === 'kurz' ? 'kurz' : 'voll';
+    if (window._checkMode === 'kurz') {
+      const hs = document.getElementById('hero-subline');
+      if (hs) hs.textContent = hs.textContent.replace('ca. 5 Minuten', 'ca. 3 Minuten');
+    }
+  } catch(e) { window._checkMode = 'voll'; }
+  window._tierExpanded = false;
+
+  // ── Pilotfreigabe (Konstruktionsanweisung 18.07.2026, Ziff. 5.5): ──
+  // Affiliate-/Rabatt-Elemente (Verisana) bis zur UWG/HWG-Freigabe deaktiviert.
+  // Studio-eigene CTAs (Probetraining etc.) bleiben aktiv — Eigenwerbung, kein Affiliate.
+  const AFFILIATE_ENABLED = false;
 
   // ── Sofort-Fix 3: landingpage_view — Funnel-Stufe VOR dem Check-Start ──
   // Feuert genau einmal pro Seitenladen (= einmal pro session_id, konsistent zu allen anderen Events).
@@ -618,7 +636,7 @@
     const map = {};
     data.forEach(row => {
       if (!map[row.question_id]) {
-        map[row.question_id] = { question_id:row.question_id, question_key:row.question_key, area_key:row.area_key, area_label:row.area_label, question_text:row.question_text, help_text:row.help_text, sort_order:row.question_sort_order, min_age: row.min_age || null, max_age: row.max_age || null, options:[] };
+        map[row.question_id] = { question_id:row.question_id, question_key:row.question_key, area_key:row.area_key, area_label:row.area_label, question_text:row.question_text, help_text:row.help_text, sort_order:row.question_sort_order, min_age: row.min_age || null, max_age: row.max_age || null, tier: row.tier || 'core', options:[] };
       }
       if (row.option_id) {
         map[row.question_id].options.push({ option_id:row.option_id, option_key:row.option_key, option_text:row.option_text });
@@ -632,9 +650,16 @@
     groupedQuestions = [
       goalQuestion ? { type:"goal", question:goalQuestion } : null,
       { type:"personal" },
-      ...questions.filter(q => !fishQuestionKeys.some(fk => q.question_key?.includes(fk))),
+      ...tierFiltered(questions).filter(q => !fishQuestionKeys.some(fk => q.question_key?.includes(fk))),
+      ...(window._checkMode === 'kurz' && !window._tierExpanded ? [{ type:"weiche" }] : []),
       { type:"consent" }
     ].filter(Boolean);
+  }
+
+  // Kurz-Modus: nur Core-Fragen, bis der Nutzer an der Weiche vertieft
+  function tierFiltered(list) {
+    if (window._checkMode !== 'kurz' || window._tierExpanded) return list;
+    return list.filter(q => (q.tier || 'core') === 'core');
   }
 
   function isFemaleSpecific(q) {
@@ -648,7 +673,7 @@
     const showFemale = personalData.gender === "weiblich";
     const age = personalData.age || 0;
     const fishQuestionKeys = ["omega3_fish", "fish_frequency", "fish_consumption", "fish_intake"];
-    const filtered = questions.filter(q => {
+    const filtered = tierFiltered(questions).filter(q => {
       if (q.question_key === "vital_goal") return false;
       if (!showFemale && isFemaleSpecific(q)) return false;
       if (q.min_age !== null && age < q.min_age) return false;
@@ -661,8 +686,57 @@
       goalQuestion ? { type:"goal", question:goalQuestion } : null,
       { type:"personal" },
       ...filtered,
+      ...(window._checkMode === 'kurz' && !window._tierExpanded ? [{ type:"weiche" }] : []),
       { type:"consent" }
     ].filter(Boolean);
+  }
+
+  // ── Die Weiche (Kurz-Modus): ehrlicher Nudge, kein Alarm (Wortlaut aus Konzept Kap. 6) ──
+  function weicheStepHtml() {
+    return `
+      <div class="card">
+        <div class="area-badge">✦ Zwischenstand</div>
+        <div class="question-text">Deine Basis-Auswertung ist fertig.</div>
+        <div class="help-text" style="margin-bottom:18px;">Für ein genaueres Bild schauen wir uns in der ausführlichen Version ein paar zusätzliche Themen an — etwa Nährstoffe, Schlafqualität und Wohlbefinden. Dauert etwa 1 Minute, ist freiwillig.</div>
+        <button class="next-btn" onclick="chooseResult()">Ergebnis ansehen →</button>
+        <button onclick="chooseExtended()" style="width:100%;margin-top:10px;padding:13px;border-radius:10px;border:1px solid var(--accent-green);background:transparent;color:var(--accent-green);font-weight:700;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">✦ Genaueres Bild — noch ein paar Fragen (ca. 1 Min.)</button>
+      </div>`;
+  }
+
+  function chooseResult() {
+    trackEvent('extended_chosen', { chosen: false });
+    nextStep();
+  }
+
+  function chooseExtended() {
+    trackEvent('extended_chosen', { chosen: true });
+    window._tierExpanded = true;
+    const showFemale = personalData.gender === "weiblich";
+    const age = personalData.age || 0;
+    const fishQuestionKeys = ["omega3_fish", "fish_frequency", "fish_consumption", "fish_intake"];
+    const present = new Set(groupedQuestions.map(s => s.question_key).filter(Boolean));
+    const extra = questions.filter(q => {
+      if ((q.tier || 'core') === 'core') return false;
+      if (present.has(q.question_key)) return false;
+      if (!showFemale && isFemaleSpecific(q)) return false;
+      if (q.min_age !== null && age < q.min_age) return false;
+      if (q.max_age !== null && age > q.max_age) return false;
+      if (fishQuestionKeys.some(fk => q.question_key?.includes(fk))) return false;
+      return true;
+    });
+    const weicheIdx = groupedQuestions.findIndex(s => s.type === 'weiche');
+    if (weicheIdx === -1) { nextStep(); return; }
+    // Weiche-Step durch die Extended-Fragen ersetzen — beantwortete Schritte bleiben unberührt
+    groupedQuestions.splice(weicheIdx, 1, ...extra);
+    buildSteps(weicheIdx);
+    currentStep = weicheIdx;
+    const firstQ = groupedQuestions[currentStep];
+    if (firstQ && firstQ.question_key) {
+      trackEvent('step_view', { step_index: currentStep, step_type: 'question', step_key: firstQ.question_key });
+    }
+    document.getElementById(`step-${currentStep}`)?.classList.add('active');
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function buildSteps(activeIndex = 0) {
@@ -675,6 +749,7 @@
       if (step.type === "goal") div.innerHTML = goalStepHtml(step.question);
       else if (step.type === "personal") div.innerHTML = personalStepHtml();
       else if (step.type === "consent") div.innerHTML = consentStepHtml();
+      else if (step.type === "weiche") div.innerHTML = weicheStepHtml();
       else div.innerHTML = questionStepHtml(step);
       flow.appendChild(div);
     });
@@ -812,8 +887,8 @@
     const gender = document.getElementById("gender").value;
     const height_cm = Number(document.getElementById("height_cm").value);
     const weight_kg = Number(document.getElementById("weight_kg").value);
-    if (!age || age < 16 || age > 100) {
-      if (age < 16) { alert("Der LeVITA Vital-Check richtet sich an Personen ab 16 Jahren. Für Jüngere ist eine Einwilligung der Erziehungsberechtigten erforderlich — bitte wende dich an info@le-vita.com."); }
+    if (!age || age < 18 || age > 100) {
+      if (age >= 1 && age < 18) { alert("Der LeVITA Vital-Check richtet sich in der aktuellen Pilotphase an Personen ab 18 Jahren. Deine Angaben wurden nicht gespeichert. Bei Fragen: info@le-vita.com"); }
       else { alert("Bitte ein gültiges Alter eingeben."); }
       return;
     }
@@ -904,7 +979,7 @@
         if (!isPlantBased) {
           const hasFish = groupedQuestions.some(q => fishQuestionKeys.some(fk => q.question_key?.includes(fk)));
           if (!hasFish) {
-            const fishQ = questions.find(q => fishQuestionKeys.some(fk => q.question_key?.includes(fk)));
+            const fishQ = tierFiltered(questions).find(q => fishQuestionKeys.some(fk => q.question_key?.includes(fk)));
             if (fishQ) {
               const nutritionIdx = groupedQuestions.findIndex(q => q.question_key === "nutrition_type" || q.question_key === "diet_type");
               groupedQuestions.splice(nutritionIdx + 1, 0, fishQ);
@@ -925,7 +1000,7 @@
       if (currentQ?.question_key === "alcohol_frequency" && !alcoholIsNever) {
         const hasAmount = groupedQuestions.some(q => q.question_key === "alcohol_amount");
         if (!hasAmount) {
-          const amountQ = questions.find(q => q.question_key === "alcohol_amount");
+          const amountQ = tierFiltered(questions).find(q => q.question_key === "alcohol_amount");
           if (amountQ) {
             const freqIdx = groupedQuestions.findIndex(q => q.question_key === "alcohol_frequency");
             groupedQuestions.splice(freqIdx + 1, 0, amountQ);
@@ -938,7 +1013,7 @@
         const strengthIs2Plus = optionKey === "a" || optionKey === "b" || strengthOptText.includes("2") || strengthOptText.includes("3") || strengthOptText.includes("täglich") || strengthOptText.includes("öfter");
         const hasCramps = groupedQuestions.some(q => q.question_key === "muscle_cramps");
         if (strengthIs2Plus && !hasCramps) {
-          const crampsQ = questions.find(q => q.question_key === "muscle_cramps");
+          const crampsQ = tierFiltered(questions).find(q => q.question_key === "muscle_cramps");
           if (crampsQ) {
             const strengthIdx = groupedQuestions.findIndex(q => q.question_key === "strength_training");
             groupedQuestions.splice(strengthIdx + 1, 0, crampsQ);
@@ -960,7 +1035,7 @@
         const otherTriggers = otherOptionKey && triggerKeys.includes(otherOptionKey);
         const hasSocial = groupedQuestions.some(q => q.question_key === "social_connection");
         if ((shouldShow || otherTriggers) && !hasSocial) {
-          const socialQ = questions.find(q => q.question_key === "social_connection");
+          const socialQ = tierFiltered(questions).find(q => q.question_key === "social_connection");
           if (socialQ) {
             const interestIdx = groupedQuestions.findIndex(q => q.question_key === "low_interest");
             if (interestIdx !== -1) { groupedQuestions.splice(interestIdx + 1, 0, socialQ); buildSteps(currentStep); }
@@ -1007,28 +1082,28 @@
     if (backQ?.question_key === "supplement_usage") {
       const hasSupplTypes = groupedQuestions.some(q => q.question_key === "supplement_types");
       if (!hasSupplTypes) {
-        const supplTypes = questions.find(q => q.question_key === "supplement_types");
+        const supplTypes = tierFiltered(questions).find(q => q.question_key === "supplement_types");
         if (supplTypes) { const usageIdx = groupedQuestions.findIndex(q => q.question_key === "supplement_usage"); groupedQuestions.splice(usageIdx + 1, 0, supplTypes); buildSteps(currentStep); }
       }
     }
     if (backQ?.question_key === "strength_training") {
       const hasCramps = groupedQuestions.some(q => q.question_key === "muscle_cramps");
       if (!hasCramps) {
-        const crampsQ = questions.find(q => q.question_key === "muscle_cramps");
+        const crampsQ = tierFiltered(questions).find(q => q.question_key === "muscle_cramps");
         if (crampsQ) { const strengthIdx = groupedQuestions.findIndex(q => q.question_key === "strength_training"); groupedQuestions.splice(strengthIdx + 1, 0, crampsQ); buildSteps(currentStep); }
       }
     }
     if (backQ?.question_key === "alcohol_frequency") {
       const hasAmount = groupedQuestions.some(q => q.question_key === "alcohol_amount");
       if (!hasAmount) {
-        const amountQ = questions.find(q => q.question_key === "alcohol_amount");
+        const amountQ = tierFiltered(questions).find(q => q.question_key === "alcohol_amount");
         if (amountQ) { const freqIdx = groupedQuestions.findIndex(q => q.question_key === "alcohol_frequency"); groupedQuestions.splice(freqIdx + 1, 0, amountQ); buildSteps(currentStep); }
       }
     }
     if (backQ?.question_key === "low_mood" || backQ?.question_key === "low_interest") {
       const hasSocial = groupedQuestions.some(q => q.question_key === "social_connection");
       if (!hasSocial) {
-        const socialQ = questions.find(q => q.question_key === "social_connection");
+        const socialQ = tierFiltered(questions).find(q => q.question_key === "social_connection");
         if (socialQ) { const interestIdx = groupedQuestions.findIndex(q => q.question_key === "low_interest"); if (interestIdx !== -1) { groupedQuestions.splice(interestIdx + 1, 0, socialQ); buildSteps(currentStep); } }
       }
     }
@@ -1451,7 +1526,7 @@
       teaserRows += teaserRow("📌", `Dein größter Hebel: ${topPrio.label} (${Math.round(Number(topPrio.score))}/100)`, "die eine Änderung, die bei dir den größten Unterschied macht");
     }
     teaserRows += teaserRow("🎯", `Dein 6-Wochen-Fahrplan für „${goalTeaser}“`, "konkret, Schritt für Schritt");
-    if (result.score?.bloodtest_hint) {
+    if (AFFILIATE_ENABLED && result.score?.bloodtest_hint) { // Pilotfreigabe 5.5: Zeile verspricht Test-Spezifik, die die Mail ohne Freigabe nicht liefert
       teaserRows += teaserRow("🩸", "Welche Blutwerte für dich sinnvoll wären", "und welche du dir sparen kannst");
     }
     teaserRows += teaserRow("🔑", "Dein persönlicher PIN", "ruf deine Auswertung jederzeit wieder auf und vergleiche beim nächsten Check in 8–12 Wochen, was sich verändert hat");
@@ -1473,7 +1548,7 @@
           </div>
           <div class="checkbox-row">
             <input type="checkbox" id="consent_email_delivery" />
-            <label for="consent_email_delivery">Ja, mein Vital-Plan darf mir per E-Mail zugesendet werden. Kein Spam, Abmeldung jederzeit möglich.</label>
+            <label for="consent_email_delivery">Ja, die angeforderte Auswertung (mein Vital-Plan) darf mir einmalig per E-Mail zugesendet werden.</label>
           </div>
         </div>
         <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">Vital-Plan zusenden →</button>
@@ -1598,8 +1673,8 @@
         </a>
       </div>`;
 
-    // Kompakter Aufbau-Hinweis
-    html += `
+    // Kompakter Aufbau-Hinweis — nur bei freigegebenem Affiliate (Pilotfreigabe 5.5)
+    if (AFFILIATE_ENABLED) html += `
       <div class="t3-info-banner" style="margin-bottom:14px;font-size:11.5px;">
         <strong>Tipp:</strong> Verisana-Bluttests kannst du bequem von zuhause bestellen — deinen persönlichen Rabattcode erhältst du mit deiner kostenlosen KI-Auswertung per Mail.
       </div>`;
@@ -1618,14 +1693,14 @@
         <div class="t3-test-card">
           <div class="t3-test-header">
             <div class="t3-test-title">Trockenbluttest — gezielter Gesundheits-Check</div>
-            <div style="margin-top:10px;">
+            ${AFFILIATE_ENABLED ? `<div style="margin-top:10px;">
               <button onclick="scrollToAiBox();" style="padding:10px 20px;background:var(--accent-green);color:#0a1628;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;width:100%;">🩸 Bluttest mit 10% Rabatt anfordern →</button>
               <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center;">Dein persönlicher Rabattcode kommt mit deiner KI-Auswertung per Mail</div>
-            </div>
+            </div>` : ``}
           </div>
           <div class="t3-test-desc">
-            Bequem von zuhause oder direkt im LeVITA Studio — kleines Set, kurze Blutprobe,
-            Ergebnis per E-Mail. Kein Nüchternblut nötig. Tests u.a.: HbA1c, Vitamin D, Ferritin, B12, Omega-3.
+            ${AFFILIATE_ENABLED ? `Bequem von zuhause oder direkt im LeVITA Studio — kleines Set, kurze Blutprobe,
+            Ergebnis per E-Mail. Kein Nüchternblut nötig. Tests u.a.: HbA1c, Vitamin D, Ferritin, B12, Omega-3.` : `Eine fachlich begleitete Laborkontrolle kann je nach Situation sinnvoll sein — im LeVITA Studio beraten wir dich gern dazu, was für dich passt.`}
           </div>
           <a class="t3-test-btn" href="https://le-vita.com/probetraining" target="_blank" style="margin-top:6px;display:inline-block;">Ergebnis im Studio besprechen →</a>
         </div>`;
@@ -2097,14 +2172,14 @@
     if (score.bloodtest_hint === true && !bloodtestShown) {
       html += `<div class="hint-box box-info" style="margin-bottom:12px;">
         <strong>🔬 Bluttest-Orientierung</strong><br>
-        <span style="font-size:13px;line-height:1.6;">Auf Basis deines Profils könnte ein gezielter Bluttest weitere Klarheit bringen. Welcher Test für dich am sinnvollsten wäre, erfährst du in deiner persönlichen KI-Auswertung per Mail.</span>
-        <br><br><button onclick="scrollToAiBox();" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;border:none;cursor:pointer;margin-top:4px;">🩸 Bluttest mit 10% Rabatt anfordern →</button>
+        <span style="font-size:13px;line-height:1.6;">Eine fachlich begleitete Laborkontrolle kann je nach Situation sinnvoll sein. Eine genauere Einordnung erhältst du in deiner persönlichen Auswertung per Mail.</span>${AFFILIATE_ENABLED ? `
+        <br><br><button onclick="scrollToAiBox();" style="display:inline-block;padding:9px 20px;background:var(--accent-green);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;border:none;cursor:pointer;margin-top:4px;">🩸 Bluttest mit 10% Rabatt anfordern →</button>` : ``}
       </div>`;
       bloodtestShown = true;
     }
 
     if (getRisk("dizziness_pale_nails") >= 3 && !bloodtestShown) {
-      html += `<div class="hint-box box-warning" style="margin-bottom:12px;"><strong>💉 Bluttest-Empfehlung</strong><br><span style="font-size:13px;line-height:1.6;">Auf Basis deiner Angaben könnte ein gezielter Bluttest bei Bedarf zusätzliche Orientierung geben — z.B. zu Eisen, B12 oder Vitamin D.</span><br><br><button onclick="scrollToAiBox();" style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;border:none;cursor:pointer;margin-top:4px;">🩸 Bluttest mit 10% Rabatt anfordern →</button></div>`;
+      html += `<div class="hint-box box-warning" style="margin-bottom:12px;"><strong>💉 Bluttest-Empfehlung</strong><br><span style="font-size:13px;line-height:1.6;">Eine fachlich begleitete Laborkontrolle kann je nach Situation sinnvoll sein — z.B. zu Eisen, B12 oder Vitamin D.</span>${AFFILIATE_ENABLED ? `<br><br><button onclick="scrollToAiBox();" style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;border:none;cursor:pointer;margin-top:4px;">🩸 Bluttest mit 10% Rabatt anfordern →</button>` : ``}</div>`;
     }
     if (getRisk("sleep_latency") >= 3) {
       html += `<div class="hint-box" style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#a78bfa;">🌙 Starke Einschlafschwierigkeiten</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Mehr als eine Stunde zum Einschlafen zu brauchen ist ein relevantes Signal. Häufig stecken Stress, Bildschirmzeit oder ein unregelmäßiger Rhythmus dahinter.</span><br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Schlaf besprechen →</a></div>`;
@@ -2238,7 +2313,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.23</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.25</footer>
 
 
 </body>
