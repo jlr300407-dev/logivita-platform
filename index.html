@@ -75,6 +75,11 @@
     .option-btn::before { content: ''; width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.15); flex-shrink: 0; transition: all 0.18s; }
     .option-btn:hover { border-color: var(--accent-green); background: var(--accent-green-dim); transform: translateX(2px); }
     .option-btn:hover::before { border-color: var(--accent-green); background: var(--accent-green); }
+    /* Benchmark-Sofort-Feedback (v1.28.21) */
+    .benchmark-flash { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); max-width: 360px; width: calc(100% - 48px); background: var(--brand-card2); border: 1px solid rgba(34,201,122,0.35); border-radius: 12px; padding: 12px 16px; font-size: 13.5px; line-height: 1.5; color: var(--text-primary); z-index: 500; box-shadow: 0 8px 30px rgba(0,0,0,0.45); animation: bmIn .25s ease; cursor: pointer; }
+    .benchmark-flash .benchmark-source { font-size: 10.5px; color: var(--text-muted); margin-top: 5px; }
+    .benchmark-flash.out { opacity: 0; transition: opacity .25s; }
+    @keyframes bmIn { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
     /* Multi-Choice (Sofort-Fix 2): Checkbox-Optik statt Radio-Kreis */
     .option-btn.multi-option input { display: none; }
     .option-btn.multi-option::before { border-radius: 5px; }
@@ -517,6 +522,7 @@
     try {
       loadHeroCount();
       await loadQuestions();
+      loadBenchmarks(); // fire-and-forget — Benchmark-Feedback ist optional
       buildSteps(0);
       document.getElementById("loading").classList.add("hidden");
       updateProgress();
@@ -831,6 +837,38 @@
     return null;
   }
 
+  // ── Benchmark-Sofort-Feedback (Ebene 2, vorgezogen 18.07.2026) ──
+  // NUR intern sichtbar (?internal=1), solange das Mail-Box-Messfenster läuft.
+  // Live-Schaltung danach: BENCHMARK_FLASH_MODE auf 'all' setzen (eine Zeile).
+  const BENCHMARK_FLASH_MODE = 'internal';
+  let benchmarkMap = {};
+  async function loadBenchmarks() {
+    try {
+      const { data } = await supabaseClient.from('public_active_benchmarks').select('question_key, option_key, framing_text, source');
+      (data || []).forEach(b => { benchmarkMap[b.question_key + '::' + b.option_key] = b; });
+    } catch(e) { /* silent — Feedback ist optional */ }
+  }
+  function benchmarkFlashEnabled() {
+    return BENCHMARK_FLASH_MODE === 'all' || (BENCHMARK_FLASH_MODE === 'internal' && window._isInternal === true);
+  }
+  function maybeShowBenchmarkFlash(q, optionKey, done) {
+    const b = (q && q.question_key && optionKey) ? benchmarkMap[q.question_key + '::' + optionKey] : null;
+    if (!benchmarkFlashEnabled() || !b) { done(); return; }
+    const el = document.createElement('div');
+    el.className = 'benchmark-flash';
+    el.innerHTML = `<div>${b.framing_text}</div>${b.source ? `<div class="benchmark-source">Referenz: ${b.source}</div>` : ''}`;
+    document.body.appendChild(el);
+    let finished = false;
+    const finish = () => {
+      if (finished) return; finished = true;
+      el.classList.add('out');
+      setTimeout(() => el.remove(), 250);
+      done();
+    };
+    el.addEventListener('click', finish); // Tippen überspringt
+    setTimeout(finish, 1600);
+  }
+
   function saveAnswer(optionId) {
     const activeStep = document.getElementById(`step-${currentStep}`);
     if (activeStep) {
@@ -926,7 +964,7 @@
           buildSteps(currentStep);
         }
       }
-      nextStep();
+      maybeShowBenchmarkFlash(currentQ, optionKey, () => nextStep());
     }, 200);
   }
 
@@ -2194,7 +2232,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.20</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.21</footer>
 
 
 </body>
