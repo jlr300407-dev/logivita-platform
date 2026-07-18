@@ -12,10 +12,19 @@
   <!-- PIXEL-CODE (inaktiv):
   <script>fbq('init','162833051672814');fbq('track','PageView');</script>
   -->
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- v1.28.19: Fonts + Bibliotheken lokal — keine Verbindungen zu Google/CDN-Drittservern (DSGVO) -->
+  <script src="assets/supabase-js@2.js"></script>
+  <script src="assets/chart.umd.min.js"></script>
   <style>
+    /* ── Lokale Fonts (v1.28.19) — ersetzt fonts.googleapis.com ── */
+    @font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 300; font-display: swap; src: url('assets/dm-sans-v17-latin-300.woff2') format('woff2'); }
+    @font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url('assets/dm-sans-v17-latin-regular.woff2') format('woff2'); }
+    @font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 500; font-display: swap; src: url('assets/dm-sans-v17-latin-500.woff2') format('woff2'); }
+    @font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 600; font-display: swap; src: url('assets/dm-sans-v17-latin-600.woff2') format('woff2'); }
+    @font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 700; font-display: swap; src: url('assets/dm-sans-v17-latin-700.woff2') format('woff2'); }
+    @font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 800; font-display: swap; src: url('assets/dm-sans-v17-latin-800.woff2') format('woff2'); }
+    @font-face { font-family: 'DM Serif Display'; font-style: normal; font-weight: 400; font-display: swap; src: url('assets/dm-serif-display-v17-latin-regular.woff2') format('woff2'); }
+    @font-face { font-family: 'DM Serif Display'; font-style: italic; font-weight: 400; font-display: swap; src: url('assets/dm-serif-display-v17-latin-italic.woff2') format('woff2'); }
     :root {
       --brand-dark: #0a1628;
       --brand-card: #132338;
@@ -2181,7 +2190,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.18</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.19</footer>
 
 
 </body>
