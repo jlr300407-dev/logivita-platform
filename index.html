@@ -652,12 +652,16 @@
       goalQuestion ? { type:"goal", question:goalQuestion } : null,
       { type:"personal" },
       ...tierFiltered(questions).filter(q => !fishQuestionKeys.some(fk => q.question_key?.includes(fk))),
-      ...(window._checkMode === 'kurz' && !window._tierExpanded ? [{ type:"weiche" }] : []),
+      ...(window._checkMode === 'kurz' && !window._tierExpanded && hasExtendedQuestions() ? [{ type:"weiche" }] : []),
       { type:"consent" }
     ].filter(Boolean);
   }
 
   // Kurz-Modus: nur Core-Fragen, bis der Nutzer an der Weiche vertieft
+  function hasExtendedQuestions() {
+    return questions.some(q => (q.tier || 'core') !== 'core');
+  }
+
   function tierFiltered(list) {
     if (window._checkMode !== 'kurz' || window._tierExpanded) return list;
     return list.filter(q => (q.tier || 'core') === 'core');
@@ -687,7 +691,7 @@
       goalQuestion ? { type:"goal", question:goalQuestion } : null,
       { type:"personal" },
       ...filtered,
-      ...(window._checkMode === 'kurz' && !window._tierExpanded ? [{ type:"weiche" }] : []),
+      ...(window._checkMode === 'kurz' && !window._tierExpanded && hasExtendedQuestions() ? [{ type:"weiche" }] : []),
       { type:"consent" }
     ].filter(Boolean);
   }
@@ -2314,7 +2318,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.26</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.27</footer>
 
 
 </body>
