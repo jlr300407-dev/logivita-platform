@@ -548,6 +548,7 @@
         source: document.referrer ? (document.referrer.includes('facebook') ? 'facebook' : document.referrer.includes('instagram') ? 'instagram' : 'other') : 'direct',
         device: window.innerWidth < 600 ? 'mobile' : 'desktop',
         is_internal: window._isInternal === true ? true : undefined, // Sofort-Fix 5: Testdaten markieren (undefined wird von JSON.stringify entfernt)
+        check_mode: window._checkMode || 'voll', // v1.28.26: Kurz-/Voll-Segmentierung für das FB-Experiment
         ...(window._utm || {})
       };
       await supabaseClient.from('funnel_events').insert({
@@ -2313,7 +2314,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.25</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.26</footer>
 
 
 </body>
