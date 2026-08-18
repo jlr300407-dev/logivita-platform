@@ -548,7 +548,6 @@
         source: document.referrer ? (document.referrer.includes('facebook') ? 'facebook' : document.referrer.includes('instagram') ? 'instagram' : 'other') : 'direct',
         device: window.innerWidth < 600 ? 'mobile' : 'desktop',
         is_internal: window._isInternal === true ? true : undefined, // Sofort-Fix 5: Testdaten markieren (undefined wird von JSON.stringify entfernt)
-        check_mode: window._checkMode || 'voll', // v1.28.26: Kurz-/Voll-Segmentierung für das FB-Experiment
         ...(window._utm || {})
       };
       await supabaseClient.from('funnel_events').insert({
@@ -587,18 +586,8 @@
     window._isInternal = sessionStorage.getItem('levita_internal') === '1';
   } catch(e) { window._isInternal = false; }
 
-  // ── Kurz-Modus (V1.29-Weiche vorgezogen, 19.07.2026) ──
-  // Nur per Link-Kontext (?modus=kurz, gedacht für Social-Media-Anzeigen).
-  // Ohne Parameter bleibt alles beim bestehenden Voll-Check — kein Einfluss auf laufende Messungen.
-  try {
-    const _mm = new URLSearchParams(window.location.search);
-    window._checkMode = _mm.get('modus') === 'kurz' ? 'kurz' : 'voll';
-    if (window._checkMode === 'kurz') {
-      const hs = document.getElementById('hero-subline');
-      if (hs) hs.textContent = hs.textContent.replace('ca. 5 Minuten', 'ca. 3 Minuten');
-    }
-  } catch(e) { window._checkMode = 'voll'; }
-  window._tierExpanded = false;
+  // Kurzversion komplett entfernt (Entscheidung Jörg 19.07.2026):
+  // Abschlussquoten zeigen, dass Nutzer den vollen Check durchziehen — es gibt nur noch den Voll-Check.
 
   // ── Pilotfreigabe (Konstruktionsanweisung 18.07.2026, Ziff. 5.5): ──
   // Affiliate-/Rabatt-Elemente (Verisana) bis zur UWG/HWG-Freigabe deaktiviert.
@@ -652,20 +641,13 @@
       goalQuestion ? { type:"goal", question:goalQuestion } : null,
       { type:"personal" },
       ...tierFiltered(questions).filter(q => !fishQuestionKeys.some(fk => q.question_key?.includes(fk))),
-      ...(window._checkMode === 'kurz' && !window._tierExpanded && hasExtendedQuestions() ? [{ type:"weiche" }] : []),
+      
       { type:"consent" }
     ].filter(Boolean);
   }
 
-  // Kurz-Modus: nur Core-Fragen, bis der Nutzer an der Weiche vertieft
-  function hasExtendedQuestions() {
-    return questions.some(q => (q.tier || 'core') !== 'core');
-  }
-
-  function tierFiltered(list) {
-    if (window._checkMode !== 'kurz' || window._tierExpanded) return list;
-    return list.filter(q => (q.tier || 'core') === 'core');
-  }
+  // Kurzversion entfernt (19.07.2026) — Filter ist Durchreiche, tier-Daten bleiben für spätere Nutzung
+  function tierFiltered(list) { return list; }
 
   function isFemaleSpecific(q) {
     const key = String(q.question_key || "").toLowerCase();
@@ -691,57 +673,9 @@
       goalQuestion ? { type:"goal", question:goalQuestion } : null,
       { type:"personal" },
       ...filtered,
-      ...(window._checkMode === 'kurz' && !window._tierExpanded && hasExtendedQuestions() ? [{ type:"weiche" }] : []),
+      
       { type:"consent" }
     ].filter(Boolean);
-  }
-
-  // ── Die Weiche (Kurz-Modus): ehrlicher Nudge, kein Alarm (Wortlaut aus Konzept Kap. 6) ──
-  function weicheStepHtml() {
-    return `
-      <div class="card">
-        <div class="area-badge">✦ Zwischenstand</div>
-        <div class="question-text">Deine Basis-Auswertung ist fertig.</div>
-        <div class="help-text" style="margin-bottom:18px;">Für ein genaueres Bild schauen wir uns in der ausführlichen Version ein paar zusätzliche Themen an — etwa Nährstoffe, Schlafqualität und Wohlbefinden. Dauert etwa 1 Minute, ist freiwillig.</div>
-        <button class="next-btn" onclick="chooseResult()">Ergebnis ansehen →</button>
-        <button onclick="chooseExtended()" style="width:100%;margin-top:10px;padding:13px;border-radius:10px;border:1px solid var(--accent-green);background:transparent;color:var(--accent-green);font-weight:700;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;">✦ Genaueres Bild — noch ein paar Fragen (ca. 1 Min.)</button>
-      </div>`;
-  }
-
-  function chooseResult() {
-    trackEvent('extended_chosen', { chosen: false });
-    nextStep();
-  }
-
-  function chooseExtended() {
-    trackEvent('extended_chosen', { chosen: true });
-    window._tierExpanded = true;
-    const showFemale = personalData.gender === "weiblich";
-    const age = personalData.age || 0;
-    const fishQuestionKeys = ["omega3_fish", "fish_frequency", "fish_consumption", "fish_intake"];
-    const present = new Set(groupedQuestions.map(s => s.question_key).filter(Boolean));
-    const extra = questions.filter(q => {
-      if ((q.tier || 'core') === 'core') return false;
-      if (present.has(q.question_key)) return false;
-      if (!showFemale && isFemaleSpecific(q)) return false;
-      if (q.min_age !== null && age < q.min_age) return false;
-      if (q.max_age !== null && age > q.max_age) return false;
-      if (fishQuestionKeys.some(fk => q.question_key?.includes(fk))) return false;
-      return true;
-    });
-    const weicheIdx = groupedQuestions.findIndex(s => s.type === 'weiche');
-    if (weicheIdx === -1) { nextStep(); return; }
-    // Weiche-Step durch die Extended-Fragen ersetzen — beantwortete Schritte bleiben unberührt
-    groupedQuestions.splice(weicheIdx, 1, ...extra);
-    buildSteps(weicheIdx);
-    currentStep = weicheIdx;
-    const firstQ = groupedQuestions[currentStep];
-    if (firstQ && firstQ.question_key) {
-      trackEvent('step_view', { step_index: currentStep, step_type: 'question', step_key: firstQ.question_key });
-    }
-    document.getElementById(`step-${currentStep}`)?.classList.add('active');
-    updateProgress();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function buildSteps(activeIndex = 0) {
@@ -754,7 +688,6 @@
       if (step.type === "goal") div.innerHTML = goalStepHtml(step.question);
       else if (step.type === "personal") div.innerHTML = personalStepHtml();
       else if (step.type === "consent") div.innerHTML = consentStepHtml();
-      else if (step.type === "weiche") div.innerHTML = weicheStepHtml();
       else div.innerHTML = questionStepHtml(step);
       flow.appendChild(div);
     });
@@ -921,7 +854,7 @@
   // ── Benchmark-Sofort-Feedback (Ebene 2, vorgezogen 18.07.2026) ──
   // NUR intern sichtbar (?internal=1), solange das Mail-Box-Messfenster läuft.
   // Live-Schaltung danach: BENCHMARK_FLASH_MODE auf 'all' setzen (eine Zeile).
-  const BENCHMARK_FLASH_MODE = 'internal';
+  const BENCHMARK_FLASH_MODE = 'off'; // 19.07.2026: deaktiviert — unterbricht den Antwort-Flow zu stark (Entscheidung Jörg). Texte/Tabelle bleiben für spätere Nutzung (z.B. Ergebnisseite).
   let benchmarkMap = {};
   async function loadBenchmarks() {
     try {
@@ -2368,7 +2301,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.28</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.30</footer>
 
 
 </body>
