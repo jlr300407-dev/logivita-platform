@@ -531,7 +531,7 @@
     try {
       loadHeroCount();
       await loadQuestions();
-      loadBenchmarks(); // fire-and-forget — Benchmark-Feedback ist optional
+      if (benchmarkFlashEnabled()) loadBenchmarks(); // kein unnötiger Request, solange das Feature aus ist
       buildSteps(0);
       document.getElementById("loading").classList.add("hidden");
       updateProgress();
@@ -1248,8 +1248,10 @@
 
   // ── mail_box_view Tracking ──
   function initStickyCta() {
+    if (window._mailBoxObserved) return; // idempotent: wird von mehreren Stellen aufgerufen
     const emailInput = document.getElementById('ai_email');
     if (emailInput) {
+      window._mailBoxObserved = true;
       const mailObserver = new IntersectionObserver((entries) => {
         entries.forEach(e => { if(e.isIntersecting) { trackEvent('mail_box_view'); document.querySelector('.ai-box')?.classList.add('ai-box-live'); mailObserver.disconnect(); } });
       }, { threshold: 0.5 });
@@ -2292,7 +2294,7 @@
           throw innerErr;
         }
       }
-      if (result?.success) { alert(`✓ Deine Daten wurden erfolgreich gelöscht.\n\nDu wirst jetzt zur Startseite weitergeleitet.`); resetVitalCheck(); }
+      if (result?.success) { alert(`✓ Deine Daten wurden erfolgreich gelöscht.\n\nDu wirst jetzt zur Startseite weitergeleitet.`); resetVitalCheck(true); }
       else { alert("Beim Löschen ist ein Fehler aufgetreten. Bitte wende dich an info@le-vita.com mit deiner Pilot-ID: " + latestResult.public_code); if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = "🗑 Daten löschen"; } }
     } catch (err) {
       console.error("Löschfehler:", err);
@@ -2302,9 +2304,9 @@
     }
   }
 
-  function resetVitalCheck() {
+  function resetVitalCheck(skipConfirm = false) {
     window._isReviewMode = false; // Neuer Check — Tracking wieder aktiv
-    if (!confirm("Möchtest du wirklich alle Eingaben zurücksetzen? Bereits übermittelte Daten in der Datenbank werden nicht gelöscht.")) return;
+    if (!skipConfirm && !confirm("Möchtest du wirklich alle Eingaben zurücksetzen? Bereits übermittelte Daten in der Datenbank werden nicht gelöscht.")) return;
     questions=[]; groupedQuestions=[]; currentStep=0; selectedAnswers=[]; latestResult=null; showComparison=false;
     if (radarChart) { radarChart.destroy(); radarChart=null; }
     Object.assign(personalData, { age:null, gender:"", height_cm:null, weight_kg:null, email:"", first_name:"", last_name:"", consent_privacy:false, consent_storage:false, goal_key:"", goal_option_id:"" });
@@ -2321,7 +2323,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.33</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.34</footer>
 
 
 </body>
