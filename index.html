@@ -1461,7 +1461,9 @@
     };
     const goalKeyForTeaser = personalData.goal_key || result.submission?.goal_key || "";
     const goalTeaser = goalTeaserLabels[goalKeyForTeaser] || "deine wichtigsten Ziele";
-    const topPrio = (result.score?.top_priorities || [])[0] || null;
+    // v1.28.33: BMI nie als "größter Hebel" im Teaser — gleiche Regel wie die Hebel-Box
+    // (BMI ist keine Handlung; erster Nicht-BMI-Fokusbereich ist der ehrliche Hebel)
+    const topPrio = (result.score?.top_priorities || []).find(p => (p.area_key || p.key) !== 'bmi') || null;
     const teaserRow = (icon, strong, rest) =>
       `<div class="ai-teaser-row" style="display:flex;gap:10px;align-items:flex-start;text-align:left;">
         <span style="flex:none;font-size:15px;line-height:1.5;">${icon}</span>
@@ -2319,7 +2321,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.32</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.33</footer>
 
 
 </body>
