@@ -1302,7 +1302,7 @@
 
     const capName = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
     const name = [capName(personalData.first_name), capName(personalData.last_name)].filter(Boolean).join(" ");
-    const goalLabels = { goal_energy:"⚡ Mehr Energie", goal_weight:"⚖️ Abnehmen / Figur", goal_fitness:"💪 Fitter werden", goal_prevention:"🛡️ Vorsorge", goal_longevity:"🌿 Longevity", goal_curious:"🔍 Neugier" };
+    const goalLabels = { goal_energy:"⚡ Mehr Energie", goal_weight:"⚖️ Abnehmen / Figur", goal_fitness:"💪 Fitter werden", goal_supplements:"💊 Nährstoffstatus", goal_prevention:"🛡️ Vorsorge", goal_longevity:"🌿 Longevity", goal_curious:"🔍 Neugier" };
     const goalLabel = personalData.goal_key && goalLabels[personalData.goal_key] ? goalLabels[personalData.goal_key] : "";
 
     // Haupthebel berechnen (für Tab 3 Hero-Card verfügbar)
@@ -1629,6 +1629,16 @@
       html += `<div class="hint-box" style="background:rgba(245,166,35,0.08);border-left:3px solid var(--accent-amber);border-radius:0;padding:14px 16px;margin-bottom:16px;">
         <strong style="color:#ffb347;">Zuerst das Wichtigste</strong><br>
         <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Du hast ungewollten Gewichtsverlust bzw. deutliche Appetit-Veränderungen angegeben. Falls das über mehrere Wochen anhält, lass es hausärztlich abklären — nicht dringend, aber der sichere Weg.</span>
+      </div>`;
+    }
+
+    // Sanfter Mental-Hinweis (reaktiviert 19.08.2026): sensible Einzelsignale dürfen nicht
+    // durchs Top-Prioritäten-Raster fallen — eigenständige ruhige Box, nie als "Tipp" verpackt
+    const mentalRisk = Math.max(riskOf('low_interest'), riskOf('low_mood'));
+    if (mentalRisk >= 2) {
+      html += `<div class="hint-box" style="background:rgba(139,92,246,0.08);border-left:3px solid var(--accent-purple);border-radius:0;padding:14px 16px;margin-bottom:16px;">
+        <strong style="color:#a78bfa;">🌱 Mentales Wohlbefinden</strong><br>
+        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Deine Angaben zeigen, dass du an manchen Tagen weniger Freude oder Energie empfindest, als du dir wünschen würdest. Das ist ein Signal, das es wert ist, aufmerksam zu bleiben.${mentalRisk >= 3 ? " Wenn sich das über längere Zeit so anfühlt, kann ein Gespräch mit deiner Hausärztin oder deinem Hausarzt gut tun." : ""}</span>
       </div>`;
     }
 
@@ -2309,7 +2319,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.31</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.32</footer>
 
 
 </body>
