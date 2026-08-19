@@ -1136,7 +1136,7 @@
     else if (q.type === "consent") { document.getElementById("progressAreaLabel").textContent = "🔒 Fast fertig"; document.getElementById("progressCount").textContent = ""; }
     else {
       const icon = AREA_ICONS[q.area_key] || "●";
-      // v1.28.38: "Frage X von Y" statt Prozent (V1.29-Punkt) — Y wird live aus dem
+      // v1.28.39: "Frage X von Y" statt Prozent (V1.29-Punkt) — Y wird live aus dem
       // aktuellen Fragenplan berechnet; Zusatzfragen erhöhen X und Y gemeinsam, nie rückwärts.
       const qSteps = groupedQuestions.filter(s => s.question_key);
       const qPos = qSteps.indexOf(q) + 1;
@@ -1712,7 +1712,24 @@
     Object.entries(window._snips.studio_rec).forEach(([k, s]) => {
       if (s.title && s.body) studioRec[k] = [s.title, s.body, Array.isArray(s.benefits) ? s.benefits : []];
     });
-    const rec2 = studioRec[goalKeyT3] || studioRec['default'] || ["Persönliche Begleitung", "Gemeinsam deine Auswertung einordnen und den passenden Einstieg finden."];
+    // v1.28.39: Bedürfnis-Ebene — starkes Antwort-Signal schlägt das Ziel-Programm.
+    // Es bleibt bei genau EINER Empfehlung; sie trifft nur öfter das echte Bedürfnis.
+    // Schutzregel (Geist von Pilotfreigabe 4.8): bei echtem mentalen Warnsignal (Stufe 3,
+    // Hausarzt-Satz aktiv) wird KEINE Entspannungs-Empfehlung verkauft.
+    const areaScoreT3 = k => { const a = areas.find(x => x.key === k); return a ? Number(a.score) : 100; };
+    const worstAreaT3 = (areas.filter(a => a.key !== 'bmi').slice().sort((a, b) => a.score - b.score)[0] || {}).key || '';
+    const ageT3 = Number(result.submission?.age || personalData.age || 0);
+    let studioKeyT3 = goalKeyT3 || 'default';
+    if (ageT3 >= 60 && areaScoreT3('activity') < 45 && studioRec['signal_reha']) {
+      studioKeyT3 = 'signal_reha';
+    } else if (riskOf('sitting_hours') >= 3 && areaScoreT3('activity') < 55 && studioRec['signal_ruecken']) {
+      studioKeyT3 = 'signal_ruecken';
+    } else if (worstAreaT3 === 'mental' && areaScoreT3('mental') < 50 && mentalRisk < 3 && studioRec['signal_entspannung']) {
+      studioKeyT3 = 'signal_entspannung';
+    } else if (worstAreaT3 === 'nutrition' && areaScoreT3('nutrition') < 45 && !['goal_weight', 'goal_fitness'].includes(goalKeyT3) && studioRec['signal_ernaehrung']) {
+      studioKeyT3 = 'signal_ernaehrung';
+    }
+    const rec2 = studioRec[studioKeyT3] || studioRec[goalKeyT3] || studioRec['default'] || ["Persönliche Begleitung", "Gemeinsam deine Auswertung einordnen und den passenden Einstieg finden."];
     const rec2Benefits = (rec2[2] || []).slice(0, 3).map(b =>
       `<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-top:6px;"><span style="color:var(--accent-green);">✓</span> ${b}</div>`
     ).join('');
@@ -2352,7 +2369,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.38</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.39</footer>
 
 
 </body>
