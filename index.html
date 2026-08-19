@@ -614,15 +614,16 @@
   } catch(e) { /* silent */ }
 
   async function loadHeroCount() {
+    // v1.28.37: Live-Zähler über RPC (RLS blockiert direkten submissions-Zugriff zu Recht).
+    // Zeigt nur Werte >= 100 (auf Zehner gerundet) — sonst bleibt der statische Text stehen.
     try {
-      const { count } = await supabaseClient
-        .from("submissions")
-        .select("id", { count: "exact", head: true });
-      if (count && count > 0) {
+      const { data } = await supabaseClient.rpc("get_public_check_count");
+      const n = Number(data);
+      if (n >= 100) {
         const el = document.getElementById("hero-count");
-        if (el) el.textContent = count + "+";
+        if (el) el.textContent = n + "+";
       }
-    } catch(e) { /* silent */ }
+    } catch(e) { /* silent — statischer Fallback bleibt */ }
   }
 
   async function loadQuestions() {
@@ -2348,7 +2349,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.36</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.37</footer>
 
 
 </body>
