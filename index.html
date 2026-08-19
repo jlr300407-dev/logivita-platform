@@ -557,6 +557,7 @@
         source: document.referrer ? (document.referrer.includes('facebook') ? 'facebook' : document.referrer.includes('instagram') ? 'instagram' : 'other') : 'direct',
         device: window.innerWidth < 600 ? 'mobile' : 'desktop',
         is_internal: window._isInternal === true ? true : undefined, // Sofort-Fix 5: Testdaten markieren (undefined wird von JSON.stringify entfernt)
+        env: location.hostname.endsWith('le-vita.com') ? 'prod' : location.hostname.endsWith('github.io') ? 'dev' : 'local', // v1.28.40: Prod/Dev-Trennung nach Umzug (gleiche DB, /v2/-Entwicklung)
         ...(window._utm || {})
       };
       await supabaseClient.from('funnel_events').insert({
@@ -1136,7 +1137,7 @@
     else if (q.type === "consent") { document.getElementById("progressAreaLabel").textContent = "🔒 Fast fertig"; document.getElementById("progressCount").textContent = ""; }
     else {
       const icon = AREA_ICONS[q.area_key] || "●";
-      // v1.28.39: "Frage X von Y" statt Prozent (V1.29-Punkt) — Y wird live aus dem
+      // v1.28.40: "Frage X von Y" statt Prozent (V1.29-Punkt) — Y wird live aus dem
       // aktuellen Fragenplan berechnet; Zusatzfragen erhöhen X und Y gemeinsam, nie rückwärts.
       const qSteps = groupedQuestions.filter(s => s.question_key);
       const qPos = qSteps.indexOf(q) + 1;
@@ -1712,7 +1713,7 @@
     Object.entries(window._snips.studio_rec).forEach(([k, s]) => {
       if (s.title && s.body) studioRec[k] = [s.title, s.body, Array.isArray(s.benefits) ? s.benefits : []];
     });
-    // v1.28.39: Bedürfnis-Ebene — starkes Antwort-Signal schlägt das Ziel-Programm.
+    // v1.28.40: Bedürfnis-Ebene — starkes Antwort-Signal schlägt das Ziel-Programm.
     // Es bleibt bei genau EINER Empfehlung; sie trifft nur öfter das echte Bedürfnis.
     // Schutzregel (Geist von Pilotfreigabe 4.8): bei echtem mentalen Warnsignal (Stufe 3,
     // Hausarzt-Satz aktiv) wird KEINE Entspannungs-Empfehlung verkauft.
@@ -2369,7 +2370,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.39</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.40</footer>
 
 
 </body>
