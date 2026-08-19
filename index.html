@@ -1136,9 +1136,12 @@
     else if (q.type === "consent") { document.getElementById("progressAreaLabel").textContent = "🔒 Fast fertig"; document.getElementById("progressCount").textContent = ""; }
     else {
       const icon = AREA_ICONS[q.area_key] || "●";
-      const pctRound = Math.round(pct);
+      // v1.28.38: "Frage X von Y" statt Prozent (V1.29-Punkt) — Y wird live aus dem
+      // aktuellen Fragenplan berechnet; Zusatzfragen erhöhen X und Y gemeinsam, nie rückwärts.
+      const qSteps = groupedQuestions.filter(s => s.question_key);
+      const qPos = qSteps.indexOf(q) + 1;
       document.getElementById("progressAreaLabel").textContent = `${icon} ${q.area_label || q.area_key}`;
-      document.getElementById("progressCount").textContent = `${pctRound}% geschafft`;
+      document.getElementById("progressCount").textContent = qPos > 0 ? `Frage ${qPos} von ${qSteps.length}` : "";
     }
   }
 
@@ -2349,7 +2352,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.37</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.38</footer>
 
 
 </body>
