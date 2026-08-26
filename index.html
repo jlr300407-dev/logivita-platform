@@ -13,6 +13,10 @@
   <script>fbq('init','162833051672814');fbq('track','PageView');</script>
   -->
   <!-- v1.28.19: Fonts + Bibliotheken lokal — keine Verbindungen zu Google/CDN-Drittservern (DSGVO) -->
+  <!-- v1.31.0 (V2-Einstieg, Schicht 3): Potenzial-Simulator (Szenario-Schalter + "Als mein Ziel setzen"),
+       Radar-Ebenen Vorher/Ist/Potenzial (max. 2 sichtbar, Potenzial gestrichelt), Verlaufs-Karte,
+       Re-Check-Start aus der PIN-Ansicht (previous_public_code + previous_pin), Mail-Box-Text im Re-Check.
+       Voraussetzung: Edge edge-2026-08-27.1 + v2-fundament.sql + Diversifizierungs-Patch. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -138,6 +142,9 @@
     .section-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
     .toggle-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
     .toggle-btn.on { background: var(--accent-green-dim); border-color: var(--accent-green); color: var(--accent-green); }
+    .toggle-btn.dim { opacity: 0.55; }
+    /* Potenzial ist die Hypothesen-Ebene — sie trägt durchgehend Blau, nie Markengrün */
+    .toggle-btn.on-blue { background: var(--accent-blue-dim); border-color: var(--accent-blue); color: var(--accent-blue); }
     .vital-index-box { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 20px; margin-bottom: 16px; }
     .vital-index-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 10px 12px; border-radius: var(--radius-sm); margin-bottom: 6px; font-size: 13px; border: 1px solid transparent; }
     .vital-index-row.active-level { background: var(--accent-green-dim); border-color: rgba(34,201,122,0.2); }
@@ -233,7 +240,7 @@
     .status-msg { padding: 12px 14px; border-radius: var(--radius-sm); font-size: 13px; margin-top: 10px; line-height: 1.5; }
     @media print {
       body { background: white !important; color: #1a1a2e !important; padding: 0; }
-      .ai-box, .feedback-box, .danger-btn, #quiz-flow, .progress-wrap, .toggle-btn { display: none !important; }
+      .ai-box, .feedback-box, .danger-btn, #quiz-flow, .progress-wrap, .toggle-btn, .sim-box, .recheck-banner, .recheck-note-quiz { display: none !important; }
       .result-area { display: block !important; }
     }
     @media (max-width: 600px) {
@@ -276,6 +283,57 @@
     /* ── PATCH 4: Stärken-Separator stärker differenziert ── */
     .bereiche-staerken-sep { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--accent-green); margin: 18px 0 10px; display: flex; align-items: center; gap: 8px; opacity: 0.75; }
     .bereiche-staerken-sep::after { content: ''; flex: 1; height: 1px; background: rgba(34,201,122,0.2); }
+    /* ══ V2-Einstieg (v1.31.0): Potenzial-Simulator, Verlauf, Re-Check ══ */
+    .sim-box { background: var(--brand-card); border: 1px solid rgba(59,158,255,0.22); border-radius: var(--radius); padding: 20px 18px; margin-bottom: 16px; }
+    .sim-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; background: var(--accent-blue-dim); border: 1px solid rgba(59,158,255,0.25); color: var(--accent-blue); font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 10px; }
+    .sim-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+    .sim-sub { font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; margin-bottom: 14px; }
+    .sim-lever { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; cursor: pointer; transition: all 0.18s; user-select: none; }
+    .sim-lever:hover { border-color: var(--border-hover); }
+    .sim-lever.on { border-color: rgba(59,158,255,0.45); background: var(--accent-blue-dim); }
+    .sim-lever-body { flex: 1; min-width: 0; }
+    .sim-lever-title { font-size: 13px; font-weight: 700; color: var(--text-primary); line-height: 1.35; }
+    .sim-lever-change { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-top: 2px; }
+    .sim-lever-gain { font-size: 11px; font-weight: 700; color: var(--accent-blue); margin-top: 3px; }
+    .sim-switch { position: relative; width: 40px; height: 22px; border-radius: 12px; background: rgba(255,255,255,0.12); flex-shrink: 0; transition: background 0.2s; }
+    .sim-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--text-secondary); transition: all 0.2s; }
+    .sim-lever.on .sim-switch { background: var(--accent-blue); }
+    .sim-lever.on .sim-switch::after { left: 20px; background: #fff; }
+    .sim-projection { display: flex; align-items: center; gap: 14px; background: rgba(59,158,255,0.06); border: 1px dashed rgba(59,158,255,0.4); border-radius: var(--radius-sm); padding: 14px 16px; margin: 12px 0 10px; }
+    .sim-proj-num { font-family: 'DM Serif Display', serif; font-size: 30px; line-height: 1; color: var(--accent-blue); white-space: nowrap; }
+    .sim-proj-meta { flex: 1; font-size: 12px; color: var(--text-secondary); line-height: 1.55; }
+    .sim-proj-meta strong { color: var(--text-primary); }
+    .sim-goal-btn { width: 100%; padding: 13px; border-radius: var(--radius-sm); border: 1px solid rgba(59,158,255,0.4); background: transparent; color: var(--accent-blue); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .sim-goal-btn:hover:not(:disabled) { background: var(--accent-blue-dim); }
+    .sim-goal-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .sim-goal-btn.saved { border-color: var(--accent-green); color: var(--accent-green); background: var(--accent-green-dim); }
+    .sim-note { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-top: 8px; }
+    .sim-goal-card { background: var(--accent-green-dim); border: 1px solid rgba(34,201,122,0.25); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 10px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; }
+    .sim-goal-card strong { color: var(--accent-green); }
+    .verlauf-card { background: var(--brand-card); border: 1px solid rgba(34,201,122,0.25); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 12px; }
+    .verlauf-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .verlauf-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+    .verlauf-date { font-size: 11px; color: var(--text-muted); }
+    .verlauf-row { display: flex; align-items: baseline; gap: 10px; font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+    .verlauf-delta-up { color: var(--accent-green); font-weight: 800; }
+    .verlauf-delta-down { color: var(--accent-amber); font-weight: 800; }
+    .verlauf-delta-stable { color: var(--text-secondary); font-weight: 700; }
+    .area-prev-delta { font-size: 10.5px; font-weight: 600; color: var(--text-muted); margin-top: 3px; }
+    .area-prev-delta .up { color: var(--accent-green); }
+    .area-prev-delta .down { color: var(--accent-amber); }
+    .recheck-banner { background: linear-gradient(135deg, rgba(34,201,122,0.10), rgba(59,158,255,0.08)); border: 1px solid rgba(34,201,122,0.3); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 14px; }
+    .recheck-banner-title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+    .recheck-banner-sub { font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; margin-bottom: 12px; }
+    .recheck-btn { width: 100%; padding: 12px; border-radius: var(--radius-sm); border: none; background: var(--accent-green); color: #0a1628; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.2s; }
+    .recheck-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(34,201,122,0.25); }
+    .recheck-note-quiz { background: var(--accent-blue-dim); border: 1px solid rgba(59,158,255,0.25); border-radius: var(--radius-sm); padding: 9px 14px; margin-bottom: 14px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+    .radar-legend { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 10px; font-size: 11px; color: var(--text-secondary); }
+    .radar-legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .radar-legend i { display: inline-block; width: 16px; height: 0; border-top: 2.5px solid; border-radius: 2px; }
+    .radar-legend .leg-ist i { border-color: #22c97a; }
+    .radar-legend .leg-prev i { border-color: rgba(141,160,184,0.8); border-top-width: 1.5px; }
+    .radar-legend .leg-pot i { border-color: #3b9eff; border-top-style: dashed; }
+    .radar-toggles { display: flex; gap: 6px; }
   </style>
 </head>
 <body>
@@ -391,6 +449,77 @@
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
   });
   let questions = [], groupedQuestions = [], currentStep = 0, selectedAnswers = [], latestResult = null, radarChart = null, showComparison = false;
+
+  // ── V2-Einstieg (v1.31.0): Zustand für Simulator, Verlauf & Re-Check ──
+  // Prinzip: Das Frontend rechnet NIE selbst — es schaltet nur zwischen
+  // serverseitig vorberechneten Szenarien um (calculate_score_scenarios).
+  let simScenarios = null;      // normalisierte Szenarien { base, levers, combos }
+  let simActiveKeys = [];       // question_keys der aktiven Hebel (max. 3)
+  let simGoalSaved = null;      // gespeichertes Ziel-Szenario (nach set_goal bzw. aus load_result)
+  let simInteractTracked = false;
+  let radarLayerPrev = false, radarLayerPot = false; // max. 2 Ebenen gleichzeitig (Design 26.08.)
+  window._previousLink = null;  // { public_code, pin } — gesetzt beim Re-Check-Start aus der PIN-Ansicht
+  window._previousData = null;  // previous-Block aus der Edge-Response (Vorgänger-Check)
+  window._linkStatus = null;    // "none" | "linked" | "invalid"
+
+  // Tolerante Normalisierung der Szenarien-Struktur: Die Edge-Function reicht
+  // das jsonb von calculate_score_scenarios unverändert durch; dieser Adapter
+  // akzeptiert naheliegende Feldnamen-Varianten und ist der EINZIGE Ort, an dem
+  // Feldnamen der Szenarien angefasst werden.
+  function normalizeScenarios(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const pickNum = (o, keys) => { for (const k of keys) { if (o && o[k] !== null && o[k] !== undefined && isFinite(Number(o[k]))) return Number(o[k]); } return null; };
+    const pickStr = (o, keys) => { for (const k of keys) { if (o && typeof o[k] === 'string' && o[k]) return o[k]; } return ''; };
+    const normEntry = (e) => {
+      if (!e || typeof e !== 'object') return null;
+      let keys = null;
+      if (Array.isArray(e.question_keys)) keys = e.question_keys.slice();
+      else if (Array.isArray(e.keys)) keys = e.keys.slice();
+      else if (Array.isArray(e.lever_keys)) keys = e.lever_keys.slice();
+      else if (Array.isArray(e.levers)) keys = e.levers.map(l => typeof l === 'string' ? l : (l && (l.question_key || l.key))).filter(Boolean);
+      const qk = pickStr(e, ['question_key', 'key', 'lever_key']);
+      if (!keys && qk) keys = [qk];
+      return {
+        question_key: qk || (keys && keys.length === 1 ? keys[0] : ''),
+        question_keys: keys || [],
+        area_key: pickStr(e, ['area_key', 'area']),
+        area_label: pickStr(e, ['area_label']),
+        label: pickStr(e, ['question_text', 'label', 'question_label', 'lever_label', 'title']),
+        from_text: pickStr(e, ['from_text', 'current_text', 'current_answer', 'answer_from', 'from']),
+        to_text: pickStr(e, ['to_text', 'target_text', 'better_text', 'answer_to', 'to', 'improved_text']),
+        gain: pickNum(e, ['gain', 'score_gain', 'delta']) || 0,
+        new_total: pickNum(e, ['new_total', 'new_total_score', 'new_score', 'projected_total', 'total_score']),
+        new_bio_age: pickNum(e, ['new_bio_age', 'projected_bio_age', 'bio_age']),
+        score_payload: (e.score_payload && typeof e.score_payload === 'object') ? e.score_payload
+          : (e.area_scores && typeof e.area_scores === 'object') ? e.area_scores
+          : (e.areas && typeof e.areas === 'object' && !Array.isArray(e.areas)) ? e.areas : null
+      };
+    };
+    const base = raw.base || {};
+    const levers = (Array.isArray(raw.levers) ? raw.levers : []).map(normEntry).filter(l => l && l.question_keys.length === 1);
+    const combos = (Array.isArray(raw.combos) ? raw.combos : []).map(normEntry).filter(c => c && c.question_keys.length >= 2);
+    if (levers.length === 0) return null;
+    return {
+      base: { total: pickNum(base, ['total_score', 'total', 'score']), bio_age: pickNum(base, ['bio_age', 'base_bio_age']) },
+      levers, combos
+    };
+  }
+
+  // Zentrale Übernahme der V2-Felder aus jeder Edge-Response (Submit + load_result)
+  function absorbV2Result(result) {
+    simScenarios = normalizeScenarios(result.scenarios);
+    simActiveKeys = [];
+    window._previousData = result.previous || null;
+    window._linkStatus = result.link_status || null;
+    simGoalSaved = (result.goal_scenario && typeof result.goal_scenario === 'object') ? result.goal_scenario : null;
+    radarLayerPrev = false; radarLayerPot = false;
+    if (window._isInternal) {
+      // Deploy-Gegenprüfung (?internal=1): rohe V2-Felder sichtbar machen
+      try { console.log('[V2] scenarios (roh):', JSON.stringify(result.scenarios)); } catch(e) {}
+      try { console.log('[V2] previous:', JSON.stringify(result.previous), '· link_status:', result.link_status, '· goal_scenario:', JSON.stringify(result.goal_scenario || null)); } catch(e) {}
+      if (result.scenarios && !simScenarios) console.warn('[V2] Szenarien vorhanden, aber nicht normalisierbar — Feldnamen prüfen (siehe normalizeScenarios).');
+    }
+  }
   const personalData = { age:null, gender:"", height_cm:null, weight_kg:null, first_name:"", last_name:"", consent_privacy:false, consent_storage:false, goal_key:"", goal_option_id:"" };
 
   // ── PIN-Screen bauen ──────────────────────────────────
@@ -473,6 +602,7 @@
       if (result && result.success) {
         window._accessPin = pin; // Für spätere Aktionen merken (z.B. Datenlöschung, v1.28.17)
         latestResult = result;
+        absorbV2Result(result); // V2: Szenarien, Verlauf, gespeichertes Ziel
         personalData.age = result.submission?.age || null;
         personalData.gender = result.submission?.gender || '';
         personalData.height_cm = result.submission?.height_cm || null;
@@ -536,6 +666,13 @@
       buildSteps(0);
       document.getElementById("loading").classList.add("hidden");
       updateProgress();
+      // V2: Nach dem Re-Check-Start direkt in den Fragen-Flow springen
+      // (kein zweiter Hero-Umweg) und die Verknüpfung sichtbar machen.
+      if (window._autoStartCheck) {
+        window._autoStartCheck = false;
+        startDirectCheck();
+        insertRecheckQuizNote();
+      }
     } catch (error) {
       document.getElementById("loading").classList.remove("hidden");
       document.getElementById("loading").innerHTML = `<div class="info-box box-danger"><strong>Fehler beim Laden</strong><br>${error.message}</div>`;
@@ -1154,10 +1291,21 @@
     const btn = document.getElementById("submitBtn");
     btn.disabled = true; btn.innerText = "Auswertung wird erstellt…";
     try {
-      const result = await callFunction({ age:personalData.age, gender:personalData.gender, height_cm:personalData.height_cm, weight_kg:personalData.weight_kg, first_name:personalData.first_name||null, last_name:personalData.last_name||null, goal_key:personalData.goal_key||null, consent_privacy:true, consent_storage:true, answers:selectedAnswers });
+      // V2: Re-Check-Verknüpfung — previous_public_code + previous_pin nur mitschicken,
+      // wenn der Nutzer aus einer PIN-verifizierten Ansicht gestartet ist.
+      const payload = { age:personalData.age, gender:personalData.gender, height_cm:personalData.height_cm, weight_kg:personalData.weight_kg, first_name:personalData.first_name||null, last_name:personalData.last_name||null, goal_key:personalData.goal_key||null, consent_privacy:true, consent_storage:true, answers:selectedAnswers };
+      const wasRecheck = !!(window._previousLink && window._previousLink.public_code && window._previousLink.pin);
+      if (wasRecheck) {
+        payload.previous_public_code = window._previousLink.public_code;
+        payload.previous_pin = window._previousLink.pin;
+      }
+      const result = await callFunction(payload);
       latestResult = result;
+      absorbV2Result(result); // V2: Szenarien, Verlauf, link_status
+      window._previousLink = null; // Verknüpfung ist verbraucht — nie doppelt verwenden
+      const rb = document.getElementById('recheckQuizNote'); if (rb) rb.remove();
       window._currentPublicCode = result.public_code || null;
-      trackEvent('check_submitted', { score: result.score?.total_score, public_code: result.public_code || null });
+      trackEvent('check_submitted', { score: result.score?.total_score, public_code: result.public_code || null, is_recheck: wasRecheck || undefined, link_status: wasRecheck ? (result.link_status || null) : undefined });
       if (typeof fbq !== 'undefined') fbq('track', 'CompleteRegistration', { content_name: 'check_complete', goal: personalData.goal_key || 'unknown' });
       showResult(result);
       setTimeout(initStickyCta, 800);
@@ -1260,7 +1408,7 @@
     if (tab) tab.classList.add('active');
     if (content) content.classList.add('active');
     if (id === 'bereiche' && window._lastResultData) {
-      setTimeout(() => renderRadarChart(window._lastResultData.areas), 50);
+      setTimeout(() => { renderRadarChart(window._lastResultData.areas); syncRadarToggleButtons(); }, 50);
     }
   }
 
@@ -1304,9 +1452,11 @@
       : totalScore >= 55 ? "Auf dem Weg"
       : totalScore >= 40 ? "Im Aufbau"
       : "Neustart";
+    window._lastResultData = { areas }; // V2: Radar-Ebenen brauchen die Bereiche bei jedem Re-Render
     document.getElementById("result-content").innerHTML = buildResultHtml(result, areas, totalScore, bioAge, suppFocus, correctedScoreLabel);
     setTimeout(() => animateScoreRing(totalScore), 100);
     setTimeout(() => renderRadarChart(areas), 200);
+    setTimeout(() => { updateSimulatorUI(); syncRadarToggleButtons(); }, 120); // V2: Startzustand Simulator + Radar-Schalter
     setTimeout(() => { document.querySelectorAll(".area-bar-fill[data-w]").forEach(el => { el.style.width = el.getAttribute("data-w") + "%"; }); }, 300);
     ra.scrollIntoView({ behavior:"smooth" });
   }
@@ -1339,6 +1489,27 @@
     const worst = areasForHebel.length > 0
       ? (hasCriticalSleep && sleepArea ? sleepArea : [...areasForHebel].sort((a,b) => a.score - b.score)[0])
       : null;
+
+    // ── V2: Re-Check-Einstieg aus der PIN-Ansicht ──
+    // Nur im Wiederaufruf (PIN bereits serverseitig verifiziert): von hier aus
+    // startet der neue Check MIT Verknüpfung (previous_public_code + previous_pin).
+    if (window._isReviewMode && window._accessPin && result.public_code) {
+      html += `
+        <div class="recheck-banner">
+          <div class="recheck-banner-title">🔄 Zeit für deinen Re-Check?</div>
+          <div class="recheck-banner-sub">Starte einen neuen Vital-Check, der mit diesem Ergebnis (${result.public_code}) verknüpft wird — du siehst danach direkt, was sich verändert hat.</div>
+          <button class="recheck-btn" onclick="startRecheckFromReview()">Neuen Check starten & vergleichen →</button>
+        </div>`;
+    }
+
+    // ── V2: Ehrlicher Hinweis, wenn die Re-Check-Verknüpfung nicht geklappt hat ──
+    // (ungültiger PIN bricht den Check bewusst nicht ab — Edge-Regel)
+    if (window._linkStatus === 'invalid') {
+      html += `
+        <div class="info-box box-warning" style="margin-top:0;margin-bottom:14px;font-size:13px;">
+          Die Verknüpfung mit deinem letzten Check hat nicht geklappt (PIN stimmte nicht) — dein neues Ergebnis ist davon unberührt und vollständig.
+        </div>`;
+    }
 
     // ── KPI-Bar ──
     html += `
@@ -1416,6 +1587,15 @@
         </div>
       </div>`;
 
+    // ── V2: Verlaufs-Karte (nur bei verknüpftem Vorgänger-Check) ──
+    window._prevAreaMap = null;
+    if (window._previousData && window._previousData.score_payload) {
+      const pm = {};
+      Object.entries(window._previousData.score_payload).forEach(([k, v]) => { if (k !== 'general' && v && isFinite(Number(v.score))) pm[k] = Number(v.score); });
+      window._prevAreaMap = Object.keys(pm).length > 0 ? pm : null;
+      html += renderVerlaufCard(window._previousData, totalScore, bioAge);
+    }
+
     // Basisdaten — aufklappbar
     const basisdatenId = 'basisdaten_' + Date.now();
     html += `
@@ -1471,6 +1651,10 @@
       </div></div>`;
     }
 
+    // ── V2: Potenzial-Simulator (Prio 2.3) — serverseitig vorberechnete Szenarien,
+    // Auswahl vorbereiteter Hebel per Schalter, keine Freieingabe, keine Client-Rechnung.
+    html += renderSimulatorHtml(totalScore, bioAge);
+
     // KI-Mail Box mit Vital-Plan-Teaser (v1.28.14):
     // Statt abstrakter Beschreibung das konkrete Inhaltsverzeichnis DIESES Plans —
     // regelbasiert aus dem Ergebnis generiert, jede Zeile beschreibt echten Mail-Inhalt.
@@ -1492,14 +1676,27 @@
         <span style="font-size:13.5px;line-height:1.55;color:var(--text-secondary);"><strong style="color:var(--text-primary);">${strong}</strong> — ${rest}</span>
       </div>`;
     let teaserRows = "";
+    // V2: Bei einem verknüpften Re-Check verspricht die Box, was die Mail jetzt
+    // wirklich enthält — die Verlaufs-Auswertung (Edge baut den history-Block).
+    const isLinkedRecheck = !!window._previousData;
+    if (isLinkedRecheck) {
+      teaserRows += teaserRow("📈", "Deine Entwicklung seit dem letzten Check", "was sich verbessert hat, was stabil blieb — und dein nächster realistischer Schritt");
+      if (window._previousData.goal_scenario) {
+        teaserRows += teaserRow("🎯", "Die Auswertung deines gesetzten Ziels", "hast du erreicht, was du dir im Simulator vorgenommen hattest?");
+      }
+    }
     if (topPrio && topPrio.label) {
       teaserRows += teaserRow("📌", `Dein größter Hebel: ${topPrio.label} (${Math.round(Number(topPrio.score))}/100)`, "die eine Änderung, die bei dir den größten Unterschied macht");
     }
-    teaserRows += teaserRow("🎯", `Dein 6-Wochen-Fahrplan für „${goalTeaser}“`, "konkret, Schritt für Schritt");
+    if (!isLinkedRecheck || !window._previousData.goal_scenario) {
+      teaserRows += teaserRow("🎯", `Dein 6-Wochen-Fahrplan für „${goalTeaser}“`, "konkret, Schritt für Schritt");
+    }
     if (AFFILIATE_ENABLED && result.score?.bloodtest_hint) { // Pilotfreigabe 5.5: Zeile verspricht Test-Spezifik, die die Mail ohne Freigabe nicht liefert
       teaserRows += teaserRow("🩸", "Welche Blutwerte für dich sinnvoll wären", "und welche du dir sparen kannst");
     }
-    teaserRows += teaserRow("🔑", "Dein persönlicher PIN", "ruf deine Auswertung jederzeit wieder auf und vergleiche beim nächsten Check in 8–12 Wochen, was sich verändert hat");
+    teaserRows += isLinkedRecheck
+      ? teaserRow("🔑", "Dein neuer persönlicher PIN", "ruf diese Auswertung jederzeit wieder auf — und vergleiche beim nächsten Check erneut, was sich verändert hat")
+      : teaserRow("🔑", "Dein persönlicher PIN", "ruf deine Auswertung jederzeit wieder auf und vergleiche beim nächsten Check in 8–12 Wochen, was sich verändert hat");
     html += `
       <div class="ai-box">
         <div class="ai-badge">✦ Dein persönlicher Vital-Plan</div>
@@ -1545,12 +1742,20 @@
     // ════════════════════════════════════════════
     html += `<div class="result-tab-content" id="rtc-bereiche">`;
 
+    // V2: Radar mit drei definierten Ebenen — Vorher (grau, dünn), Ist (Markengrün,
+    // gefüllt), Potenzial (gestrichelt, ungefüllt). Maximal zwei gleichzeitig sichtbar.
+    const hasPrevLayer = !!window._prevAreaMap;
+    const hasPotLayer = potentialLayerAvailable();
     html += `<div class="section-card">
       <div class="section-header">
         <div class="section-title">Vitalitäts-Spinne</div>
-        <button class="toggle-btn" id="compareToggleBtn" onclick="toggleRadarComparison()">Verlauf einblenden</button>
+        <div class="radar-toggles">
+          <button class="toggle-btn" id="compareToggleBtn" onclick="toggleRadarComparison()" ${hasPrevLayer ? '' : (window._previousData ? 'style="display:none;"' : '')}>Verlauf einblenden</button>
+          <button class="toggle-btn" id="potToggleBtn" onclick="toggleRadarPotential()" ${hasPotLayer ? '' : 'style="display:none;"'}>Potenzial einblenden</button>
+        </div>
       </div>
       <canvas id="vitalChart" height="300"></canvas>
+      <div class="radar-legend" id="radarLegend"></div>
     </div>`;
     html += renderRadarExplanation(areas);
 
@@ -1946,6 +2151,16 @@
     }
     const icon = AREA_ICONS[area.key] || "●";
     const bmiHtml = area.key === "bmi" ? renderBmiDetail(result) : "";
+    // V2: Vorher→Heute-Delta je Bereich (nur bei verknüpftem Re-Check).
+    // Rausch-Regel wie in der Mail: |Delta| <= 2 gilt als "stabil gehalten".
+    let prevDeltaHtml = "";
+    if (window._prevAreaMap && isFinite(window._prevAreaMap[area.key])) {
+      const prevS = Math.round(window._prevAreaMap[area.key]);
+      const curS = Math.round(area.score);
+      const d = curS - prevS;
+      const deltaTxt = Math.abs(d) <= 2 ? `<span>· stabil gehalten</span>` : (d > 0 ? `<span class="up">▲ +${d}</span>` : `<span class="down">▼ ${d}</span>`);
+      prevDeltaHtml = `<div class="area-prev-delta">Vorher ${prevS} → heute ${curS} ${deltaTxt}</div>`;
+    }
     return `
       <div class="area-card ${cls}" onclick="toggleAreaDetail('detail-${area.key}')">
         <div class="area-card-header">
@@ -1954,6 +2169,7 @@
         </div>
         <div class="area-bar-track"><div class="area-bar-fill" data-w="${Math.round(area.score)}" style="width:0%"></div></div>
         <div class="area-status">${statusTxt}</div>
+        ${prevDeltaHtml}
         ${bmiHtml}
         <div class="area-detail" id="detail-${area.key}">
           <div class="insight-label">⚡ Sofort umsetzen</div>
@@ -2266,7 +2482,260 @@
     return html;
   }
 
-  // ── PATCH 1: Radar-Chart mit Kurznamen ──
+  /* ══════════════════════════════════════════════════════
+     V2-Einstieg (v1.31.0) — Verlaufs-Karte, Potenzial-Simulator,
+     Ziel-Speicherung, Re-Check-Start
+  ══════════════════════════════════════════════════════ */
+  function escHtml(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function fmtGain(n) {
+    const v = Math.round(Number(n) * 10) / 10;
+    return (v % 1 === 0 ? String(v) : v.toFixed(1).replace('.', ','));
+  }
+  const SIM_SHORT_LABELS = {
+    activity_days: "Aktive Tage pro Woche", strength_training: "Krafttraining", sitting_hours: "Sitzzeit",
+    sleep_duration: "Schlafdauer", sleep_latency: "Einschlafzeit", daytime_sleepiness: "Tagesmüdigkeit",
+    water_intake: "Trinkmenge", vegetables_fruit: "Gemüse & Obst", vegetable_fruit: "Gemüse & Obst",
+    diet_type: "Ernährungsweise", protein_intake: "Eiweiß", protein_frequency: "Eiweiß",
+    omega3_fish: "Seefisch / Omega-3", sun_exposure_winter: "Tageslicht im Winter",
+    alcohol_frequency: "Alkohol", alcohol_amount: "Alkohol-Menge", nicotine_use: "Nikotin",
+    stress_level: "Stresslevel", social_connection: "Soziale Kontakte", meal_regularity: "Mahlzeiten-Rhythmus"
+  };
+
+  // ── Verlaufs-Karte (Tab 1): Vorher → Heute, Rausch-Regel |Delta| < 2 = stabil ──
+  function renderVerlaufCard(prev, totalScore, bioAge) {
+    const prevTotal = Math.round(Number(prev.total_score));
+    const curTotal = Math.round(Number(totalScore));
+    const delta = Math.round((Number(totalScore) - Number(prev.total_score)) * 10) / 10;
+    const weeks = Math.max(1, Math.round((Date.now() - new Date(prev.created_at).getTime()) / (7 * 24 * 3600 * 1000)));
+    const stable = Math.abs(delta) < 2;
+    const deltaHtml = stable
+      ? `<span class="verlauf-delta-stable">stabil gehalten</span>`
+      : delta > 0
+        ? `<span class="verlauf-delta-up">▲ +${fmtGain(delta)} Punkte</span>`
+        : `<span class="verlauf-delta-down">▼ ${fmtGain(delta)} Punkte</span>`;
+    let bioHtml = "";
+    if (prev.bio_age && bioAge) {
+      const bd = Number(bioAge) - Number(prev.bio_age);
+      bioHtml = `<div class="verlauf-row">Vitalitäts-Alter: ${prev.bio_age} J. → <strong style="color:var(--text-primary);">${bioAge} J.</strong>${bd !== 0 ? ` <span class="${bd < 0 ? 'verlauf-delta-up' : 'verlauf-delta-down'}">(${bd > 0 ? '+' : ''}${bd} J.)</span>` : ''}</div>`;
+    }
+    const prevDate = new Date(prev.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return `
+      <div class="verlauf-card">
+        <div class="verlauf-head">
+          <div class="verlauf-title">📈 Dein Verlauf</div>
+          <div class="verlauf-date">Letzter Check: ${prevDate} · vor ca. ${weeks} Woche${weeks === 1 ? '' : 'n'}</div>
+        </div>
+        <div class="verlauf-row" style="font-size:15px;">Vitalitäts-Index: ${prevTotal} → <strong style="color:var(--text-primary);font-size:17px;">${curTotal}</strong> ${deltaHtml}</div>
+        ${bioHtml}
+        <div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">Die Bereichs-Entwicklung siehst du unter „Meine Bereiche“ — dort kannst du im Rad die Vorher-Ebene einblenden.</div>
+      </div>`;
+  }
+
+  // ── Potenzial-Simulator (Tab 1) ──
+  function getActiveProjection() {
+    if (!simScenarios) return null;
+    if (simActiveKeys.length === 0) {
+      return { entry: null, total: simScenarios.base.total, bio_age: simScenarios.base.bio_age, gain: 0 };
+    }
+    if (simActiveKeys.length === 1) {
+      const lever = simScenarios.levers.find(l => l.question_key === simActiveKeys[0]);
+      return lever ? { entry: lever, total: lever.new_total, bio_age: lever.new_bio_age, gain: lever.gain } : null;
+    }
+    const want = simActiveKeys.slice().sort().join('|');
+    const combo = simScenarios.combos.find(c => c.question_keys.slice().sort().join('|') === want);
+    return combo ? { entry: combo, total: combo.new_total, bio_age: combo.new_bio_age, gain: combo.gain } : null;
+  }
+
+  function renderSimulatorHtml(totalScore, bioAge) {
+    if (!simScenarios || !simScenarios.levers.length) {
+      // Kein Szenario verfügbar (z.B. bereits alles im Optimum) — dann ggf. nur das gespeicherte Ziel zeigen
+      return simGoalSaved ? `<div class="sim-box">${renderGoalCardHtml()}</div>` : "";
+    }
+    let leversHtml = "";
+    simScenarios.levers.forEach(l => {
+      const icon = AREA_ICONS[l.area_key] || "→";
+      const short = SIM_SHORT_LABELS[l.question_key] || l.label || l.question_key;
+      leversHtml += `
+        <div class="sim-lever" id="simLever_${escHtml(l.question_key)}" onclick="toggleSimLever('${escHtml(l.question_key)}')">
+          <div class="sim-lever-body">
+            <div class="sim-lever-title">${icon} ${escHtml(short)}${l.area_label ? ` <span style="font-weight:500;color:var(--text-muted);">· ${escHtml(l.area_label)}</span>` : ''}</div>
+            <div class="sim-lever-change">${escHtml(l.from_text)} → <strong style="color:var(--text-primary);">${escHtml(l.to_text)}</strong></div>
+            <div class="sim-lever-gain">+${fmtGain(l.gain)} Punkte</div>
+          </div>
+          <div class="sim-switch"></div>
+        </div>`;
+    });
+    return `
+      <div class="sim-box" id="simBox">
+        <div class="sim-badge">✦ Was wäre wenn</div>
+        <div class="sim-title">Dein realistisches Potenzial</div>
+        <div class="sim-sub">Wähle bis zu drei Hebel aus deinen größten Ansatzpunkten — und sieh sofort, was das für deinen Index bedeuten würde. Serverseitig berechnet, mit derselben Formel wie dein Ergebnis.</div>
+        ${renderGoalCardHtml()}
+        ${leversHtml}
+        <div class="sim-projection">
+          <div class="sim-proj-num" id="simProjNum">${Math.round(totalScore)}</div>
+          <div class="sim-proj-meta" id="simProjMeta">Schalte oben einen Hebel ein, um dein Potenzial zu sehen.</div>
+        </div>
+        <button class="sim-goal-btn" id="simGoalBtn" onclick="setSimulatorGoal()" disabled>🎯 Als mein Ziel setzen</button>
+        <div class="sim-note">Eine Simulation, keine Messung — nur beeinflussbare Verhaltens-Hebel, Symptom-Fragen und BMI sind bewusst ausgenommen. Dein gesetztes Ziel greifen wir beim nächsten Check wieder auf.</div>
+      </div>`;
+  }
+
+  function renderGoalCardHtml() {
+    if (!simGoalSaved) return "";
+    const levers = Array.isArray(simGoalSaved.levers) ? simGoalSaved.levers : [];
+    const leverTxt = levers.map(l => {
+      const short = SIM_SHORT_LABELS[l.question_key] || l.question_key;
+      return `${escHtml(short)}${l.to_text ? ` (${escHtml(l.to_text)})` : ''}`;
+    }).join(' · ');
+    const projTxt = isFinite(Number(simGoalSaved.projected_total)) ? ` — Ziel-Index ~${Math.round(Number(simGoalSaved.projected_total))}` : '';
+    return `<div class="sim-goal-card"><strong>🎯 Dein gespeichertes Ziel</strong>${projTxt}<br>${leverTxt || 'Gewählte Hebel'}<br><span style="font-size:11px;color:var(--text-muted);">Beim nächsten Check schauen wir gemeinsam darauf, was daraus geworden ist.</span></div>`;
+  }
+
+  function toggleSimLever(key) {
+    if (!simScenarios) return;
+    const idx = simActiveKeys.indexOf(key);
+    if (idx >= 0) simActiveKeys.splice(idx, 1);
+    else {
+      if (simActiveKeys.length >= 3) return; // Leitplanke: max. 3 Hebel
+      simActiveKeys.push(key);
+    }
+    if (!simInteractTracked) { simInteractTracked = true; trackEvent('simulator_interact'); }
+    updateSimulatorUI();
+  }
+
+  function updateSimulatorUI() {
+    if (!simScenarios) return;
+    simScenarios.levers.forEach(l => {
+      const el = document.getElementById('simLever_' + l.question_key);
+      if (el) el.classList.toggle('on', simActiveKeys.includes(l.question_key));
+    });
+    const proj = getActiveProjection();
+    const num = document.getElementById('simProjNum');
+    const meta = document.getElementById('simProjMeta');
+    const btn = document.getElementById('simGoalBtn');
+    if (proj && simActiveKeys.length === 0) {
+      if (num) { num.textContent = Math.round(proj.total); num.style.color = 'var(--text-muted)'; }
+      if (meta) meta.innerHTML = 'Schalte oben einen Hebel ein, um dein Potenzial zu sehen.';
+    } else if (proj) {
+      if (num) { num.textContent = Math.round(proj.total); num.style.color = 'var(--accent-blue)'; }
+      if (meta) {
+        const bioTxt = proj.bio_age ? ` · Vitalitäts-Alter ~<strong>${proj.bio_age} J.</strong>` : '';
+        const comboNote = simActiveKeys.length >= 2 ? ' <span style="color:var(--text-muted);">(Kombination exakt berechnet — Hebel addieren sich nicht einfach)</span>' : '';
+        meta.innerHTML = `<strong>+${fmtGain(proj.gain)} Punkte</strong> gegenüber heute${bioTxt}${comboNote}`;
+      }
+    } else {
+      // Ehrlicher Zustand: gewählte Kombination liegt nicht vorberechnet vor (sollte nicht vorkommen)
+      if (num) { num.textContent = '–'; num.style.color = 'var(--text-muted)'; }
+      if (meta) meta.innerHTML = 'Für diese Kombination liegt keine vorberechnete Zahl vor — bitte eine andere Auswahl wählen.';
+      if (window._isInternal) console.warn('[V2] Keine vorberechnete Kombination für', simActiveKeys.slice().sort().join('+'), '— combos.keys prüfen.');
+    }
+    if (btn && !btn.classList.contains('saved')) {
+      btn.disabled = !(proj && proj.entry);
+    }
+    // Potenzial-Ebene im Rad hängt an der aktiven Auswahl — jede Änderung
+    // im Simulator zeichnet die gestrichelte Kontur neu (oder blendet sie aus).
+    if (radarLayerPot) {
+      if (!getPotentialAreaMap()) radarLayerPot = false;
+      rerenderRadar();
+    }
+    syncRadarToggleButtons();
+  }
+
+  async function setSimulatorGoal() {
+    const proj = getActiveProjection();
+    if (!proj || !proj.entry || !latestResult?.public_code) return;
+    const btn = document.getElementById('simGoalBtn');
+    const activeLevers = simScenarios.levers.filter(l => simActiveKeys.includes(l.question_key));
+    const scenario = {
+      source: 'simulator-v1.31',
+      set_at: new Date().toISOString(),
+      base_total: simScenarios.base.total,
+      projected_total: proj.total,
+      projected_bio_age: proj.bio_age,
+      gain: proj.gain,
+      levers: activeLevers.map(l => ({ question_key: l.question_key, area_key: l.area_key, area_label: l.area_label || null, from_text: l.from_text || null, to_text: l.to_text || null, gain: l.gain }))
+    };
+    if (btn) { btn.disabled = true; btn.textContent = 'Wird gespeichert…'; }
+    try {
+      // Edge-Vertrag: Feld heißt "scenario"; PIN nur nötig, wenn bereits einer existiert
+      // (frische Session: 24h-Fenster ohne PIN).
+      const payload = { mode: 'set_goal', public_code: latestResult.public_code, scenario };
+      if (window._accessPin) payload.pin = window._accessPin;
+      const result = await callFunction(payload);
+      if (result && result.goal_saved) {
+        simGoalSaved = scenario;
+        trackEvent('goal_set', { gain: proj.gain, lever_count: activeLevers.length });
+        if (btn) { btn.disabled = true; btn.textContent = '✓ Ziel gespeichert — wir greifen es beim nächsten Check auf'; btn.classList.add('saved'); }
+      } else {
+        throw new Error('Speichern nicht bestätigt.');
+      }
+    } catch (e) {
+      const msg = e.message || '';
+      let userMsg = 'Dein Ziel konnte nicht gespeichert werden — bitte versuche es gleich noch einmal.';
+      if (msg.includes('PIN_LOCKED')) userMsg = 'Zu viele Fehlversuche — bitte in 15 Minuten erneut versuchen.';
+      else if (msg.includes('PIN_REQUIRED') || msg.includes('PIN_INVALID') || msg.includes('aktuellen Sitzung')) userMsg = 'Dein Ziel lässt sich hier nur mit deinem PIN speichern — ruf deine Auswertung über den Link in deiner E-Mail auf und setze das Ziel dort.';
+      if (btn) { btn.disabled = false; btn.textContent = '🎯 Als mein Ziel setzen'; }
+      const note = document.createElement('div');
+      note.className = 'info-box box-warning';
+      note.style.cssText = 'margin-top:10px;font-size:12.5px;';
+      note.textContent = userMsg;
+      const old = document.querySelector('#simBox .sim-goal-error'); if (old) old.remove();
+      note.classList.add('sim-goal-error');
+      btn?.parentNode?.insertBefore(note, btn.nextSibling);
+    }
+  }
+
+  // ── Re-Check-Start aus der PIN-verifizierten Ansicht ──
+  function startRecheckFromReview() {
+    if (!latestResult?.public_code || !window._accessPin) return;
+    window._previousLink = { public_code: latestResult.public_code, pin: window._accessPin };
+    window._isReviewMode = false;      // neuer Check = neuer Funnel
+    window._currentPublicCode = null;  // Events gehören zum neuen Check
+    try { history.replaceState({}, '', window.location.pathname); } catch (e) { /* still */ }
+    trackEvent('recheck_start', { previous_public_code: window._previousLink.public_code });
+    window._autoStartCheck = true;
+    resetVitalCheck(true, true);
+  }
+
+  function insertRecheckQuizNote() {
+    if (!window._previousLink) return;
+    const existing = document.getElementById('recheckQuizNote'); if (existing) existing.remove();
+    const note = document.createElement('div');
+    note.id = 'recheckQuizNote';
+    note.className = 'recheck-note-quiz';
+    note.innerHTML = `🔄 <strong>Re-Check:</strong> Dein neues Ergebnis wird nach dem Absenden mit ${escHtml(window._previousLink.public_code)} verglichen.`;
+    const flow = document.getElementById('quiz-flow');
+    if (flow && flow.parentNode) flow.parentNode.insertBefore(note, flow);
+  }
+
+  // ── PATCH 1 + V2 (v1.31.0): Radar-Chart mit Ebenen Vorher / Ist / Potenzial ──
+  // Design-Festlegung 26.08.: Vorher = neutral/grau + dünn, Ist = Markengrün gefüllt,
+  // Potenzial = gestrichelte Kontur ohne Füllung (Hypothese darf nie wie Messung
+  // aussehen). Maximal zwei Ebenen gleichzeitig — die Toggles schließen sich aus.
+  // Existiert überhaupt eine Potenzial-Ebene (liefert der Server Bereichswerte
+  // je Szenario)? Unabhängig davon, ob gerade ein Hebel gewählt ist.
+  function potentialLayerAvailable() {
+    if (!simScenarios) return false;
+    const hasPayload = (e) => !!(e && (e.score_payload));
+    return simScenarios.levers.some(hasPayload) || simScenarios.combos.some(hasPayload);
+  }
+
+  function getPotentialAreaMap() {
+    // Per-Bereich-Werte des aktuell gewählten Szenarios — nur wenn der Server sie
+    // liefert (score_payload je Szenario). Fehlen sie, gibt es keine Potenzial-Ebene.
+    const proj = getActiveProjection();
+    if (!proj || !proj.entry || !proj.entry.score_payload) return null;
+    const pm = {};
+    Object.entries(proj.entry.score_payload).forEach(([k, v]) => {
+      const s = (v && typeof v === 'object') ? Number(v.score) : Number(v);
+      if (k !== 'general' && isFinite(s)) pm[k] = s;
+    });
+    return Object.keys(pm).length > 0 ? pm : null;
+  }
+
   function renderRadarChart(areas) {
     const ctx = document.getElementById("vitalChart");
     if (!ctx) return;
@@ -2276,34 +2745,107 @@
       vitamin_d:"Vit. D", bmi:"BMI", mental:"Mental",
       lifestyle:"Lifestyle", micronutrients:"Mikro", metabolic:"Energie"
     };
+    const datasets = [];
+    // Ebene "Vorher" (Re-Check): neutral, dünn, ungefüllt — liegt UNTER der Ist-Ebene
+    if (radarLayerPrev && window._prevAreaMap) {
+      datasets.push({ label:"Vorher", data: areas.map(a => isFinite(window._prevAreaMap[a.key]) ? Math.round(window._prevAreaMap[a.key]) : null),
+        backgroundColor:"transparent", borderColor:"rgba(141,160,184,0.75)", borderWidth:1.5,
+        pointBackgroundColor:"rgba(141,160,184,0.75)", pointRadius:2.5 });
+    }
+    // Ebene "Ist": Markengrün, gefüllt
+    datasets.push({ label:"Heute", data: areas.map(a => Math.round(a.score)),
+      backgroundColor:"rgba(34,201,122,0.15)", borderColor:"#22c97a", borderWidth:2.5,
+      pointBackgroundColor:"#22c97a", pointRadius:4 });
+    // Ebene "Potenzial": gestrichelt, ungefüllt — Hypothese, keine Messung
+    const potMap = radarLayerPot ? getPotentialAreaMap() : null;
+    if (potMap) {
+      datasets.push({ label:"Potenzial (Simulation)", data: areas.map(a => isFinite(potMap[a.key]) ? Math.round(potMap[a.key]) : Math.round(a.score)),
+        backgroundColor:"transparent", borderColor:"#3b9eff", borderWidth:2, borderDash:[6,4],
+        pointBackgroundColor:"#3b9eff", pointRadius:3 });
+    }
     radarChart = new Chart(ctx, {
       type:"radar",
-      data:{
-        labels: areas.map(a => shortLabels[a.key] || a.label),
-        datasets:[{ label:"Aktueller Check", data: areas.map(a => Math.round(a.score)), backgroundColor:"rgba(59,158,255,0.15)", borderColor:"#3b9eff", borderWidth:2.5, pointBackgroundColor:"#3b9eff", pointRadius:4 }]
-      },
+      data:{ labels: areas.map(a => shortLabels[a.key] || a.label), datasets },
       options:{
         scales:{ r:{ min:0, max:100, ticks:{ stepSize:25, color:"rgba(255,255,255,0.2)", font:{size:10}, backdropColor:"transparent" }, grid:{ color:"rgba(255,255,255,0.06)" }, angleLines:{ color:"rgba(255,255,255,0.06)" }, pointLabels:{ color:"#8da0b8", font:{size:11,weight:"600"} } } },
         plugins:{ legend:{ display:false }, tooltip:{ backgroundColor:"#132338", borderColor:"rgba(255,255,255,0.1)", borderWidth:1, titleColor:"#f0f4f8", bodyColor:"#8da0b8" } },
         animation:{ duration:800 }
       }
     });
+    updateRadarLegend();
+  }
+
+  function updateRadarLegend() {
+    const leg = document.getElementById("radarLegend");
+    if (!leg) return;
+    let items = `<span class="leg-ist"><i></i>Heute</span>`;
+    if (radarLayerPrev && window._prevAreaMap) items = `<span class="leg-prev"><i></i>Vorher</span>` + items;
+    if (radarLayerPot && getPotentialAreaMap()) items += `<span class="leg-pot"><i></i>Potenzial (Simulation)</span>`;
+    leg.innerHTML = items;
+  }
+
+  function rerenderRadar() {
+    const areas = window._lastResultData && window._lastResultData.areas;
+    if (areas) renderRadarChart(areas);
   }
 
   function toggleRadarComparison() {
-    showComparison = !showComparison;
-    const btn = document.getElementById("compareToggleBtn");
-    if (btn) { btn.textContent = showComparison ? "✓ Verlauf aktiv" : "Verlauf einblenden"; btn.classList.toggle("on", showComparison); }
-    const existing = document.getElementById("compareNote");
-    if (showComparison) {
-      if (!existing && radarChart) {
-        const note = document.createElement("div");
-        note.id = "compareNote";
-        note.style.cssText = "font-size:12px;color:var(--text-muted);text-align:center;margin-top:8px;";
-        note.textContent = "Der Verlaufsvergleich mit deinem nächsten Check kommt in einer künftigen Version.";
-        radarChart.canvas.parentNode.appendChild(note);
-      }
-    } else { if (existing) existing.remove(); }
+    // Ohne verknüpften Vorgänger-Check bleibt der ehrliche Hinweis von früher.
+    if (!window._prevAreaMap) {
+      showComparison = !showComparison;
+      const btn = document.getElementById("compareToggleBtn");
+      if (btn) { btn.textContent = showComparison ? "✓ Verlauf aktiv" : "Verlauf einblenden"; btn.classList.toggle("on", showComparison); }
+      const existing = document.getElementById("compareNote");
+      if (showComparison) {
+        if (!existing && radarChart) {
+          const note = document.createElement("div");
+          note.id = "compareNote";
+          note.style.cssText = "font-size:12px;color:var(--text-muted);text-align:center;margin-top:8px;";
+          note.textContent = "Den Verlauf siehst du hier, sobald du einen Re-Check machst — starte ihn über deine Auswertungs-Mail (PIN-Ansicht).";
+          radarChart.canvas.parentNode.appendChild(note);
+        }
+      } else { if (existing) existing.remove(); }
+      return;
+    }
+    // Max. 2 Ebenen: Vorher-Ebene schließt die Potenzial-Ebene aus
+    radarLayerPrev = !radarLayerPrev;
+    if (radarLayerPrev) radarLayerPot = false;
+    syncRadarToggleButtons();
+    rerenderRadar();
+  }
+
+  function toggleRadarPotential() {
+    // Ohne gewählten Hebel gibt es keine Hypothese zum Zeichnen — dann leitet
+    // der Schalter zum Simulator, statt eine Auswahl zu erfinden.
+    if (!getPotentialAreaMap()) {
+      const old = document.getElementById("potNote"); if (old) old.remove();
+      const note = document.createElement("div");
+      note.id = "potNote";
+      note.style.cssText = "font-size:12px;color:var(--text-muted);text-align:center;margin-top:8px;line-height:1.5;";
+      note.innerHTML = `Wähle zuerst im Potenzial-Simulator einen Hebel — <a onclick="document.getElementById('rtab-ergebnis').click();setTimeout(()=>document.getElementById('simBox')?.scrollIntoView({behavior:'smooth',block:'center'}),120);" style="color:var(--accent-blue);cursor:pointer;text-decoration:underline;">dorthin wechseln →</a>`;
+      const host = document.getElementById("radarLegend");
+      if (host && host.parentNode) host.parentNode.appendChild(note);
+      return;
+    }
+    document.getElementById("potNote")?.remove();
+    radarLayerPot = !radarLayerPot;
+    if (radarLayerPot) radarLayerPrev = false;
+    syncRadarToggleButtons();
+    rerenderRadar();
+  }
+
+  function syncRadarToggleButtons() {
+    const cb = document.getElementById("compareToggleBtn");
+    if (cb && window._prevAreaMap) { cb.textContent = radarLayerPrev ? "✓ Verlauf" : "Verlauf einblenden"; cb.classList.toggle("on", radarLayerPrev); }
+    const pb = document.getElementById("potToggleBtn");
+    if (pb) {
+      // Sichtbar, sobald es überhaupt eine Potenzial-Ebene geben kann — sonst
+      // taucht der Schalter beim Umschalten scheinbar aus dem Nichts auf.
+      pb.style.display = potentialLayerAvailable() ? "" : "none";
+      pb.textContent = radarLayerPot ? "✓ Potenzial" : "Potenzial einblenden";
+      pb.classList.toggle("on-blue", radarLayerPot);
+      pb.classList.toggle("dim", !getPotentialAreaMap());
+    }
   }
 
   function openGoogleForm() { window.open(GOOGLE_FORM_URL, "_blank"); }
@@ -2351,10 +2893,18 @@
     }
   }
 
-  function resetVitalCheck(skipConfirm = false) {
+  function resetVitalCheck(skipConfirm = false, keepPreviousLink = false) {
     window._isReviewMode = false; // Neuer Check — Tracking wieder aktiv
     if (!skipConfirm && !confirm("Möchtest du wirklich alle Eingaben zurücksetzen? Bereits übermittelte Daten in der Datenbank werden nicht gelöscht.")) return;
     questions=[]; groupedQuestions=[]; currentStep=0; selectedAnswers=[]; latestResult=null; showComparison=false;
+    // V2-Zustand zurücksetzen — die Re-Check-Verknüpfung bleibt nur beim Re-Check-Start erhalten
+    simScenarios=null; simActiveKeys=[]; simGoalSaved=null; simInteractTracked=false;
+    radarLayerPrev=false; radarLayerPot=false;
+    window._previousData=null; window._linkStatus=null; window._prevAreaMap=null; window._lastResultData=null;
+    if (!keepPreviousLink) {
+      window._previousLink=null;
+      const rn = document.getElementById('recheckQuizNote'); if (rn) rn.remove();
+    }
     if (radarChart) { radarChart.destroy(); radarChart=null; }
     Object.assign(personalData, { age:null, gender:"", height_cm:null, weight_kg:null, email:"", first_name:"", last_name:"", consent_privacy:false, consent_storage:false, goal_key:"", goal_option_id:"" });
     document.getElementById("result-area").style.display = "none";
@@ -2370,7 +2920,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.28.40</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.31.0</footer>
 
 
 </body>
