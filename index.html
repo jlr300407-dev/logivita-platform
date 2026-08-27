@@ -656,6 +656,35 @@
   }
   // ── Ende PIN-System ────────────────────────────────────
 
+  // ── Einbettungs-Sicherheit (v1.31.4) ──
+  // Ab dem Umzug auf le-vita.com läuft der Check in einem iFrame der eigenen
+  // Domain. Parameter wie ?code= oder die UTM-Kennungen landen dann an der
+  // UMGEBENDEN Seite, nicht am iFrame. Weil beide Seiten dieselbe Herkunft
+  // haben, dürfen wir die Adresse der Elternseite lesen — die eigenen
+  // Parameter haben dabei immer Vorrang. Läuft die Seite eigenständig oder
+  // fremdeingebettet, greift der Versuch ins Leere und alles bleibt beim Alten.
+  function pageParams() {
+    const own = new URLSearchParams(window.location.search);
+    try {
+      if (window.parent && window.parent !== window) {
+        const outer = new URLSearchParams(window.parent.location.search); // wirft bei fremder Herkunft
+        outer.forEach((v, k) => { if (!own.has(k)) own.append(k, v); });
+      }
+    } catch (e) { /* andere Herkunft — nur eigene Parameter nutzen */ }
+    return own;
+  }
+
+  // Herkunft der Besucher: im iFrame ist der eigene Referrer die Elternseite,
+  // die echte Quelle steht im Referrer der Elternseite.
+  function pageReferrer() {
+    try {
+      if (window.parent && window.parent !== window && window.parent.document) {
+        return window.parent.document.referrer || document.referrer || '';
+      }
+    } catch (e) { /* andere Herkunft */ }
+    return document.referrer || '';
+  }
+
   function initLogo() {
     const el = document.getElementById("logoDisplay");
     if (LOGO_URL) { el.innerHTML = `<div class="logo-img-wrap"><img src="${LOGO_URL}" alt="LeVITA Logo" /></div>`; }
@@ -666,7 +695,8 @@
     initLogo();
 
     // ── ?code= URL-Zugriff MIT PIN-VALIDIERUNG (ab 23.06.2026) ──
-    const urlParams = new URLSearchParams(window.location.search);
+    // v1.31.4: auch aus der Adresse der einbettenden Seite (gleiche Herkunft)
+    const urlParams = pageParams();
     const codeParam = urlParams.get("code");
     if (codeParam) {
       // PIN-Eingabe-Screen anzeigen
@@ -714,7 +744,7 @@
       const enriched = {
         ...meta,
         public_code: window._currentPublicCode || null,
-        source: document.referrer ? (document.referrer.includes('facebook') ? 'facebook' : document.referrer.includes('instagram') ? 'instagram' : 'other') : 'direct',
+        source: (function(){ const r = pageReferrer(); return r ? (r.includes('facebook') ? 'facebook' : r.includes('instagram') ? 'instagram' : 'other') : 'direct'; })(),
         device: window.innerWidth < 600 ? 'mobile' : 'desktop',
         is_internal: window._isInternal === true ? true : undefined, // Sofort-Fix 5: Testdaten markieren (undefined wird von JSON.stringify entfernt)
         env: location.hostname.endsWith('le-vita.com') ? 'prod' : location.hostname.endsWith('github.io') ? 'dev' : 'local', // v1.28.40: Prod/Dev-Trennung nach Umzug (gleiche DB, /v2/-Entwicklung)
@@ -737,7 +767,7 @@
   // UTM-Parameter einmalig beim Laden erfassen (persistent für die gesamte Session)
   if (typeof window._utm === 'undefined') {
     try {
-      const p = new URLSearchParams(window.location.search);
+      const p = pageParams();
       const utm = {};
       ['utm_source','utm_medium','utm_campaign','utm_content'].forEach(k => { // utm_term entfernt (Pilotfreigabe 4.4: nur definierte Parameter)
         const v = p.get(k);
@@ -751,7 +781,7 @@
   // Markiert alle Funnel-Events dieser Browser-Session als is_internal=true,
   // damit eigene Tests (Deploy-Verifikation, Debugging) das Dashboard nicht verzerren.
   try {
-    const _ip = new URLSearchParams(window.location.search);
+    const _ip = pageParams();
     if (_ip.get('internal') === '1') sessionStorage.setItem('levita_internal', '1');
     window._isInternal = sessionStorage.getItem('levita_internal') === '1';
   } catch(e) { window._isInternal = false; }
@@ -768,7 +798,7 @@
   // Feuert genau einmal pro Seitenladen (= einmal pro session_id, konsistent zu allen anderen Events).
   // Nicht beim Wiederaufruf per ?code= (Review-Modus, kein Funnel).
   try {
-    const _lp = new URLSearchParams(window.location.search);
+    const _lp = pageParams();
     if (!_lp.get('code')) {
       trackEvent('landingpage_view');
     }
@@ -3167,7 +3197,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.31.3</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.31.4</footer>
 
 
 </body>
