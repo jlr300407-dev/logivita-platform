@@ -1415,7 +1415,7 @@
       // mail_sent_success NUR bei bestätigtem email_sent:true — nie optimistisch.
       if (result.email_sent) {
         trackEvent('mail_sent_success', { email_sent: true });
-        statusEl.innerHTML = `<div class="status-msg info-box box-success">✓ Dein Vital-Plan wurde an <strong>${email}</strong> versendet. Schau gleich in dein Postfach — ggf. auch im Spam-Ordner.</div>`;
+        statusEl.innerHTML = `<div class="status-msg info-box box-success">✓ Dein Vital-Plan wurde an <strong>${email}</strong> versendet. Schau gleich in dein Postfach — ggf. auch im Spam-Ordner.</div>${recheckReminderHtml()}`;
         btn.disabled = true; btn.innerText = "✓ Vital-Plan wurde versendet";
         showFeedbackBox();
       } else {
@@ -2599,9 +2599,12 @@
   }
 
   function renderSimulatorHtml(totalScore, bioAge) {
+    const outcomeHtml = renderGoalOutcomeHtml();
     if (!simScenarios || !simScenarios.levers.length) {
-      // Kein Szenario verfügbar (z.B. bereits alles im Optimum) — dann ggf. nur das gespeicherte Ziel zeigen
-      return simGoalSaved ? `<div class="sim-box">${renderGoalCardHtml()}</div>` : "";
+      // Kein Szenario verfügbar (z.B. bereits alles im Optimum) — Ziel-Auswertung
+      // und gespeichertes Ziel dürfen trotzdem nicht verlorengehen.
+      const rest = outcomeHtml + renderGoalCardHtml();
+      return rest ? `<div class="sim-box">${rest}</div>` : "";
     }
     let leversHtml = "";
     simScenarios.levers.forEach(l => {
@@ -2620,8 +2623,11 @@
     return `
       <div class="sim-box" id="simBox">
         <div class="sim-badge">✦ Was wäre wenn</div>
-        <div class="sim-title">Dein realistisches Potenzial</div>
-        <div class="sim-sub">Wähle bis zu drei Hebel aus deinen größten Ansatzpunkten — und sieh sofort, was das für deinen Index bedeuten würde. Serverseitig berechnet, mit derselben Formel wie dein Ergebnis.</div>
+        ${outcomeHtml}
+        <div class="sim-title">${outcomeHtml ? 'Dein nächster Hebel' : 'Dein realistisches Potenzial'}</div>
+        <div class="sim-sub">${outcomeHtml
+          ? 'Und weiter? Das hier sind die Ansatzpunkte, die dir <em>jetzt</em> am meisten bringen — neu berechnet auf Basis deiner heutigen Antworten.'
+          : 'Wähle bis zu drei Hebel aus deinen größten Ansatzpunkten — und sieh sofort, was das für deinen Index bedeuten würde. Serverseitig berechnet, mit derselben Formel wie dein Ergebnis.'}</div>
         <div id="simGoalCard">${renderGoalCardHtml()}</div>
         ${leversHtml}
         <div class="sim-projection">
@@ -2662,7 +2668,115 @@
           Diese Seite zeigt dir dieselbe Auswertung jederzeit interaktiv — mit Spinne, Bereichen und Simulator.
           Einen neuen Vital-Plan per Mail gibt es mit deinem nächsten Check.
         </div>
+        ${recheckReminderHtml()}
         <div style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center;">Fragen zur Zustellung: <strong>info@le-vita.com</strong></div>
+      </div>`;
+  }
+
+  // ── Ziel-Auswertung beim Re-Check (v1.31.2) ──
+  // Die Schleife muss sich schliessen können: Wer ein Ziel gesetzt hat, sieht
+  // beim nächsten Check ZUERST, was daraus geworden ist — und erst danach den
+  // nächsten Hebel. Sonst zeigt der Simulator bei jedem Besuch nur neue Lücken.
+  // Bewertet wird über die Bereichs-Deltas (dieselbe Grundlage wie die Mail);
+  // die Formulierung bleibt deshalb bewusst auf Bereichsebene und behauptet
+  // nicht, eine einzelne Gewohnheit sei nachgewiesen.
+  function renderGoalOutcomeHtml() {
+    const goal = window._previousData && window._previousData.goal_scenario;
+    if (!goal || !window._prevAreaMap) return "";
+    const levers = Array.isArray(goal.levers) ? goal.levers : [];
+    if (!levers.length) return "";
+    const areasNow = (window._lastResultData && window._lastResultData.areas) || [];
+    const seen = {};
+    const rows = [];
+    levers.forEach(l => {
+      const k = l && l.area_key;
+      if (!k || seen[k]) return;
+      seen[k] = true;
+      const cur = areasNow.find(a => a.key === k);
+      const prev = window._prevAreaMap[k];
+      if (!cur || !isFinite(prev)) return;
+      const p = Math.round(prev), c = Math.round(cur.score), d = c - p;
+      rows.push({ label: cur.label, prev: p, cur: c, delta: d, moved: d >= 3 });
+    });
+    if (!rows.length) return "";
+    const movedCount = rows.filter(r => r.moved).length;
+    const state = movedCount === rows.length ? 'erreicht' : movedCount > 0 ? 'teilweise' : 'offen';
+    const head = state === 'erreicht'
+      ? { icon: '🏆', title: 'Dein Ziel: erreicht', color: 'var(--accent-green)', border: 'rgba(34,201,122,0.35)', bg: 'var(--accent-green-dim)',
+          text: 'Du hattest dir das beim letzten Check vorgenommen — und genau dort hat sich etwas bewegt. Das ist der Teil, den die meisten nie zu sehen bekommen.' }
+      : state === 'teilweise'
+      ? { icon: '📈', title: 'Dein Ziel: teilweise erreicht', color: 'var(--accent-green)', border: 'rgba(34,201,122,0.28)', bg: 'var(--accent-green-dim)',
+          text: 'Ein Teil deines Ziels ist aufgegangen. Das zählt — der Rest bleibt als nächster Schritt stehen.' }
+      : { icon: '🎯', title: 'Dein Ziel: noch offen', color: 'var(--accent-amber)', border: 'rgba(245,166,35,0.3)', bg: 'rgba(245,166,35,0.08)',
+          text: 'In diesen Bereichen hat sich noch nichts Messbares getan. Kein Grund zur Sorge — oft ist das Ziel einfach eine Nummer zu gross gewesen.' };
+    const rowsHtml = rows.map(r => {
+      const badge = r.moved
+        ? `<span style="color:var(--accent-green);font-weight:800;">▲ +${r.delta}</span>`
+        : Math.abs(r.delta) <= 2
+          ? `<span style="color:var(--text-muted);">unverändert</span>`
+          : `<span style="color:var(--accent-amber);font-weight:700;">▼ ${r.delta}</span>`;
+      return `<div style="display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--text-secondary);padding:4px 0;">
+        <span>${escHtml(r.label)}</span><span>${r.prev} → <strong style="color:var(--text-primary);">${r.cur}</strong> ${badge}</span>
+      </div>`;
+    }).join('');
+    return `
+      <div style="background:${head.bg};border:1px solid ${head.border};border-radius:var(--radius);padding:16px 18px;margin-bottom:12px;">
+        <div style="font-size:14px;font-weight:800;color:${head.color};margin-bottom:6px;">${head.icon} ${head.title}</div>
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:10px;">${head.text}</div>
+        ${rowsHtml}
+      </div>`;
+  }
+
+  // ── Re-Check in den eigenen Kalender (v1.31.2) ──
+  // Bewusst KEINE Erinnerungsmail: Die erteilte Einwilligung deckt genau eine
+  // Zusendung ("einmalig"), und der T+90-Versand hängt am Consent-Umbau.
+  // Ein Kalendereintrag entsteht im Browser des Nutzers, verlässt ihn nicht
+  // und braucht deshalb keine Einwilligung.
+  function addRecheckToCalendar() {
+    try {
+      const code = latestResult?.public_code || '';
+      const start = new Date(Date.now() + 84 * 24 * 3600 * 1000); // ~12 Wochen
+      const end = new Date(start.getTime() + 24 * 3600 * 1000);
+      const ymd = (d) => d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+      const stamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+      const url = location.origin + location.pathname + (code ? '?code=' + encodeURIComponent(code) : '');
+      const desc = 'Zeit für deinen LeVITA Re-Check. Vergleiche\\, was sich seit dem letzten Mal verändert hat.'
+        + (code ? '\\n\\nDeine Pilot-ID: ' + code + '\\nDen PIN findest du in deiner Auswertungs-Mail.' : '')
+        + '\\n\\n' + url;
+      const ics = [
+        'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//LeVITA//Vital-Check//DE', 'CALSCALE:GREGORIAN',
+        'BEGIN:VEVENT',
+        'UID:levita-recheck-' + (code || stamp) + '@le-vita.com',
+        'DTSTAMP:' + stamp,
+        'DTSTART;VALUE=DATE:' + ymd(start),
+        'DTEND;VALUE=DATE:' + ymd(end),
+        'SUMMARY:LeVITA Vital-Check — Zeit für deinen Re-Check',
+        'DESCRIPTION:' + desc,
+        'URL:' + url,
+        'BEGIN:VALARM', 'TRIGGER:-P1D', 'ACTION:DISPLAY', 'DESCRIPTION:LeVITA Re-Check', 'END:VALARM',
+        'END:VEVENT', 'END:VCALENDAR'
+      ].join('\r\n');
+      const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'levita-recheck.ics';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      trackEvent('recheck_calendar_added');
+    } catch (e) { /* still — der Termin ist optional */ }
+  }
+
+  function recheckReminderHtml() {
+    return `
+      <div style="margin-top:12px;padding:12px 14px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--radius-sm);text-align:left;">
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:10px;">
+          <strong style="color:var(--text-primary);">Dein nächster Check lohnt sich in 8–12 Wochen.</strong>
+          So lange braucht es, bis sich Veränderungen im Alltag auch im Wert zeigen. Wir erinnern dich nicht automatisch — trag ihn dir am besten gleich selbst ein.
+        </div>
+        <button onclick="addRecheckToCalendar()" style="width:100%;padding:11px;border-radius:var(--radius-sm);border:1px solid rgba(59,158,255,0.4);background:transparent;color:var(--accent-blue);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;">
+          📅 Re-Check in meinen Kalender eintragen
+        </button>
       </div>`;
   }
 
@@ -3046,7 +3160,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.31.1</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.31.2</footer>
 
 
 </body>
