@@ -16,7 +16,10 @@
   <!-- v1.31.0 (V2-Einstieg, Schicht 3): Potenzial-Simulator (Szenario-Schalter + "Als mein Ziel setzen"),
        Radar-Ebenen Vorher/Ist/Potenzial (max. 2 sichtbar, Potenzial gestrichelt), Verlaufs-Karte,
        Re-Check-Start aus der PIN-Ansicht (previous_public_code + previous_pin), Mail-Box-Text im Re-Check.
-       Voraussetzung: Edge edge-2026-08-27.1 + v2-fundament.sql + Diversifizierungs-Patch. -->
+       Voraussetzung: Edge edge-2026-08-27.1 + v2-fundament.sql + Diversifizierungs-Patch.
+       v1.31.1 (UX-Nachschärfung): gespeichertes Ziel stellt beim Wiederaufruf die Hebel-Auswahl wieder
+       her; Radar-Ebenen sind vorbelegt statt freizuschalten (Potenzial folgt der Hebel-Auswahl, Vorher
+       ist beim Re-Check vorbelegt) und bleiben abwählbar; Direktlink Simulator → Rad. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -458,6 +461,7 @@
   let simGoalSaved = null;      // gespeichertes Ziel-Szenario (nach set_goal bzw. aus load_result)
   let simInteractTracked = false;
   let radarLayerPrev = false, radarLayerPot = false; // max. 2 Ebenen gleichzeitig (Design 26.08.)
+  let radarPotUserOff = false;  // merkt sich ein bewusstes Abwählen der Potenzial-Ebene
   window._previousLink = null;  // { public_code, pin } — gesetzt beim Re-Check-Start aus der PIN-Ansicht
   window._previousData = null;  // previous-Block aus der Edge-Response (Vorgänger-Check)
   window._linkStatus = null;    // "none" | "linked" | "invalid"
@@ -512,7 +516,26 @@
     window._previousData = result.previous || null;
     window._linkStatus = result.link_status || null;
     simGoalSaved = (result.goal_scenario && typeof result.goal_scenario === 'object') ? result.goal_scenario : null;
-    radarLayerPrev = false; radarLayerPot = false;
+    radarLayerPrev = false; radarLayerPot = false; radarPotUserOff = false;
+
+    // v1.31.1 — Wiederaufruf landet dort, wo der Nutzer aufgehört hat:
+    // das gespeicherte Ziel stellt die Hebel-Auswahl wieder her. Die Szenarien
+    // sind für dieselbe Submission deterministisch, die Keys passen also —
+    // falls doch nicht (Formeländerung), wird still auf leer zurückgefallen.
+    if (simGoalSaved && simScenarios) {
+      const savedKeys = (Array.isArray(simGoalSaved.levers) ? simGoalSaved.levers : [])
+        .map(l => l && l.question_key).filter(Boolean)
+        .filter(k => simScenarios.levers.some(l => l.question_key === k));
+      simActiveKeys = savedKeys.slice(0, 3);
+      if (!getActiveProjection()) simActiveKeys = [];
+    }
+
+    // v1.31.1 — Ebenen-Vorgabe: der Nutzer soll die Erkenntnis sehen, nicht
+    // erst freischalten. Wiederhergestelltes Ziel → Potenzial-Ebene an;
+    // sonst bei verknüpftem Re-Check → Vorher-Ebene an (das ist dort die
+    // eigentliche Nachricht). Beides bleibt jederzeit abwählbar.
+    radarLayerPot = simActiveKeys.length > 0 && !!getPotentialAreaMap();
+    radarLayerPrev = !radarLayerPot && !!(result.previous && result.previous.score_payload);
     if (window._isInternal) {
       // Deploy-Gegenprüfung (?internal=1): rohe V2-Felder sichtbar machen
       try { console.log('[V2] scenarios (roh):', JSON.stringify(result.scenarios)); } catch(e) {}
@@ -843,10 +866,24 @@
 
   function goalStepHtml(q) {
     const goalIcons = { goal_energy:"⚡", goal_weight:"⚖️", goal_fitness:"💪", goal_supplements:"💊", goal_longevity:"🌿", goal_prevention:"🛡️", goal_curious:"✨" };
-    let html = `<div class="card"><div class="area-badge">🎯 Dein Ziel</div><div class="question-text">${q.question_text}</div>`;
-    if (q.help_text) html += `<div class="help-text">${q.help_text}</div>`;
+    // v1.31.1 — Beim Re-Check wird das frühere Ziel aufgegriffen statt blank
+    // neu gefragt. Es bleibt eine Frage, keine Setzung: alle Optionen stehen
+    // weiter offen, ein Klick genügt zum Ändern.
+    const prevGoal = (window._recheckPrefill && window._recheckPrefill.goal_key) || '';
+    const prevOpt = prevGoal ? q.options.find(o => o.option_key === prevGoal) : null;
+    let html = `<div class="card"><div class="area-badge">🎯 Dein Ziel</div>`;
+    if (prevOpt) {
+      html += `<div class="question-text">Ist das immer noch dein Ziel?</div>
+        <div class="help-text">Beim letzten Check hast du <strong style="color:var(--text-primary);">${escHtml(prevOpt.option_text)}</strong> gewählt. Passt das noch, oder hat sich etwas verschoben?</div>
+        <button class="next-btn" style="margin-bottom:14px;" onclick="saveGoal('${prevOpt.option_id}', '${prevOpt.option_key}')">${goalIcons[prevOpt.option_key] || "→"} Ja, weiter mit diesem Ziel →</button>
+        <div class="help-text" style="margin-bottom:10px;">Oder wähle ein anderes:</div>`;
+    } else {
+      html += `<div class="question-text">${q.question_text}</div>`;
+      if (q.help_text) html += `<div class="help-text">${q.help_text}</div>`;
+    }
     html += `<div class="options-grid">`;
     q.options.forEach(opt => {
+      if (prevOpt && opt.option_id === prevOpt.option_id) return; // steht schon oben als Primäraktion
       const icon = goalIcons[opt.option_key] || "→";
       html += `<button class="option-btn" onclick="saveGoal('${opt.option_id}', '${opt.option_key}')">${icon} ${opt.option_text}</button>`;
     });
@@ -855,25 +892,34 @@
   }
 
   function personalStepHtml() {
+    // v1.31.1 — Beim Re-Check sind alle vier Basisangaben vorbelegt
+    // (Entscheidung Jörg); jedes Feld bleibt frei überschreibbar. Alter und
+    // Gewicht sind die beiden, die sich ändern — sie werden deshalb im
+    // Hilfetext ausdrücklich zur Prüfung ausgewiesen.
+    const pre = window._recheckPrefill || null;
+    const v = (x) => (x === null || x === undefined || x === '') ? '' : String(x);
+    const sel = (g) => (pre && pre.gender === g) ? ' selected' : '';
     return `
       <div class="card">
         <div class="area-badge">👤 Basisdaten</div>
         <div class="question-text">Deine persönlichen Angaben</div>
-        <div class="help-text">Für deinen persönlichen Vitalitäts-Index brauchen wir noch drei Angaben — mehr nicht. Name ist optional.</div>
+        <div class="help-text">${pre
+          ? 'Deine Angaben vom letzten Check sind übernommen. Bitte prüfe besonders <strong style="color:var(--text-primary);">Alter und Gewicht</strong> — die beiden ändern sich, und der Vergleich wird nur so genau wie diese Zahlen.'
+          : 'Für deinen persönlichen Vitalitäts-Index brauchen wir noch drei Angaben — mehr nicht. Name ist optional.'}</div>
         <div class="form-grid">
 
-          <div class="form-field"><label>Alter *</label><input type="number" id="age" placeholder="z.B. 38" min="14" max="100" /></div>
+          <div class="form-field"><label>Alter *</label><input type="number" id="age" placeholder="z.B. 38" min="14" max="100" value="${pre ? v(pre.age) : ''}" /></div>
           <div class="form-field"><label>Geschlecht *</label>
             <select id="gender">
               <option value="">Bitte wählen</option>
-              <option value="weiblich">Weiblich</option>
-              <option value="männlich">Männlich</option>
-              <option value="divers">Divers</option>
-              <option value="keine_angabe">Keine Angabe</option>
+              <option value="weiblich"${sel('weiblich')}>Weiblich</option>
+              <option value="männlich"${sel('männlich')}>Männlich</option>
+              <option value="divers"${sel('divers')}>Divers</option>
+              <option value="keine_angabe"${sel('keine_angabe')}>Keine Angabe</option>
             </select>
           </div>
-          <div class="form-field"><label>Größe (cm) *</label><input type="number" id="height_cm" placeholder="z.B. 178" min="120" max="230" /></div>
-          <div class="form-field"><label>Gewicht (kg) *</label><input type="number" id="weight_kg" placeholder="z.B. 76" min="35" max="250" /></div>
+          <div class="form-field"><label>Größe (cm) *</label><input type="number" id="height_cm" placeholder="z.B. 178" min="120" max="230" value="${pre ? v(pre.height_cm) : ''}" /></div>
+          <div class="form-field"><label>${pre ? 'Gewicht heute (kg) *' : 'Gewicht (kg) *'}</label><input type="number" id="weight_kg" placeholder="z.B. 76" min="35" max="250" value="${pre ? v(pre.weight_kg) : ''}" /></div>
         </div>
         <button class="next-btn" onclick="savePersonalData()">Weiter →</button>
       </div>`;
@@ -1302,7 +1348,7 @@
       const result = await callFunction(payload);
       latestResult = result;
       absorbV2Result(result); // V2: Szenarien, Verlauf, link_status
-      window._previousLink = null; // Verknüpfung ist verbraucht — nie doppelt verwenden
+      window._previousLink = null; window._recheckPrefill = null; // verbraucht — nie doppelt verwenden
       const rb = document.getElementById('recheckQuizNote'); if (rb) rb.remove();
       window._currentPublicCode = result.public_code || null;
       trackEvent('check_submitted', { score: result.score?.total_score, public_code: result.public_code || null, is_recheck: wasRecheck || undefined, link_status: wasRecheck ? (result.link_status || null) : undefined });
@@ -1697,7 +1743,11 @@
     teaserRows += isLinkedRecheck
       ? teaserRow("🔑", "Dein neuer persönlicher PIN", "ruf diese Auswertung jederzeit wieder auf — und vergleiche beim nächsten Check erneut, was sich verändert hat")
       : teaserRow("🔑", "Dein persönlicher PIN", "ruf deine Auswertung jederzeit wieder auf und vergleiche beim nächsten Check in 8–12 Wochen, was sich verändert hat");
-    html += `
+    // v1.31.1 — Beim Wiederaufruf über PIN ist die Mail zwingend schon
+    // versendet (der PIN entsteht erst mit ihr). Ein leeres Eingabefeld wäre
+    // dort schlicht falsch: ein zweiter Versand wird serverseitig ohnehin
+    // abgelehnt. Statt Formular also der Status.
+    html += (window._isReviewMode && window._accessPin) ? renderMailAlreadySentHtml(result) : `
       <div class="ai-box">
         <div class="ai-badge">✦ Dein persönlicher Vital-Plan</div>
         <div class="ai-title">Das steht in deinem Vital-Plan:</div>
@@ -2572,14 +2622,47 @@
         <div class="sim-badge">✦ Was wäre wenn</div>
         <div class="sim-title">Dein realistisches Potenzial</div>
         <div class="sim-sub">Wähle bis zu drei Hebel aus deinen größten Ansatzpunkten — und sieh sofort, was das für deinen Index bedeuten würde. Serverseitig berechnet, mit derselben Formel wie dein Ergebnis.</div>
-        ${renderGoalCardHtml()}
+        <div id="simGoalCard">${renderGoalCardHtml()}</div>
         ${leversHtml}
         <div class="sim-projection">
           <div class="sim-proj-num" id="simProjNum">${Math.round(totalScore)}</div>
           <div class="sim-proj-meta" id="simProjMeta">Schalte oben einen Hebel ein, um dein Potenzial zu sehen.</div>
         </div>
+        <div id="simRadarLink" style="display:none;text-align:center;margin:0 0 10px;">
+          <span onclick="goToRadar()" style="font-size:12.5px;font-weight:600;color:var(--accent-blue);cursor:pointer;">Im Vitalitäts-Rad ansehen →</span>
+        </div>
         <button class="sim-goal-btn" id="simGoalBtn" onclick="setSimulatorGoal()" disabled>🎯 Als mein Ziel setzen</button>
         <div class="sim-note">Eine Simulation, keine Messung — nur beeinflussbare Verhaltens-Hebel, Symptom-Fragen und BMI sind bewusst ausgenommen. Dein gesetztes Ziel greifen wir beim nächsten Check wieder auf.</div>
+      </div>`;
+  }
+
+  // ── Mail-Status beim Wiederaufruf (v1.31.1) ──
+  // Der PIN existiert nur, weil die Auswertung bereits verschickt wurde —
+  // das ist keine Vermutung, sondern der einzige Weg, wie er entsteht.
+  // Das Datum liefert die Edge Function (ai_analysis.created_at), sobald
+  // sie es mitschickt; fehlt es, bleibt die Aussage ohne Datum korrekt.
+  function renderMailAlreadySentHtml(result) {
+    let sentTxt = '';
+    const raw = result?.ai_analysis?.created_at || result?.analysis_created_at || null;
+    if (raw) {
+      const d = new Date(raw);
+      if (!isNaN(d.getTime())) {
+        sentTxt = ` am <strong style="color:var(--text-primary);">${d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</strong>`;
+      }
+    }
+    return `
+      <div class="ai-box" style="box-shadow:none;">
+        <div class="ai-badge">✓ Vital-Plan versendet</div>
+        <div class="ai-title">Deine Auswertung ist schon unterwegs gewesen</div>
+        <div class="ai-sub" style="margin-bottom:14px;">
+          Dein persönlicher Vital-Plan wurde${sentTxt} an deine E-Mail-Adresse geschickt — zusammen mit dem PIN, mit dem du gerade hier bist.
+          Falls du ihn nicht findest, schau bitte auch im Spam-Ordner nach.
+        </div>
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;background:rgba(255,255,255,0.04);border-radius:var(--radius-sm);padding:12px 14px;text-align:left;">
+          Diese Seite zeigt dir dieselbe Auswertung jederzeit interaktiv — mit Spinne, Bereichen und Simulator.
+          Einen neuen Vital-Plan per Mail gibt es mit deinem nächsten Check.
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center;">Fragen zur Zustellung: <strong>info@le-vita.com</strong></div>
       </div>`;
   }
 
@@ -2596,6 +2679,8 @@
 
   function toggleSimLever(key) {
     if (!simScenarios) return;
+    const btnReset = document.getElementById('simGoalBtn');
+    if (btnReset) delete btnReset.dataset.justSaved;
     const idx = simActiveKeys.indexOf(key);
     if (idx >= 0) simActiveKeys.splice(idx, 1);
     else {
@@ -2604,6 +2689,11 @@
     }
     if (!simInteractTracked) { simInteractTracked = true; trackEvent('simulator_interact'); }
     updateSimulatorUI();
+  }
+
+  function goToRadar() {
+    document.getElementById('rtab-bereiche')?.click();
+    setTimeout(() => document.getElementById('vitalChart')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 140);
   }
 
   function updateSimulatorUI() {
@@ -2632,15 +2722,34 @@
       if (meta) meta.innerHTML = 'Für diese Kombination liegt keine vorberechnete Zahl vor — bitte eine andere Auswahl wählen.';
       if (window._isInternal) console.warn('[V2] Keine vorberechnete Kombination für', simActiveKeys.slice().sort().join('+'), '— combos.keys prüfen.');
     }
-    if (btn && !btn.classList.contains('saved')) {
-      btn.disabled = !(proj && proj.entry);
+    // Ziel-Button: zeigt an, ob die aktuelle Auswahl das gespeicherte Ziel IST
+    const savedKeys = (simGoalSaved && Array.isArray(simGoalSaved.levers))
+      ? simGoalSaved.levers.map(l => l && l.question_key).filter(Boolean).slice().sort().join('|')
+      : null;
+    const curKeys = simActiveKeys.slice().sort().join('|');
+    if (btn && !btn.dataset.justSaved) {
+      if (savedKeys && savedKeys === curKeys && curKeys) {
+        btn.disabled = true; btn.classList.add('saved');
+        btn.textContent = '✓ Das ist dein gesetztes Ziel';
+      } else {
+        btn.classList.remove('saved');
+        btn.disabled = !(proj && proj.entry);
+        btn.textContent = simGoalSaved ? '🎯 Als neues Ziel setzen' : '🎯 Als mein Ziel setzen';
+      }
     }
-    // Potenzial-Ebene im Rad hängt an der aktiven Auswahl — jede Änderung
-    // im Simulator zeichnet die gestrichelte Kontur neu (oder blendet sie aus).
-    if (radarLayerPot) {
-      if (!getPotentialAreaMap()) radarLayerPot = false;
-      rerenderRadar();
+
+    // v1.31.1 — Potenzial-Ebene folgt der Auswahl von selbst: wer einen Hebel
+    // wählt, findet die gestrichelte Kontur im Rad bereits vor. Ein bewusstes
+    // Abwählen (radarPotUserOff) wird respektiert und nicht überschrieben.
+    const potWanted = simActiveKeys.length > 0 && !!getPotentialAreaMap() && !radarPotUserOff;
+    const potChanged = potWanted !== radarLayerPot;
+    if (potChanged) {
+      radarLayerPot = potWanted;
+      if (radarLayerPot) radarLayerPrev = false;
     }
+    if (radarLayerPot || potChanged) rerenderRadar();
+    const link = document.getElementById('simRadarLink');
+    if (link) link.style.display = (radarLayerPot && getPotentialAreaMap()) ? '' : 'none';
     syncRadarToggleButtons();
   }
 
@@ -2668,7 +2777,13 @@
       if (result && result.goal_saved) {
         simGoalSaved = scenario;
         trackEvent('goal_set', { gain: proj.gain, lever_count: activeLevers.length });
-        if (btn) { btn.disabled = true; btn.textContent = '✓ Ziel gespeichert — wir greifen es beim nächsten Check auf'; btn.classList.add('saved'); }
+        if (btn) {
+          btn.dataset.justSaved = '1'; // Bestätigung stehen lassen, bis der Nutzer wieder umschaltet
+          btn.disabled = true; btn.textContent = '✓ Ziel gespeichert — wir greifen es beim nächsten Check auf'; btn.classList.add('saved');
+        }
+        // Ziel-Karte im Simulator sofort nachziehen, damit die Übersicht stimmt
+        const goalHost = document.getElementById('simGoalCard');
+        if (goalHost) goalHost.innerHTML = renderGoalCardHtml();
       } else {
         throw new Error('Speichern nicht bestätigt.');
       }
@@ -2692,6 +2807,16 @@
   function startRecheckFromReview() {
     if (!latestResult?.public_code || !window._accessPin) return;
     window._previousLink = { public_code: latestResult.public_code, pin: window._accessPin };
+    // v1.31.1 — Was beim letzten Mal galt, wird aufgegriffen statt neu abgefragt:
+    // Ziel und unveränderliche Basisdaten werden vorbelegt. Das GEWICHT bewusst
+    // nicht — es ist die Messgrösse, die beim Re-Check neu erhoben werden muss.
+    window._recheckPrefill = {
+      goal_key: latestResult.submission?.goal_key || personalData.goal_key || '',
+      age: latestResult.submission?.age || personalData.age || null,
+      gender: latestResult.submission?.gender || personalData.gender || '',
+      height_cm: latestResult.submission?.height_cm || personalData.height_cm || null,
+      weight_kg: latestResult.submission?.weight_kg || personalData.weight_kg || null
+    };
     window._isReviewMode = false;      // neuer Check = neuer Funnel
     window._currentPublicCode = null;  // Events gehören zum neuen Check
     try { history.replaceState({}, '', window.location.pathname); } catch (e) { /* still */ }
@@ -2829,6 +2954,7 @@
     }
     document.getElementById("potNote")?.remove();
     radarLayerPot = !radarLayerPot;
+    radarPotUserOff = !radarLayerPot; // bewusstes Abwählen merken, sonst käme die Ebene sofort zurück
     if (radarLayerPot) radarLayerPrev = false;
     syncRadarToggleButtons();
     rerenderRadar();
@@ -2902,7 +3028,7 @@
     radarLayerPrev=false; radarLayerPot=false;
     window._previousData=null; window._linkStatus=null; window._prevAreaMap=null; window._lastResultData=null;
     if (!keepPreviousLink) {
-      window._previousLink=null;
+      window._previousLink=null; window._recheckPrefill=null;
       const rn = document.getElementById('recheckQuizNote'); if (rn) rn.remove();
     }
     if (radarChart) { radarChart.destroy(); radarChart=null; }
@@ -2920,7 +3046,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.31.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.31.1</footer>
 
 
 </body>
