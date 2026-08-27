@@ -1815,7 +1815,7 @@
 
     if (wachstumAreas.length > 0) {
       html += `<div class="bereiche-header">
-        <div class="bereiche-header-label">Deine größten Hebel zuerst</div>
+        <div class="bereiche-header-label">Deine Wachstumsbereiche — schwächster zuerst</div>
         <div class="bereiche-wachstum-badge">${wachstumAreas.length} Wachstumsbereich${wachstumAreas.length>1?'e':''}</div>
       </div>`;
       html += `<div class="areas-grid">`;
@@ -1880,8 +1880,15 @@
       goal_curious:"Deine Neugier als Antrieb"
     };
     const heroTitle3 = heroGoalTitles[heroGoalKey3] || "Dein nächster Schritt";
+    // v1.31.3: Titel (aus dem Ziel) und Text (aus dem schwächsten Bereich) wurden
+    // bisher unverbunden nebeneinandergestellt und lasen sich widersprüchlich.
+    // Jetzt verknüpft der Satz beides ausdrücklich: Ziel → passender Hebel dorthin.
+    const heroGoalShort = { goal_longevity:"länger vital zu bleiben", goal_prevention:"vorzusorgen",
+      goal_fitness:"fitter und stärker zu werden", goal_weight:"an Figur und Gewicht zu arbeiten",
+      goal_energy:"mehr Energie zu haben", goal_supplements:"deinen Nährstoffstatus zu klären",
+      goal_curious:"deinen Standort zu bestimmen" }[heroGoalKey3] || "";
     const heroDesc3 = worst
-      ? `${AREA_ICONS[worst.key]||""} <strong>${worst.label}</strong> ist laut deinem Check dein stärkster Ansatzpunkt. Kleine Verbesserungen hier wirken sich auf alle anderen Bereiche aus — ein kostenloses Gespräch im Studio zeigt dir den passenden Einstieg.`
+      ? `${heroGoalShort ? `Um ${heroGoalShort}, führt der kürzeste Weg über einen Bereich: ` : ""}${AREA_ICONS[worst.key]||""} <strong>${worst.label}</strong> ist laut deinem Check dein stärkster Ansatzpunkt. Kleine Verbesserungen hier wirken sich auf alle anderen Bereiche aus — ein kostenloses Gespräch im Studio zeigt dir den passenden Einstieg.`
       : `Deine Basis wirkt bereits stabil. Im LeVITA Studio helfen wir dir, das weiterzuentwickeln — individuell und ohne Druck.`;
     html += `
       <div style="background:linear-gradient(135deg,rgba(34,201,122,0.12),rgba(59,158,255,0.08));
@@ -3160,7 +3167,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.31.2</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.31.3</footer>
 
 
 </body>
