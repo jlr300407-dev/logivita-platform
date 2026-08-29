@@ -31,7 +31,15 @@
        (WebP 128/256 + PNG-Fallback), Laden erst beim Erreichen des Schritts (loading="lazy").
        Sperrliste: kein Buddy bei frauenspezifischen Fragen und bei Hinweisen auf aerztliche
        Abklaerung, mentale Warnsignale oder Red Flags. Schalter BUDDY_ENABLED=false nimmt
-       ihn vollstaendig wieder heraus, ohne dass Markup zurueckgebaut werden muss. -->
+       ihn vollstaendig wieder heraus, ohne dass Markup zurueckgebaut werden muss.
+       Bilder liegen flach in assets/ (Pfad steht in BUDDY_PATH, eine Zeile).
+       v1.32.1: (1) Der Potenzial-Simulator startet mit dem staerksten Hebel
+       vorbelegt — die gestrichelte Potenzial-Ebene ist damit sofort im Rad zu
+       sehen statt erst nach manueller Auswahl; abwaehlbar bleibt sie. Ein
+       gespeichertes Ziel hat weiter Vorrang, und "als Ziel gesetzt" gilt
+       weiterhin erst nach bewusstem Klick. (2) Auf der Ergebnisseite stellt ein
+       Buddy die Auswertung vor: success nach einem frischen Check,
+       welcome-back beim Wiederaufruf ueber PIN. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -96,6 +104,20 @@
     .buddy-img.buddy-lg { width: 160px; height: 160px; }
     .buddy-wait { display: flex; align-items: center; gap: 14px; }
     .buddy-wait .buddy-img { width: 100px; height: 100px; }
+    /* v1.32.1 — Buddy stellt das Ergebnis vor (Abschluss des Checks) */
+    .buddy-result { display: flex; align-items: center; gap: 16px; background: var(--brand-card);
+      border: 1px solid rgba(34,201,122,0.22); border-radius: var(--radius);
+      padding: 16px 18px; margin-bottom: 14px; }
+    .buddy-result .buddy-img { width: 150px; height: 150px; }
+    .buddy-result-text { flex: 1; min-width: 0; }
+    .buddy-result-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 5px; line-height: 1.3; }
+    .buddy-result-sub { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    @media (max-width: 480px) {
+      .buddy-result { gap: 12px; padding: 14px; }
+      .buddy-result .buddy-img { width: 104px; height: 104px; }
+      .buddy-result-title { font-size: 15px; }
+      .buddy-result-sub { font-size: 12.5px; }
+    }
     @media (max-width: 480px) {
       .buddy-img { width: 96px; height: 96px; }
       .buddy-img.buddy-lg { width: 120px; height: 120px; }
@@ -631,6 +653,22 @@
         .filter(k => simScenarios.levers.some(l => l.question_key === k));
       simActiveKeys = savedKeys.slice(0, 3);
       if (!getActiveProjection()) simActiveKeys = [];
+    }
+
+    // v1.32.1 — Ohne gespeichertes Ziel war der Simulator bisher leer und das
+    // Potenzial damit unsichtbar, bis der Nutzer selbst einen Hebel fand. Das
+    // stellt die Erkenntnis hinter eine Huerde. Jetzt ist der staerkste Hebel
+    // vorbelegt: das Potenzial ist von Anfang an im Rad zu sehen und bleibt
+    // jederzeit abwaehlbar. Vorbelegt heisst NICHT gesetzt — als Ziel gilt es
+    // erst nach bewusstem Klick auf "Als mein Ziel setzen".
+    if (simActiveKeys.length === 0 && simScenarios && simScenarios.levers.length) {
+      const strongest = simScenarios.levers
+        .filter(l => l.score_payload)                 // nur Hebel, die auch eine Rad-Ebene liefern
+        .sort((a, b) => Number(b.gain) - Number(a.gain))[0];
+      if (strongest) {
+        simActiveKeys = [strongest.question_key];
+        if (!getActiveProjection()) simActiveKeys = [];
+      }
     }
 
     // v1.31.1 — Ebenen-Vorgabe: der Nutzer soll die Erkenntnis sehen, nicht
@@ -1743,6 +1781,35 @@
     ra.scrollIntoView({ behavior:"smooth" });
   }
 
+  // v1.32.1 — Der Buddy stellt das Ergebnis vor. Beim Wiederaufruf ueber PIN
+  // begruesst der welcome-back-Buddy, nach einem frisch abgeschlossenen Check
+  // der success-Buddy. Ton bleibt ruhig: kein Jubel ueber einen niedrigen Wert.
+  function renderResultBuddyHtml(totalScore, isRecheck) {
+    if (!BUDDY_ENABLED) return "";
+    const back = window._isReviewMode && window._accessPin;
+    const img = buddyHtml(back ? "buddy-welcome-back" : "buddy-success", "lg");
+    if (!img) return "";
+    const first = (personalData.first_name || "").trim();
+    const hi = first ? `Schoen, dass du wieder da bist, ${escHtml(first.charAt(0).toUpperCase() + first.slice(1).toLowerCase())}!` : "Schoen, dass du wieder da bist!";
+    let title, sub;
+    if (back) {
+      title = hi;
+      sub = "Hier ist deine Auswertung — genau so, wie du sie verlassen hast. Nimm dir Zeit fuer die Bereiche und den Simulator.";
+    } else if (isRecheck) {
+      title = "Geschafft — und diesmal mit Vergleich!";
+      sub = "Dein neuer Vitalitaets-Ueberblick ist fertig. Weiter unten siehst du, was sich seit deinem letzten Check veraendert hat.";
+    } else {
+      title = "Geschafft! Dein Vitalitaets-Ueberblick ist fertig.";
+      sub = totalScore >= 70
+        ? "Deine Basis steht gut da. Schau dir an, welche Bereiche dich tragen — und wo noch etwas Luft ist."
+        : "Hier siehst du, wo du heute stehst. Der Wert ist keine Note, sondern ein Ausgangspunkt — die naechsten Schritte findest du gleich darunter.";
+    }
+    return `<div class="buddy-result">${img}<div class="buddy-result-text">
+        <div class="buddy-result-title">${title}</div>
+        <div class="buddy-result-sub">${sub}</div>
+      </div></div>`;
+  }
+
   function buildResultHtml(result, areas, totalScore, bioAge, suppFocus, correctedScoreLabel) {
     const score = result.score;
     const scoreLabel = correctedScoreLabel || score.score_label;
@@ -1830,6 +1897,9 @@
     // TAB 1 — MEIN ERGEBNIS
     // ════════════════════════════════════════════
     html += `<div class="result-tab-content active" id="rtc-ergebnis">`;
+
+    // v1.32.1 — Der Buddy eroeffnet die Auswertung, bevor die Zahlen kommen.
+    html += renderResultBuddyHtml(totalScore, !!window._previousData);
 
     // ── PATCH 6: Score-Ring kompakt (links Ring, rechts Meta) wie Prototyp ──
     html += `
@@ -3403,7 +3473,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.32.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.32.1</footer>
 
 
 </body>
