@@ -19,7 +19,12 @@
        Voraussetzung: Edge edge-2026-08-27.1 + v2-fundament.sql + Diversifizierungs-Patch.
        v1.31.1 (UX-Nachschärfung): gespeichertes Ziel stellt beim Wiederaufruf die Hebel-Auswahl wieder
        her; Radar-Ebenen sind vorbelegt statt freizuschalten (Potenzial folgt der Hebel-Auswahl, Vorher
-       ist beim Re-Check vorbelegt) und bleiben abwählbar; Direktlink Simulator → Rad. -->
+       ist beim Re-Check vorbelegt) und bleiben abwählbar; Direktlink Simulator → Rad.
+       v1.31.5 (Funnel-Messung): neues Ereignis `landingpage_engaged` schliesst die Lücke
+       zwischen landingpage_view und check_start_click — Trigger 'scroll' (Hero verlassen),
+       'dwell' (10 s sichtbar) oder 'cta' (Klick kam zuerst), mit visible_seconds und
+       max_scroll_pct im meta; check_start_click trägt dieselben beiden Werte. Damit lässt
+       sich unterscheiden, ob Kaltverkehr sofort abspringt oder liest ohne zu klicken. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -804,6 +809,86 @@
     }
   } catch(e) { /* silent */ }
 
+  // ── Landingpage-Engagement (v1.31.5) ──
+  // Zwischen landingpage_view und check_start_click lag bisher KEIN Ereignis. Wer die
+  // Seite zwei Minuten liest und dann doch nicht klickt, sah in den Daten exakt aus wie
+  // jemand, der sofort wieder wegwischt: ein Ereignis, null Verweildauer. Damit liessen
+  // sich "falsche Zielgruppe" und "Seite überzeugt nicht" nicht unterscheiden.
+  //
+  // Feuert GENAU EINMAL, je nachdem was zuerst eintritt:
+  //   trigger 'scroll' — Hero-Bereich nach oben aus dem Blickfeld gescrollt
+  //   trigger 'dwell'  — 10 Sekunden SICHTBARE Verweildauer (Hintergrund-Tabs zählen nicht)
+  //   trigger 'cta'    — Klick auf "Jetzt starten", bevor eines der beiden griff
+  // Der 'cta'-Fall hält den Funnel monoton: view >= engaged >= check_start_click.
+  window._lpVisibleMs = 0;
+  (function () {
+    try { if (pageParams().get('code')) return; } catch (e) { return; }
+
+    let lastTick = Date.now(), maxScroll = 0, sent = false, timer = null;
+
+    function visibleSeconds() {
+      if (document.visibilityState === 'visible') {
+        const now = Date.now();
+        window._lpVisibleMs += now - lastTick;
+        lastTick = now;
+      }
+      return Math.round(window._lpVisibleMs / 1000);
+    }
+
+    function scrollPct() {
+      const doc = document.documentElement;
+      const max = Math.max(1, doc.scrollHeight - window.innerHeight);
+      const pct = Math.min(100, Math.round((window.scrollY / max) * 100));
+      if (pct > maxScroll) maxScroll = pct;
+      return maxScroll;
+    }
+
+    function stop() {
+      if (timer) { clearInterval(timer); timer = null; }
+      window.removeEventListener('scroll', onScroll);
+      document.removeEventListener('visibilitychange', onVis);
+    }
+
+    function fire(trigger) {
+      if (sent) return;
+      sent = true;
+      trackEvent('landingpage_engaged', {
+        trigger: trigger,
+        visible_seconds: visibleSeconds(),
+        max_scroll_pct: scrollPct()
+      });
+      stop();
+    }
+
+    function onScroll() {
+      scrollPct();
+      const hero = document.getElementById('hero-block');
+      // Im iFrame kann das innere Dokument unscrollbar sein — dann greift nur 'dwell'.
+      const past = hero
+        ? (hero.getBoundingClientRect().bottom < window.innerHeight * 0.5)
+        : (maxScroll > 40);
+      if (past) fire('scroll');
+    }
+
+    function onVis() {
+      if (document.visibilityState === 'visible') lastTick = Date.now();
+      else visibleSeconds();
+    }
+
+    timer = setInterval(function () {
+      if (window._checkStarted) { stop(); return; }
+      if (visibleSeconds() >= 10) fire('dwell');
+    }, 1000);
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('visibilitychange', onVis);
+
+    // Für startDirectCheck() erreichbar
+    window._lpFireEngaged = fire;
+    window._lpVisibleSeconds = visibleSeconds;
+    window._lpScrollPct = scrollPct;
+  })();
+
   async function loadHeroCount() {
     // v1.28.37: Live-Zähler über RPC (RLS blockiert direkten submissions-Zugriff zu Recht).
     // Zeigt nur Werte >= 100 (auf Zehner gerundet) — sonst bleibt der statische Text stehen.
@@ -1290,7 +1375,14 @@
 
   function startDirectCheck() {
     window._isReviewMode = false; // Sicherstellen dass Tracking aktiv ist
-    trackEvent('check_start_click');
+    // v1.31.5: Engagement zuerst nachziehen, falls weder Scrollen noch 10 s gegriffen
+    // haben — sonst stünde im Funnel ein Klick ohne vorheriges Engagement.
+    if (typeof window._lpFireEngaged === 'function') window._lpFireEngaged('cta');
+    window._checkStarted = true;
+    trackEvent('check_start_click', {
+      visible_seconds: (typeof window._lpVisibleSeconds === 'function') ? window._lpVisibleSeconds() : null,
+      max_scroll_pct: (typeof window._lpScrollPct === 'function') ? window._lpScrollPct() : null
+    });
     if(typeof fbq!=='undefined') fbq('track','Lead',{content_name:'check_start'});
     const hero = document.getElementById('hero-block');
     if (hero) hero.style.display = 'none';
@@ -3197,7 +3289,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.31.4</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.31.5</footer>
 
 
 </body>
