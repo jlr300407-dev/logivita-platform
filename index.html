@@ -24,7 +24,14 @@
        zwischen landingpage_view und check_start_click — Trigger 'scroll' (Hero verlassen),
        'dwell' (10 s sichtbar) oder 'cta' (Klick kam zuerst), mit visible_seconds und
        max_scroll_pct im meta; check_start_click trägt dieselben beiden Werte. Damit lässt
-       sich unterscheiden, ob Kaltverkehr sofort abspringt oder liest ohne zu klicken. -->
+       sich unterscheiden, ob Kaltverkehr sofort abspringt oder liest ohne zu klicken.
+       v1.32.0 (Buddy, Stufe 1): Maskottchen neben der Bereichsbezeichnung, ausschliesslich am
+       ANFANG eines Bereichs sowie bei Ziel/Basisdaten/Datenschutz; thinking-Buddy auf dem
+       Wartescreen der KI-Auswertung. Bilder liegen als eigene Dateien in assets/buddy/
+       (WebP 128/256 + PNG-Fallback), Laden erst beim Erreichen des Schritts (loading="lazy").
+       Sperrliste: kein Buddy bei frauenspezifischen Fragen und bei Hinweisen auf aerztliche
+       Abklaerung, mentale Warnsignale oder Red Flags. Schalter BUDDY_ENABLED=false nimmt
+       ihn vollstaendig wieder heraus, ohne dass Markup zurueckgebaut werden muss. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -80,6 +87,23 @@
     .question-step.active { display: block; }
     .card { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 24px; margin-bottom: 16px; }
     .area-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; background: var(--accent-blue-dim); border: 1px solid rgba(59,158,255,0.18); color: var(--accent-blue); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 16px; }
+    /* v1.32.0 — Buddy (Maskottchen). Nur am Bereichsanfang, nie bei Folgefragen.
+       Bildgrössen sind fix gesetzt, damit beim Nachladen nichts springt. */
+    .buddy-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+    .buddy-row .area-badge { margin-bottom: 0; }
+    .buddy-img { flex: 0 0 auto; width: 120px; height: 120px; display: block; }
+    .buddy-img.buddy-sm { width: 80px; height: 80px; }
+    .buddy-img.buddy-lg { width: 160px; height: 160px; }
+    .buddy-wait { display: flex; align-items: center; gap: 14px; }
+    .buddy-wait .buddy-img { width: 100px; height: 100px; }
+    @media (max-width: 480px) {
+      .buddy-img { width: 96px; height: 96px; }
+      .buddy-img.buddy-lg { width: 120px; height: 120px; }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .buddy-img { animation: buddyIn .32s ease-out both; }
+    }
+    @keyframes buddyIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
     .question-text { font-size: 19px; font-weight: 600; line-height: 1.4; color: var(--text-primary); margin-bottom: 6px; }
     .help-text { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 22px; }
     .options-grid { display: flex; flex-direction: column; gap: 9px; }
@@ -450,6 +474,77 @@
   const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdWp0l2Cy_KDraD0kW5uXzecV3CdyR1L28nSmdLAzdLUoiTTA/viewform?usp=publish-editor";
   const LOGO_URL = "";
   const AREA_ICONS = { sleep:"🌙", activity:"⚡", nutrition:"🥗", vitamin_d:"☀️", bmi:"⚖️", mental:"🧘", lifestyle:"🍃", micronutrients:"💊", metabolic:"🔥" };
+
+  // ══ Buddy / Maskottchen (v1.32.0, Stufe 1) ══════════════════════════════
+  // Der Buddy erscheint NUR am Anfang eines Bereichs, nicht bei Folgefragen.
+  // Ein einziger Schalter nimmt ihn komplett wieder heraus — kein Rückbau nötig.
+  const BUDDY_ENABLED = true;
+  const BUDDY_PATH    = "assets/buddy/";
+
+  // Bereichskennung → Motiv. Deckt sich mit den neun Scoring-Dimensionen;
+  // alles Unbekannte fällt auf buddy-neutral zurück.
+  const BUDDY_BY_AREA = {
+    sleep:"buddy-sleep", activity:"buddy-activity", nutrition:"buddy-nutrition",
+    vitamin_d:"buddy-vitamin-d", bmi:"buddy-bmi", mental:"buddy-mental",
+    lifestyle:"buddy-lifestyle", micronutrients:"buddy-micronutrients",
+    metabolic:"buddy-metabolic", general:"buddy-neutral"
+  };
+  const BUDDY_BY_STEP = { goal:"buddy-goal", personal:"buddy-personal", consent:"buddy-consent" };
+
+  // Sperrliste: neben diesen Inhalten steht NIE eine Comicfigur. Der Buddy ist
+  // Begleitung durch den Fragebogen, kein Kommentar zu einem Warnsignal.
+  const BUDDY_BLOCK_KEYWORDS = [
+    "arzt","ärztlich","aerztlich","abklär","abklaer","diagnos","therapie","medikament",
+    "suizid","selbstverletz","depress","angstst","panik","hoffnungslos","lebensmüde","lebensmuede",
+    "brustschmerz","atemnot","blut im","bewusstlos","notfall","warnzeichen","red flag"
+  ];
+  function buddyIsBlocked(q) {
+    if (!q) return false;
+    if (typeof isFemaleSpecific === "function" && isFemaleSpecific(q)) return true;
+    const text = `${q.question_key||""} ${q.question_text||""} ${q.help_text||""}`.toLowerCase();
+    return BUDDY_BLOCK_KEYWORDS.some(k => text.includes(k));
+  }
+
+  // Erste ANZEIGBARE Frage eines Bereichs? Nur dann wird der Buddy gezeigt.
+  // Ist die eigentliche erste Frage gesperrt (z. B. frauenspezifisch), rueckt
+  // die naechste nach — sonst verlöre der ganze Bereich seinen Buddy.
+  function buddyIsAreaStart(q) {
+    if (!q || !q.area_key) return false;
+    const idx = groupedQuestions.indexOf(q);
+    if (idx < 0) return false;
+    for (let i = idx - 1; i >= 0; i--) {
+      const prev = groupedQuestions[i];
+      if (!prev || !prev.area_key) break;          // davor lag ein Nicht-Fragen-Schritt
+      if (prev.area_key !== q.area_key) break;     // davor lag ein anderer Bereich
+      if (!buddyIsBlocked(prev)) return false;     // dieser Bereich hatte schon einen Buddy
+    }
+    return true;
+  }
+
+  // Baut das <picture>-Element. WebP mit PNG-Fallback, Laden erst beim
+  // Erreichen des Schritts (loading="lazy"), feste Masse gegen Layout-Sprünge.
+  function buddyHtml(name, size) {
+    if (!BUDDY_ENABLED || !name) return "";
+    const cls = size === "sm" ? "buddy-img buddy-sm" : size === "lg" ? "buddy-img buddy-lg" : "buddy-img";
+    const px  = size === "sm" ? 80 : size === "lg" ? 160 : 120;
+    const res = size === "lg" ? "256" : "128";
+    return `<picture>
+        <source srcset="${BUDDY_PATH}${name}-${res}.webp" type="image/webp">
+        <img class="${cls}" src="${BUDDY_PATH}${name}-256.png" width="${px}" height="${px}"
+             loading="lazy" decoding="async" alt="" aria-hidden="true">
+      </picture>`;
+  }
+
+  // Buddy für einen Fragebogen-Schritt — liefert "" wenn gesperrt oder keine Bereichsöffnung.
+  function buddyForStep(q, opts) {
+    if (!BUDDY_ENABLED || !q) return "";
+    const forced = (opts && opts.force) === true;
+    if (buddyIsBlocked(q)) return "";
+    const stepName = q.type && BUDDY_BY_STEP[q.type];
+    if (stepName) return buddyHtml(stepName, (opts && opts.size) || null);
+    if (!forced && !buddyIsAreaStart(q)) return "";
+    return buddyHtml(BUDDY_BY_AREA[q.area_key] || "buddy-neutral", (opts && opts.size) || null);
+  }
 
   // v1.28.20: Der öffentliche Check nutzt IMMER den Anon-Key — niemals gespeicherte
   // Login-Sitzungen (Trainer-Dashboard/Funnel teilen sich dieselbe Browser-Domain).
@@ -986,7 +1081,10 @@
     // weiter offen, ein Klick genügt zum Ändern.
     const prevGoal = (window._recheckPrefill && window._recheckPrefill.goal_key) || '';
     const prevOpt = prevGoal ? q.options.find(o => o.option_key === prevGoal) : null;
-    let html = `<div class="card"><div class="area-badge">🎯 Dein Ziel</div>`;
+    const _bGoal = buddyForStep({ type:'goal' });
+    let html = `<div class="card">`
+      + (_bGoal ? `<div class="buddy-row">${_bGoal}<div class="area-badge">🎯 Dein Ziel</div></div>`
+                : `<div class="area-badge">🎯 Dein Ziel</div>`);
     if (prevOpt) {
       html += `<div class="question-text">Ist das immer noch dein Ziel?</div>
         <div class="help-text">Beim letzten Check hast du <strong style="color:var(--text-primary);">${escHtml(prevOpt.option_text)}</strong> gewählt. Passt das noch, oder hat sich etwas verschoben?</div>
@@ -1016,7 +1114,9 @@
     const sel = (g) => (pre && pre.gender === g) ? ' selected' : '';
     return `
       <div class="card">
-        <div class="area-badge">👤 Basisdaten</div>
+        ${(() => { const b = buddyForStep({ type:'personal' });
+            return b ? `<div class="buddy-row">${b}<div class="area-badge">👤 Basisdaten</div></div>`
+                     : `<div class="area-badge">👤 Basisdaten</div>`; })()}
         <div class="question-text">Deine persönlichen Angaben</div>
         <div class="help-text">${pre
           ? 'Deine Angaben vom letzten Check sind übernommen. Bitte prüfe besonders <strong style="color:var(--text-primary);">Alter und Gewicht</strong> — die beiden ändern sich, und der Vergleich wird nur so genau wie diese Zahlen.'
@@ -1049,7 +1149,11 @@
 
   function questionStepHtml(q) {
     const icon = AREA_ICONS[q.area_key] || "●";
-    let html = `<div class="card"><div class="area-badge">${icon} ${q.area_label || q.area_key}</div><div class="question-text">${q.question_text}</div>`;
+    const buddy = buddyForStep(q);
+    const badge = `<div class="area-badge">${icon} ${q.area_label || q.area_key}</div>`;
+    let html = `<div class="card">`
+      + (buddy ? `<div class="buddy-row">${buddy}${badge}</div>` : badge)
+      + `<div class="question-text">${q.question_text}</div>`;
     if (q.help_text) html += `<div class="help-text">${q.help_text}</div>`;
     if (isMultiChoice(q)) {
       html += `<div class="help-text" style="margin-bottom:10px;">Mehrfachauswahl möglich — wähle alles Zutreffende aus.</div>`;
@@ -1092,7 +1196,9 @@
   function consentStepHtml() {
     return `
       <div class="card">
-        <div class="area-badge">🔒 Datenschutz</div>
+        ${(() => { const b = buddyForStep({ type:'consent' });
+            return b ? `<div class="buddy-row">${b}<div class="area-badge">🔒 Datenschutz</div></div>`
+                     : `<div class="area-badge">🔒 Datenschutz</div>`; })()}
         <div class="question-text">Datenschutz & Auswertung</div>
         <div class="info-box box-info" style="margin-bottom:14px;margin-top:8px;">
           Deine Angaben werden zur Erstellung deines LeVITA Vital-Checks verarbeitet.
@@ -1527,7 +1633,12 @@
     if (typeof fbq !== 'undefined') fbq('track', 'Subscribe', { content_name: 'ai_mail_requested' });
     btn.disabled = true; btn.innerText = "Auswertung wird erstellt…";
     const hintTimer = setTimeout(() => {
-      statusEl.innerHTML = `<div class="status-msg info-box box-info">⏳ Die KI-Auswertung wird gerade erstellt — das kann bis zu 30 Sekunden dauern. Bitte warte kurz…</div>`;
+      // v1.32.0 — der thinking-Buddy fuellt die Wartezeit statt eines nackten ⏳
+      const waitBuddy = buddyHtml("buddy-thinking");
+      statusEl.innerHTML = `<div class="status-msg info-box box-info">`
+        + (waitBuddy ? `<div class="buddy-wait">${waitBuddy}<div>Einen Moment — deine Antworten werden gerade eingeordnet. Das kann bis zu 30 Sekunden dauern.</div></div>`
+                     : `⏳ Die KI-Auswertung wird gerade erstellt — das kann bis zu 30 Sekunden dauern. Bitte warte kurz…`)
+        + `</div>`;
     }, 8000);
     try {
       const firstName = (document.getElementById("ai_firstname")?.value || "").trim().slice(0, 60);
@@ -3289,7 +3400,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.31.5</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.32.0</footer>
 
 
 </body>
