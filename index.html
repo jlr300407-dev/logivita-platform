@@ -479,7 +479,10 @@
   // Der Buddy erscheint NUR am Anfang eines Bereichs, nicht bei Folgefragen.
   // Ein einziger Schalter nimmt ihn komplett wieder heraus — kein Rückbau nötig.
   const BUDDY_ENABLED = true;
-  const BUDDY_PATH    = "assets/buddy/";
+  // Pfad angepasst 29.08.2026: die Motive liegen flach in assets/, nicht in
+  // einem Unterordner. Liegen sie spaeter doch in assets/buddy/, nur diese
+  // eine Zeile aendern — sonst nichts.
+  const BUDDY_PATH    = "assets/";
 
   // Bereichskennung → Motiv. Deckt sich mit den neun Scoring-Dimensionen;
   // alles Unbekannte fällt auf buddy-neutral zurück.
