@@ -39,7 +39,17 @@
        gespeichertes Ziel hat weiter Vorrang, und "als Ziel gesetzt" gilt
        weiterhin erst nach bewusstem Klick. (2) Auf der Ergebnisseite stellt ein
        Buddy die Auswertung vor: success nach einem frischen Check,
-       welcome-back beim Wiederaufruf ueber PIN. -->
+       welcome-back beim Wiederaufruf ueber PIN.
+       v1.32.2 (Konsistenz + Sicherheit): (1) Der Haupthebel kommt jetzt aus
+       top_priorities vom Server statt aus einer eigenen Frontend-Rechnung —
+       Bildschirm und KI-Mail nannten sonst verschiedene Bereiche (Testfall
+       000294). Die alte Rechnung bleibt nur als Rueckfall, wenn top_priorities
+       fehlt. (2) Red-Flag-Sperre: bei ungewolltem Gewichtsverlust zusammen mit
+       Appetitveraenderung oder Schwindel unterdrueckt die Seite JEDEN Bluttest-
+       und Selbsttest-Hinweis und leitet zur Hausarztpraxis — dieselbe Regel,
+       die in der Edge fuer die Mail gilt. (3) Die KPI-Kachel zaehlt echte
+       Fokusbereiche (<55) statt aller Bereiche unter 75; die vollstaendige
+       Liste steht unveraendert in Tab 2. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -1817,7 +1827,13 @@
     let html = "";
 
     const sc = getScoreColor(totalScore);
-    const weakCount = areas.filter(a => a.score < 75).length;
+    // v1.32.2 — Die Kachel zeigte bisher ALLE Bereiche unter 75. Bei einem
+    // niedrigen Gesamtscore standen dort schnell 8 oder 9 — das liest sich wie
+    // ein Befund und ist als Handlungsliste unbrauchbar. Gezaehlt werden jetzt
+    // die echten Fokusbereiche (<55); die vollstaendige Liste steht unveraendert
+    // in Tab 2, es wird also nichts verschwiegen.
+    const weakCount = areas.filter(a => a.score < 55).length;
+    const growthCount = areas.filter(a => a.score < 75).length;
     const bioColor = bioAge && bioAge < personalData.age ? "var(--accent-green)" : "var(--accent-amber)";
 
     const capName = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
@@ -1825,19 +1841,43 @@
     const goalLabels = { goal_energy:"⚡ Mehr Energie", goal_weight:"⚖️ Abnehmen / Figur", goal_fitness:"💪 Fitter werden", goal_supplements:"💊 Nährstoffstatus", goal_prevention:"🛡️ Vorsorge", goal_longevity:"🌿 Longevity", goal_curious:"🔍 Neugier" };
     const goalLabel = personalData.goal_key && goalLabels[personalData.goal_key] ? goalLabels[personalData.goal_key] : "";
 
-    // Haupthebel berechnen (für Tab 3 Hero-Card verfügbar)
+    // Haupthebel (fuer Tab 1 + Tab 3 Hero-Card)
+    // v1.32.2 — WICHTIG: Bis v1.32.1 rechnete das Frontend den Hebel selbst
+    // (niedrigster Bereich), waehrend die KI-Mail ihn aus top_priorities nahm.
+    // Bei eng beieinanderliegenden Werten nannten beide verschiedene Bereiche —
+    // derselbe Nutzer bekam auf dem Bildschirm eine andere Aussage als in der
+    // Mail (Testfall 000294: Bildschirm "Mikronaehrstoffe", Mail "Bewegung").
+    // Jetzt gilt EINE Quelle: top_priorities vom Server. Nur wenn die fehlt,
+    // greift die alte Rechnung als Rueckfall.
     const bmiNum = Number(result.bmi);
     const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
     const areasForHebel = areas.filter(a => {
-      if (a.key === "bmi") return false;
+      if (a.key === "bmi") return false;            // BMI ist keine Handlung
       if (bmiIsLow && a.key === "activity") return false;
       return true;
     });
     const sleepArea = areas.find(a => a.key === "sleep");
     const hasCriticalSleep = result.answers?.some(a => a.question_key === "sleep_duration" && a.answer_text?.includes("Weniger als 5"));
-    const worst = areasForHebel.length > 0
-      ? (hasCriticalSleep && sleepArea ? sleepArea : [...areasForHebel].sort((a,b) => a.score - b.score)[0])
-      : null;
+    const serverPrio = (result.score?.top_priorities || [])
+      .map(p => areas.find(a => a.key === (p.area_key || p.key)))
+      .filter(a => a && areasForHebel.includes(a))[0] || null;
+    const worst = serverPrio
+      ? serverPrio
+      : (areasForHebel.length > 0
+          ? (hasCriticalSleep && sleepArea ? sleepArea : [...areasForHebel].sort((a,b) => a.score - b.score)[0])
+          : null);
+    if (window._isInternal && serverPrio) {
+      const own = [...areasForHebel].sort((a,b) => a.score - b.score)[0];
+      if (own && own.key !== serverPrio.key) console.log('[Hebel] Server:', serverPrio.key, '· eigene Rechnung waere:', own.key, '— Server gewinnt (v1.32.2)');
+    }
+
+    // v1.32.2 — Red-Flag-Sperre im Frontend. Bei ungewolltem Gewichtsverlust
+    // zusammen mit Appetitveraenderung oder Schwindel darf die Seite NICHT zum
+    // Bluttest raten: dort gehoert der Hausarzt hin, nicht ein Selbsttest.
+    // Dieselbe Regel gilt in der Edge; bis v1.32.1 kannte sie nur die Mail.
+    const rfRisk = (k) => Number((result.answers || []).find(a => a.question_key === k)?.risk_points || 0);
+    window._redFlagNoBloodtest = (rfRisk("unintentional_weight_loss") >= 2
+      && (rfRisk("appetite_change") >= 2 || rfRisk("dizziness_pale_nails") >= 2));
 
     // ── V2: Re-Check-Einstieg aus der PIN-Ansicht ──
     // Nur im Wiederaufruf (PIN bereits serverseitig verifiziert): von hier aus
@@ -1867,9 +1907,9 @@
         <div class="kpi-card"><span class="kpi-icon">🧬</span><div class="kpi-val" style="color:${bioColor}">${bioAge||"–"}</div><div class="kpi-label">Vitalitäts-Alter</div></div>
         <div class="kpi-card" onclick="switchResultTab('bereiche')" style="cursor:pointer;border-color:rgba(245,166,35,${weakCount>0?'0.3':'0.1'});">
           <span class="kpi-icon">📊</span>
-          <div class="kpi-val" style="color:var(--accent-amber)">${weakCount}</div>
+          <div class="kpi-val" style="color:var(--accent-amber)">${weakCount > 0 ? weakCount : growthCount}</div>
           <div class="kpi-label" style="color:${weakCount>0?'var(--accent-amber)':'var(--text-muted)'}">
-            ${weakCount>0?'Wachstumsbereiche →':'Bereiche'}
+            ${weakCount>0?'Fokusbereiche →':'Bereiche'}
           </div>
         </div>
       </div>`;
@@ -2318,7 +2358,12 @@
       const mT = window._snips.measurement.tanita || {};
       cat3.push([mT.title || "Tanita-Körperanalyse im Studio", mT.body || "Muskelmasse, Körperfett und Wasserhaushalt — die Zahlen hinter deinem BMI, als Ausgangspunkt für deinen Verlauf."]);
     }
-    if (bloodtestShown || score.bloodtest_hint === true) {
+    if (window._redFlagNoBloodtest) {
+      // v1.32.2 — Red Flag schlaegt jeden Labor-/Selbsttest-Hinweis: hier fuehrt
+      // der Weg zuerst in die Hausarztpraxis, nicht ins Studio und nicht zu
+      // einem Test in Eigenregie.
+      cat3.push(["Ärztliche Abklärung zuerst", "Deine Angaben zu Gewicht und Appetit gehören vor jede weitere Messung in die Hausarztpraxis. Welche Blutwerte sinnvoll sind, entscheidet sich dort — wir unterstützen dich danach gern."]);
+    } else if (bloodtestShown || score.bloodtest_hint === true) {
       const mL = window._snips.measurement.labor || {};
       cat3.push([mL.title || "Fachlich begleitete Laborkontrolle", mL.body || "Kann je nach Situation sinnvoll sein — sprich uns im Studio darauf an, wir beraten dich, was für dich passt."]);
     }
@@ -2614,7 +2659,7 @@
     if (key === "micronutrients") {
       const dizzy = getRisk("dizziness_pale_nails"); const nutType = getText("nutrition_type") || getText("diet_type"); const gender = latestResult?.submission?.gender || "";
       const isPlant = nutType.includes("vegan") || nutType.includes("vegetar"); const isFemale = gender === "female" || gender === "weiblich";
-      if (l === "low") { if (dizzy >= 2 && isPlant && isFemale) return "Eisenreiche Lebensmittel mit Vitamin C kombinieren — Hülsenfrüchte + Paprika oder Orangensaft."; if (dizzy >= 2) return "Schwindel oder blasse Nägel sind mögliche Signale — ein Bluttest kann dir hier mehr Klarheit geben."; return "Ernährung nicht pauschal supplementieren — zuerst Muster und Qualität der Mahlzeiten prüfen."; }
+      if (l === "low") { if (dizzy >= 2 && isPlant && isFemale) return "Eisenreiche Lebensmittel mit Vitamin C kombinieren — Hülsenfrüchte + Paprika oder Orangensaft."; if (dizzy >= 2) return window._redFlagNoBloodtest ? "Schwindel oder blasse Nägel sind Signale, die zusammen mit deinen Angaben zu Gewicht und Appetit in ärztliche Hände gehören — bitte hausärztlich abklären lassen." : "Schwindel oder blasse Nägel sind mögliche Signale — ein Bluttest kann dir hier mehr Klarheit geben."; return "Ernährung nicht pauschal supplementieren — zuerst Muster und Qualität der Mahlzeiten prüfen."; }
       if (l === "medium") { if (dizzy >= 2 && isPlant) return "Eisenreiche Lebensmittel immer mit Vitamin C kombinieren."; return "Eiweiß, Eisenquellen, Omega-3 und B12 im Alltag bewusster einbauen."; }
       return "Abwechslungsreiche Ernährung bleibt die beste Basis — Supplemente nur gezielt.";
     }
@@ -2681,7 +2726,7 @@
     if (key === "micronutrients") {
       const dizzy = getRisk("dizziness_pale_nails"); const nutType = getText("nutrition_type") || getText("diet_type");
       const isPlant = nutType.includes("vegan") || nutType.includes("vegetar");
-      if (l === "low") { if (dizzy >= 2 && isPlant) return "Ein Bluttest für Eisen, B12 und Vitamin D gibt dir konkrete Werte statt Vermutungen."; return "Gezielte Blutwerte geben dir Orientierung — sinnvoller als blindes Supplementieren."; }
+      if (l === "low") { if (window._redFlagNoBloodtest) return "Klärung gehört hier zuerst in die Hausarztpraxis — dort werden auch die passenden Blutwerte veranlasst."; if (dizzy >= 2 && isPlant) return "Ein Bluttest für Eisen, B12 und Vitamin D gibt dir konkrete Werte statt Vermutungen."; return "Gezielte Blutwerte geben dir Orientierung — sinnvoller als blindes Supplementieren."; }
       if (l === "medium") { if (isPlant) return "B12, Jod und Eisen bei pflanzlicher Ernährung gezielt im Blick behalten — Trockenbluttest gibt Klarheit."; return "Bei anhaltender Müdigkeit gezielte Abklärung vor Supplement-Kauf prüfen."; }
       return "Supplemente nur gezielt, sinnvoll und nach Bedarf einsetzen.";
     }
@@ -2769,7 +2814,8 @@
     const metabolicScoreHba = Number(result?.score?.score_payload?.metabolic?.score || 100);
     const lifestyleScoreHba = Number(result?.score?.score_payload?.lifestyle?.score || 100);
     const hba1cTrigger = (bmiNumHba >= 26 && activityRiskHba >= 2) || (ageNumHba >= 45 && metabolicScoreHba < 80) || (ageNumHba >= 65 && lifestyleScoreHba < 50);
-    if (hba1cTrigger && !hints.some(h => h.includes("HbA1c") || h.includes("Blutzucker"))) {
+    // v1.32.2 — bei Red Flag kein Selbsttest-Hinweis (siehe _redFlagNoBloodtest)
+    if (hba1cTrigger && !window._redFlagNoBloodtest && !hints.some(h => h.includes("HbA1c") || h.includes("Blutzucker"))) {
       hints.push(`<strong>Langzeit-Blutzucker (HbA1c)</strong> — ein Orientierungswert den viele Menschen noch nie gemessen haben. Kein Nüchternblut nötig, bequem von zuhause.`);
     }
 
@@ -2805,7 +2851,7 @@
       html += `<div class="hint-box" style="background:rgba(255,160,0,0.08);border:1px solid rgba(255,160,0,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#ffb347;">🧠 Hoher Stresslevel</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Du gibst einen hohen oder sehr hohen Stresslevel an. Chronischer Stress wirkt sich langfristig auf Schlaf, Immunsystem und Herzgesundheit aus.</span><br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:rgba(255,160,0,0.15);color:#ffb347;border:1px solid rgba(255,160,0,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Stressgespräch vereinbaren →</a></div>`;
     }
     // Verisana-Hinweis in Tab 1 — wenn bloodtest_hint aber noch kein Button gezeigt
-    if (score.bloodtest_hint === true && !bloodtestShown) {
+    if (score.bloodtest_hint === true && !bloodtestShown && !window._redFlagNoBloodtest) {
       html += `<div class="hint-box box-info" style="margin-bottom:12px;">
         <strong>🔬 Bluttest-Orientierung</strong><br>
         <span style="font-size:13px;line-height:1.6;">Eine fachlich begleitete Laborkontrolle kann je nach Situation sinnvoll sein. Eine genauere Einordnung erhältst du in deiner persönlichen Auswertung per Mail.</span>${AFFILIATE_ENABLED ? `
@@ -2814,7 +2860,7 @@
       bloodtestShown = true;
     }
 
-    if (getRisk("dizziness_pale_nails") >= 3 && !bloodtestShown) {
+    if (getRisk("dizziness_pale_nails") >= 3 && !bloodtestShown && !window._redFlagNoBloodtest) {
       html += `<div class="hint-box box-warning" style="margin-bottom:12px;"><strong>💉 Bluttest-Empfehlung</strong><br><span style="font-size:13px;line-height:1.6;">Eine fachlich begleitete Laborkontrolle kann je nach Situation sinnvoll sein — z.B. zu Eisen, B12 oder Vitamin D.</span>${AFFILIATE_ENABLED ? `<br><br><button onclick="scrollToAiBox();" style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;border:none;cursor:pointer;margin-top:4px;">🩸 Bluttest mit 10% Rabatt anfordern →</button>` : ``}</div>`;
     }
     if (getRisk("sleep_latency") >= 3) {
@@ -3473,7 +3519,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.32.1</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.32.2</footer>
 
 
 </body>
