@@ -52,7 +52,17 @@
        Liste steht unveraendert in Tab 2.
        v1.32.3 (Sprache): Das Diagramm heisst durchgaengig "Vitalitaets-Spinne",
        nicht "Rad" — die Ueberschrift in Tab 2 sagte Spinne, Verweise darauf
-       sagten Rad. Betrifft sichtbaren Text und Code-Kommentare. -->
+       sagten Rad. Betrifft sichtbaren Text und Code-Kommentare.
+       v1.32.4 (eine Bewertungsskala): Bisher liefen vier Skalen nebeneinander —
+       Legende (5 Stufen), Bereichskarten (3 Stufen), getScoreColor (eigene
+       Farben, 70-84 blau) und die Mail (5 Stufen, andere Woerter). Ein Wert von
+       33 hiess dadurch auf der Karte "Fokusbereich", in der Legende daneben
+       "besonderer Orientierungsbereich" und in der Mail "Besonderer
+       Fokusbereich". Jetzt gibt es SCORE_SCALE als einzige Quelle fuer Farbe
+       und Wort; die Woerter sind die der Mail (getScoreLevel in der Edge). Die
+       Legende rendert aus derselben Konstante, kann also nicht mehr abweichen.
+       Ausserdem: BMI faellt aus dem Satz "wo kleine Hebel den groessten Nutzen
+       bringen" — der Simulator schliesst ihn als Hebel ausdruecklich aus. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -232,22 +242,30 @@
     .area-card { background: var(--brand-card); border: 1px solid var(--border); border-left: 3px solid transparent; border-radius: var(--radius-sm); padding: 14px; cursor: pointer; transition: all 0.2s; }
     .area-card:hover { transform: translateY(-1px); border-color: var(--border-hover); }
     .area-card.area-good { border-left-color: var(--accent-green); }
+    .area-card.area-ok { border-left-color: #5edb97; }
     .area-card.area-medium { border-left-color: var(--accent-amber); }
+    .area-card.area-focus { border-left-color: #ff8c42; }
     .area-card.area-low { border-left-color: var(--accent-red); }
     .area-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .area-card-name { font-size: 13px; font-weight: 700; color: var(--text-primary); }
     .area-score-pill { font-size: 12px; font-weight: 800; padding: 2px 9px; border-radius: 10px; }
     .area-good .area-score-pill { background: rgba(34,201,122,0.15); color: var(--accent-green); }
+    .area-ok .area-score-pill { background: rgba(94,219,151,0.15); color: #5edb97; }
     .area-medium .area-score-pill { background: rgba(245,166,35,0.15); color: var(--accent-amber); }
+    .area-focus .area-score-pill { background: rgba(255,140,66,0.15); color: #ff8c42; }
     .area-low .area-score-pill { background: rgba(255,92,92,0.15); color: var(--accent-red); }
     .area-bar-track { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
     .area-bar-fill { height: 100%; border-radius: 2px; transition: width 1s cubic-bezier(0.4,0,0.2,1); }
     .area-good .area-bar-fill { background: var(--accent-green); }
+    .area-ok .area-bar-fill { background: #5edb97; }
     .area-medium .area-bar-fill { background: var(--accent-amber); }
+    .area-focus .area-bar-fill { background: #ff8c42; }
     .area-low .area-bar-fill { background: var(--accent-red); }
     .area-status { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
     .area-good .area-status { color: var(--accent-green); }
+    .area-ok .area-status { color: #5edb97; }
     .area-medium .area-status { color: var(--accent-amber); }
+    .area-focus .area-status { color: #ff8c42; }
     .area-low .area-status { color: var(--accent-red); }
     .area-detail { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
     .area-detail.open { display: block; }
@@ -2460,13 +2478,25 @@
     return html;
   }
 
-  function getScoreColor(s) {
-    if (s >= 85) return "#22c97a";
-    if (s >= 70) return "#3b9eff";
-    if (s >= 55) return "#f5a623";
-    if (s >= 40) return "#ff8c42";
-    return "#ff5c5c";
+  // ══ Bewertungsskala — EINE Quelle fuer Farbe UND Wort (v1.32.4) ══════════
+  // Vorher liefen vier Skalen nebeneinander: die Legende (5 Stufen), die
+  // Bereichskarten (3 Stufen), getScoreColor (eigene Farben, 70-84 blau) und
+  // die Mail (5 Stufen, andere Woerter). Ein Wert von 33 hiess dadurch auf der
+  // Karte "Fokusbereich", in der Legende "besonderer Orientierungsbereich" und
+  // in der Mail "Besonderer Fokusbereich". Massgeblich sind ab jetzt die
+  // Woerter der Mail (getScoreLevel in der Edge) — Entscheidung Joerg 30.08.
+  const SCORE_SCALE = [
+    { min: 85, label: "Sehr stabile Grundlage",  short: "Sehr stabil",      color: "#22c97a", cls: "area-good",   badge: "✓" },
+    { min: 70, label: "Gute Basis mit Potenzial", short: "Gute Basis",      color: "#5edb97", cls: "area-ok",     badge: "✓" },
+    { min: 55, label: "Optimierungspotenzial",    short: "Optimierbar",     color: "#f5a623", cls: "area-medium", badge: "△" },
+    { min: 40, label: "Fokusbereich",             short: "Fokusbereich",    color: "#ff8c42", cls: "area-focus",  badge: "⚠" },
+    { min: 0,  label: "Besonderer Fokusbereich",  short: "Besonderer Fokus", color: "#ff5c5c", cls: "area-low",   badge: "⚠" }
+  ];
+  function scoreBand(s) {
+    const n = Number(s);
+    return SCORE_SCALE.find(b => n >= b.min) || SCORE_SCALE[SCORE_SCALE.length - 1];
   }
+  function getScoreColor(s) { return scoreBand(s).color; }
 
   // ── PATCH 2+3: animateScoreRing — angepasst auf r=47 (C≈295) ──
   function animateScoreRing(target) {
@@ -2511,7 +2541,11 @@
   }
 
   function renderRadarExplanation(areas) {
-    const focus = [...areas].sort((a,b) => a.score-b.score).filter(a => a.score < 75).slice(0,3).map(a => a.label);
+    // v1.32.4 — BMI raus: der Simulator schliesst ihn ausdruecklich als Hebel
+    // aus ("BMI bewusst ausgenommen"), also darf er hier nicht als Stelle
+    // genannt werden, an der "kleine Hebel den groessten Nutzen bringen".
+    const focus = [...areas].filter(a => a.key !== "bmi")
+      .sort((a,b) => a.score-b.score).filter(a => a.score < 70).slice(0,3).map(a => a.label);
     const focusTxt = focus.length > 0
       ? `Bei dir liegen besonders <strong>${focus.join(", ")}</strong> weiter innen — das zeigt, wo kleine Hebel aktuell den größten Nutzen bringen.`
       : "Deine Bereiche wirken insgesamt stabil. Der Fokus liegt auf Erhalt und Feinschliff.";
@@ -2535,11 +2569,10 @@
             <div class="radar-explain-grid">
               <div class="radar-explain-card"><strong>Was die Grafik zeigt</strong>Je weiter außen ein Punkt liegt, desto stabiler wirkt dieser Bereich. Innen liegende Bereiche zeigen mögliche Ansatzpunkte. Die Grafik ist keine medizinische Bewertung.</div>
               <div class="radar-explain-card"><strong>Einordnung der Werte</strong>
-                <div class="score-scale-item ssi-green"><span>85–100</span>sehr stabile Grundlage</div>
-                <div class="score-scale-item ssi-lgreen"><span>70–84</span>gute Basis mit Potenzial</div>
-                <div class="score-scale-item ssi-amber"><span>55–69</span>sichtbare Stellschrauben</div>
-                <div class="score-scale-item ssi-amber"><span>40–54</span>klarer Fokusbereich</div>
-                <div class="score-scale-item ssi-red"><span>0–39</span>besonderer Orientierungsbereich</div>
+                ${SCORE_SCALE.map((b, i) => {
+                  const upper = i === 0 ? 100 : SCORE_SCALE[i-1].min - 1;
+                  return `<div class="score-scale-item" style="color:${b.color};background:${b.color}1a;"><span>${b.min}–${upper}</span>${b.label}</div>`;
+                }).join("")}
               </div>
             </div>
             <div class="info-box box-info" style="font-size:13px;">${focusTxt}</div>
@@ -2549,16 +2582,17 @@
   }
 
   function renderAreaCard(area, result) {
-    let cls = "area-good", statusTxt = "✓ Gute Grundlage";
+    // v1.32.4 — Karte folgt jetzt derselben Skala wie Legende und Mail.
+    const band = scoreBand(area.score);
+    let cls = band.cls, statusTxt = `${band.badge} ${band.label}`;
     const bmi = area.key === "bmi" ? Number(result?.bmi) : null;
     if (area.key === "bmi" && bmi !== null) {
+      // BMI behaelt seine eigene Einordnung: der Bereichswert ist hier eine
+      // Umrechnung, aussagekraeftig ist der BMI selbst.
       if (bmi < 18.5) { cls = "area-medium"; statusTxt = "△ Niedriger Orientierungsbereich"; }
       else if (bmi < 25) { cls = "area-good"; statusTxt = "✓ Stabiler Bereich"; }
       else if (bmi < 30) { cls = "area-medium"; statusTxt = "△ Optimierungspotenzial"; }
-      else { cls = "area-low"; statusTxt = "⚠ Fokusbereich"; }
-    } else {
-      if (area.score < 55) { cls = "area-low"; statusTxt = "⚠ Fokusbereich"; }
-      else if (area.score < 75) { cls = "area-medium"; statusTxt = "△ Optimierungspotenzial"; }
+      else { cls = "area-focus"; statusTxt = "⚠ Deutlich erhöhter Bereich"; }
     }
     const icon = AREA_ICONS[area.key] || "●";
     const bmiHtml = area.key === "bmi" ? renderBmiDetail(result) : "";
@@ -3522,7 +3556,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.32.3</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.32.4</footer>
 
 
 </body>
