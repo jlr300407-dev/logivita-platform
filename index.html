@@ -20,59 +20,66 @@
        v1.31.1 (UX-Nachschärfung): gespeichertes Ziel stellt beim Wiederaufruf die Hebel-Auswahl wieder
        her; Radar-Ebenen sind vorbelegt statt freizuschalten (Potenzial folgt der Hebel-Auswahl, Vorher
        ist beim Re-Check vorbelegt) und bleiben abwählbar; Direktlink Simulator → Spinne.
-       v1.31.5 (Funnel-Messung): neues Ereignis `landingpage_engaged` schliesst die Lücke
+       v1.31.5 (Funnel-Messung): neues Ereignis `landingpage_engaged` schließt die Lücke
        zwischen landingpage_view und check_start_click — Trigger 'scroll' (Hero verlassen),
        'dwell' (10 s sichtbar) oder 'cta' (Klick kam zuerst), mit visible_seconds und
        max_scroll_pct im meta; check_start_click trägt dieselben beiden Werte. Damit lässt
        sich unterscheiden, ob Kaltverkehr sofort abspringt oder liest ohne zu klicken.
-       v1.32.0 (Buddy, Stufe 1): Maskottchen neben der Bereichsbezeichnung, ausschliesslich am
+       v1.32.0 (Buddy, Stufe 1): Maskottchen neben der Bereichsbezeichnung, ausschließlich am
        ANFANG eines Bereichs sowie bei Ziel/Basisdaten/Datenschutz; thinking-Buddy auf dem
        Wartescreen der KI-Auswertung. Bilder liegen als eigene Dateien in assets/buddy/
        (WebP 128/256 + PNG-Fallback), Laden erst beim Erreichen des Schritts (loading="lazy").
-       Sperrliste: kein Buddy bei frauenspezifischen Fragen und bei Hinweisen auf aerztliche
-       Abklaerung, mentale Warnsignale oder Red Flags. Schalter BUDDY_ENABLED=false nimmt
-       ihn vollstaendig wieder heraus, ohne dass Markup zurueckgebaut werden muss.
+       Sperrliste: kein Buddy bei frauenspezifischen Fragen und bei Hinweisen auf ärztliche
+       Abklärung, mentale Warnsignale oder Red Flags. Schalter BUDDY_ENABLED=false nimmt
+       ihn vollständig wieder heraus, ohne dass Markup zurückgebaut werden muss.
        Bilder liegen flach in assets/ (Pfad steht in BUDDY_PATH, eine Zeile).
-       v1.32.1: (1) Der Potenzial-Simulator startet mit dem staerksten Hebel
+       v1.32.1: (1) Der Potenzial-Simulator startet mit dem stärksten Hebel
        vorbelegt — die gestrichelte Potenzial-Ebene ist damit sofort in der Spinne zu
-       sehen statt erst nach manueller Auswahl; abwaehlbar bleibt sie. Ein
+       sehen statt erst nach manueller Auswahl; abwählbar bleibt sie. Ein
        gespeichertes Ziel hat weiter Vorrang, und "als Ziel gesetzt" gilt
        weiterhin erst nach bewusstem Klick. (2) Auf der Ergebnisseite stellt ein
        Buddy die Auswertung vor: success nach einem frischen Check,
-       welcome-back beim Wiederaufruf ueber PIN.
+       welcome-back beim Wiederaufruf über PIN.
        v1.32.2 (Konsistenz + Sicherheit): (1) Der Haupthebel kommt jetzt aus
        top_priorities vom Server statt aus einer eigenen Frontend-Rechnung —
        Bildschirm und KI-Mail nannten sonst verschiedene Bereiche (Testfall
-       000294). Die alte Rechnung bleibt nur als Rueckfall, wenn top_priorities
+       000294). Die alte Rechnung bleibt nur als Rückfall, wenn top_priorities
        fehlt. (2) Red-Flag-Sperre: bei ungewolltem Gewichtsverlust zusammen mit
-       Appetitveraenderung oder Schwindel unterdrueckt die Seite JEDEN Bluttest-
+       Appetitveränderung oder Schwindel unterdrückt die Seite JEDEN Bluttest-
        und Selbsttest-Hinweis und leitet zur Hausarztpraxis — dieselbe Regel,
-       die in der Edge fuer die Mail gilt. (3) Die KPI-Kachel zaehlt echte
-       Fokusbereiche (<55) statt aller Bereiche unter 75; die vollstaendige
-       Liste steht unveraendert in Tab 2.
-       v1.32.3 (Sprache): Das Diagramm heisst durchgaengig "Vitalitaets-Spinne",
-       nicht "Rad" — die Ueberschrift in Tab 2 sagte Spinne, Verweise darauf
+       die in der Edge für die Mail gilt. (3) Die KPI-Kachel zählt echte
+       Fokusbereiche (<55) statt aller Bereiche unter 75; die vollständige
+       Liste steht unverändert in Tab 2.
+       v1.32.3 (Sprache): Das Diagramm heißt durchgängig "Vitalitäts-Spinne",
+       nicht "Rad" — die Überschrift in Tab 2 sagte Spinne, Verweise darauf
        sagten Rad. Betrifft sichtbaren Text und Code-Kommentare.
        v1.32.4 (eine Bewertungsskala): Bisher liefen vier Skalen nebeneinander —
        Legende (5 Stufen), Bereichskarten (3 Stufen), getScoreColor (eigene
-       Farben, 70-84 blau) und die Mail (5 Stufen, andere Woerter). Ein Wert von
-       33 hiess dadurch auf der Karte "Fokusbereich", in der Legende daneben
+       Farben, 70-84 blau) und die Mail (5 Stufen, andere Wörter). Ein Wert von
+       33 hieß dadurch auf der Karte "Fokusbereich", in der Legende daneben
        "besonderer Orientierungsbereich" und in der Mail "Besonderer
-       Fokusbereich". Jetzt gibt es SCORE_SCALE als einzige Quelle fuer Farbe
-       und Wort; die Woerter sind die der Mail (getScoreLevel in der Edge). Die
+       Fokusbereich". Jetzt gibt es SCORE_SCALE als einzige Quelle für Farbe
+       und Wort; die Wörter sind die der Mail (getScoreLevel in der Edge). Die
        Legende rendert aus derselben Konstante, kann also nicht mehr abweichen.
-       Ausserdem: BMI faellt aus dem Satz "wo kleine Hebel den groessten Nutzen
-       bringen" — der Simulator schliesst ihn als Hebel ausdruecklich aus.
-       v1.32.5 (Mail-Box, groesster Drop-off im Funnel): Die Nutzen-Punkte
-       nannten als erstes den groessten Hebel, der zwei Bildschirme weiter oben
-       schon steht — der staerkste Platz ging an eine Wiederholung. Genannt wird
+       Außerdem: BMI fällt aus dem Satz "wo kleine Hebel den größten Nutzen
+       bringen" — der Simulator schließt ihn als Hebel ausdrücklich aus.
+       v1.32.5 (Mail-Box, größter Drop-off im Funnel): Die Nutzen-Punkte
+       nannten als erstes den größten Hebel, der zwei Bildschirme weiter oben
+       schon steht — der stärkste Platz ging an eine Wiederholung. Genannt wird
        jetzt, was es NUR in der Mail gibt: die geschriebene Einordnung, die
-       Uebersicht aller neun Bereichswerte als Vergleichsbasis, und der PIN mit
-       dem, was wirklich daran haengt (ohne ihn ist die Auswertung spaeter nicht
-       mehr aufrufbar) — sachlich formuliert, ohne Verlustdruck. Neu ausserdem:
+       Übersicht aller neun Bereichswerte als Vergleichsbasis, und der PIN mit
+       dem, was wirklich daran hängt (ohne ihn ist die Auswertung später nicht
+       mehr aufrufbar) — sachlich formuliert, ohne Verlustdruck. Neu außerdem:
        "Kostenlos · kommt in wenigen Minuten", und der Buddy steht NEUTRAL in
        der Box (kein Sprechtext, keine Empfehlung — hier werden zwei
-       Einwilligungen abgefragt, das Consent muss ueberredungsfrei bleiben). -->
+       Einwilligungen abgefragt, das Consent muss überredungsfrei bleiben).
+       v1.32.6 (Schreibweise): Sämtliche Umlaute korrekt gesetzt — beim Einbau
+       der Versionen 1.32.x waren in Text und Kommentaren Umschreibungen wie
+       "Vitalitaets-Ueberblick" statt "Vitalitäts-Überblick" gelandet. Betraf
+       den Buddy-Text auf der Ergebnisseite, eine interne Konsolenausgabe und
+       die Kommentare. Kontrolle: alle Zeichenketten der Datei gegen ae/oe/ue
+       geprüft, verbleibende Treffer sind echte deutsche Wörter (bauen,
+       Ausdauer, bequem) oder URLs. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -543,8 +550,8 @@
   // Ein einziger Schalter nimmt ihn komplett wieder heraus — kein Rückbau nötig.
   const BUDDY_ENABLED = true;
   // Pfad angepasst 29.08.2026: die Motive liegen flach in assets/, nicht in
-  // einem Unterordner. Liegen sie spaeter doch in assets/buddy/, nur diese
-  // eine Zeile aendern — sonst nichts.
+  // einem Unterordner. Liegen sie später doch in assets/buddy/, nur diese
+  // eine Zeile ändern — sonst nichts.
   const BUDDY_PATH    = "assets/";
 
   // Bereichskennung → Motiv. Deckt sich mit den neun Scoring-Dimensionen;
@@ -572,8 +579,8 @@
   }
 
   // Erste ANZEIGBARE Frage eines Bereichs? Nur dann wird der Buddy gezeigt.
-  // Ist die eigentliche erste Frage gesperrt (z. B. frauenspezifisch), rueckt
-  // die naechste nach — sonst verlöre der ganze Bereich seinen Buddy.
+  // Ist die eigentliche erste Frage gesperrt (z. B. frauenspezifisch), rückt
+  // die nächste nach — sonst verlöre der ganze Bereich seinen Buddy.
   function buddyIsAreaStart(q) {
     if (!q || !q.area_key) return false;
     const idx = groupedQuestions.indexOf(q);
@@ -698,9 +705,9 @@
 
     // v1.32.1 — Ohne gespeichertes Ziel war der Simulator bisher leer und das
     // Potenzial damit unsichtbar, bis der Nutzer selbst einen Hebel fand. Das
-    // stellt die Erkenntnis hinter eine Huerde. Jetzt ist der staerkste Hebel
+    // stellt die Erkenntnis hinter eine Hürde. Jetzt ist der stärkste Hebel
     // vorbelegt: das Potenzial ist von Anfang an in der Spinne zu sehen und bleibt
-    // jederzeit abwaehlbar. Vorbelegt heisst NICHT gesetzt — als Ziel gilt es
+    // jederzeit abwählbar. Vorbelegt heißt NICHT gesetzt — als Ziel gilt es
     // erst nach bewusstem Klick auf "Als mein Ziel setzen".
     if (simActiveKeys.length === 0 && simScenarios && simScenarios.levers.length) {
       const strongest = simScenarios.levers
@@ -1715,7 +1722,7 @@
     if (typeof fbq !== 'undefined') fbq('track', 'Subscribe', { content_name: 'ai_mail_requested' });
     btn.disabled = true; btn.innerText = "Auswertung wird erstellt…";
     const hintTimer = setTimeout(() => {
-      // v1.32.0 — der thinking-Buddy fuellt die Wartezeit statt eines nackten ⏳
+      // v1.32.0 — der thinking-Buddy füllt die Wartezeit statt eines nackten ⏳
       const waitBuddy = buddyHtml("buddy-thinking");
       statusEl.innerHTML = `<div class="status-msg info-box box-info">`
         + (waitBuddy ? `<div class="buddy-wait">${waitBuddy}<div>Einen Moment — deine Antworten werden gerade eingeordnet. Das kann bis zu 30 Sekunden dauern.</div></div>`
@@ -1822,28 +1829,28 @@
     ra.scrollIntoView({ behavior:"smooth" });
   }
 
-  // v1.32.1 — Der Buddy stellt das Ergebnis vor. Beim Wiederaufruf ueber PIN
-  // begruesst der welcome-back-Buddy, nach einem frisch abgeschlossenen Check
-  // der success-Buddy. Ton bleibt ruhig: kein Jubel ueber einen niedrigen Wert.
+  // v1.32.1 — Der Buddy stellt das Ergebnis vor. Beim Wiederaufruf über PIN
+  // begrüßt der welcome-back-Buddy, nach einem frisch abgeschlossenen Check
+  // der success-Buddy. Ton bleibt ruhig: kein Jubel über einen niedrigen Wert.
   function renderResultBuddyHtml(totalScore, isRecheck) {
     if (!BUDDY_ENABLED) return "";
     const back = window._isReviewMode && window._accessPin;
     const img = buddyHtml(back ? "buddy-welcome-back" : "buddy-success", "lg");
     if (!img) return "";
     const first = (personalData.first_name || "").trim();
-    const hi = first ? `Schoen, dass du wieder da bist, ${escHtml(first.charAt(0).toUpperCase() + first.slice(1).toLowerCase())}!` : "Schoen, dass du wieder da bist!";
+    const hi = first ? `Schön, dass du wieder da bist, ${escHtml(first.charAt(0).toUpperCase() + first.slice(1).toLowerCase())}!` : "Schön, dass du wieder da bist!";
     let title, sub;
     if (back) {
       title = hi;
-      sub = "Hier ist deine Auswertung — genau so, wie du sie verlassen hast. Nimm dir Zeit fuer die Bereiche und den Simulator.";
+      sub = "Hier ist deine Auswertung — genau so, wie du sie verlassen hast. Nimm dir Zeit für die Bereiche und den Simulator.";
     } else if (isRecheck) {
       title = "Geschafft — und diesmal mit Vergleich!";
-      sub = "Dein neuer Vitalitaets-Ueberblick ist fertig. Weiter unten siehst du, was sich seit deinem letzten Check veraendert hat.";
+      sub = "Dein neuer Vitalitäts-Überblick ist fertig. Weiter unten siehst du, was sich seit deinem letzten Check verändert hat.";
     } else {
-      title = "Geschafft! Dein Vitalitaets-Ueberblick ist fertig.";
+      title = "Geschafft! Dein Vitalitäts-Überblick ist fertig.";
       sub = totalScore >= 70
         ? "Deine Basis steht gut da. Schau dir an, welche Bereiche dich tragen — und wo noch etwas Luft ist."
-        : "Hier siehst du, wo du heute stehst. Der Wert ist keine Note, sondern ein Ausgangspunkt — die naechsten Schritte findest du gleich darunter.";
+        : "Hier siehst du, wo du heute stehst. Der Wert ist keine Note, sondern ein Ausgangspunkt — die nächsten Schritte findest du gleich darunter.";
     }
     return `<div class="buddy-result">${img}<div class="buddy-result-text">
         <div class="buddy-result-title">${title}</div>
@@ -1860,8 +1867,8 @@
     const sc = getScoreColor(totalScore);
     // v1.32.2 — Die Kachel zeigte bisher ALLE Bereiche unter 75. Bei einem
     // niedrigen Gesamtscore standen dort schnell 8 oder 9 — das liest sich wie
-    // ein Befund und ist als Handlungsliste unbrauchbar. Gezaehlt werden jetzt
-    // die echten Fokusbereiche (<55); die vollstaendige Liste steht unveraendert
+    // ein Befund und ist als Handlungsliste unbrauchbar. Gezählt werden jetzt
+    // die echten Fokusbereiche (<55); die vollständige Liste steht unverändert
     // in Tab 2, es wird also nichts verschwiegen.
     const weakCount = areas.filter(a => a.score < 55).length;
     const growthCount = areas.filter(a => a.score < 75).length;
@@ -1872,14 +1879,14 @@
     const goalLabels = { goal_energy:"⚡ Mehr Energie", goal_weight:"⚖️ Abnehmen / Figur", goal_fitness:"💪 Fitter werden", goal_supplements:"💊 Nährstoffstatus", goal_prevention:"🛡️ Vorsorge", goal_longevity:"🌿 Longevity", goal_curious:"🔍 Neugier" };
     const goalLabel = personalData.goal_key && goalLabels[personalData.goal_key] ? goalLabels[personalData.goal_key] : "";
 
-    // Haupthebel (fuer Tab 1 + Tab 3 Hero-Card)
+    // Haupthebel (für Tab 1 + Tab 3 Hero-Card)
     // v1.32.2 — WICHTIG: Bis v1.32.1 rechnete das Frontend den Hebel selbst
-    // (niedrigster Bereich), waehrend die KI-Mail ihn aus top_priorities nahm.
+    // (niedrigster Bereich), während die KI-Mail ihn aus top_priorities nahm.
     // Bei eng beieinanderliegenden Werten nannten beide verschiedene Bereiche —
     // derselbe Nutzer bekam auf dem Bildschirm eine andere Aussage als in der
-    // Mail (Testfall 000294: Bildschirm "Mikronaehrstoffe", Mail "Bewegung").
+    // Mail (Testfall 000294: Bildschirm "Mikronährstoffe", Mail "Bewegung").
     // Jetzt gilt EINE Quelle: top_priorities vom Server. Nur wenn die fehlt,
-    // greift die alte Rechnung als Rueckfall.
+    // greift die alte Rechnung als Rückfall.
     const bmiNum = Number(result.bmi);
     const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
     const areasForHebel = areas.filter(a => {
@@ -1899,12 +1906,12 @@
           : null);
     if (window._isInternal && serverPrio) {
       const own = [...areasForHebel].sort((a,b) => a.score - b.score)[0];
-      if (own && own.key !== serverPrio.key) console.log('[Hebel] Server:', serverPrio.key, '· eigene Rechnung waere:', own.key, '— Server gewinnt (v1.32.2)');
+      if (own && own.key !== serverPrio.key) console.log('[Hebel] Server:', serverPrio.key, '· eigene Rechnung wäre:', own.key, '— Server gewinnt (v1.32.2)');
     }
 
     // v1.32.2 — Red-Flag-Sperre im Frontend. Bei ungewolltem Gewichtsverlust
-    // zusammen mit Appetitveraenderung oder Schwindel darf die Seite NICHT zum
-    // Bluttest raten: dort gehoert der Hausarzt hin, nicht ein Selbsttest.
+    // zusammen mit Appetitveränderung oder Schwindel darf die Seite NICHT zum
+    // Bluttest raten: dort gehört der Hausarzt hin, nicht ein Selbsttest.
     // Dieselbe Regel gilt in der Edge; bis v1.32.1 kannte sie nur die Mail.
     const rfRisk = (k) => Number((result.answers || []).find(a => a.question_key === k)?.risk_points || 0);
     window._redFlagNoBloodtest = (rfRisk("unintentional_weight_loss") >= 2
@@ -1969,7 +1976,7 @@
     // ════════════════════════════════════════════
     html += `<div class="result-tab-content active" id="rtc-ergebnis">`;
 
-    // v1.32.1 — Der Buddy eroeffnet die Auswertung, bevor die Zahlen kommen.
+    // v1.32.1 — Der Buddy eröffnet die Auswertung, bevor die Zahlen kommen.
     html += renderResultBuddyHtml(totalScore, !!window._previousData);
 
     // ── PATCH 6: Score-Ring kompakt (links Ring, rechts Meta) wie Prototyp ──
@@ -2108,11 +2115,11 @@
         teaserRows += teaserRow("🎯", "Die Auswertung deines gesetzten Ziels", "hast du erreicht, was du dir im Simulator vorgenommen hattest?");
       }
     }
-    // v1.32.5 — Die Box nannte als ersten Punkt den groessten Hebel. Der steht
+    // v1.32.5 — Die Box nannte als ersten Punkt den größten Hebel. Der steht
     // aber schon zwei Bildschirme weiter oben auf der Ergebnisseite: der
-    // staerkste Werbeplatz ging damit an eine Wiederholung. Genannt wird jetzt,
+    // stärkste Werbeplatz ging damit an eine Wiederholung. Genannt wird jetzt,
     // was es NUR in der Mail gibt — die geschriebene Einordnung, die
-    // Bereichstabelle als Vergleichsbasis und der PIN als einziger Rueckweg.
+    // Bereichstabelle als Vergleichsbasis und der PIN als einziger Rückweg.
     if (!isLinkedRecheck) {
       teaserRows += teaserRow("💬", "Deine persönliche Einordnung", `geschrieben auf deine Antworten — nicht die gleichen Tipps wie für alle anderen`);
     }
@@ -2126,7 +2133,7 @@
       teaserRows += teaserRow("🩸", "Welche Blutwerte für dich sinnvoll wären", "und welche du dir sparen kannst");
     }
     // Der PIN entsteht erst mit dieser Mail und steht nur darin — ohne sie ist
-    // diese Auswertung spaeter nicht mehr aufrufbar. Das sachlich sagen, ohne
+    // diese Auswertung später nicht mehr aufrufbar. Das sachlich sagen, ohne
     // Druck aufzubauen.
     teaserRows += isLinkedRecheck
       ? teaserRow("🔑", "Dein neuer persönlicher PIN", "nur damit rufst du diese Auswertung später wieder auf und vergleichst beim nächsten Check erneut")
@@ -2142,8 +2149,8 @@
         ${(() => {
           // v1.32.5 — Der Buddy steht hier NEUTRAL: kein Sprechtext, keine
           // Empfehlung. Diese Box fragt eine E-Mail-Adresse und zwei
-          // Einwilligungen ab; eine sympathische Figur, die zum Zustimmen raet,
-          // waere genau an der Stelle Ueberredung, an der das Consent sauber
+          // Einwilligungen ab; eine sympathische Figur, die zum Zustimmen rät,
+          // wäre genau an der Stelle Überredung, an der das Consent sauber
           // sein muss. Er zeigt nur, dass derselbe Begleiter noch da ist.
           const b = buddyHtml("buddy-neutral", "sm");
           return b ? `<div style="display:flex;justify-content:center;margin:10px 0 2px;">${b}</div>` : "";
@@ -2413,7 +2420,7 @@
       cat3.push([mT.title || "Tanita-Körperanalyse im Studio", mT.body || "Muskelmasse, Körperfett und Wasserhaushalt — die Zahlen hinter deinem BMI, als Ausgangspunkt für deinen Verlauf."]);
     }
     if (window._redFlagNoBloodtest) {
-      // v1.32.2 — Red Flag schlaegt jeden Labor-/Selbsttest-Hinweis: hier fuehrt
+      // v1.32.2 — Red Flag schlägt jeden Labor-/Selbsttest-Hinweis: hier führt
       // der Weg zuerst in die Hausarztpraxis, nicht ins Studio und nicht zu
       // einem Test in Eigenregie.
       cat3.push(["Ärztliche Abklärung zuerst", "Deine Angaben zu Gewicht und Appetit gehören vor jede weitere Messung in die Hausarztpraxis. Welche Blutwerte sinnvoll sind, entscheidet sich dort — wir unterstützen dich danach gern."]);
@@ -2511,13 +2518,13 @@
     return html;
   }
 
-  // ══ Bewertungsskala — EINE Quelle fuer Farbe UND Wort (v1.32.4) ══════════
+  // ══ Bewertungsskala — EINE Quelle für Farbe UND Wort (v1.32.4) ══════════
   // Vorher liefen vier Skalen nebeneinander: die Legende (5 Stufen), die
   // Bereichskarten (3 Stufen), getScoreColor (eigene Farben, 70-84 blau) und
-  // die Mail (5 Stufen, andere Woerter). Ein Wert von 33 hiess dadurch auf der
+  // die Mail (5 Stufen, andere Wörter). Ein Wert von 33 hieß dadurch auf der
   // Karte "Fokusbereich", in der Legende "besonderer Orientierungsbereich" und
-  // in der Mail "Besonderer Fokusbereich". Massgeblich sind ab jetzt die
-  // Woerter der Mail (getScoreLevel in der Edge) — Entscheidung Joerg 30.08.
+  // in der Mail "Besonderer Fokusbereich". Maßgeblich sind ab jetzt die
+  // Wörter der Mail (getScoreLevel in der Edge) — Entscheidung Jörg 30.08.
   const SCORE_SCALE = [
     { min: 85, label: "Sehr stabile Grundlage",  short: "Sehr stabil",      color: "#22c97a", cls: "area-good",   badge: "✓" },
     { min: 70, label: "Gute Basis mit Potenzial", short: "Gute Basis",      color: "#5edb97", cls: "area-ok",     badge: "✓" },
@@ -2574,9 +2581,9 @@
   }
 
   function renderRadarExplanation(areas) {
-    // v1.32.4 — BMI raus: der Simulator schliesst ihn ausdruecklich als Hebel
+    // v1.32.4 — BMI raus: der Simulator schließt ihn ausdrücklich als Hebel
     // aus ("BMI bewusst ausgenommen"), also darf er hier nicht als Stelle
-    // genannt werden, an der "kleine Hebel den groessten Nutzen bringen".
+    // genannt werden, an der "kleine Hebel den größten Nutzen bringen".
     const focus = [...areas].filter(a => a.key !== "bmi")
       .sort((a,b) => a.score-b.score).filter(a => a.score < 70).slice(0,3).map(a => a.label);
     const focusTxt = focus.length > 0
@@ -2620,8 +2627,8 @@
     let cls = band.cls, statusTxt = `${band.badge} ${band.label}`;
     const bmi = area.key === "bmi" ? Number(result?.bmi) : null;
     if (area.key === "bmi" && bmi !== null) {
-      // BMI behaelt seine eigene Einordnung: der Bereichswert ist hier eine
-      // Umrechnung, aussagekraeftig ist der BMI selbst.
+      // BMI behält seine eigene Einordnung: der Bereichswert ist hier eine
+      // Umrechnung, aussagekräftig ist der BMI selbst.
       if (bmi < 18.5) { cls = "area-medium"; statusTxt = "△ Niedriger Orientierungsbereich"; }
       else if (bmi < 25) { cls = "area-good"; statusTxt = "✓ Stabiler Bereich"; }
       else if (bmi < 30) { cls = "area-medium"; statusTxt = "△ Optimierungspotenzial"; }
@@ -3589,7 +3596,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.32.5</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.32.6</footer>
 
 
 </body>
