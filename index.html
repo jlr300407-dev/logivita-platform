@@ -19,7 +19,7 @@
        Voraussetzung: Edge edge-2026-08-27.1 + v2-fundament.sql + Diversifizierungs-Patch.
        v1.31.1 (UX-Nachschärfung): gespeichertes Ziel stellt beim Wiederaufruf die Hebel-Auswahl wieder
        her; Radar-Ebenen sind vorbelegt statt freizuschalten (Potenzial folgt der Hebel-Auswahl, Vorher
-       ist beim Re-Check vorbelegt) und bleiben abwählbar; Direktlink Simulator → Rad.
+       ist beim Re-Check vorbelegt) und bleiben abwählbar; Direktlink Simulator → Spinne.
        v1.31.5 (Funnel-Messung): neues Ereignis `landingpage_engaged` schliesst die Lücke
        zwischen landingpage_view und check_start_click — Trigger 'scroll' (Hero verlassen),
        'dwell' (10 s sichtbar) oder 'cta' (Klick kam zuerst), mit visible_seconds und
@@ -34,7 +34,7 @@
        ihn vollstaendig wieder heraus, ohne dass Markup zurueckgebaut werden muss.
        Bilder liegen flach in assets/ (Pfad steht in BUDDY_PATH, eine Zeile).
        v1.32.1: (1) Der Potenzial-Simulator startet mit dem staerksten Hebel
-       vorbelegt — die gestrichelte Potenzial-Ebene ist damit sofort im Rad zu
+       vorbelegt — die gestrichelte Potenzial-Ebene ist damit sofort in der Spinne zu
        sehen statt erst nach manueller Auswahl; abwaehlbar bleibt sie. Ein
        gespeichertes Ziel hat weiter Vorrang, und "als Ziel gesetzt" gilt
        weiterhin erst nach bewusstem Klick. (2) Auf der Ergebnisseite stellt ein
@@ -49,7 +49,10 @@
        und Selbsttest-Hinweis und leitet zur Hausarztpraxis — dieselbe Regel,
        die in der Edge fuer die Mail gilt. (3) Die KPI-Kachel zaehlt echte
        Fokusbereiche (<55) statt aller Bereiche unter 75; die vollstaendige
-       Liste steht unveraendert in Tab 2. -->
+       Liste steht unveraendert in Tab 2.
+       v1.32.3 (Sprache): Das Diagramm heisst durchgaengig "Vitalitaets-Spinne",
+       nicht "Rad" — die Ueberschrift in Tab 2 sagte Spinne, Verweise darauf
+       sagten Rad. Betrifft sichtbaren Text und Code-Kommentare. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -668,12 +671,12 @@
     // v1.32.1 — Ohne gespeichertes Ziel war der Simulator bisher leer und das
     // Potenzial damit unsichtbar, bis der Nutzer selbst einen Hebel fand. Das
     // stellt die Erkenntnis hinter eine Huerde. Jetzt ist der staerkste Hebel
-    // vorbelegt: das Potenzial ist von Anfang an im Rad zu sehen und bleibt
+    // vorbelegt: das Potenzial ist von Anfang an in der Spinne zu sehen und bleibt
     // jederzeit abwaehlbar. Vorbelegt heisst NICHT gesetzt — als Ziel gilt es
     // erst nach bewusstem Klick auf "Als mein Ziel setzen".
     if (simActiveKeys.length === 0 && simScenarios && simScenarios.levers.length) {
       const strongest = simScenarios.levers
-        .filter(l => l.score_payload)                 // nur Hebel, die auch eine Rad-Ebene liefern
+        .filter(l => l.score_payload)                 // nur Hebel, die auch eine Spinnen-Ebene liefern
         .sort((a, b) => Number(b.gain) - Number(a.gain))[0];
       if (strongest) {
         simActiveKeys = [strongest.question_key];
@@ -2938,7 +2941,7 @@
         </div>
         <div class="verlauf-row" style="font-size:15px;">Vitalitäts-Index: ${prevTotal} → <strong style="color:var(--text-primary);font-size:17px;">${curTotal}</strong> ${deltaHtml}</div>
         ${bioHtml}
-        <div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">Die Bereichs-Entwicklung siehst du unter „Meine Bereiche“ — dort kannst du im Rad die Vorher-Ebene einblenden.</div>
+        <div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">Die Bereichs-Entwicklung siehst du unter „Meine Bereiche“ — dort kannst du in der Spinne die Vorher-Ebene einblenden.</div>
       </div>`;
   }
 
@@ -2994,7 +2997,7 @@
           <div class="sim-proj-meta" id="simProjMeta">Schalte oben einen Hebel ein, um dein Potenzial zu sehen.</div>
         </div>
         <div id="simRadarLink" style="display:none;text-align:center;margin:0 0 10px;">
-          <span onclick="goToRadar()" style="font-size:12.5px;font-weight:600;color:var(--accent-blue);cursor:pointer;">Im Vitalitäts-Rad ansehen →</span>
+          <span onclick="goToRadar()" style="font-size:12.5px;font-weight:600;color:var(--accent-blue);cursor:pointer;">In der Vitalitäts-Spinne ansehen →</span>
         </div>
         <button class="sim-goal-btn" id="simGoalBtn" onclick="setSimulatorGoal()" disabled>🎯 Als mein Ziel setzen</button>
         <div class="sim-note">Eine Simulation, keine Messung — nur beeinflussbare Verhaltens-Hebel, Symptom-Fragen und BMI sind bewusst ausgenommen. Dein gesetztes Ziel greifen wir beim nächsten Check wieder auf.</div>
@@ -3212,7 +3215,7 @@
     }
 
     // v1.31.1 — Potenzial-Ebene folgt der Auswahl von selbst: wer einen Hebel
-    // wählt, findet die gestrichelte Kontur im Rad bereits vor. Ein bewusstes
+    // wählt, findet die gestrichelte Kontur in der Spinne bereits vor. Ein bewusstes
     // Abwählen (radarPotUserOff) wird respektiert und nicht überschrieben.
     const potWanted = simActiveKeys.length > 0 && !!getPotentialAreaMap() && !radarPotUserOff;
     const potChanged = potWanted !== radarLayerPot;
@@ -3519,7 +3522,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.32.2</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.32.3</footer>
 
 
 </body>
