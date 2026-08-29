@@ -62,7 +62,17 @@
        und Wort; die Woerter sind die der Mail (getScoreLevel in der Edge). Die
        Legende rendert aus derselben Konstante, kann also nicht mehr abweichen.
        Ausserdem: BMI faellt aus dem Satz "wo kleine Hebel den groessten Nutzen
-       bringen" — der Simulator schliesst ihn als Hebel ausdruecklich aus. -->
+       bringen" — der Simulator schliesst ihn als Hebel ausdruecklich aus.
+       v1.32.5 (Mail-Box, groesster Drop-off im Funnel): Die Nutzen-Punkte
+       nannten als erstes den groessten Hebel, der zwei Bildschirme weiter oben
+       schon steht — der staerkste Platz ging an eine Wiederholung. Genannt wird
+       jetzt, was es NUR in der Mail gibt: die geschriebene Einordnung, die
+       Uebersicht aller neun Bereichswerte als Vergleichsbasis, und der PIN mit
+       dem, was wirklich daran haengt (ohne ihn ist die Auswertung spaeter nicht
+       mehr aufrufbar) — sachlich formuliert, ohne Verlustdruck. Neu ausserdem:
+       "Kostenlos · kommt in wenigen Minuten", und der Buddy steht NEUTRAL in
+       der Box (kein Sprechtext, keine Empfehlung — hier werden zwei
+       Einwilligungen abgefragt, das Consent muss ueberredungsfrei bleiben). -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -2098,18 +2108,29 @@
         teaserRows += teaserRow("🎯", "Die Auswertung deines gesetzten Ziels", "hast du erreicht, was du dir im Simulator vorgenommen hattest?");
       }
     }
-    if (topPrio && topPrio.label) {
-      teaserRows += teaserRow("📌", `Dein größter Hebel: ${topPrio.label} (${Math.round(Number(topPrio.score))}/100)`, "die eine Änderung, die bei dir den größten Unterschied macht");
+    // v1.32.5 — Die Box nannte als ersten Punkt den groessten Hebel. Der steht
+    // aber schon zwei Bildschirme weiter oben auf der Ergebnisseite: der
+    // staerkste Werbeplatz ging damit an eine Wiederholung. Genannt wird jetzt,
+    // was es NUR in der Mail gibt — die geschriebene Einordnung, die
+    // Bereichstabelle als Vergleichsbasis und der PIN als einziger Rueckweg.
+    if (!isLinkedRecheck) {
+      teaserRows += teaserRow("💬", "Deine persönliche Einordnung", `geschrieben auf deine Antworten — nicht die gleichen Tipps wie für alle anderen`);
     }
     if (!isLinkedRecheck || !window._previousData.goal_scenario) {
       teaserRows += teaserRow("🎯", `Dein 6-Wochen-Fahrplan für „${goalTeaser}“`, "konkret, Schritt für Schritt");
     }
+    if (!isLinkedRecheck) {
+      teaserRows += teaserRow("📊", "Alle neun Bereichswerte als Übersicht", "deine Vergleichsbasis für den nächsten Check");
+    }
     if (AFFILIATE_ENABLED && result.score?.bloodtest_hint) { // Pilotfreigabe 5.5: Zeile verspricht Test-Spezifik, die die Mail ohne Freigabe nicht liefert
       teaserRows += teaserRow("🩸", "Welche Blutwerte für dich sinnvoll wären", "und welche du dir sparen kannst");
     }
+    // Der PIN entsteht erst mit dieser Mail und steht nur darin — ohne sie ist
+    // diese Auswertung spaeter nicht mehr aufrufbar. Das sachlich sagen, ohne
+    // Druck aufzubauen.
     teaserRows += isLinkedRecheck
-      ? teaserRow("🔑", "Dein neuer persönlicher PIN", "ruf diese Auswertung jederzeit wieder auf — und vergleiche beim nächsten Check erneut, was sich verändert hat")
-      : teaserRow("🔑", "Dein persönlicher PIN", "ruf deine Auswertung jederzeit wieder auf und vergleiche beim nächsten Check in 8–12 Wochen, was sich verändert hat");
+      ? teaserRow("🔑", "Dein neuer persönlicher PIN", "nur damit rufst du diese Auswertung später wieder auf und vergleichst beim nächsten Check erneut")
+      : teaserRow("🔑", "Dein persönlicher PIN", "nur damit kommst du später wieder an diese Auswertung — und vergleichst in 8–12 Wochen, was sich verändert hat");
     // v1.31.1 — Beim Wiederaufruf über PIN ist die Mail zwingend schon
     // versendet (der PIN entsteht erst mit ihr). Ein leeres Eingabefeld wäre
     // dort schlicht falsch: ein zweiter Versand wird serverseitig ohnehin
@@ -2118,7 +2139,19 @@
       <div class="ai-box">
         <div class="ai-badge">✦ Dein persönlicher Vital-Plan</div>
         <div class="ai-title">Das steht in deinem Vital-Plan:</div>
-        <div style="display:flex;flex-direction:column;gap:9px;margin:12px 0 16px;">${teaserRows}</div>
+        ${(() => {
+          // v1.32.5 — Der Buddy steht hier NEUTRAL: kein Sprechtext, keine
+          // Empfehlung. Diese Box fragt eine E-Mail-Adresse und zwei
+          // Einwilligungen ab; eine sympathische Figur, die zum Zustimmen raet,
+          // waere genau an der Stelle Ueberredung, an der das Consent sauber
+          // sein muss. Er zeigt nur, dass derselbe Begleiter noch da ist.
+          const b = buddyHtml("buddy-neutral", "sm");
+          return b ? `<div style="display:flex;justify-content:center;margin:10px 0 2px;">${b}</div>` : "";
+        })()}
+        <div style="display:flex;flex-direction:column;gap:9px;margin:12px 0 14px;">${teaserRows}</div>
+        <div style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:14px;">
+          Kostenlos &nbsp;·&nbsp; kommt in wenigen Minuten
+        </div>
         <div class="ai-sub" style="margin-bottom:8px;">Wohin dürfen wir deinen Plan schicken?</div>
         <input type="text" id="ai_firstname" placeholder="Vorname (optional)" style="margin-bottom:8px;" />
         <input type="email" id="ai_email" placeholder="deine@email.de" />
@@ -3556,7 +3589,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.32.4</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.32.5</footer>
 
 
 </body>
