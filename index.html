@@ -934,6 +934,7 @@
         ...meta,
         public_code: window._currentPublicCode || null,
         source: (function(){ const r = pageReferrer(); return r ? (r.includes('facebook') ? 'facebook' : r.includes('instagram') ? 'instagram' : 'other') : 'direct'; })(),
+        referrer: (function(){ const r = pageReferrer(); return r ? String(r).slice(0, 200) : undefined; })(), // v1.32.4: Rohwert — nur damit lassen sich organische Suche, Maps und Direkteinstieg trennen (undefined wird von JSON.stringify entfernt)
         device: window.innerWidth < 600 ? 'mobile' : 'desktop',
         is_internal: window._isInternal === true ? true : undefined, // Sofort-Fix 5: Testdaten markieren (undefined wird von JSON.stringify entfernt)
         env: location.hostname.endsWith('le-vita.com') ? 'prod' : location.hostname.endsWith('github.io') ? 'dev' : 'local', // v1.28.40: Prod/Dev-Trennung nach Umzug (gleiche DB, /v2/-Entwicklung)
@@ -962,6 +963,10 @@
         const v = p.get(k);
         if (v) utm[k] = String(v).slice(0, 100); // Länge begrenzen zur Sicherheit
       });
+      // v1.32.4: Meta-Anzeigen hängen haeufig NUR fbclid an und verschlucken die UTM-
+      // Parameter. Ohne dieses Feld landen bezahlte Facebook-Klicks unter "Homepage".
+      const _fbc = p.get('fbclid');
+      if (_fbc) utm.fbclid = String(_fbc).slice(0, 100);
       window._utm = utm;
     } catch(e) { window._utm = {}; }
   }
@@ -3358,14 +3363,22 @@
     if (!latestResult?.public_code || !window._accessPin) return;
     window._previousLink = { public_code: latestResult.public_code, pin: window._accessPin };
     // v1.31.1 — Was beim letzten Mal galt, wird aufgegriffen statt neu abgefragt:
-    // Ziel und unveränderliche Basisdaten werden vorbelegt. Das GEWICHT bewusst
-    // nicht — es ist die Messgrösse, die beim Re-Check neu erhoben werden muss.
+    // Ziel und unveränderliche Basisdaten werden vorbelegt.
+    // GEWICHT: wird bewusst MIT vorbelegt (Entscheidung Jörg, 14.09.2026). Der alte
+    // Kommentar behauptete das Gegenteil und widersprach dem Code darunter.
+    // Begründung: wer abgenommen hat, überschreibt den Wert ohnehin.
+    // Bekannte Kehrseite: wer zugenommen hat, überschreibt ihn eher nicht — der
+    // Verlauf zeigt dann "stabil" statt einer Verschlechterung. Siehe weight_carried
+    // weiter unten, damit sich beide Fälle später auseinanderhalten lassen.
     window._recheckPrefill = {
       goal_key: latestResult.submission?.goal_key || personalData.goal_key || '',
       age: latestResult.submission?.age || personalData.age || null,
       gender: latestResult.submission?.gender || personalData.gender || '',
       height_cm: latestResult.submission?.height_cm || personalData.height_cm || null,
-      weight_kg: latestResult.submission?.weight_kg || personalData.weight_kg || null
+      weight_kg: latestResult.submission?.weight_kg || personalData.weight_kg || null,
+      // Merker: Ausgangswert stammt aus dem Vorcheck. Wird beim Absenden mitgeschickt
+      // und im Formular auf false gesetzt, sobald der Nutzer das Feld anfasst.
+      weight_carried: true
     };
     window._isReviewMode = false;      // neuer Check = neuer Funnel
     window._currentPublicCode = null;  // Events gehören zum neuen Check
