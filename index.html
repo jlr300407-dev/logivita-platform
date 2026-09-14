@@ -758,13 +758,42 @@
           Auswertung laden →
         </button>
         <div class="pin-new-check">
-          Noch keinen PIN? <a onclick="window.location.href=window.location.pathname">Neuen Check starten →</a>
+          <strong>PIN nicht zur Hand?</strong><br>
+          Suche in deinem Postfach nach der Mail mit dem Betreff „dein Vital-Check ist da“ —
+          auch im Spam-Ordner. Nur mit dem PIN lässt sich dein bisheriger Verlauf fortführen.
+          <div style="margin-top:12px;">
+            <a onclick="startFreshCheckFromPin()">Trotzdem neu starten (ohne Verlauf) →</a>
+          </div>
         </div>
       </div>`;
   }
 
+  // v1.32.4: Verteilt eine eingefügte PIN auf die Felder. Vorher schluckte
+  // maxlength="1" alles bis auf ein Zeichen — die PIN aus der Mail liess sich
+  // nicht kopieren, sie musste abgetippt werden.
+  function pinSpread(startIndex, raw) {
+    const chars = String(raw).replace(/[^A-Za-z0-9]/g, '').toUpperCase().split('');
+    if (chars.length < 2) return false;
+    for (let i = 0; i < 8; i++) {
+      const el = document.getElementById('pin' + i);
+      if (!el) continue;
+      const c = chars[i - startIndex];
+      if (i >= startIndex && c) {
+        el.value = c;
+        el.classList.add('filled');
+      }
+    }
+    const last = Math.min(startIndex + chars.length, 8) - 1;
+    document.getElementById('pin' + Math.max(0, last))?.focus();
+    return true;
+  }
+
   function pinInput(index) {
     const input = document.getElementById('pin' + index);
+    // Eingefügte PIN auf die Felder verteilen, statt sie auf ein Zeichen zu kürzen
+    if (input.value.replace(/[^A-Za-z0-9]/g, '').length > 1) {
+      if (pinSpread(index, input.value)) { pinRefreshSubmit(); return; }
+    }
     // Nur eine Ziffer erlauben
     const val = input.value.replace(/[^A-Za-z0-9]/g, '').slice(-1).toUpperCase();
     input.value = val;
@@ -773,14 +802,26 @@
     if (val && index < 7) {
       document.getElementById('pin' + (index + 1)).focus();
     }
-    // Submit-Button aktivieren wenn alle 8 Felder gefüllt
+    pinRefreshSubmit();
+  }
+
+  function pinRefreshSubmit() {
     const allFilled = Array.from({length: 8}, (_, i) =>
       document.getElementById('pin' + i)?.value
     ).every(v => v && v.length === 1);
     const btn = document.getElementById('pinSubmitBtn');
     if (btn) { btn.disabled = !allFilled; btn.style.opacity = allFilled ? '1' : '0.4'; }
-    // Fehler zurücksetzen
     document.getElementById('pinError')?.classList.add('hidden');
+  }
+
+  // v1.32.4: Der Link erzeugte bisher kommentarlos einen ZWEITEN, unverknüpften
+  // Datensatz — der Verlauf zersplitterte genau bei denen, die ihn brauchen.
+  // Jetzt ist es eine bewusste Entscheidung.
+  function startFreshCheckFromPin() {
+    const ok = confirm('Ein neuer Check startet von vorn: dein bisheriger Verlauf wird nicht fortgeführt und die Werte lassen sich später nicht vergleichen.\n\nTrotzdem neu starten?');
+    if (!ok) return;
+    try { trackEvent('recheck_abandoned_no_pin'); } catch (e) { /* still */ }
+    window.location.href = window.location.pathname;
   }
 
   function pinKey(event, index) {
@@ -863,6 +904,17 @@
     return own;
   }
 
+  // v1.32.4: Im iFrame ist der eigene Hostname weiterhin die Entwicklungsadresse.
+  // Ohne diese Funktion stünde nach dem Live-Gang JEDES Event auf env='dev'.
+  function pageHostname() {
+    try {
+      if (window.parent && window.parent !== window && window.parent.location.hostname) {
+        return window.parent.location.hostname;
+      }
+    } catch (e) { /* andere Herkunft — eigener Hostname ist das Beste, was wir haben */ }
+    return location.hostname;
+  }
+
   // Herkunft der Besucher: im iFrame ist der eigene Referrer die Elternseite,
   // die echte Quelle steht im Referrer der Elternseite.
   function pageReferrer() {
@@ -937,7 +989,7 @@
         referrer: (function(){ const r = pageReferrer(); return r ? String(r).slice(0, 200) : undefined; })(), // v1.32.4: Rohwert — nur damit lassen sich organische Suche, Maps und Direkteinstieg trennen (undefined wird von JSON.stringify entfernt)
         device: window.innerWidth < 600 ? 'mobile' : 'desktop',
         is_internal: window._isInternal === true ? true : undefined, // Sofort-Fix 5: Testdaten markieren (undefined wird von JSON.stringify entfernt)
-        env: location.hostname.endsWith('le-vita.com') ? 'prod' : location.hostname.endsWith('github.io') ? 'dev' : 'local', // v1.28.40: Prod/Dev-Trennung nach Umzug (gleiche DB, /v2/-Entwicklung)
+        env: (function(){ const h = pageHostname(); return h.endsWith('le-vita.com') ? 'prod' : h.endsWith('github.io') ? 'dev' : 'local'; })(), // v1.32.4: Hostname der einbettenden Seite — im iFrame ist der eigene immer 'dev'
         ...(window._utm || {})
       };
       await supabaseClient.from('funnel_events').insert({
@@ -1343,6 +1395,12 @@
     if (!height_cm || height_cm < 120 || height_cm > 230) return alert("Bitte eine gültige Größe eingeben.");
     if (!weight_kg || weight_kg < 35 || weight_kg > 250) return alert("Bitte ein gültiges Gewicht eingeben.");
     personalData.age = age; personalData.gender = gender; personalData.height_cm = height_cm; personalData.weight_kg = weight_kg;
+    // v1.32.4: Beim Re-Check ist das Gewicht vorbelegt. Bleibt der Wert unverändert,
+    // ist er übernommen und nicht bestätigt — der BMI-Verlauf ist dann mit Vorbehalt
+    // zu lesen. Wer abgenommen hat, überschreibt; wer zugenommen hat, eher nicht.
+    if (window._recheckPrefill) {
+      window._recheckPrefill.weight_carried = (Number(window._recheckPrefill.weight_kg) === weight_kg);
+    }
     trackEvent('personal_completed', { step_index: currentStep, age: personalData.age, gender: personalData.gender });
     const nextStepIndex = currentStep + 1;
     buildGroupedQuestionsForGender();
@@ -1663,6 +1721,8 @@
       // wenn der Nutzer aus einer PIN-verifizierten Ansicht gestartet ist.
       const payload = { age:personalData.age, gender:personalData.gender, height_cm:personalData.height_cm, weight_kg:personalData.weight_kg, first_name:personalData.first_name||null, last_name:personalData.last_name||null, goal_key:personalData.goal_key||null, consent_privacy:true, consent_storage:true, answers:selectedAnswers };
       const wasRecheck = !!(window._previousLink && window._previousLink.public_code && window._previousLink.pin);
+      // Merker sichern, bevor _recheckPrefill weiter unten verworfen wird
+      const _weightCarried = !!(window._recheckPrefill && window._recheckPrefill.weight_carried);
       if (wasRecheck) {
         payload.previous_public_code = window._previousLink.public_code;
         payload.previous_pin = window._previousLink.pin;
@@ -1673,7 +1733,7 @@
       window._previousLink = null; window._recheckPrefill = null; // verbraucht — nie doppelt verwenden
       const rb = document.getElementById('recheckQuizNote'); if (rb) rb.remove();
       window._currentPublicCode = result.public_code || null;
-      trackEvent('check_submitted', { score: result.score?.total_score, public_code: result.public_code || null, is_recheck: wasRecheck || undefined, link_status: wasRecheck ? (result.link_status || null) : undefined });
+      trackEvent('check_submitted', { score: result.score?.total_score, public_code: result.public_code || null, is_recheck: wasRecheck || undefined, link_status: wasRecheck ? (result.link_status || null) : undefined, weight_carried: wasRecheck ? (_weightCarried === true) : undefined });
       if (typeof fbq !== 'undefined') fbq('track', 'CompleteRegistration', { content_name: 'check_complete', goal: personalData.goal_key || 'unknown' });
       showResult(result);
       setTimeout(initStickyCta, 800);
