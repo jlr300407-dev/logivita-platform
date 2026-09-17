@@ -168,7 +168,22 @@
        IntersectionObserver auf #ai_email, also erst beim Aufklappen. Die Stufe
        bedeutet damit dasselbe wie vorher — eine Leiste, die nur angezeigt wird,
        hätte sie sonst auf jedem Seitenaufruf ausgelöst und den Vergleich mit
-       den Altdaten gebrochen. -->
+       den Altdaten gebrochen.
+
+       v1.36.0 (Re-Check-Zeitpunkt und PIN):
+       (1) RE-CHECK-BANNER kennt jetzt den Abstand zum letzten Check. Es lud
+       bisher unabhaengig davon ein, waehrend die Seite daneben 8–12 Wochen
+       empfiehlt — wer nach zwei Wochen erneut ausfuellt, misst
+       Antwortschwankung statt Veraenderung (so entstand die gefeierte
+       Verbesserung von +16,4 Punkten in einer Woche). Unter acht Wochen steht
+       jetzt ein ruhiger Hinweis mit dem Alter des Ergebnisses; der Weg bleibt
+       offen ("Trotzdem neu testen"), nur die Aufforderung entfaellt.
+       (2) PIN AUF DER SEITE: Sie stand nur in der Mail. Wer sie verliert, kommt
+       an seinen Verlauf nicht mehr heran — und neu ausstellen waere keine
+       Loesung, denn eine PIN, die man nachfordern kann, schuetzt nichts mehr.
+       Sie steht jetzt in der Versandbestaetigung, mit Kopier-Knopf und dem
+       oeffentlichen Code daneben. Sichtbar nur, wenn der Nutzer ohnehin mit
+       ihr angemeldet ist. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -2156,12 +2171,34 @@
     // Nur im Wiederaufruf (PIN bereits serverseitig verifiziert): von hier aus
     // startet der neue Check MIT Verknüpfung (previous_public_code + previous_pin).
     if (window._isReviewMode && window._accessPin && result.public_code) {
-      html += `
-        <div class="recheck-banner">
-          <div class="recheck-banner-title">🔄 Zeit für deinen Re-Check?</div>
-          <div class="recheck-banner-sub">Starte einen neuen Vital-Check, der mit diesem Ergebnis (${result.public_code}) verknüpft wird — du siehst danach direkt, was sich verändert hat.</div>
-          <button class="recheck-btn" onclick="startRecheckFromReview()">Neuen Check starten & vergleichen →</button>
-        </div>`;
+      // v1.36.0 — Das Banner lud unabhaengig vom Abstand zum Einstieg ein,
+      // waehrend die Seite daneben 8–12 Wochen empfiehlt. Wer nach zwei Wochen
+      // erneut ausfuellt, misst Antwortschwankung, keine Veraenderung — genau
+      // so entstand die gefeierte Verbesserung von +16,4 Punkten in einer Woche.
+      // Vor acht Wochen bleibt der Verlauf sichtbar, aber ohne Aufforderung.
+      const _checkedAt = result.submission?.created_at || result.created_at || null;
+      const _weeksSince = _checkedAt && !isNaN(new Date(_checkedAt).getTime())
+        ? Math.floor((Date.now() - new Date(_checkedAt).getTime()) / (7 * 24 * 3600 * 1000))
+        : null;
+      const _recheckReady = _weeksSince === null || _weeksSince >= 8;
+
+      if (_recheckReady) {
+        html += `
+          <div class="recheck-banner">
+            <div class="recheck-banner-title">🔄 Zeit für deinen Re-Check?</div>
+            <div class="recheck-banner-sub">${_weeksSince !== null ? `Dein letzter Check ist ${_weeksSince} Wochen her — jetzt wird der Vergleich aussagekräftig. ` : ``}Der neue Check wird mit diesem Ergebnis (${result.public_code}) verknüpft, du siehst danach direkt, was sich verändert hat.</div>
+            <button class="recheck-btn" onclick="startRecheckFromReview()">Neuen Check starten &amp; vergleichen →</button>
+          </div>`;
+      } else {
+        const _wk = _weeksSince <= 0 ? "wenige Tage" : `${_weeksSince} Woche${_weeksSince > 1 ? "n" : ""}`;
+        html += `
+          <div class="recheck-banner" style="background:rgba(255,255,255,0.03);border-color:var(--border);">
+            <div class="recheck-banner-title" style="color:var(--text-secondary);">🔄 Dein Ergebnis ist ${_wk} alt</div>
+            <div class="recheck-banner-sub">Aussagekräftig wird der Vergleich ab etwa 8 Wochen — so lange braucht es, bis sich Veränderungen im Alltag auch im Wert zeigen.</div>
+            <button class="recheck-btn" onclick="startRecheckFromReview()"
+              style="background:transparent;color:var(--text-secondary);border:1px solid var(--border);">Trotzdem neu testen →</button>
+          </div>`;
+      }
     }
 
     // ── V2: Ehrlicher Hinweis, wenn die Re-Check-Verknüpfung nicht geklappt hat ──
@@ -3458,9 +3495,20 @@
         <div class="ai-badge">✓ Vital-Plan versendet</div>
         <div class="ai-title">Deine Auswertung ist schon unterwegs gewesen</div>
         <div class="ai-sub" style="margin-bottom:14px;">
-          Dein persönlicher Vital-Plan wurde${sentTxt} an deine E-Mail-Adresse geschickt — zusammen mit dem PIN, mit dem du gerade hier bist.
+          Dein persönlicher Vital-Plan wurde${sentTxt} an deine E-Mail-Adresse geschickt.
           Falls du ihn nicht findest, schau bitte auch im Spam-Ordner nach.
         </div>
+        ${(window._accessPin && result?.public_code) ? `
+        <div style="background:rgba(34,201,122,0.08);border:1px solid rgba(34,201,122,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;text-align:left;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-green);margin-bottom:8px;">🔑 Dein persönlicher PIN</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="font-family:'DM Serif Display',serif;font-size:23px;letter-spacing:.16em;flex-grow:1;word-break:break-all;">${window._accessPin}</div>
+            <button onclick="copyAccessPin(this)" style="min-height:44px;padding:0 14px;background:rgba(255,255,255,0.06);color:var(--text-primary);border:1px solid var(--border);border-radius:9px;font-size:12.5px;cursor:pointer;flex-shrink:0;">Kopieren</button>
+          </div>
+          <div style="font-size:11.5px;color:var(--text-secondary);line-height:1.6;margin-top:10px;">
+            Mit deinem Code <strong style="color:var(--text-primary);">${result.public_code}</strong> und diesem PIN rufst du dein Ergebnis jederzeit wieder auf — und verknüpfst deinen nächsten Check damit. Er steht auch in deiner Mail.
+          </div>
+        </div>` : ``}
         <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;background:rgba(255,255,255,0.04);border-radius:var(--radius-sm);padding:12px 14px;text-align:left;">
           Diese Seite zeigt dir dieselbe Auswertung jederzeit interaktiv — mit Spinne, Bereichen und Simulator.
           Einen neuen Vital-Plan per Mail gibt es mit deinem nächsten Check.
@@ -3562,6 +3610,31 @@
       setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
       trackEvent('recheck_calendar_added');
     } catch (e) { /* still — der Termin ist optional */ }
+  }
+
+  // v1.36.0 — Die PIN steht bisher nur in der Mail. Wer sie verliert, kommt an
+  // seinen Verlauf nicht mehr heran; neu ausstellen waere keine Loesung (eine
+  // PIN, die man nachfordern kann, ist keine). Sie hier sichtbar zu machen,
+  // sobald der Nutzer ohnehin mit ihr angemeldet ist, kostet nichts und
+  // schliesst die Luecke.
+  function copyAccessPin(btn) {
+    const pin = window._accessPin || '';
+    if (!pin) return;
+    const done = () => {
+      const old = btn.textContent;
+      btn.textContent = '✓ kopiert';
+      setTimeout(() => { btn.textContent = old; }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(pin).then(done).catch(() => fallbackCopyPin(pin, done));
+    } else { fallbackCopyPin(pin, done); }
+  }
+  function fallbackCopyPin(txt, done) {
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { /* still */ }
+    document.body.removeChild(ta);
   }
 
   function recheckReminderHtml() {
@@ -3965,7 +4038,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.35.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.36.0</footer>
 
 
 </body>
