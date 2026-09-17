@@ -149,7 +149,26 @@
        aus v1.31.3 bleibt im Satz. Das Gesprächsangebot ist aus dem Hero-Satz
        entfernt — es steht gebündelt in Block 2 (v1.34.0).
        (3) MAIL-VERWEIS: "Eine ausführlichere Einordnung erhältst du per E-Mail"
-       erschien auch im Wiederaufruf, wo es keine neue Mail mehr gibt. -->
+       erschien auch im Wiederaufruf, wo es keine neue Mail mehr gibt.
+
+       v1.34.3 (Anfordern-Knopf wirkte folgenlos): scrollToAiBox() suchte die
+       Mail-Box genau einmal, 200 ms nach dem Tabwechsel. Wer aus Tab 2 oder 3
+       kam, sah deshalb je nach Gerät gar nichts. Jetzt bis zu zehn Versuche,
+       und zwar erst, wenn die Box wirklich sichtbar ist (offsetParent). Beim
+       Ankommen blinkt sie über die vorhandene Klasse ai-box-live kurz auf —
+       ein Sprung ohne Quittung liest sich sonst wie ein kaputter Knopf.
+
+       v1.35.0 (die Vital-Plan-Box gehört keinem Tab mehr): Sie lag am Ende von
+       Tab 1; die Leiste darüber sprang nur dorthin — der Nutzer verlor den Tab,
+       auf dem er war. Jetzt steht die echte Box eingeklappt unter der Leiste
+       über den Tabs: ein Formular, eine Stelle, von überall erreichbar, kein
+       Tabwechsel. toggleVitalPlan() klappt auf und zu, scrollToAiBox() leitet
+       dorthin um (die Bluttest-Knöpfe nutzen es weiter).
+       MESSUNG: mail_box_view feuert weiterhin ausschliesslich über den
+       IntersectionObserver auf #ai_email, also erst beim Aufklappen. Die Stufe
+       bedeutet damit dasselbe wie vorher — eine Leiste, die nur angezeigt wird,
+       hätte sie sonst auf jedem Seitenaufruf ausgelöst und den Vergleich mit
+       den Altdaten gebrochen. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -1829,19 +1848,58 @@
     }
   }
 
+  // v1.35.0 — Die Vital-Plan-Box klappt an Ort und Stelle auf. Sie steht ueber
+  // den Tabs, also bleibt der Nutzer da, wo er war.
+  function toggleVitalPlan(forceOpen) {
+    const body = document.getElementById('vitalplanBody');
+    const btn = document.getElementById('vitalplanToggle');
+    const cta = document.getElementById('vitalplanCta');
+    if (!body) return false;
+    const open = forceOpen === true ? true : body.style.display === 'none';
+    body.style.display = open ? 'block' : 'none';
+    if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (cta) cta.textContent = open ? 'Schließen' : (window._isReviewMode && window._accessPin ? 'Ansehen' : 'Anfordern');
+    if (open) {
+      // Kein eigenes trackEvent hier: initStickyCta beobachtet #ai_email und
+      // meldet mail_box_view genau dann, wenn das Feld wirklich sichtbar wird.
+      // Ein zusaetzlicher Aufruf wuerde die Stufe doppelt zaehlen.
+      setTimeout(initStickyCta, 100);
+      setTimeout(() => {
+        body.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const mail = document.getElementById('ai_email');
+        if (mail) setTimeout(() => { try { mail.focus({ preventScroll: true }); } catch (e) {} }, 350);
+      }, 60);
+    }
+    return open;
+  }
+
   function scrollToAiBox() {
-    // Tab 1 "Mein Ergebnis" aktivieren
+    // v1.35.0: Die Box liegt jetzt in der aufklappbaren Leiste ueber den Tabs.
+    // Kein Tabwechsel mehr noetig — aufklappen genuegt.
+    if (toggleVitalPlan(true) !== false) return;
+    // Rueckfall fuer den Fall, dass die Leiste nicht gerendert wurde
     const tab1Btn = document.getElementById('rtab-ergebnis');
     if (tab1Btn) tab1Btn.click();
     setTimeout(initStickyCta, 800);
-    // Dann zur ai-box scrollen
-    setTimeout(() => {
+
+    // v1.34.3 — Vorher genau EIN Versuch nach 200 ms. Kommt der Tabwechsel
+    // langsamer (oder ist die Box beim Klick noch in einem ausgeblendeten
+    // Tab), passierte sichtbar nichts. Jetzt bis zu zehn Versuche, und die
+    // Box blinkt beim Ankommen kurz auf — sonst wirkt der Klick folgenlos.
+    let tries = 0;
+    (function findBox() {
       const aiBox = document.querySelector('.ai-box');
-      if (aiBox) {
-        aiBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(() => document.getElementById('ai_email')?.focus(), 400);
+      const visible = aiBox && aiBox.offsetParent !== null;
+      if (!visible) {
+        if (++tries < 10) { setTimeout(findBox, 120); }
+        return;
       }
-    }, 200);
+      aiBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      aiBox.classList.add('ai-box-live');
+      setTimeout(() => aiBox.classList.remove('ai-box-live'), 1800);
+      const mail = document.getElementById('ai_email');
+      if (mail) setTimeout(() => { try { mail.focus({ preventScroll: true }); } catch (e) { mail.focus(); } }, 500);
+    })();
   }
 
   // Feedback-Box erst nach bestätigtem Mail-Versand zeigen (v1.28.14)
@@ -2173,21 +2231,124 @@
       window._shown.triage = true;
     }
 
-    // ── Dauerhafte Vital-Plan-Leiste: erreicht auch die, die nie bis ans
-    // Ende von Tab 1 scrollen — der groesste Drop-off im Funnel.
-    if (!window._isReviewMode) {
-      html += `
-        <div style="background:rgba(34,201,122,0.07);border:1px solid rgba(34,201,122,0.25);
-             border-radius:14px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;">
+    // ── v1.35.0 — Die Vital-Plan-Box gehoert keinem Tab mehr.
+    // Vorher lag sie am Ende von Tab 1; die Leiste darueber sprang nur dorthin.
+    // Jetzt steht die echte Box hier, eingeklappt unter der Leiste — ein
+    // Formular, eine Stelle, von jedem Tab aus erreichbar.
+    // KI-Mail Box mit Vital-Plan-Teaser (v1.28.14):
+    // Statt abstrakter Beschreibung das konkrete Inhaltsverzeichnis DIESES Plans —
+    // regelbasiert aus dem Ergebnis generiert, jede Zeile beschreibt echten Mail-Inhalt.
+    const goalTeaserLabels = {
+      goal_energy: "Mehr Energie im Alltag", goal_weight: "Figur & Wohlfühlgewicht",
+      goal_fitness: "Mehr Kraft & Fitness", goal_supplements: "Klarheit bei Nährstoffen",
+      goal_longevity: "Gesund älter werden", goal_prevention: "Vorsorge & Prävention",
+      goal_curious: "deinen Standort bestimmen"
+    };
+    Object.entries(window._snips.teaser_label).forEach(([k, s]) => { if (s.body) goalTeaserLabels[k] = s.body; });
+    const goalKeyForTeaser = personalData.goal_key || result.submission?.goal_key || "";
+    const goalTeaser = goalTeaserLabels[goalKeyForTeaser] || "deine wichtigsten Ziele";
+    // v1.28.33: BMI nie als "größter Hebel" im Teaser — gleiche Regel wie die Hebel-Box
+    // (BMI ist keine Handlung; erster Nicht-BMI-Fokusbereich ist der ehrliche Hebel)
+    const topPrio = (result.score?.top_priorities || []).find(p => (p.area_key || p.key) !== 'bmi') || null;
+    const teaserRow = (icon, strong, rest) =>
+      `<div class="ai-teaser-row" style="display:flex;gap:10px;align-items:flex-start;text-align:left;">
+        <span style="flex:none;font-size:15px;line-height:1.5;">${icon}</span>
+        <span style="font-size:13.5px;line-height:1.55;color:var(--text-secondary);"><strong style="color:var(--text-primary);">${strong}</strong> — ${rest}</span>
+      </div>`;
+    let teaserRows = "";
+    // V2: Bei einem verknüpften Re-Check verspricht die Box, was die Mail jetzt
+    // wirklich enthält — die Verlaufs-Auswertung (Edge baut den history-Block).
+    const isLinkedRecheck = !!window._previousData;
+    if (isLinkedRecheck) {
+      teaserRows += teaserRow("📈", "Deine Entwicklung seit dem letzten Check", "was sich verbessert hat, was stabil blieb — und dein nächster realistischer Schritt");
+      if (window._previousData.goal_scenario) {
+        teaserRows += teaserRow("🎯", "Die Auswertung deines gesetzten Ziels", "hast du erreicht, was du dir im Simulator vorgenommen hattest?");
+      }
+    }
+    // v1.32.5 — Die Box nannte als ersten Punkt den größten Hebel. Der steht
+    // aber schon zwei Bildschirme weiter oben auf der Ergebnisseite: der
+    // stärkste Werbeplatz ging damit an eine Wiederholung. Genannt wird jetzt,
+    // was es NUR in der Mail gibt — die geschriebene Einordnung, die
+    // Bereichstabelle als Vergleichsbasis und der PIN als einziger Rückweg.
+    if (!isLinkedRecheck) {
+      teaserRows += teaserRow("💬", "Deine persönliche Einordnung", `geschrieben auf deine Antworten — nicht die gleichen Tipps wie für alle anderen`);
+    }
+    if (!isLinkedRecheck || !window._previousData.goal_scenario) {
+      teaserRows += teaserRow("🎯", `Dein 6-Wochen-Fahrplan für „${goalTeaser}“`, "konkret, Schritt für Schritt");
+    }
+    if (!isLinkedRecheck) {
+      teaserRows += teaserRow("📊", "Alle neun Bereichswerte als Übersicht", "deine Vergleichsbasis für den nächsten Check");
+    }
+    if (AFFILIATE_ENABLED && result.score?.bloodtest_hint) { // Pilotfreigabe 5.5: Zeile verspricht Test-Spezifik, die die Mail ohne Freigabe nicht liefert
+      teaserRows += teaserRow("🩸", "Welche Blutwerte für dich sinnvoll wären", "und welche du dir sparen kannst");
+    }
+    // Der PIN entsteht erst mit dieser Mail und steht nur darin — ohne sie ist
+    // diese Auswertung später nicht mehr aufrufbar. Das sachlich sagen, ohne
+    // Druck aufzubauen.
+    teaserRows += isLinkedRecheck
+      ? teaserRow("🔑", "Dein neuer persönlicher PIN", "nur damit rufst du diese Auswertung später wieder auf und vergleichst beim nächsten Check erneut")
+      : teaserRow("🔑", "Dein persönlicher PIN", "nur damit kommst du später wieder an diese Auswertung — und vergleichst in 8–12 Wochen, was sich verändert hat");
+    // v1.31.1 — Beim Wiederaufruf über PIN ist die Mail zwingend schon
+    // versendet (der PIN entsteht erst mit ihr). Ein leeres Eingabefeld wäre
+    // dort schlicht falsch: ein zweiter Versand wird serverseitig ohnehin
+    // abgelehnt. Statt Formular also der Status.
+    let mailBoxHtml = (window._isReviewMode && window._accessPin) ? renderMailAlreadySentHtml(result) : `
+      <div class="ai-box">
+        <div class="ai-badge">✦ Dein persönlicher Vital-Plan</div>
+        <div class="ai-title">Das steht in deinem Vital-Plan:</div>
+        ${(() => {
+          // v1.32.5 — Der Buddy steht hier NEUTRAL: kein Sprechtext, keine
+          // Empfehlung. Diese Box fragt eine E-Mail-Adresse und zwei
+          // Einwilligungen ab; eine sympathische Figur, die zum Zustimmen rät,
+          // wäre genau an der Stelle Überredung, an der das Consent sauber
+          // sein muss. Er zeigt nur, dass derselbe Begleiter noch da ist.
+          const b = buddyHtml("buddy-neutral", "sm");
+          return b ? `<div style="display:flex;justify-content:center;margin:10px 0 2px;">${b}</div>` : "";
+        })()}
+        <div style="display:flex;flex-direction:column;gap:9px;margin:12px 0 14px;">${teaserRows}</div>
+        <div style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:14px;">
+          Kostenlos &nbsp;·&nbsp; kommt in wenigen Minuten
+        </div>
+        <div class="ai-sub" style="margin-bottom:8px;">Wohin dürfen wir deinen Plan schicken?</div>
+        <input type="text" id="ai_firstname" placeholder="Vorname (optional)" style="margin-bottom:8px;" />
+        <input type="email" id="ai_email" placeholder="deine@email.de" />
+        <div class="ai-consent">
+          <div class="checkbox-row">
+            <input type="checkbox" id="consent_ai_analysis" />
+            <label for="consent_ai_analysis">Ja, ich möchte meine persönliche KI-Auswertung erhalten.
+              <span id="consentDetail1" style="display:none;color:var(--text-muted);font-size:10px;line-height:1.5;margin-top:4px;">Deine Angaben werden zur Erstellung der Auswertung an Anthropic PBC (USA) übermittelt — ausschließlich für diesen Zweck, nicht zum Training von KI-Modellen. Grundlage: Standardvertragsklauseln (Art. 46 DSGVO).</span>
+              <span onclick="toggleConsent1(event)" style="color:var(--text-muted);font-size:10px;cursor:pointer;text-decoration:underline;margin-left:4px;" id="consentToggle1">Details</span>
+            </label>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="consent_email_delivery" />
+            <label for="consent_email_delivery">Ja, die angeforderte Auswertung (mein Vital-Plan) darf mir einmalig per E-Mail zugesendet werden.</label>
+          </div>
+        </div>
+        <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">Meinen kostenlosen Vital-Plan anfordern →</button>
+        <div id="ai-status"></div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center;"><span style="color:var(--accent-green);">✓</span> Keine Werbung, keine Weitergabe an Dritte, jederzeit löschbar</div>
+      </div>`;
+
+    html += `
+      <div style="background:rgba(34,201,122,0.07);border:1px solid rgba(34,201,122,0.25);
+           border-radius:14px;margin-bottom:14px;overflow:hidden;">
+        <button id="vitalplanToggle" onclick="toggleVitalPlan()" aria-expanded="false" aria-controls="vitalplanBody"
+          style="width:100%;background:none;border:none;color:inherit;font-family:inherit;text-align:left;
+                 padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;min-height:56px;">
           <div style="font-size:19px;line-height:1.2;flex-shrink:0;" aria-hidden="true">✉️</div>
           <div style="flex-grow:1;min-width:0;">
-            <div style="font-size:13px;font-weight:700;">Dein persönlicher Vital-Plan</div>
-            <div style="font-size:11.5px;color:var(--text-secondary);">Ausführliche Auswertung per Mail · kostenlos</div>
+            <div style="font-size:13px;font-weight:700;">${window._isReviewMode && window._accessPin ? "Dein Vital-Plan" : "Dein persönlicher Vital-Plan"}</div>
+            <div style="font-size:11.5px;color:var(--text-secondary);">${window._isReviewMode && window._accessPin ? "Status und PIN ansehen" : "Ausführliche Auswertung per Mail · kostenlos"}</div>
           </div>
-          <button onclick="scrollToAiBox();" style="min-height:44px;padding:0 15px;background:var(--accent-green);
-            color:#0a1628;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;">Anfordern</button>
-        </div>`;
-    }
+          <span id="vitalplanCta" style="min-height:44px;padding:0 15px;display:flex;align-items:center;
+            background:var(--accent-green);color:#0a1628;border-radius:9px;font-size:13px;font-weight:700;flex-shrink:0;">
+            ${window._isReviewMode && window._accessPin ? "Ansehen" : "Anfordern"}
+          </span>
+        </button>
+        <div id="vitalplanBody" style="display:none;padding:0 10px 10px;">${mailBoxHtml}</div>
+      </div>`;
+    if (window._shown) window._shown.mail = true;
 
     // ── TABS ──
     html += `
@@ -2312,100 +2473,9 @@
     // Auswahl vorbereiteter Hebel per Schalter, keine Freieingabe, keine Client-Rechnung.
     html += renderSimulatorHtml(totalScore, bioAge);
 
-    // KI-Mail Box mit Vital-Plan-Teaser (v1.28.14):
-    // Statt abstrakter Beschreibung das konkrete Inhaltsverzeichnis DIESES Plans —
-    // regelbasiert aus dem Ergebnis generiert, jede Zeile beschreibt echten Mail-Inhalt.
-    const goalTeaserLabels = {
-      goal_energy: "Mehr Energie im Alltag", goal_weight: "Figur & Wohlfühlgewicht",
-      goal_fitness: "Mehr Kraft & Fitness", goal_supplements: "Klarheit bei Nährstoffen",
-      goal_longevity: "Gesund älter werden", goal_prevention: "Vorsorge & Prävention",
-      goal_curious: "deinen Standort bestimmen"
-    };
-    Object.entries(window._snips.teaser_label).forEach(([k, s]) => { if (s.body) goalTeaserLabels[k] = s.body; });
-    const goalKeyForTeaser = personalData.goal_key || result.submission?.goal_key || "";
-    const goalTeaser = goalTeaserLabels[goalKeyForTeaser] || "deine wichtigsten Ziele";
-    // v1.28.33: BMI nie als "größter Hebel" im Teaser — gleiche Regel wie die Hebel-Box
-    // (BMI ist keine Handlung; erster Nicht-BMI-Fokusbereich ist der ehrliche Hebel)
-    const topPrio = (result.score?.top_priorities || []).find(p => (p.area_key || p.key) !== 'bmi') || null;
-    const teaserRow = (icon, strong, rest) =>
-      `<div class="ai-teaser-row" style="display:flex;gap:10px;align-items:flex-start;text-align:left;">
-        <span style="flex:none;font-size:15px;line-height:1.5;">${icon}</span>
-        <span style="font-size:13.5px;line-height:1.55;color:var(--text-secondary);"><strong style="color:var(--text-primary);">${strong}</strong> — ${rest}</span>
-      </div>`;
-    let teaserRows = "";
-    // V2: Bei einem verknüpften Re-Check verspricht die Box, was die Mail jetzt
-    // wirklich enthält — die Verlaufs-Auswertung (Edge baut den history-Block).
-    const isLinkedRecheck = !!window._previousData;
-    if (isLinkedRecheck) {
-      teaserRows += teaserRow("📈", "Deine Entwicklung seit dem letzten Check", "was sich verbessert hat, was stabil blieb — und dein nächster realistischer Schritt");
-      if (window._previousData.goal_scenario) {
-        teaserRows += teaserRow("🎯", "Die Auswertung deines gesetzten Ziels", "hast du erreicht, was du dir im Simulator vorgenommen hattest?");
-      }
-    }
-    // v1.32.5 — Die Box nannte als ersten Punkt den größten Hebel. Der steht
-    // aber schon zwei Bildschirme weiter oben auf der Ergebnisseite: der
-    // stärkste Werbeplatz ging damit an eine Wiederholung. Genannt wird jetzt,
-    // was es NUR in der Mail gibt — die geschriebene Einordnung, die
-    // Bereichstabelle als Vergleichsbasis und der PIN als einziger Rückweg.
-    if (!isLinkedRecheck) {
-      teaserRows += teaserRow("💬", "Deine persönliche Einordnung", `geschrieben auf deine Antworten — nicht die gleichen Tipps wie für alle anderen`);
-    }
-    if (!isLinkedRecheck || !window._previousData.goal_scenario) {
-      teaserRows += teaserRow("🎯", `Dein 6-Wochen-Fahrplan für „${goalTeaser}“`, "konkret, Schritt für Schritt");
-    }
-    if (!isLinkedRecheck) {
-      teaserRows += teaserRow("📊", "Alle neun Bereichswerte als Übersicht", "deine Vergleichsbasis für den nächsten Check");
-    }
-    if (AFFILIATE_ENABLED && result.score?.bloodtest_hint) { // Pilotfreigabe 5.5: Zeile verspricht Test-Spezifik, die die Mail ohne Freigabe nicht liefert
-      teaserRows += teaserRow("🩸", "Welche Blutwerte für dich sinnvoll wären", "und welche du dir sparen kannst");
-    }
-    // Der PIN entsteht erst mit dieser Mail und steht nur darin — ohne sie ist
-    // diese Auswertung später nicht mehr aufrufbar. Das sachlich sagen, ohne
-    // Druck aufzubauen.
-    teaserRows += isLinkedRecheck
-      ? teaserRow("🔑", "Dein neuer persönlicher PIN", "nur damit rufst du diese Auswertung später wieder auf und vergleichst beim nächsten Check erneut")
-      : teaserRow("🔑", "Dein persönlicher PIN", "nur damit kommst du später wieder an diese Auswertung — und vergleichst in 8–12 Wochen, was sich verändert hat");
-    // v1.31.1 — Beim Wiederaufruf über PIN ist die Mail zwingend schon
-    // versendet (der PIN entsteht erst mit ihr). Ein leeres Eingabefeld wäre
-    // dort schlicht falsch: ein zweiter Versand wird serverseitig ohnehin
-    // abgelehnt. Statt Formular also der Status.
-    html += (window._isReviewMode && window._accessPin) ? renderMailAlreadySentHtml(result) : `
-      <div class="ai-box">
-        <div class="ai-badge">✦ Dein persönlicher Vital-Plan</div>
-        <div class="ai-title">Das steht in deinem Vital-Plan:</div>
-        ${(() => {
-          // v1.32.5 — Der Buddy steht hier NEUTRAL: kein Sprechtext, keine
-          // Empfehlung. Diese Box fragt eine E-Mail-Adresse und zwei
-          // Einwilligungen ab; eine sympathische Figur, die zum Zustimmen rät,
-          // wäre genau an der Stelle Überredung, an der das Consent sauber
-          // sein muss. Er zeigt nur, dass derselbe Begleiter noch da ist.
-          const b = buddyHtml("buddy-neutral", "sm");
-          return b ? `<div style="display:flex;justify-content:center;margin:10px 0 2px;">${b}</div>` : "";
-        })()}
-        <div style="display:flex;flex-direction:column;gap:9px;margin:12px 0 14px;">${teaserRows}</div>
-        <div style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:14px;">
-          Kostenlos &nbsp;·&nbsp; kommt in wenigen Minuten
-        </div>
-        <div class="ai-sub" style="margin-bottom:8px;">Wohin dürfen wir deinen Plan schicken?</div>
-        <input type="text" id="ai_firstname" placeholder="Vorname (optional)" style="margin-bottom:8px;" />
-        <input type="email" id="ai_email" placeholder="deine@email.de" />
-        <div class="ai-consent">
-          <div class="checkbox-row">
-            <input type="checkbox" id="consent_ai_analysis" />
-            <label for="consent_ai_analysis">Ja, ich möchte meine persönliche KI-Auswertung erhalten.
-              <span id="consentDetail1" style="display:none;color:var(--text-muted);font-size:10px;line-height:1.5;margin-top:4px;">Deine Angaben werden zur Erstellung der Auswertung an Anthropic PBC (USA) übermittelt — ausschließlich für diesen Zweck, nicht zum Training von KI-Modellen. Grundlage: Standardvertragsklauseln (Art. 46 DSGVO).</span>
-              <span onclick="toggleConsent1(event)" style="color:var(--text-muted);font-size:10px;cursor:pointer;text-decoration:underline;margin-left:4px;" id="consentToggle1">Details</span>
-            </label>
-          </div>
-          <div class="checkbox-row">
-            <input type="checkbox" id="consent_email_delivery" />
-            <label for="consent_email_delivery">Ja, die angeforderte Auswertung (mein Vital-Plan) darf mir einmalig per E-Mail zugesendet werden.</label>
-          </div>
-        </div>
-        <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">Meinen kostenlosen Vital-Plan anfordern →</button>
-        <div id="ai-status"></div>
-        <div style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center;"><span style="color:var(--accent-green);">✓</span> Keine Werbung, keine Weitergabe an Dritte, jederzeit löschbar</div>
-      </div>`;
+    // v1.35.0 — Die Vital-Plan-Box steht nicht mehr in Tab 1, sondern als
+    // aufklappbare Leiste ueber den Tabs (siehe oben). Sie gehoert damit
+    // keinem Tab mehr und ist von ueberall erreichbar.
 
     // Feedback-Box — erscheint erst NACH erfolgreicher Mail-Anforderung (v1.28.14):
     // konkurriert sonst mit der Vital-Plan-Box um denselben Moment.
@@ -3895,7 +3965,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.34.2</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.35.0</footer>
 
 
 </body>
