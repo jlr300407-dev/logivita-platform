@@ -138,6 +138,8 @@
     .logo-area { display: flex; flex-direction: column; align-items: center; margin-bottom: 32px; padding-top: 12px; }
     .logo-img-wrap { margin-bottom: 10px; }
     .logo-img-wrap img { max-height: 60px; max-width: 220px; object-fit: contain; }
+    /* v1.33.0: Bildmarke als gerundete Kachel, Schriftzug darunter ohne Rundung */
+    .logo-img-wrap img[width="54"] { width: 54px; height: 54px; border-radius: 15px; }
     .logo-placeholder { width: 54px; height: 54px; border-radius: 14px; background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-blue) 100%); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; color: #0a1628; margin-bottom: 10px; }
     .logo-name { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--text-primary); }
     .logo-name span { color: var(--accent-green); }
@@ -565,7 +567,11 @@
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/submit-vital-check";
   const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdWp0l2Cy_KDraD0kW5uXzecV3CdyR1L28nSmdLAzdLUoiTTA/viewform?usp=publish-editor";
-  const LOGO_URL = "";
+  // v1.33.0: Das echte Logo. Die Bildmarke liegt auf heller Flaeche, weil die
+  // Figur im Kreis Negativraum ist — freigestellt verschwindet sie auf #0a1628.
+  // Der Schriftzug ist die Negativfassung (Braun -> Creme), sonst kein Kontrast.
+  const LOGO_URL = "assets/levita-mark.png";
+  const LOGO_WORDMARK_URL = "assets/levita-wordmark-light.png";
   const AREA_ICONS = { sleep:"🌙", activity:"⚡", nutrition:"🥗", vitamin_d:"☀️", bmi:"⚖️", mental:"🧘", lifestyle:"🍃", micronutrients:"💊", metabolic:"🔥" };
 
   // ══ Buddy / Maskottchen (v1.32.0, Stufe 1) ══════════════════════════════
@@ -951,8 +957,18 @@
 
   function initLogo() {
     const el = document.getElementById("logoDisplay");
-    if (LOGO_URL) { el.innerHTML = `<div class="logo-img-wrap"><img src="${LOGO_URL}" alt="LeVITA Logo" /></div>`; }
-    else { el.innerHTML = `<div class="logo-placeholder">LV</div>`; }
+    if (!LOGO_URL) { el.innerHTML = `<div class="logo-placeholder">LV</div>`; return; }
+    // Faellt auf die LV-Kachel zurueck, falls die Datei (noch) nicht hochgeladen ist
+    el.innerHTML = `<div class="logo-img-wrap"><img src="${LOGO_URL}" alt="" width="54" height="54"
+      onerror="this.parentElement.outerHTML='&lt;div class=&quot;logo-placeholder&quot;&gt;LV&lt;/div&gt;';" /></div>`;
+    if (LOGO_WORDMARK_URL) {
+      const nameEl = document.querySelector(".logo-name");
+      if (nameEl) {
+        nameEl.innerHTML = `<img src="${LOGO_WORDMARK_URL}" alt="LeVITA — Therapie, Gesundheit, Fitness"
+          style="max-width:168px;height:auto;display:block;"
+          onerror="this.parentElement.innerHTML='Le&lt;span&gt;VITA&lt;/span&gt;';" />`;
+      }
+    }
   }
 
   async function init() {
