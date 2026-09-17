@@ -102,7 +102,27 @@
        (4) RE-CHECK: Die PIN lässt sich einfügen (acht Felder mit maxlength=1
        schluckten alles bis auf ein Zeichen), weight_carried zeigt an, ob das
        vorbelegte Gewicht bestätigt wurde, und "Noch keinen PIN?" verlangt eine
-       Bestätigung, statt still einen zweiten unverknüpften Datensatz anzulegen. -->
+       Bestätigung, statt still einen zweiten unverknüpften Datensatz anzulegen.
+
+       v1.34.0 (Struktur: ein Tab, eine Frage): Über die Versionen hinweg war
+       an den Aussagen weitergearbeitet worden, ohne dass eine Stelle wusste,
+       was auf der Seite schon gesagt wurde. Ergebnis waren Dopplungen und —
+       schlimmer — widersprüchliche Reihenfolgen.
+       (1) REGISTER window._shown mit vier Schlüsseln (triage, focus, studioCta,
+       mail), nach dem Vorbild des vorhandenen bloodtestShown.
+       (2) SICHERHEITSBAND vor den Tabs, in genau einer Dringlichkeitsstufe.
+       Vorher stand die Triage unter der Nährstoff-Botschaft und tauchte in drei
+       Stufen von "Sofort" bis "nicht dringend" auf. Die Box in Tab 3 ist jetzt
+       nur noch Rückfall, falls das Band nicht lief.
+       (3) VITAL-PLAN-LEISTE vor den Tabs — sie erreicht auch die, die nie bis
+       ans Ende von Tab 1 scrollen (der größte Drop-off im Funnel). Die
+       vollständige Mail-Box bleibt unverändert an ihrem Platz.
+       (4) EIN GESPRÄCHSANGEBOT: Die Buttons in den Warnboxen (Stress, Schlaf)
+       sind entfallen, ebenso der Coaching-Block auf Tab 1 (Schalter
+       TAB1_STUDIO_CTA). Das Angebot steht gebündelt in Tab 3, Block 2.
+       Warnboxen informieren, sie verkaufen nicht.
+       NICHT geändert: "Meine Angaben" (Tab 1, Stammdaten) und "Meine Antworten"
+       (Tab 2, Antworten) sind verschiedene Inhalte und bleiben beide. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -2093,6 +2113,55 @@
         <div style="font-size:22px;">⚡</div>
       </div>`;
 
+    // ══════════════════════════════════════════════════════════════
+    // v1.34.0 — REGISTER: was einmal gesagt wurde, wird nicht wiederholt.
+    // Vorbild ist das bereits vorhandene bloodtestShown. Vier Schluessel,
+    // jeder wird an der Stelle mit der hoechsten Prioritaet ausgespielt.
+    // ══════════════════════════════════════════════════════════════
+    window._shown = { triage: false, focus: false, studioCta: false, mail: false };
+
+    // ── Dauerhaftes Sicherheitsband: steht VOR den Tabs, damit kein
+    // Inhaltsblock es ueberholen kann. Genau eine Dringlichkeitsstufe.
+    if (window._safetyTier) {
+      const _sn = window._snips.notice;
+      const _bandText =
+        window._safetyTier === "combined"
+          ? (_sn.weight_appetite_combined?.body || "Ungewollter Gewichtsverlust zusammen mit verändertem Appetit oder Schwindel gehört ärztlich abgeklärt — am besten bei deiner Hausärztin oder deinem Hausarzt.")
+        : window._safetyTier === "senior"
+          ? (_sn.weight_appetite_senior?.body || "Weil ungewollter Gewichtsverlust zusammen mit vermindertem Appetit in deinem Alter mehrere Ursachen haben kann, gehört das in ärztliche Hände — sprich das bitte bei deinem nächsten Hausarztbesuch an.")
+        : window._safetyTier === "light"
+          ? (_sn.weight_appetite?.body || "Du hast ungewollten Gewichtsverlust bzw. deutliche Appetit-Veränderungen angegeben. Falls das über mehrere Wochen anhält, lass es hausärztlich abklären — nicht dringend, aber der sichere Weg.")
+          : (_sn.weight_appetite_single?.body || "Du hast Veränderungen bei Gewicht oder Appetit angegeben. Behalte das im Blick und sprich es bei Gelegenheit hausärztlich an.");
+      const _bandTitle = (window._safetyTier === "combined" || window._safetyTier === "senior")
+        ? "Bitte ärztlich abklären lassen" : "Zuerst das Wichtigste";
+      html += `
+        <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);
+             border-radius:14px;padding:14px 16px;margin-bottom:12px;display:flex;gap:11px;align-items:flex-start;">
+          <div style="font-size:17px;line-height:1.2;flex-shrink:0;" aria-hidden="true">⚠️</div>
+          <div>
+            <div style="font-size:13.5px;font-weight:700;color:#ffb347;margin-bottom:3px;">${_bandTitle}</div>
+            <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${_bandText}</div>
+          </div>
+        </div>`;
+      window._shown.triage = true;
+    }
+
+    // ── Dauerhafte Vital-Plan-Leiste: erreicht auch die, die nie bis ans
+    // Ende von Tab 1 scrollen — der groesste Drop-off im Funnel.
+    if (!window._isReviewMode) {
+      html += `
+        <div style="background:rgba(34,201,122,0.07);border:1px solid rgba(34,201,122,0.25);
+             border-radius:14px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;">
+          <div style="font-size:19px;line-height:1.2;flex-shrink:0;" aria-hidden="true">✉️</div>
+          <div style="flex-grow:1;min-width:0;">
+            <div style="font-size:13px;font-weight:700;">Dein persönlicher Vital-Plan</div>
+            <div style="font-size:11.5px;color:var(--text-secondary);">Ausführliche Auswertung per Mail · kostenlos</div>
+          </div>
+          <button onclick="scrollToAiBox();" style="min-height:44px;padding:0 15px;background:var(--accent-green);
+            color:#0a1628;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;">Anfordern</button>
+        </div>`;
+    }
+
     // ── TABS ──
     html += `
       <div class="result-tabs">
@@ -2451,7 +2520,9 @@
     // v1.33.0 — Text nach Stufe, nicht mehr eine Fassung für alle Fälle.
     // Ab 70 ist jede Relativierung ("nicht dringend") ausgeschlossen; das entspricht
     // der Vorgabe, die in der Edge schon seit v1.31.5 gilt.
-    if (window._safetyTier) {
+    // v1.34.0 — Das Band vor den Tabs hat die Triage bereits gezeigt.
+    // Hier bleibt nur der Rueckfall, falls das Band nicht gelaufen ist.
+    if (window._safetyTier && !(window._shown && window._shown.triage)) {
       const _sn = window._snips.notice;
       const _safetyText =
         window._safetyTier === "combined"
@@ -2555,6 +2626,7 @@
       <a href="https://le-vita.com/probetraining" target="_blank"
          style="display:block;background:var(--accent-green);color:#0a1628;border-radius:10px;margin-top:12px;padding:12px;font-size:14px;font-weight:700;text-align:center;text-decoration:none;">Kostenloses Vitalitätsgespräch vereinbaren →</a>
     </div>`;
+    if (window._shown) window._shown.studioCta = true;   // v1.34.0: der eine Ort für das Angebot
 
     // Kategorie 3 — Genauer hinschauen (nur bei Signal; pilotkonform ohne Produkt-/Rabattwerbung)
     const cat3 = [];
@@ -3077,7 +3149,7 @@
       html += `<div class="hint-box" style="background:rgba(255,160,0,0.08);border:1px solid rgba(255,160,0,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#ffb347;">😴 Starke Tagesmüdigkeit</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Du fühlst dich häufig tagsüber müde — auch wenn du nachts schläfst. Das kann ein Hinweis auf unruhigen Schlaf oder andere Faktoren sein.</span></div>`;
     }
     if (getRisk("stress_level") >= 3) {
-      html += `<div class="hint-box" style="background:rgba(255,160,0,0.08);border:1px solid rgba(255,160,0,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#ffb347;">🧠 Hoher Stresslevel</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Du gibst einen hohen oder sehr hohen Stresslevel an. Chronischer Stress wirkt sich langfristig auf Schlaf, Immunsystem und Herzgesundheit aus.</span><br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:rgba(255,160,0,0.15);color:#ffb347;border:1px solid rgba(255,160,0,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Stressgespräch vereinbaren →</a></div>`;
+      html += `<div class="hint-box" style="background:rgba(255,160,0,0.08);border:1px solid rgba(255,160,0,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#ffb347;">🧠 Hoher Stresslevel</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Du gibst einen hohen oder sehr hohen Stresslevel an. Chronischer Stress wirkt sich langfristig auf Schlaf, Immunsystem und Herzgesundheit aus.</span></div>`;   // v1.34.0: CTA entfernt — genau ein Gesprächsangebot, gebündelt in Tab 3, Block 2
     }
     // Verisana-Hinweis in Tab 1 — wenn bloodtest_hint aber noch kein Button gezeigt
     if (score.bloodtest_hint === true && !bloodtestShown && !window._redFlagNoBloodtest) {
@@ -3093,7 +3165,7 @@
       html += `<div class="hint-box box-warning" style="margin-bottom:12px;"><strong>💉 Bluttest-Empfehlung</strong><br><span style="font-size:13px;line-height:1.6;">Eine fachlich begleitete Laborkontrolle kann je nach Situation sinnvoll sein — z.B. zu Eisen, B12 oder Vitamin D.</span>${AFFILIATE_ENABLED ? `<br><br><button onclick="scrollToAiBox();" style="display:inline-block;padding:9px 20px;background:var(--accent-amber);color:#0a1628;border-radius:8px;font-weight:700;font-size:13px;border:none;cursor:pointer;margin-top:4px;">🩸 Bluttest mit 10% Rabatt anfordern →</button>` : ``}</div>`;
     }
     if (getRisk("sleep_latency") >= 3) {
-      html += `<div class="hint-box" style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#a78bfa;">🌙 Starke Einschlafschwierigkeiten</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Mehr als eine Stunde zum Einschlafen zu brauchen ist ein relevantes Signal. Häufig stecken Stress, Bildschirmzeit oder ein unregelmäßiger Rhythmus dahinter.</span><br><br><a href="https://le-vita.com/probetraining" target="_blank" style="display:inline-block;padding:9px 20px;background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.3);border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;margin-top:4px;">Schlaf besprechen →</a></div>`;
+      html += `<div class="hint-box" style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#a78bfa;">🌙 Starke Einschlafschwierigkeiten</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Mehr als eine Stunde zum Einschlafen zu brauchen ist ein relevantes Signal. Häufig stecken Stress, Bildschirmzeit oder ein unregelmäßiger Rhythmus dahinter.</span></div>`;   // v1.34.0: CTA entfernt — siehe oben
     }
     if (getRisk("nicotine_use") >= 3) {
       html += `<div class="hint-box" style="background:rgba(255,92,92,0.06);border:1px solid rgba(255,92,92,0.2);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#ff8a8a;">🚬 Nikotin & Gesundheit</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Regelmäßiger Nikotinkonsum ist einer der stärksten beeinflussbaren Risikofaktoren. Jede Reduktion zählt — auch kleine Schritte wirken.</span></div>`;
@@ -3104,7 +3176,11 @@
       html += `<div class="hint-box" style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;"><strong style="color:#a78bfa;">🌱 Mentales Wohlbefinden</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">Deine Angaben zeigen, dass du an manchen Tagen weniger Freude oder Energie empfindest als du dir wünschen würdest. Das ist ein Signal das es wert ist, aufmerksam zu bleiben.</span></div>`;
     }
 
-    const showCTA = (score.coaching_hint || goalKey) && !bmiIsLow;
+    // v1.34.0 — Das Gesprächsangebot steht gebündelt in Tab 3, Block 2.
+    // Auf Tab 1 stand es zusätzlich, oft neben zwei weiteren Buttons aus den
+    // Warnboxen. Auf true setzen, wenn ihr es hier doch wieder wollt.
+    const TAB1_STUDIO_CTA = false;
+    const showCTA = TAB1_STUDIO_CTA && (score.coaching_hint || goalKey) && !bmiIsLow;
     if (showCTA) {
       const gk = goalKey || "";
       let coachingText = "";
@@ -3756,7 +3832,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.33.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.34.0</footer>
 
 
 </body>
