@@ -135,7 +135,21 @@
        ("Stabiler Bereich", "Optimierungspotenzial"), sodass im selben Raster
        drei Wörter für den grünen Bereich standen. Der BMI hat jetzt eine eigene
        Wortfamilie (Orientierungsbereich) — seine Schwellen bleiben unverändert,
-       denn er beschreibt BMI-Bereiche und keine Score-Stufen. -->
+       denn er beschreibt BMI-Bereiche und keine Score-Stufen.
+
+       v1.34.2 (die Kernbotschaft hat einen Ort): Sie stand fast wortgleich auf
+       Tab 1 und Tab 3.
+       (1) TAB 1 zeigt nur noch einen Anreisser mit dem Namen des Bereichs und
+       einem Verweis; die Handlungsschritte (Sofort / Diese Woche) sind nach
+       Tab 3 gewandert — verschoben, nicht doppelt. Tab 1 beantwortet "Wo stehe
+       ich", die Schritte gehören zu "Was tue ich". Register: _shown.focus.
+       (2) TAB-3-HERO: Die Überschrift nannte das ZIEL ("Nährstoffstatus
+       klären"), der Text darunter den HEBEL ("Bewegung & Kraft"). Jetzt steht
+       der Hebel als Überschrift, das Ziel als Kicker darüber; die Verknüpfung
+       aus v1.31.3 bleibt im Satz. Das Gesprächsangebot ist aus dem Hero-Satz
+       entfernt — es steht gebündelt in Block 2 (v1.34.0).
+       (3) MAIL-VERWEIS: "Eine ausführlichere Einordnung erhältst du per E-Mail"
+       erschien auch im Wiederaufruf, wo es keine neue Mail mehr gibt. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -2283,13 +2297,14 @@
         </div></div>`;
       }
     } else if (worst) {
-      html += `<div class="hebel-box"><div class="hebel-icon">💡</div><div>
-        <div class="hebel-title">Dein wichtigster Hebel heute</div>
-        <div class="hebel-text"><strong>${AREA_ICONS[worst.key]||""} ${worst.label}</strong> ist dein stärkster Ansatzpunkt. Kleine Verbesserungen hier wirken sich auf alle anderen Bereiche aus.</div>
-        <div style="margin-top:10px;background:var(--brand-card);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;">
-            ⚡ <strong style="color:var(--accent-green)">Sofort:</strong> ${getInsightNow(worst.key, worst.score, result.bmi, result)}<br><br>
-            📅 <strong style="color:var(--accent-amber)">Diese Woche:</strong> ${getInsightSoon(worst.key, worst.score, result.bmi, result)}
-          </div>
+      // v1.34.2 — Anreisser statt zweiter Ausformulierung. Derselbe Satz stand
+      // bisher fast wortgleich auf Tab 3. Tab 1 beantwortet "Wo stehe ich",
+      // die Handlungsschritte (Sofort / Diese Woche) gehoeren zu "Was tue ich"
+      // und stehen jetzt dort — verschoben, nicht doppelt.
+      html += `<div class="hebel-box" onclick="switchResultTab('empfehlungen')" style="cursor:pointer;"><div class="hebel-icon">💡</div><div>
+        <div class="hebel-title">Dein größter Hebel</div>
+        <div class="hebel-text"><strong>${AREA_ICONS[worst.key]||""} ${worst.label}</strong></div>
+        <div style="margin-top:8px;font-size:12.5px;color:var(--accent-green);font-weight:600;">Was das konkret heißt → Nächste Schritte</div>
       </div></div>`;
     }
 
@@ -2522,17 +2537,31 @@
       goal_fitness:"fitter und stärker zu werden", goal_weight:"an Figur und Gewicht zu arbeiten",
       goal_energy:"mehr Energie zu haben", goal_supplements:"deinen Nährstoffstatus zu klären",
       goal_curious:"deinen Standort zu bestimmen" }[heroGoalKey3] || "";
+    // v1.34.2: Der Bereich steht jetzt als Ueberschrift darueber — der Satz
+    // nennt ihn nicht noch einmal, sondern begruendet nur noch den Zusammenhang.
     const heroDesc3 = worst
-      ? `${heroGoalShort ? `Um ${heroGoalShort}, führt der kürzeste Weg über einen Bereich: ` : ""}${AREA_ICONS[worst.key]||""} <strong>${worst.label}</strong> ist laut deinem Check dein stärkster Ansatzpunkt. Kleine Verbesserungen hier wirken sich auf alle anderen Bereiche aus — ein kostenloses Gespräch im Studio zeigt dir den passenden Einstieg.`
+      ? `${heroGoalShort ? `Um ${heroGoalShort}, führt der kürzeste Weg über diesen Bereich. ` : ""}Kleine Verbesserungen hier wirken sich auf alle anderen Bereiche aus.`
       : `Deine Basis wirkt bereits stabil. Im LeVITA Studio helfen wir dir, das weiterzuentwickeln — individuell und ohne Druck.`;
+    // v1.34.2 — Die Ueberschrift nannte das ZIEL ("Nährstoffstatus klären"),
+    // der Text darunter den HEBEL ("Bewegung & Kraft ist dein stärkster
+    // Ansatzpunkt"). Zwei Richtungen in einem Block. Jetzt steht der Hebel in
+    // der Ueberschrift, das Ziel in der Kicker-Zeile darueber — die Verbindung
+    // aus v1.31.3 bleibt im Satz erhalten.
+    const heroHead3 = worst ? `${AREA_ICONS[worst.key]||""} ${worst.label}` : heroTitle3;
+    const heroKicker3 = worst && heroTitle3 ? `✦ Dein Weg zu: ${heroTitle3}` : "✦ Dein wichtigster nächster Schritt";
     html += `
       <div style="background:linear-gradient(135deg,rgba(34,201,122,0.12),rgba(59,158,255,0.08));
            border:1px solid rgba(34,201,122,0.3);border-radius:var(--radius);padding:18px;margin-bottom:16px;">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
-             color:var(--accent-green);margin-bottom:8px;">✦ Dein wichtigster nächster Schritt</div>
-        <div style="font-size:17px;font-weight:700;margin-bottom:8px;line-height:1.3;">${heroTitle3}</div>
-        <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px;">${heroDesc3}</div>
+             color:var(--accent-green);margin-bottom:8px;">${heroKicker3}</div>
+        <div style="font-size:17px;font-weight:700;margin-bottom:8px;line-height:1.3;">${heroHead3}</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${heroDesc3}</div>
+        ${worst ? `<div style="margin-top:14px;background:rgba(0,0,0,0.18);border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.6;">
+            ⚡ <strong style="color:var(--accent-green)">Sofort:</strong> ${getInsightNow(worst.key, worst.score, result.bmi, result)}<br><br>
+            📅 <strong style="color:var(--accent-amber)">Diese Woche:</strong> ${getInsightSoon(worst.key, worst.score, result.bmi, result)}
+          </div>` : ``}
       </div>`;
+    if (window._shown) window._shown.focus = true;   // v1.34.2: der eine Ort für die Kernbotschaft
 
     // Kompakter Aufbau-Hinweis — nur bei freigegebenem Affiliate (Pilotfreigabe 5.5)
     if (AFFILIATE_ENABLED) html += `
@@ -3162,7 +3191,7 @@
         <h3>Was deine Vitalität aktuell besonders unterstützen könnte</h3>
         <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;">Nicht alles muss gleichzeitig verändert werden. Entscheidend ist, welche kleinen Hebel zu deinem Alltag passen.</p>
         <ul class="support-hints">${hints.slice(0,3).map(h => `<li>${h}</li>`).join("")}</ul>
-        <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Diese Hinweise dienen der allgemeinen Orientierung und ersetzen keine medizinische Beratung. Eine ausführlichere Einordnung erhältst du in der individuellen Auswertung per E-Mail.</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Diese Hinweise dienen der allgemeinen Orientierung und ersetzen keine medizinische Beratung.${window._isReviewMode ? `` : ` Eine ausführlichere Einordnung erhältst du in der individuellen Auswertung per E-Mail.`}</div>
       </div>`;
     return { html, bloodtestShown };
   }
@@ -3866,7 +3895,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.34.1</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.34.2</footer>
 
 
 </body>
