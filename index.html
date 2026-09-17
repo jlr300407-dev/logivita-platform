@@ -79,7 +79,30 @@
        den Buddy-Text auf der Ergebnisseite, eine interne Konsolenausgabe und
        die Kommentare. Kontrolle: alle Zeichenketten der Datei gegen ae/oe/ue
        geprüft, verbleibende Treffer sind echte deutsche Wörter (bauen,
-       Ausdauer, bequem) oder URLs. -->
+       Ausdauer, bequem) oder URLs.
+
+       v1.33.0 (Sicherheitsstufen + Messung): Koordinierte Auslieferung mit der
+       Edge Function und drei neuen Zeilen in content_snippets.
+       (1) SICHERHEIT: Die Edge kannte vier Stufen und eine Altersweiche bei 70,
+       das Frontend nur eine Schwelle ohne Alter. Dadurch zeigte die Seite einem
+       75-Jährigen "nicht dringend", während die Mail genau diese Wendung
+       verbietet. Die Edge-Logik gilt jetzt auch hier: _safetyTier mit den Stufen
+       combined / senior / light / single, _doctorFirst mit allen drei
+       Bedingungen der Edge. Die Sicherheitsbox hat vier Textfassungen statt
+       einer (neue Schlüssel notice.weight_appetite_combined / _senior / _single;
+       notice.weight_appetite ist jetzt die Fassung für unter 70).
+       (2) ZENTRALER BLUTTEST-FILTER hinter der Hinweis-Sammlung: einzelne
+       Zweige und Snippets kannten die Sperre nicht und empfahlen den
+       Trockenbluttest trotz gesetztem Signal.
+       (3) MESSUNG: meta.referrer (Rohwert) und fbclid ergänzt — ohne sie ließen
+       sich organische Suche, Maps und Direkteinstieg nicht trennen, und
+       bezahlte Facebook-Klicks ohne UTM landeten unter "Homepage". env liest
+       jetzt den Hostnamen der einbettenden Seite; im iFrame stand sonst jedes
+       Ereignis auf "dev".
+       (4) RE-CHECK: Die PIN lässt sich einfügen (acht Felder mit maxlength=1
+       schluckten alles bis auf ein Zeichen), weight_carried zeigt an, ob das
+       vorbelegte Gewicht bestätigt wurde, und "Noch keinen PIN?" verlangt eine
+       Bestätigung, statt still einen zweiten unverknüpften Datensatz anzulegen. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -768,7 +791,7 @@
       </div>`;
   }
 
-  // v1.32.4: Verteilt eine eingefügte PIN auf die Felder. Vorher schluckte
+  // v1.33.0: Verteilt eine eingefügte PIN auf die Felder. Vorher schluckte
   // maxlength="1" alles bis auf ein Zeichen — die PIN aus der Mail liess sich
   // nicht kopieren, sie musste abgetippt werden.
   function pinSpread(startIndex, raw) {
@@ -814,7 +837,7 @@
     document.getElementById('pinError')?.classList.add('hidden');
   }
 
-  // v1.32.4: Der Link erzeugte bisher kommentarlos einen ZWEITEN, unverknüpften
+  // v1.33.0: Der Link erzeugte bisher kommentarlos einen ZWEITEN, unverknüpften
   // Datensatz — der Verlauf zersplitterte genau bei denen, die ihn brauchen.
   // Jetzt ist es eine bewusste Entscheidung.
   function startFreshCheckFromPin() {
@@ -904,7 +927,7 @@
     return own;
   }
 
-  // v1.32.4: Im iFrame ist der eigene Hostname weiterhin die Entwicklungsadresse.
+  // v1.33.0: Im iFrame ist der eigene Hostname weiterhin die Entwicklungsadresse.
   // Ohne diese Funktion stünde nach dem Live-Gang JEDES Event auf env='dev'.
   function pageHostname() {
     try {
@@ -986,10 +1009,10 @@
         ...meta,
         public_code: window._currentPublicCode || null,
         source: (function(){ const r = pageReferrer(); return r ? (r.includes('facebook') ? 'facebook' : r.includes('instagram') ? 'instagram' : 'other') : 'direct'; })(),
-        referrer: (function(){ const r = pageReferrer(); return r ? String(r).slice(0, 200) : undefined; })(), // v1.32.4: Rohwert — nur damit lassen sich organische Suche, Maps und Direkteinstieg trennen (undefined wird von JSON.stringify entfernt)
+        referrer: (function(){ const r = pageReferrer(); return r ? String(r).slice(0, 200) : undefined; })(), // v1.33.0: Rohwert — nur damit lassen sich organische Suche, Maps und Direkteinstieg trennen (undefined wird von JSON.stringify entfernt)
         device: window.innerWidth < 600 ? 'mobile' : 'desktop',
         is_internal: window._isInternal === true ? true : undefined, // Sofort-Fix 5: Testdaten markieren (undefined wird von JSON.stringify entfernt)
-        env: (function(){ const h = pageHostname(); return h.endsWith('le-vita.com') ? 'prod' : h.endsWith('github.io') ? 'dev' : 'local'; })(), // v1.32.4: Hostname der einbettenden Seite — im iFrame ist der eigene immer 'dev'
+        env: (function(){ const h = pageHostname(); return h.endsWith('le-vita.com') ? 'prod' : h.endsWith('github.io') ? 'dev' : 'local'; })(), // v1.33.0: Hostname der einbettenden Seite — im iFrame ist der eigene immer 'dev'
         ...(window._utm || {})
       };
       await supabaseClient.from('funnel_events').insert({
@@ -1015,7 +1038,7 @@
         const v = p.get(k);
         if (v) utm[k] = String(v).slice(0, 100); // Länge begrenzen zur Sicherheit
       });
-      // v1.32.4: Meta-Anzeigen hängen haeufig NUR fbclid an und verschlucken die UTM-
+      // v1.33.0: Meta-Anzeigen hängen haeufig NUR fbclid an und verschlucken die UTM-
       // Parameter. Ohne dieses Feld landen bezahlte Facebook-Klicks unter "Homepage".
       const _fbc = p.get('fbclid');
       if (_fbc) utm.fbclid = String(_fbc).slice(0, 100);
@@ -1395,7 +1418,7 @@
     if (!height_cm || height_cm < 120 || height_cm > 230) return alert("Bitte eine gültige Größe eingeben.");
     if (!weight_kg || weight_kg < 35 || weight_kg > 250) return alert("Bitte ein gültiges Gewicht eingeben.");
     personalData.age = age; personalData.gender = gender; personalData.height_cm = height_cm; personalData.weight_kg = weight_kg;
-    // v1.32.4: Beim Re-Check ist das Gewicht vorbelegt. Bleibt der Wert unverändert,
+    // v1.33.0: Beim Re-Check ist das Gewicht vorbelegt. Bleibt der Wert unverändert,
     // ist er übernommen und nicht bestätigt — der BMI-Verlauf ist dann mit Vorbehalt
     // zu lesen. Wer abgenommen hat, überschreibt; wer zugenommen hat, eher nicht.
     if (window._recheckPrefill) {
@@ -1974,13 +1997,39 @@
       if (own && own.key !== serverPrio.key) console.log('[Hebel] Server:', serverPrio.key, '· eigene Rechnung wäre:', own.key, '— Server gewinnt (v1.32.2)');
     }
 
-    // v1.32.2 — Red-Flag-Sperre im Frontend. Bei ungewolltem Gewichtsverlust
-    // zusammen mit Appetitveränderung oder Schwindel darf die Seite NICHT zum
-    // Bluttest raten: dort gehört der Hausarzt hin, nicht ein Selbsttest.
-    // Dieselbe Regel gilt in der Edge; bis v1.32.1 kannte sie nur die Mail.
+    // v1.33.0 — Sicherheitsstufen, portiert aus der Edge Function.
+    // Vorher kannte das Frontend nur EINE Stufe (>= 2) und kein Alter; die Edge
+    // hatte drei Stufen und eine Altersweiche bei 70. Dadurch zeigte die Seite
+    // einem 75-Jährigen "nicht dringend", während die Mail genau diese Wendung
+    // verbietet. Die Edge-Logik ist die fachlich richtige — sie gilt jetzt hier.
     const rfRisk = (k) => Number((result.answers || []).find(a => a.question_key === k)?.risk_points || 0);
-    window._redFlagNoBloodtest = (rfRisk("unintentional_weight_loss") >= 2
-      && (rfRisk("appetite_change") >= 2 || rfRisk("dizziness_pale_nails") >= 2));
+    const _wl = rfRisk("unintentional_weight_loss");
+    const _ap = rfRisk("appetite_change");
+    const _dz = rfRisk("dizziness_pale_nails");
+    const _ageSafe = Number(personalData.age || result.submission?.age || 0);
+    const _metabolic = Number(result.score?.score_payload?.metabolic?.score ?? 100);
+
+    // Stufe 1 — kombiniertes Sicherheitssignal (Edge: combinedRedFlag)
+    const _combinedRedFlag = _wl >= 3 && (_ap >= 3 || _dz >= 3);
+    // Stufe 2 — leichtes Kombinationssignal, ab 70 ohne jede Beschwichtigung
+    const _lightCombo = !_combinedRedFlag && _wl >= 1 && (_ap >= 1 || _dz >= 1);
+    const _lightComboSenior = _lightCombo && _ageSafe >= 70;
+    // Stufe 3 — einzelnes deutliches Signal
+    const _singleSignal = !_combinedRedFlag && !_lightCombo && (_wl >= 3 || _ap >= 3);
+
+    // Ärztlicher Vorrang (Edge: doctorFirst) — plus die Senioren-Stufe,
+    // bei der die Edge den Selbsttest ebenfalls ausdrücklich verbietet.
+    window._doctorFirst = _combinedRedFlag
+      || (_ageSafe >= 65 && _metabolic < 55)
+      || _wl >= 3;
+    window._redFlagNoBloodtest = window._doctorFirst || _lightComboSenior;
+
+    // Für die Textauswahl der Sicherheitsbox
+    window._safetyTier = _combinedRedFlag ? "combined"
+      : _lightComboSenior ? "senior"
+      : _lightCombo ? "light"
+      : _singleSignal ? "single"
+      : null;
 
     // ── V2: Re-Check-Einstieg aus der PIN-Ansicht ──
     // Nur im Wiederaufruf (PIN bereits serverseitig verifiziert): von hier aus
@@ -2383,10 +2432,24 @@
     const goalKeyT3 = result.submission?.goal_key || personalData.goal_key || "";
 
     // Sicherheits-Hinweis eigenständig VOR den Kategorien (Pilotfreigabe 4.8: nie mit Angeboten vermischt)
-    if (riskOf('unintentional_weight_loss') >= 2 || riskOf('appetite_change') >= 3) {
+    // v1.33.0 — Text nach Stufe, nicht mehr eine Fassung für alle Fälle.
+    // Ab 70 ist jede Relativierung ("nicht dringend") ausgeschlossen; das entspricht
+    // der Vorgabe, die in der Edge schon seit v1.31.5 gilt.
+    if (window._safetyTier) {
+      const _sn = window._snips.notice;
+      const _safetyText =
+        window._safetyTier === "combined"
+          ? (_sn.weight_appetite_combined?.body || "Ungewollter Gewichtsverlust zusammen mit verändertem Appetit oder Schwindel gehört ärztlich abgeklärt — am besten bei deiner Hausärztin oder deinem Hausarzt.")
+        : window._safetyTier === "senior"
+          ? (_sn.weight_appetite_senior?.body || "Weil ungewollter Gewichtsverlust zusammen mit vermindertem Appetit in deinem Alter mehrere Ursachen haben kann, gehört das in ärztliche Hände — sprich das bitte bei deinem nächsten Hausarztbesuch an.")
+        : window._safetyTier === "light"
+          ? (_sn.weight_appetite?.body || "Du hast ungewollten Gewichtsverlust bzw. deutliche Appetit-Veränderungen angegeben. Falls das über mehrere Wochen anhält, lass es hausärztlich abklären — nicht dringend, aber der sichere Weg.")
+          : (_sn.weight_appetite_single?.body || "Du hast Veränderungen bei Gewicht oder Appetit angegeben. Behalte das im Blick und sprich es bei Gelegenheit hausärztlich an.");
+      const _safetyTitle = (window._safetyTier === "combined" || window._safetyTier === "senior")
+        ? "Bitte ärztlich abklären lassen" : "Zuerst das Wichtigste";
       html += `<div class="hint-box" style="background:rgba(245,166,35,0.08);border-left:3px solid var(--accent-amber);border-radius:0;padding:14px 16px;margin-bottom:16px;">
-        <strong style="color:#ffb347;">Zuerst das Wichtigste</strong><br>
-        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${(window._snips.notice.weight_appetite?.body) || "Du hast ungewollten Gewichtsverlust bzw. deutliche Appetit-Veränderungen angegeben. Falls das über mehrere Wochen anhält, lass es hausärztlich abklären — nicht dringend, aber der sichere Weg."}</span>
+        <strong style="color:#ffb347;">${_safetyTitle}</strong><br>
+        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${_safetyText}</span>
       </div>`;
     }
 
@@ -2895,7 +2958,7 @@
     const scoreOf = key => { const a = areas.find(x => x.key === key); return a ? Number(a.score) : 100; };
     const bmiNum = Number(result?.bmi);
     const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
-    const hints = [];
+    let hints = [];   // v1.33.0: neu zuweisbar für den zentralen Bluttest-Filter
     const allRuleKeys = suppFocus.map(item => (item.rule_key || item.label || "").toLowerCase());
     const isVegan = allRuleKeys.some(k => k.includes("vegan") || k.includes("b12_vegan"));
     const isVegetarian = !isVegan && allRuleKeys.some(k => k.includes("vegetar") || k.includes("b12_vegetar"));
@@ -2961,6 +3024,14 @@
       hints.push(`<strong>Langzeit-Blutzucker (HbA1c)</strong> — ein Orientierungswert den viele Menschen noch nie gemessen haben. Kein Nüchternblut nötig, bequem von zuhause.`);
     }
 
+    // v1.33.0 — ZENTRALER FILTER. Einzelne Zweige und Textbausteine aus
+    // content_snippets kannten die Red-Flag-Sperre nicht und empfahlen den
+    // Trockenbluttest trotz gesetzter Sperre. Statt jede Stelle einzeln zu
+    // pruefen (und die naechste wieder zu vergessen) wird hier gefiltert,
+    // nachdem alle Hinweise zusammengetragen sind.
+    if (window._redFlagNoBloodtest) {
+      hints = hints.filter(h => !/Trockenblut|Bluttest|Blutwert|Laborkontrolle/i.test(h));
+    }
     const visibleHints = hints.slice(0, 3);
     const bloodtestShown = visibleHints.some(h => h.includes("Trockenbluttest") || h.includes("Blutwert-Check") || h.includes("HbA1c"));
 
@@ -3669,7 +3740,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.32.6</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.33.0</footer>
 
 
 </body>
