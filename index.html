@@ -122,7 +122,20 @@
        TAB1_STUDIO_CTA). Das Angebot steht gebündelt in Tab 3, Block 2.
        Warnboxen informieren, sie verkaufen nicht.
        NICHT geändert: "Meine Angaben" (Tab 1, Stammdaten) und "Meine Antworten"
-       (Tab 2, Antworten) sind verschiedene Inhalte und bleiben beide. -->
+       (Tab 2, Antworten) sind verschiedene Inhalte und bleiben beide.
+
+       v1.34.1 (zwei Zahlen, die dasselbe zu meinen schienen): Die Kachel oben
+       zählte Fokusbereiche (<55), der Abschnitt in Tab 2 alle unter 75 —
+       "2 Fokusbereiche →" führte also auf eine Liste mit fünf Einträgen.
+       Die Kachel bleibt wie sie ist (die Beschränkung auf <55 war eine bewusste
+       Entscheidung, siehe oben); stattdessen ist der Abschnitt jetzt zweigeteilt:
+       "Deine Fokusbereiche" bestätigt die Kachel, "Mit Optimierungspotenzial"
+       steht darunter. Das Abzeichen "5 Wachstumsbereiche" entfällt.
+       Ausserdem: Die BMI-Karte lieh sich zwei Bezeichnungen der Score-Skala
+       ("Stabiler Bereich", "Optimierungspotenzial"), sodass im selben Raster
+       drei Wörter für den grünen Bereich standen. Der BMI hat jetzt eine eigene
+       Wortfamilie (Orientierungsbereich) — seine Schwellen bleiben unverändert,
+       denn er beschreibt BMI-Bereiche und keine Score-Stufen. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -2416,16 +2429,32 @@
     html += renderRadarExplanation(areas);
 
     const sortedAreas = [...areas].sort((a, b) => a.score - b.score);
+    // v1.34.1 — Die Kachel oben zählt Fokusbereiche (<55), dieser Abschnitt
+    // zählte alle unter 75. Beide Zahlen stimmten, standen aber unverbunden
+    // nebeneinander: "2 Fokusbereiche →" führte auf eine Liste mit fünf.
+    // Jetzt zwei Überschriften statt einer, damit die Kachel bestätigt wird.
+    const fokusAreas = sortedAreas.filter(a => a.score < 55);
+    const optimierAreas = sortedAreas.filter(a => a.score >= 55 && a.score < 75);
     const wachstumAreas = sortedAreas.filter(a => a.score < 75);
     const staerkenAreas = sortedAreas.filter(a => a.score >= 75);
 
-    if (wachstumAreas.length > 0) {
+    if (fokusAreas.length > 0) {
       html += `<div class="bereiche-header">
-        <div class="bereiche-header-label">Deine Wachstumsbereiche — schwächster zuerst</div>
-        <div class="bereiche-wachstum-badge">${wachstumAreas.length} Wachstumsbereich${wachstumAreas.length>1?'e':''}</div>
+        <div class="bereiche-header-label">Deine Fokusbereiche — schwächster zuerst</div>
+        <div class="bereiche-wachstum-badge">${fokusAreas.length} Fokusbereich${fokusAreas.length>1?'e':''}</div>
       </div>`;
       html += `<div class="areas-grid">`;
-      wachstumAreas.forEach(area => { html += renderAreaCard(area, result); });
+      fokusAreas.forEach(area => { html += renderAreaCard(area, result); });
+      html += `</div>`;
+    }
+
+    if (optimierAreas.length > 0) {
+      html += `<div class="bereiche-header">
+        <div class="bereiche-header-label">Mit Optimierungspotenzial</div>
+        <div class="bereiche-wachstum-badge">${optimierAreas.length} Bereich${optimierAreas.length>1?'e':''}</div>
+      </div>`;
+      html += `<div class="areas-grid">`;
+      optimierAreas.forEach(area => { html += renderAreaCard(area, result); });
       html += `</div>`;
     }
 
@@ -2845,10 +2874,15 @@
     if (area.key === "bmi" && bmi !== null) {
       // BMI behält seine eigene Einordnung: der Bereichswert ist hier eine
       // Umrechnung, aussagekräftig ist der BMI selbst.
+      // v1.34.1 — Eine Wortfamilie für den BMI. Vorher liehen sich zwei der
+      // vier Stufen die Wörter der Score-Skala ("Stabiler Bereich",
+      // "Optimierungspotenzial"), sodass im selben Raster drei verschiedene
+      // Bezeichnungen für den grünen Bereich standen. Der BMI beschreibt
+      // Orientierungsbereiche, keine Score-Stufen — das sagen die Wörter jetzt.
       if (bmi < 18.5) { cls = "area-medium"; statusTxt = "△ Niedriger Orientierungsbereich"; }
-      else if (bmi < 25) { cls = "area-good"; statusTxt = "✓ Stabiler Bereich"; }
-      else if (bmi < 30) { cls = "area-medium"; statusTxt = "△ Optimierungspotenzial"; }
-      else { cls = "area-focus"; statusTxt = "⚠ Deutlich erhöhter Bereich"; }
+      else if (bmi < 25) { cls = "area-good"; statusTxt = "✓ Stabiler Orientierungsbereich"; }
+      else if (bmi < 30) { cls = "area-medium"; statusTxt = "△ Erhöhter Orientierungsbereich"; }
+      else { cls = "area-focus"; statusTxt = "⚠ Deutlich erhöhter Orientierungsbereich"; }
     }
     const icon = AREA_ICONS[area.key] || "●";
     const bmiHtml = area.key === "bmi" ? renderBmiDetail(result) : "";
@@ -3832,7 +3866,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.34.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.34.1</footer>
 
 
 </body>
