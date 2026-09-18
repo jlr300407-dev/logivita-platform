@@ -192,7 +192,14 @@
        (v1.38.0 dort), lässt ihn aber weg, sobald ein Sicherheitssignal gesetzt
        ist — dort gilt: erst der Hausarzt. Der Teaser folgt derselben Bedingung
        und nennt dann "Deine konkreten nächsten Schritte" statt des Fahrplans.
-       Kein Versprechen ohne Deckung. -->
+       Kein Versprechen ohne Deckung.
+
+       v1.38.1 (Schwelle korrigiert): Die Stufe "light" löste ab risk_points >= 1
+       aus — also bei praktisch jedem. Sichtbar wurde das erst, als in v1.38.0
+       Fahrplan und Buddy daran gekoppelt wurden: Beide fehlten in einer Mail,
+       die im selben Text "Appetit und Gewicht sind konstant" schrieb. Jetzt
+       >= 2, wie in der älteren kalibrierten Regel weiter unten in dieser Datei
+       (weightRisk >= 2 && appetiteRisk >= 2). Gleiche Änderung in der Edge. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -2157,7 +2164,11 @@
     // Stufe 1 — kombiniertes Sicherheitssignal (Edge: combinedRedFlag)
     const _combinedRedFlag = _wl >= 3 && (_ap >= 3 || _dz >= 3);
     // Stufe 2 — leichtes Kombinationssignal, ab 70 ohne jede Beschwichtigung
-    const _lightCombo = !_combinedRedFlag && _wl >= 1 && (_ap >= 1 || _dz >= 1);
+    // v1.38.1 — Schwelle von >= 1 auf >= 2. Bei >= 1 loeste die Stufe auch bei
+    // unauffaelligen Antworten aus; seit v1.38.0 haengen daran Fahrplan und
+    // Buddy, wodurch der Fehler sichtbar wurde. >= 2 entspricht der aelteren,
+    // kalibrierten Regel weiter unten (weightRisk >= 2 && appetiteRisk >= 2).
+    const _lightCombo = !_combinedRedFlag && _wl >= 2 && (_ap >= 2 || _dz >= 2);
     const _lightComboSenior = _lightCombo && _ageSafe >= 70;
     // Stufe 3 — einzelnes deutliches Signal
     const _singleSignal = !_combinedRedFlag && !_lightCombo && (_wl >= 3 || _ap >= 3);
@@ -4054,7 +4065,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.38.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.38.1</footer>
 
 
 </body>
