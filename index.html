@@ -183,7 +183,16 @@
        Loesung, denn eine PIN, die man nachfordern kann, schuetzt nichts mehr.
        Sie steht jetzt in der Versandbestaetigung, mit Kopier-Knopf und dem
        oeffentlichen Code daneben. Sichtbar nur, wenn der Nutzer ohnehin mit
-       ihr angemeldet ist. -->
+       ihr angemeldet ist.
+
+       v1.38.0 (der Teaser verspricht nur noch, was ankommt): Die Zeile "Dein
+       6-Wochen-Fahrplan — konkret, Schritt für Schritt" steht an der Stelle,
+       an der jemand seine Adresse hergibt; geliefert wurden bisher drei
+       Einzelmassnahmen ohne Zeitbezug. Die Edge erzeugt den Fahrplan jetzt
+       (v1.38.0 dort), lässt ihn aber weg, sobald ein Sicherheitssignal gesetzt
+       ist — dort gilt: erst der Hausarzt. Der Teaser folgt derselben Bedingung
+       und nennt dann "Deine konkreten nächsten Schritte" statt des Fahrplans.
+       Kein Versprechen ohne Deckung. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -2310,8 +2319,15 @@
     if (!isLinkedRecheck) {
       teaserRows += teaserRow("💬", "Deine persönliche Einordnung", `geschrieben auf deine Antworten — nicht die gleichen Tipps wie für alle anderen`);
     }
+    // v1.38.0 — Der Fahrplan wird in der Mail unterdrückt, sobald ein
+    // Sicherheitssignal gesetzt ist (dort gilt: erst der Hausarzt). Dann darf
+    // der Teaser ihn auch nicht versprechen — ein Versprechen an der Stelle,
+    // an der jemand seine Adresse hergibt, muss eingelöst werden.
+    const _planPromised = !window._safetyTier && !window._doctorFirst;
     if (!isLinkedRecheck || !window._previousData.goal_scenario) {
-      teaserRows += teaserRow("🎯", `Dein 6-Wochen-Fahrplan für „${goalTeaser}“`, "konkret, Schritt für Schritt");
+      teaserRows += _planPromised
+        ? teaserRow("🎯", `Dein 6-Wochen-Fahrplan für „${goalTeaser}“`, "konkret, Schritt für Schritt")
+        : teaserRow("🎯", `Deine konkreten nächsten Schritte für „${goalTeaser}“`, "was du selbst tun kannst, wo wir helfen");
     }
     if (!isLinkedRecheck) {
       teaserRows += teaserRow("📊", "Alle neun Bereichswerte als Übersicht", "deine Vergleichsbasis für den nächsten Check");
@@ -4038,7 +4054,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.36.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.38.0</footer>
 
 
 </body>
