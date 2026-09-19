@@ -262,7 +262,29 @@
        unter dem Knopf war nichts mehr zu sehen, also auch kein Hinweis, dass
        die Seite weitergeht. Zwei zusätzliche Media Queries auf max-height
        machen ihn auf kurzen Ansichten flacher (430 px, unter 680 px Höhe
-       360 px). Breite Bildschirme bleiben unverändert. -->
+       360 px). Breite Bildschirme bleiben unverändert.
+
+       v1.41.2 (rohe Fragen-Schlüssel in "Meine Antworten"): Dort standen
+       unintentional_weight_loss, dizziness_pale_nails, vegetables_fruit,
+       protein_intake und sun_exposure_winter statt der Fragen. Ursache war
+       eine handgepflegte Kopie der Fragetexte (questionLabels), die über die
+       Zeit von den echten Schlüsseln abgedriftet war — teils nur im Singular
+       (vegetable_fruit), teils ganz fehlend. Der Text kommt jetzt ZUERST aus
+       den geladenen Fragen, die ohnehin im Speicher liegen und die einzige
+       Wahrheit sind; die Liste bleibt nur als Rückfall und wurde um die
+       fehlenden Schlüssel ergänzt. Damit kann dieselbe Lücke nach der
+       nächsten Fragebogen-Änderung nicht wieder entstehen.
+
+       v1.41.3 (zwei Lücken in den Sicherheitsregeln):
+       (1) Der Bluttest-Filter aus v1.33.0 prüfte auf Trockenblut, Bluttest,
+       Blutwert und Laborkontrolle — NICHT auf HbA1c oder Langzeit-Blutzucker.
+       Genau dieser Hinweis wäre also trotz gesetztem Signal durchgerutscht.
+       Ergänzt um HbA1c, Langzeit-Blutzucker, Blutbild und Labor.
+       (2) Der Selbsthilfe-Tipp "Kraft statt Waage" vergleicht mit "jeder
+       Diät". Ab 70 Jahren oder bei gesetztem Sicherheitssignal ist jede
+       Reduktions-Erzählung falsch — dort geht es um Muskelerhalt. Die Edge
+       verbietet das seit v1.31.5, das Frontend hatte die Regel bisher nur für
+       die Warnbox. Der Tipp wird in diesen Fällen ersetzt. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -2834,7 +2856,21 @@
 
     if (answersData && answersData.length > 0) {
       const areaLabels = { activity:"Bewegung & Kraft", sleep:"Schlaf & Regeneration", nutrition:"Ernährung", mental:"Mentale Balance & Stress", vitamin_d:"Vitamin D & Tageslicht", bmi:"BMI", lifestyle:"Alkohol / Nikotin", micronutrients:"Mikronährstoffe", metabolic:"Energie & Stoffwechsel", general:"Allgemein" };
-      const questionLabels = { activity_days:"Wie viele Tage pro Woche bist du körperlich aktiv?",activity_intensity:"Wie intensiv ist deine Bewegung?",strength_training:"Wie oft trainierst du gezielt Kraft?",muscle_cramps:"Hast du beim Sport Muskelkrämpfe?",sitting_hours:"Wie viele Stunden sitzt du täglich?",sleep_duration:"Wie viele Stunden schläfst du pro Nacht?",sleep_quality:"Wie erholsam ist dein Schlaf?",sleep_problems:"Hast du Einschlaf- oder Durchschlafschwierigkeiten?",sleep_latency:"Wie lange brauchst du zum Einschlafen?",daytime_sleepiness:"Bist du tagsüber müde oder schläfrig?",nutrition_type:"Wie ernährst du dich?",diet_type:"Wie ernährst du dich?",omega3_fish:"Wie oft isst du fettreichen Seefisch?",vegetable_fruit:"Wie oft isst du Gemüse und Obst?",protein_frequency:"Wie oft isst du bewusst eiweißreiche Lebensmittel?",meal_regularity:"Isst du regelmäßig zu festen Zeiten?",water_intake:"Wie viel trinkst du täglich?",sunlight_exposure:"Wie viel Zeit verbringst du täglich im Freien?",alcohol_frequency:"Wie häufig trinkst du Alkohol?",alcohol_amount:"Wie viele alkoholische Getränke pro Monat?",smoking:"Rauchst du?",nicotine_use:"Rauchst du oder nutzt du Nikotin?",stress_level:"Wie gestresst fühlst du dich im Alltag?",low_mood:"Wie oft fühlst du dich niedergeschlagen?",low_interest:"Wie oft verlierst du die Freude an Dingen?",social_connection:"Wie gut bist du sozial eingebunden?",energy_level:"Wie ist dein Energielevel im Alltag?",appetite_change:"Hast du Veränderungen beim Appetit?",weight_changes:"Hast du ungewollte Gewichtsveränderungen?",supplement_usage:"Nimmst du Nahrungsergänzungsmittel?",supplement_types:"Welche Supplements nimmst du?",vital_goal:"Was ist dein wichtigstes Ziel?" };
+      const questionLabels = { activity_days:"Wie viele Tage pro Woche bist du körperlich aktiv?",activity_intensity:"Wie intensiv ist deine Bewegung?",strength_training:"Wie oft trainierst du gezielt Kraft?",muscle_cramps:"Hast du beim Sport Muskelkrämpfe?",sitting_hours:"Wie viele Stunden sitzt du täglich?",sleep_duration:"Wie viele Stunden schläfst du pro Nacht?",sleep_quality:"Wie erholsam ist dein Schlaf?",sleep_problems:"Hast du Einschlaf- oder Durchschlafschwierigkeiten?",sleep_latency:"Wie lange brauchst du zum Einschlafen?",daytime_sleepiness:"Bist du tagsüber müde oder schläfrig?",nutrition_type:"Wie ernährst du dich?",diet_type:"Wie ernährst du dich?",omega3_fish:"Wie oft isst du fettreichen Seefisch?",vegetable_fruit:"Wie oft isst du Gemüse und Obst?",protein_frequency:"Wie oft isst du bewusst eiweißreiche Lebensmittel?",meal_regularity:"Isst du regelmäßig zu festen Zeiten?",water_intake:"Wie viel trinkst du täglich?",sunlight_exposure:"Wie viel Zeit verbringst du täglich im Freien?",alcohol_frequency:"Wie häufig trinkst du Alkohol?",alcohol_amount:"Wie viele alkoholische Getränke pro Monat?",smoking:"Rauchst du?",nicotine_use:"Rauchst du oder nutzt du Nikotin?",stress_level:"Wie gestresst fühlst du dich im Alltag?",low_mood:"Wie oft fühlst du dich niedergeschlagen?",low_interest:"Wie oft verlierst du die Freude an Dingen?",social_connection:"Wie gut bist du sozial eingebunden?",energy_level:"Wie ist dein Energielevel im Alltag?",appetite_change:"Hast du Veränderungen beim Appetit?",weight_changes:"Hast du ungewollte Gewichtsveränderungen?",supplement_usage:"Nimmst du Nahrungsergänzungsmittel?",supplement_types:"Welche Supplements nimmst du?",vital_goal:"Was ist dein wichtigstes Ziel?",unintentional_weight_loss:"Hast du ungewollt an Gewicht verloren?",dizziness_pale_nails:"Hast du Schwindel oder blasse Nägel bemerkt?",vegetables_fruit:"Wie oft isst du Gemüse und Obst?",protein_intake:"Wie oft isst du bewusst eiweißreiche Lebensmittel?",sun_exposure_winter:"Wie viel Tageslicht bekommst du im Winter?",period_bleeding:"Wie stark ist deine Monatsblutung?",hormonal_transition:"Befindest du dich in den Wechseljahren?" };
+      // v1.41.2 — Der Fragetext kommt jetzt ZUERST aus den geladenen Fragen.
+      // Die Liste questionLabels war eine handgepflegte Kopie und im Laufe der
+      // Zeit abgedriftet: vegetable_fruit statt vegetables_fruit,
+      // protein_frequency statt protein_intake, sunlight_exposure statt
+      // sun_exposure_winter, weight_changes statt unintentional_weight_loss,
+      // dizziness_pale_nails fehlte ganz. Bei jedem Treffer stand der rohe
+      // Schluessel in der Auswertung. Die geladenen Fragen sind die einzige
+      // Wahrheit; die Liste bleibt nur als Ruckfall, falls sie fehlen.
+      const questionTextFor = (key) => {
+        if (!key) return "";
+        const q = (questions || []).find(x => x.question_key === key);
+        if (q && q.question_text) return q.question_text;
+        return questionLabels[key] || key;
+      };
       const grouped = {};
       answersData.forEach(a => { const area = a.area_key || "general"; if (!grouped[area]) grouped[area] = []; grouped[area].push(a); });
       const answersHtml = Object.entries(grouped).map(([area, ans]) => `
@@ -2842,7 +2878,7 @@
           <div style="font-size:11px;font-weight:700;color:var(--accent-green);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">${areaLabels[area]||area}</div>
           ${ans.map(a => `
             <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:0.5px solid var(--border);">
-              <div style="font-size:12px;color:var(--text-secondary);flex:1;">${questionLabels[a.question_key]||a.question_key}</div>
+              <div style="font-size:12px;color:var(--text-secondary);flex:1;">${questionTextFor(a.question_key)}</div>
               <div style="font-size:12px;color:var(--text-primary);font-weight:500;text-align:right;margin-left:12px;max-width:55%;">${a.answer_text}</div>
             </div>`).join("")}
         </div>`).join("");
@@ -2971,6 +3007,13 @@
       bmi: ["Kraft statt Waage", "Zweimal pro Woche einfache Kraftübungen (Kniebeugen, Stütz) verändern die Körperzusammensetzung nachhaltiger als jede Diät."]
     };
     Object.entries(window._snips.self_tip).forEach(([k, s]) => { if (s.title && s.body) selfTips[k] = [s.title, s.body]; });
+    // v1.41.3 — Der BMI-Tipp vergleicht mit "jeder Diät". Ab 70 Jahren oder bei
+    // einem gesetzten Sicherheitssignal ist jede Reduktions-Erzaehlung falsch:
+    // dort geht es um Muskelerhalt, nicht um Gewicht. Die Edge verbietet das
+    // seit v1.31.5, das Frontend hatte die Regel nur fuer die Warnbox.
+    if ((Number(personalData.age || 0) >= 70) || window._safetyTier || window._doctorFirst) {
+      selfTips.bmi = ["Muskeln erhalten", "Zweimal pro Woche einfache Kraftübungen (Kniebeugen, Stütz) — im Alter ist der Erhalt von Muskelmasse wichtiger als jede Zahl auf der Waage."];
+    }
     const usedAreas = new Set();
     const cat1 = [];
     (score.top_priorities || []).forEach(p => {
@@ -3531,7 +3574,7 @@
     // pruefen (und die naechste wieder zu vergessen) wird hier gefiltert,
     // nachdem alle Hinweise zusammengetragen sind.
     if (window._redFlagNoBloodtest) {
-      hints = hints.filter(h => !/Trockenblut|Bluttest|Blutwert|Laborkontrolle/i.test(h));
+      hints = hints.filter(h => !/Trockenblut|Bluttest|Blutwert|Laborkontrolle|HbA1c|Langzeit-?Blutzucker|Blutbild|Labor/i.test(h));
     }
     const visibleHints = hints.slice(0, 3);
     const bloodtestShown = visibleHints.some(h => h.includes("Trockenbluttest") || h.includes("Blutwert-Check") || h.includes("HbA1c"));
@@ -4360,7 +4403,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.41.1</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.41.3</footer>
 
 
 </body>
