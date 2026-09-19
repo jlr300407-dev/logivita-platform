@@ -314,7 +314,18 @@
        (2) Zwei Textstellen nannten noch "Trockenbluttest" als Produkt: der
        Mikronährstoff-Tipp (mittlere Stufe, ohne Red-Flag-Prüfung) und der
        Vitamin-D-Hinweis. Jetzt neutral "Laborkontrolle", der Tipp prüft
-       _redFlagNoBloodtest. bloodtestShown erkennt die neutrale Formulierung. -->
+       _redFlagNoBloodtest. bloodtestShown erkennt die neutrale Formulierung.
+
+       v1.43.0 (weight_carried auf der Submission, gehört zu edge-2026-09-20.2
+       und der SQL-Spalte submissions.weight_carried):
+       (1) Der Merker lag bisher nur im Tracking-Event. Er geht jetzt mit dem
+       Re-Check an die Edge und wird gespeichert; im Wiederaufruf kommt er
+       über submission.weight_carried zurück.
+       (2) "Übernommen" heisst jetzt: Feld nicht angefasst UND Wert gleich.
+       Vorher genügte der Zahlenvergleich, wer bewusst dasselbe Gewicht
+       eintippte, zählte mit.
+       (3) Bei übernommenem Gewicht zeigt die BMI-Karte kein "stabil gehalten",
+       sondern "kein echter Vergleich", und die Verlaufskarte erklärt, warum. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -1553,7 +1564,7 @@
             </select>
           </div>
           <div class="form-field"><label>Größe (cm) *</label><input type="number" id="height_cm" placeholder="z.B. 178" min="120" max="230" value="${pre ? v(pre.height_cm) : ''}" /></div>
-          <div class="form-field"><label>${pre ? 'Gewicht heute (kg) *' : 'Gewicht (kg) *'}</label><input type="number" id="weight_kg" placeholder="z.B. 76" min="35" max="250" value="${pre ? v(pre.weight_kg) : ''}" /></div>
+          <div class="form-field"><label>${pre ? 'Gewicht heute (kg) *' : 'Gewicht (kg) *'}</label><input type="number" id="weight_kg" placeholder="z.B. 76" min="35" max="250" value="${pre ? v(pre.weight_kg) : ''}"${pre ? ` oninput="if(window._recheckPrefill)window._recheckPrefill.weight_touched=true;"` : ''} /></div>
         </div>
         <button class="next-btn" onclick="savePersonalData()">Weiter →</button>
       </div>`;
@@ -1672,7 +1683,11 @@
     // ist er übernommen und nicht bestätigt — der BMI-Verlauf ist dann mit Vorbehalt
     // zu lesen. Wer abgenommen hat, überschreibt; wer zugenommen hat, eher nicht.
     if (window._recheckPrefill) {
-      window._recheckPrefill.weight_carried = (Number(window._recheckPrefill.weight_kg) === weight_kg);
+      // v1.43.0 — Nur noch "übernommen", wenn das Feld gar nicht angefasst wurde.
+      // Vorher zählte nur der Zahlenvergleich: Wer sein unverändertes Gewicht
+      // bewusst neu eintippte, galt ebenfalls als übernommen.
+      window._recheckPrefill.weight_carried = !window._recheckPrefill.weight_touched
+        && (Number(window._recheckPrefill.weight_kg) === weight_kg);
     }
     trackEvent('personal_completed', { step_index: currentStep, age: personalData.age, gender: personalData.gender });
     const nextStepIndex = currentStep + 1;
@@ -2131,9 +2146,15 @@
       if (wasRecheck) {
         payload.previous_public_code = window._previousLink.public_code;
         payload.previous_pin = window._previousLink.pin;
+        payload.weight_carried = _weightCarried;   // v1.43.0 — jetzt auch auf der Submission
       }
       const result = await callFunction(payload);
       clearProgress();   // v1.41.0 — Check abgeschickt, Zwischenstand verbraucht
+      // v1.43.0 — Der Merker gilt nur bei tatsächlich verknüpftem Check; im
+      // Wiederaufruf liefert ihn die Edge über submission.weight_carried.
+      if (wasRecheck && result.link_status === 'linked') {
+        result.submission = Object.assign({}, result.submission || {}, { weight_carried: _weightCarried === true });
+      }
       latestResult = result;
       absorbV2Result(result); // V2: Szenarien, Verlauf, link_status
       window._previousLink = null; window._recheckPrefill = null; // verbraucht — nie doppelt verwenden
@@ -2756,6 +2777,9 @@
 
     // ── V2: Verlaufs-Karte (nur bei verknüpftem Vorgänger-Check) ──
     window._prevAreaMap = null;
+    // v1.43.0 — Gewicht aus dem Vorcheck unverändert übernommen? Dann ist der
+    // BMI-Vergleich keiner: "stabil" hiesse nur, dass niemand das Feld geändert hat.
+    window._weightCarried = !!window._previousData && result.submission?.weight_carried === true;
     if (window._previousData && window._previousData.score_payload) {
       const pm = {};
       Object.entries(window._previousData.score_payload).forEach(([k, v]) => { if (k !== 'general' && v && isFinite(Number(v.score))) pm[k] = Number(v.score); });
@@ -3392,7 +3416,9 @@
       const curS = Math.round(area.score);
       const d = curS - prevS;
       const deltaTxt = Math.abs(d) <= 2 ? `<span>· stabil gehalten</span>` : (d > 0 ? `<span class="up">▲ +${d}</span>` : `<span class="down">▼ ${d}</span>`);
-      prevDeltaHtml = `<div class="area-prev-delta">Vorher ${prevS} → heute ${curS} ${deltaTxt}</div>`;
+      prevDeltaHtml = (area.key === "bmi" && window._weightCarried)
+        ? `<div class="area-prev-delta">Vorher ${prevS} → heute ${curS} <span>· Gewicht vom letzten Check übernommen — kein echter Vergleich</span></div>`
+        : `<div class="area-prev-delta">Vorher ${prevS} → heute ${curS} ${deltaTxt}</div>`;
     }
     // v1.41.4 — Ab 85 Punkten (ausser BMI) keine Detailansicht: Die Tipps aus
     // dem good-Zweig ("Energie beobachten") waren dort Fuellmaterial.
@@ -3722,6 +3748,7 @@
         </div>
         <div class="verlauf-row" style="font-size:15px;">Vitalitäts-Index: ${prevTotal} → <strong style="color:var(--text-primary);font-size:17px;">${curTotal}</strong> ${deltaHtml}</div>
         ${bioHtml}
+        ${window._weightCarried ? `<div style="font-size:11.5px;color:var(--accent-amber);line-height:1.5;margin-top:8px;">Dein Gewicht ist unverändert vom letzten Check übernommen. Der BMI-Vergleich sagt deshalb nichts über eine echte Veränderung — trag beim nächsten Check dein aktuelles Gewicht ein.</div>` : ''}
         <div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">Die Bereichs-Entwicklung siehst du unter „Meine Bereiche“ — dort kannst du in der Spinne die Vorher-Ebene einblenden.</div>
       </div>`;
   }
@@ -4192,9 +4219,11 @@
       gender: latestResult.submission?.gender || personalData.gender || '',
       height_cm: latestResult.submission?.height_cm || personalData.height_cm || null,
       weight_kg: latestResult.submission?.weight_kg || personalData.weight_kg || null,
-      // Merker: Ausgangswert stammt aus dem Vorcheck. Wird beim Absenden mitgeschickt
-      // und im Formular auf false gesetzt, sobald der Nutzer das Feld anfasst.
-      weight_carried: true
+      // Merker: Ausgangswert stammt aus dem Vorcheck. savePersonalData() setzt ihn
+      // endgültig (false, sobald das Feld angefasst oder der Wert geändert wurde);
+      // submitAll() schickt ihn mit, die Edge speichert ihn auf der Submission.
+      weight_carried: true,
+      weight_touched: false
     };
     window._isReviewMode = false;      // neuer Check = neuer Funnel
     window._currentPublicCode = null;  // Events gehören zum neuen Check
@@ -4426,7 +4455,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.42.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.43.0</footer>
 
 
 </body>
