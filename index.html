@@ -213,7 +213,19 @@
        Auf dem Handy öffnet navigator.share die installierten Messenger; auf
        dem Desktop wird der Text in die Zwischenablage gelegt. Ein Abbruch im
        Teilen-Dialog wird bewusst NICHT als Erfolg gemeldet.
-       Events: referral_prompt_view und referral_shared (mit how). -->
+       Events: referral_prompt_view und referral_shared (mit how).
+
+       v1.39.1 (PIN auch für Erstnutzer sichtbar): Seit v1.36.0 stand er in der
+       Versandbestätigung — die sieht aber nur, wer mit PIN zurückkommt, also
+       genau die Gruppe, die ihn ohnehin hat. Für Erstnutzer stand er NUR in der
+       Mail; wer sie nicht findet, kommt nie wieder an seine Auswertung. Die
+       Edge gibt den PIN jetzt in der Antwort mit zurück (dort v1.39.1), das
+       Frontend zeigt ihn direkt nach dem Versand und merkt ihn sich für die
+       Sitzung, damit Ziel-Speichern und Re-Check ohne erneute Eingabe laufen.
+       Der Anreiz-Gedanke bleibt unberührt: VOR der Anforderung ist der PIN
+       weiterhin nicht sichtbar — danach gibt es keinen Grund mehr dafür.
+       Beide Anzeigen (Versand und Wiederaufruf) nutzen jetzt denselben
+       Baustein accessPinBlockHtml statt zweier Kopien. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -1991,7 +2003,11 @@
       // mail_sent_success NUR bei bestätigtem email_sent:true — nie optimistisch.
       if (result.email_sent) {
         trackEvent('mail_sent_success', { email_sent: true });
-        statusEl.innerHTML = `<div class="status-msg info-box box-success">✓ Dein Vital-Plan wurde an <strong>${email}</strong> versendet. Schau gleich in dein Postfach — ggf. auch im Spam-Ordner.</div>${recheckReminderHtml()}`;
+        // v1.39.1: Die Edge liefert den PIN jetzt mit — fuer die Sitzung merken,
+        // damit Re-Check und Ziel-Speichern ohne erneute Eingabe funktionieren.
+        if (result.access_pin) window._accessPin = result.access_pin;
+        const pinBlock = accessPinBlockHtml(result.access_pin, latestResult.public_code);
+        statusEl.innerHTML = `<div class="status-msg info-box box-success">✓ Dein Vital-Plan wurde an <strong>${email}</strong> versendet. Schau gleich in dein Postfach — ggf. auch im Spam-Ordner.</div>${pinBlock}${recheckReminderHtml()}`;
         btn.disabled = true; btn.innerText = "✓ Vital-Plan wurde versendet";
         showFeedbackBox();
       } else {
@@ -3540,17 +3556,7 @@
           Dein persönlicher Vital-Plan wurde${sentTxt} an deine E-Mail-Adresse geschickt.
           Falls du ihn nicht findest, schau bitte auch im Spam-Ordner nach.
         </div>
-        ${(window._accessPin && result?.public_code) ? `
-        <div style="background:rgba(34,201,122,0.08);border:1px solid rgba(34,201,122,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;text-align:left;">
-          <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-green);margin-bottom:8px;">🔑 Dein persönlicher PIN</div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div style="font-family:'DM Serif Display',serif;font-size:23px;letter-spacing:.16em;flex-grow:1;word-break:break-all;">${window._accessPin}</div>
-            <button onclick="copyAccessPin(this)" style="min-height:44px;padding:0 14px;background:rgba(255,255,255,0.06);color:var(--text-primary);border:1px solid var(--border);border-radius:9px;font-size:12.5px;cursor:pointer;flex-shrink:0;">Kopieren</button>
-          </div>
-          <div style="font-size:11.5px;color:var(--text-secondary);line-height:1.6;margin-top:10px;">
-            Mit deinem Code <strong style="color:var(--text-primary);">${result.public_code}</strong> und diesem PIN rufst du dein Ergebnis jederzeit wieder auf — und verknüpfst deinen nächsten Check damit. Er steht auch in deiner Mail.
-          </div>
-        </div>` : ``}
+        ${accessPinBlockHtml(window._accessPin, result?.public_code)}
         <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;background:rgba(255,255,255,0.04);border-radius:var(--radius-sm);padding:12px 14px;text-align:left;">
           Diese Seite zeigt dir dieselbe Auswertung jederzeit interaktiv — mit Spinne, Bereichen und Simulator.
           Einen neuen Vital-Plan per Mail gibt es mit deinem nächsten Check.
@@ -3659,6 +3665,26 @@
   // PIN, die man nachfordern kann, ist keine). Sie hier sichtbar zu machen,
   // sobald der Nutzer ohnehin mit ihr angemeldet ist, kostet nichts und
   // schliesst die Luecke.
+  // v1.39.1 — Derselbe PIN-Block wie im Wiederaufruf, jetzt auch direkt nach
+  // dem Versand. Bisher stand der PIN fuer Erstnutzer NUR in der Mail: wer sie
+  // nicht findet oder loescht, kommt nie wieder an seine Auswertung. Nach dem
+  // Versand gibt es auch keinen Grund mehr, ihn zurueckzuhalten — die Adresse
+  // liegt vor, der Anreiz hat gewirkt.
+  function accessPinBlockHtml(pin, publicCode) {
+    if (!pin || !publicCode) return "";
+    return `
+      <div style="background:rgba(34,201,122,0.08);border:1px solid rgba(34,201,122,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-top:12px;text-align:left;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-green);margin-bottom:8px;">🔑 Dein persönlicher PIN</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-family:'DM Serif Display',serif;font-size:23px;letter-spacing:.16em;flex-grow:1;word-break:break-all;">${pin}</div>
+          <button onclick="copyAccessPin(this)" style="min-height:44px;padding:0 14px;background:rgba(255,255,255,0.06);color:var(--text-primary);border:1px solid var(--border);border-radius:9px;font-size:12.5px;cursor:pointer;flex-shrink:0;">Kopieren</button>
+        </div>
+        <div style="font-size:11.5px;color:var(--text-secondary);line-height:1.6;margin-top:10px;">
+          Sichere ihn dir jetzt. Mit deinem Code <strong style="color:var(--text-primary);">${publicCode}</strong> und diesem PIN rufst du dein Ergebnis jederzeit wieder auf — und verknüpfst deinen nächsten Check damit. Er steht auch in deiner Mail.
+        </div>
+      </div>`;
+  }
+
   function copyAccessPin(btn) {
     const pin = window._accessPin || '';
     if (!pin) return;
@@ -4147,7 +4173,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.39.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.39.1</footer>
 
 
 </body>
