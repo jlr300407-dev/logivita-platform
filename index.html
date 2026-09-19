@@ -254,7 +254,15 @@
        Passt irgendetwas nicht, wird still verworfen und normal von vorn
        begonnen; nie ein halb wiederhergestellter Zustand. Gelöscht wird beim
        Absenden und beim bewussten Neustart.
-       Events: progress_offered, progress_resumed, progress_discarded. -->
+       Events: progress_offered, progress_resumed, progress_discarded.
+
+       v1.41.1 (Hero auf flachen Bildschirmen): Die Höhe richtete sich nur nach
+       der Fensterbreite, nicht nach der Höhe. Auf einem 13-Zoll-Notebook (rund
+       620 px sichtbare Fläche) füllte der Hero mit 580 px den ganzen Schirm —
+       unter dem Knopf war nichts mehr zu sehen, also auch kein Hinweis, dass
+       die Seite weitergeht. Zwei zusätzliche Media Queries auf max-height
+       machen ihn auf kurzen Ansichten flacher (430 px, unter 680 px Höhe
+       360 px). Breite Bildschirme bleiben unverändert. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -632,6 +640,21 @@
       #hero-subline { max-width: 480px !important; font-size: 18px !important; }
       #hero-features { color: rgba(255,255,255,0.85) !important; font-size: 13px !important; }
       #hero-cta { max-width: 480px !important; }
+    }
+    /* v1.41.1 — Flache Bildschirme (13-Zoll-Notebooks, Laptops mit 16:10).
+       Der Hero war mit 580 px so hoch, dass bei rund 620 px sichtbarer
+       Fläche nichts darunter mehr zu sehen war — kein Hinweis, dass die
+       Seite weitergeht. Auf kurzen Ansichten wird er deshalb flacher. */
+    @media (min-width: 640px) and (max-height: 820px) {
+      #hero-block { min-height: 430px !important; }
+      #hero-title { font-size: 36px !important; }
+      #hero-subline { font-size: 16px !important; margin-bottom: 16px !important; }
+      #hero-features { margin-bottom: 18px !important; }
+      #hero-block > div:last-child { padding: 14px 22px 24px !important; }
+    }
+    @media (min-width: 640px) and (max-height: 680px) {
+      #hero-block { min-height: 360px !important; }
+      #hero-title { font-size: 30px !important; }
     }
   </style>
   <img id="hero-img-mobile" src="assets/hero-mobile.jpg" width="800" height="999" fetchpriority="high" decoding="async"  style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;" alt="">
@@ -4337,7 +4360,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.41.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.41.1</footer>
 
 
 </body>
