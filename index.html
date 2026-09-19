@@ -199,7 +199,21 @@
        Fahrplan und Buddy daran gekoppelt wurden: Beide fehlten in einer Mail,
        die im selben Text "Appetit und Gewicht sind konstant" schrieb. Jetzt
        >= 2, wie in der älteren kalibrierten Regel weiter unten in dieser Datei
-       (weightRisk >= 2 && appetiteRisk >= 2). Gleiche Änderung in der Edge. -->
+       (weightRisk >= 2 && appetiteRisk >= 2). Gleiche Änderung in der Edge.
+
+       v1.39.0 (Empfehlungs-Moment): Im Produkt gab es keinen einzigen Anlass
+       zum Weitersagen, obwohl 65 % der Befragten dazu bereit wären. Der Button
+       erscheint jetzt unmittelbar NACH "Als mein Ziel setzen" — dem emotional
+       stärksten Punkt des Ablaufs — und nicht am Seitenende.
+       GETEILT WIRD NUR DER ANLASS: Der Link enthält weder public_code noch PIN
+       noch irgendeinen Wert. Score, Bereiche und Vitalitäts-Alter sind
+       Gesundheitsangaben und haben im Chatverlauf einer anderen Person nichts
+       zu suchen. Er trägt utm_source=empfehlung&utm_medium=referral, damit der
+       Kanal im Dashboard messbar wird.
+       Auf dem Handy öffnet navigator.share die installierten Messenger; auf
+       dem Desktop wird der Text in die Zwischenablage gelegt. Ein Abbruch im
+       Teilen-Dialog wird bewusst NICHT als Erfolg gemeldet.
+       Events: referral_prompt_view und referral_shared (mit how). -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -3499,6 +3513,7 @@
           <span onclick="goToRadar()" style="font-size:12.5px;font-weight:600;color:var(--accent-blue);cursor:pointer;">In der Vitalitäts-Spinne ansehen →</span>
         </div>
         <button class="sim-goal-btn" id="simGoalBtn" onclick="setSimulatorGoal()" disabled>🎯 Als mein Ziel setzen</button>
+        <div id="referralHost"></div>
         <div class="sim-note">Eine Simulation, keine Messung — nur beeinflussbare Verhaltens-Hebel, Symptom-Fragen und BMI sind bewusst ausgenommen. Dein gesetztes Ziel greifen wir beim nächsten Check wieder auf.</div>
       </div>`;
   }
@@ -3764,6 +3779,68 @@
     syncRadarToggleButtons();
   }
 
+  // ══════════════════════════════════════════════════════════════
+  // v1.39.0 — Empfehlung. Geteilt wird ausschliesslich der ANLASS, niemals
+  // ein Wert: Score, Bereiche und Vitalitaets-Alter sind Gesundheitsangaben
+  // und haben im Chatverlauf einer anderen Person nichts zu suchen.
+  // Der Link traegt utm_source=empfehlung, damit der Kanal im Dashboard
+  // sichtbar wird (Quelle dort seit der Funnel-Runde angelegt).
+  // ══════════════════════════════════════════════════════════════
+  const REFERRAL_TEXT = "Ich habe gerade meinen Vital-Check gemacht — 5 Minuten, kostenlos, und man sieht direkt, wo man steht. Schau mal:";
+
+  function referralLink() {
+    const base = (location.origin + location.pathname).replace(/[?&]+$/, "");
+    return base + (base.includes("?") ? "&" : "?") + "utm_source=empfehlung&utm_medium=referral";
+  }
+
+  function showReferralPrompt() {
+    const host = document.getElementById('referralHost');
+    if (!host || host.dataset.shown === '1') return;
+    host.dataset.shown = '1';
+    host.innerHTML = `
+      <div style="background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.25);
+           border-radius:var(--radius);padding:16px;margin-top:14px;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:5px;">🤝 Kennst du jemanden, für den das auch passt?</div>
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">
+          Schick den Check weiter — geteilt wird nur der Link, keine deiner Angaben.
+        </div>
+        <button id="referralBtn" onclick="shareReferral(this)"
+          style="width:100%;min-height:48px;background:rgba(245,166,35,0.15);color:#ffb347;
+                 border:1px solid rgba(245,166,35,0.35);border-radius:10px;font-family:inherit;
+                 font-size:14px;font-weight:700;cursor:pointer;">Check weiterempfehlen</button>
+      </div>`;
+    host.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    try { trackEvent('referral_prompt_view'); } catch (e) { /* still */ }
+  }
+
+  async function shareReferral(btn) {
+    const url = referralLink();
+    const done = (how) => {
+      btn.textContent = how === 'copy' ? '✓ Link kopiert' : '✓ Danke fürs Weitersagen';
+      setTimeout(() => { btn.textContent = 'Check weiterempfehlen'; }, 2600);
+      try { trackEvent('referral_shared', { how }); } catch (e) { /* still */ }
+    };
+    // Handy: oeffnet WhatsApp, Signal, Mail — was der Nutzer installiert hat
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'LeVITA Vital-Check', text: REFERRAL_TEXT, url });
+        done('share');
+        return;
+      } catch (e) {
+        if (e && e.name === 'AbortError') return;   // Nutzer hat abgebrochen — nichts melden
+      }
+    }
+    const text = REFERRAL_TEXT + ' ' + url;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try { await navigator.clipboard.writeText(text); done('copy'); return; } catch (e) { /* weiter */ }
+    }
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done('copy'); } catch (e) { /* still */ }
+    document.body.removeChild(ta);
+  }
+
   async function setSimulatorGoal() {
     const proj = getActiveProjection();
     if (!proj || !proj.entry || !latestResult?.public_code) return;
@@ -3795,6 +3872,11 @@
         // Ziel-Karte im Simulator sofort nachziehen, damit die Übersicht stimmt
         const goalHost = document.getElementById('simGoalCard');
         if (goalHost) goalHost.innerHTML = renderGoalCardHtml();
+        // v1.39.0 — Der Empfehlungs-Moment. Er sitzt hier, weil dies der
+        // emotional staerkste Punkt des Ablaufs ist: jemand hat sich gerade
+        // entschieden, etwas zu aendern. Vorher gab es im Produkt ueberhaupt
+        // keinen Anlass zum Weitersagen, obwohl 65 % dazu bereit waeren.
+        showReferralPrompt();
       } else {
         throw new Error('Speichern nicht bestätigt.');
       }
@@ -4065,7 +4147,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.38.1</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.39.0</footer>
 
 
 </body>
