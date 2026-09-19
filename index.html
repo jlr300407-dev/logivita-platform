@@ -235,7 +235,26 @@
        gegen den Umbruch beim Laden und fetchpriority="high", weil sie
        oberhalb der Falz stehen. Die Datei ist von 519 auf 283 KB geschrumpft,
        und ab dem zweiten Aufruf holt der Browser die Bilder gar nicht mehr.
-       Für Mobilfunk auf dem Land ist das der spürbarste Unterschied. -->
+       Für Mobilfunk auf dem Land ist das der spürbarste Unterschied.
+
+       v1.41.0 (Zwischenstand): Der Check war alles oder nichts — wer nach
+       Frage 12 unterbrochen wurde, fing von vorn an. Bei Newsletter- und
+       Studio-Verkehr fiel das kaum auf; mit Suchverkehr ist die Abbruchrate
+       systematisch höher und ein verlorener Zwischenstand ein endgültig
+       verlorener Nutzer. Gespeichert wird nach jeder Antwort LOKAL im Browser
+       (currentStep, selectedAnswers, personalData) — nie auf dem Server.
+       DREI SCHUTZMECHANISMEN: (1) 24 Stunden Gültigkeit, danach verworfen —
+       es sind Gesundheitsangaben. (2) Fingerabdruck der geladenen Fragen statt
+       Versionsnummer: erkennt jede inhaltliche Änderung, sonst passten
+       gespeicherte Antworten nach einer Fragebogen-Änderung nicht mehr zu den
+       Indizes (stiller Fehler, der erst Wochen später aufgefallen wäre).
+       (3) Es wird GEFRAGT, nicht automatisch fortgesetzt: Auf einem geteilten
+       Gerät — Studio-Tablet, Familien-Laptop — würde automatisches Fortsetzen
+       jemandem die Antworten eines anderen unterschieben.
+       Passt irgendetwas nicht, wird still verworfen und normal von vorn
+       begonnen; nie ein halb wiederhergestellter Zustand. Gelöscht wird beim
+       Absenden und beim bewussten Neustart.
+       Events: progress_offered, progress_resumed, progress_discarded. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -1130,6 +1149,7 @@
       if (benchmarkFlashEnabled()) loadBenchmarks(); // kein unnötiger Request, solange das Feature aus ist
       loadContentSnippets(); // fire-and-forget — bis zur Ergebnisseite geladen, sonst Fallback
       buildSteps(0);
+      offerResume();   // v1.41.0 — fragt, statt automatisch fortzusetzen
       document.getElementById("loading").classList.add("hidden");
       updateProgress();
       // V2: Nach dem Re-Check-Start direkt in den Fragen-Flow springen
@@ -1578,8 +1598,138 @@
     buildGroupedQuestionsForGender();
     buildSteps(nextStepIndex);
     currentStep = nextStepIndex;
+    saveProgress();   // v1.41.0
     updateProgress();
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // v1.41.0 — ZWISCHENSTAND. Bisher war der Check alles oder nichts:
+  // wer nach Frage 12 unterbrochen wurde, fing von vorn an. Bei warmem
+  // Verkehr (Newsletter, Studio) fiel das kaum auf; bei Suchverkehr ist
+  // die Abbruchrate systematisch hoeher und ein verlorener Zwischenstand
+  // ein endgueltig verlorener Nutzer.
+  //
+  // Der ganze Zustand des Fragebogens steckt in drei Variablen. Gespeichert
+  // wird lokal im Browser, nie auf dem Server.
+  // ══════════════════════════════════════════════════════════════
+  const PROGRESS_KEY = 'levita_progress_v1';
+  const PROGRESS_MAX_AGE_MS = 24 * 60 * 60 * 1000;   // Gesundheitsangaben liegen nicht wochenlang herum
+
+  // Fingerabdruck der geladenen Fragen. Besser als eine Versionsnummer:
+  // erkennt JEDE inhaltliche Aenderung. Ohne das passten gespeicherte
+  // Antworten nach einer Fragebogen-Aenderung nicht mehr zu den Indizes —
+  // ein stiller Fehler, der erst Wochen spaeter auffiele.
+  function questionsFingerprint() {
+    try {
+      const ids = (questions || []).map(q => q.question_id).join('|');
+      let h = 0;
+      for (let i = 0; i < ids.length; i++) { h = ((h << 5) - h + ids.charCodeAt(i)) | 0; }
+      return String(h) + ':' + (questions || []).length;
+    } catch (e) { return null; }
+  }
+
+  function saveProgress() {
+    if (window._isReviewMode) return;
+    if (!selectedAnswers.length && !personalData.age) return;
+    try {
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify({
+        fp: questionsFingerprint(),
+        ts: Date.now(),
+        currentStep,
+        selectedAnswers,
+        personalData,
+        recheck: window._recheckPrefill || null
+      }));
+    } catch (e) { /* voll oder gesperrt — der Check laeuft trotzdem */ }
+  }
+
+  function clearProgress() {
+    try { localStorage.removeItem(PROGRESS_KEY); } catch (e) { /* still */ }
+  }
+
+  // Defensiv: passt irgendetwas nicht, wird still verworfen und normal
+  // von vorn begonnen. Nie ein halb wiederhergestellter Zustand.
+  function loadProgress() {
+    try {
+      const raw = localStorage.getItem(PROGRESS_KEY);
+      if (!raw) return null;
+      const p = JSON.parse(raw);
+      if (!p || typeof p !== 'object') return null;
+      if (p.fp !== questionsFingerprint()) return null;
+      if (!p.ts || (Date.now() - p.ts) > PROGRESS_MAX_AGE_MS) return null;
+      if (!Array.isArray(p.selectedAnswers) || !p.selectedAnswers.length) return null;
+      if (!p.personalData || !p.personalData.age || !p.personalData.gender) return null;
+      if (!Number.isInteger(p.currentStep) || p.currentStep < 1) return null;
+      return p;
+    } catch (e) { return null; }
+  }
+
+  function progressAgeText(ts) {
+    const min = Math.floor((Date.now() - ts) / 60000);
+    if (min < 2) return 'gerade eben';
+    if (min < 60) return `vor ${min} Minuten`;
+    const h = Math.round(min / 60);
+    return h === 1 ? 'vor etwa einer Stunde' : `vor etwa ${h} Stunden`;
+  }
+
+  function resumeProgress() {
+    const p = loadProgress();
+    if (!p) { dismissResume(); return; }
+    try {
+      Object.assign(personalData, p.personalData);
+      if (p.recheck) window._recheckPrefill = p.recheck;
+      selectedAnswers = p.selectedAnswers.slice();
+      buildGroupedQuestionsForGender();
+      // Schritt auf das tatsaechlich Vorhandene begrenzen
+      const target = Math.min(p.currentStep, groupedQuestions.length);
+      buildSteps(target);
+      currentStep = target;
+      document.getElementById('hero-block') && (document.getElementById('hero-block').style.display = 'none');
+      const hv = document.getElementById('heroValueProps'); if (hv) hv.style.display = 'none';
+      const la = document.getElementById('logoArea'); if (la) la.style.display = '';
+      document.getElementById('progressWrap')?.classList.remove('hidden');
+      document.getElementById('quiz-flow')?.classList.remove('hidden');
+      dismissResume();
+      updateProgress();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      trackEvent('progress_resumed', { step_index: currentStep, answers: selectedAnswers.length });
+    } catch (e) {
+      // Wiederherstellung gescheitert: sauber von vorn, nicht halb kaputt
+      clearProgress();
+      location.reload();
+    }
+  }
+
+  function discardProgress() {
+    clearProgress();
+    dismissResume();
+    trackEvent('progress_discarded');
+  }
+
+  function dismissResume() {
+    const el = document.getElementById('resumeBanner');
+    if (el) el.remove();
+  }
+
+  function offerResume() {
+    const p = loadProgress();
+    if (!p) return;
+    const host = document.getElementById('quiz-flow') || document.body;
+    const div = document.createElement('div');
+    div.id = 'resumeBanner';
+    div.style.cssText = 'background:rgba(59,158,255,0.08);border:1px solid rgba(59,158,255,0.3);border-radius:14px;padding:16px;margin:0 0 16px;';
+    div.innerHTML = `
+      <div style="font-size:14px;font-weight:700;margin-bottom:5px;">Du hast schon begonnen</div>
+      <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">
+        ${p.selectedAnswers.length} Fragen sind beantwortet, gespeichert ${progressAgeText(p.ts)} auf diesem Gerät.
+      </div>
+      <div style="display:flex;gap:9px;flex-wrap:wrap;">
+        <button onclick="resumeProgress()" style="flex-grow:1;min-height:46px;background:var(--accent-green);color:#0a1628;border:none;border-radius:10px;font-size:13.5px;font-weight:700;cursor:pointer;">Dort weitermachen</button>
+        <button onclick="discardProgress()" style="flex-grow:1;min-height:46px;background:transparent;color:var(--text-secondary);border:1px solid var(--border);border-radius:10px;font-size:13.5px;cursor:pointer;">Neu beginnen</button>
+      </div>`;
+    host.parentNode.insertBefore(div, host);
+    trackEvent('progress_offered', { answers: p.selectedAnswers.length });
   }
 
   function getOptionKeyById(optionId) {
@@ -1648,6 +1798,7 @@
     }
     setTimeout(() => {
       selectedAnswers.push({ option_id: optionId, question_key: groupedQuestions[currentStep]?.question_key || null });
+      saveProgress();   // v1.41.0
       const optionKey = getOptionKeyById(optionId);
       const currentQ = groupedQuestions[currentStep];
       // step_answered tracken
@@ -1767,6 +1918,7 @@
       } else {
         selectedAnswers.pop(); // Fallback für Alt-Einträge ohne question_key
       }
+      saveProgress();   // v1.41.0: Zwischenstand nach dem Zurueckgehen nachziehen
     }
     const backQ = groupedQuestions[currentStep];
     if (backQ?.question_key === "supplement_usage") {
@@ -1900,6 +2052,7 @@
         payload.previous_pin = window._previousLink.pin;
       }
       const result = await callFunction(payload);
+      clearProgress();   // v1.41.0 — Check abgeschickt, Zwischenstand verbraucht
       latestResult = result;
       absorbV2Result(result); // V2: Szenarien, Verlauf, link_status
       window._previousLink = null; window._recheckPrefill = null; // verbraucht — nie doppelt verwenden
@@ -4159,6 +4312,7 @@
   function resetVitalCheck(skipConfirm = false, keepPreviousLink = false) {
     window._isReviewMode = false; // Neuer Check — Tracking wieder aktiv
     if (!skipConfirm && !confirm("Möchtest du wirklich alle Eingaben zurücksetzen? Bereits übermittelte Daten in der Datenbank werden nicht gelöscht.")) return;
+    clearProgress();   // v1.41.0 — bewusster Neustart verwirft den Zwischenstand
     questions=[]; groupedQuestions=[]; currentStep=0; selectedAnswers=[]; latestResult=null; showComparison=false;
     // V2-Zustand zurücksetzen — die Re-Check-Verknüpfung bleibt nur beim Re-Check-Start erhalten
     simScenarios=null; simActiveKeys=[]; simGoalSaved=null; simInteractTracked=false;
@@ -4183,7 +4337,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.40.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.41.0</footer>
 
 
 </body>
