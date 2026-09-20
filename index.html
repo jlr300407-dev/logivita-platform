@@ -337,7 +337,16 @@
        Stand ("1.500 mehr als bisher"), weil der Ausgangswert noch nicht
        abgefragt wird. Die sanften Zweige bei niedrigem BMI bleiben ohne Zahl.
        Hinweis: Ein Text in content_snippets (self_tip.activity) überschreibt
-       den eingebauten Tipp — dort die Schrittzahl ggf. nachtragen. -->
+       den eingebauten Tipp — dort die Schrittzahl ggf. nachtragen.
+
+       v1.44.1 (Reha-Sport nur mit Anlass, gehört zu edge-2026-09-20.4):
+       Die Studio-Empfehlung auf Tab 3 wählte signal_reha allein nach Alter
+       60+ und Bewegung < 45. Reha-Sport braucht eine ärztliche Verordnung;
+       die Edge prüft seit .6 einen Anlass (doctor_hint, kombiniertes Signal,
+       Einschlafzeit >= 3, Schmerz/Gelenk/Rücken/Beschwerden in den Antworten)
+       — aber nur in ihrer Rückfall-Liste, nicht bei vorhandenem Snippet.
+       Jetzt an beiden Stellen dieselbe Prüfung; ohne Anlass kommt der
+       Präventionskurs §20. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -3136,8 +3145,17 @@
     const worstAreaT3 = (areas.filter(a => a.key !== 'bmi').slice().sort((a, b) => a.score - b.score)[0] || {}).key || '';
     const ageT3 = Number(result.submission?.age || personalData.age || 0);
     let studioKeyT3 = goalKeyT3 || 'default';
-    if (ageT3 >= 60 && areaScoreT3('activity') < 45 && studioRec['signal_reha']) {
+    // v1.44.1 — Reha-Sport braucht eine ärztliche Verordnung. Die Edge prüft
+    // seit .6 einen Anlass, hier fehlte die Prüfung: Ein gesunder 62-Jähriger
+    // bekam Reha-Sport empfohlen. Jetzt dieselben Kriterien wie in der Edge;
+    // ohne Anlass der Präventionskurs §20, der ohne Verordnung buchbar ist.
+    const _txtT3 = answersT3.map(a => String(a.answer_text || '').toLowerCase());
+    const _rehaAnlassT3 = score.doctor_hint === true || window._safetyTier === 'combined' || riskOf('sleep_latency') >= 3
+      || _txtT3.some(t => t.includes('schmerz') || t.includes('gelenk') || t.includes('rücken') || t.includes('beschwerden'));
+    if (ageT3 >= 60 && areaScoreT3('activity') < 45 && _rehaAnlassT3 && studioRec['signal_reha']) {
       studioKeyT3 = 'signal_reha';
+    } else if (ageT3 >= 60 && areaScoreT3('activity') < 45 && !_rehaAnlassT3 && studioRec['goal_prevention']) {
+      studioKeyT3 = 'goal_prevention';
     } else if (riskOf('sitting_hours') >= 3 && areaScoreT3('activity') < 55 && studioRec['signal_ruecken']) {
       studioKeyT3 = 'signal_ruecken';
     } else if (worstAreaT3 === 'mental' && areaScoreT3('mental') < 50 && mentalRisk < 3 && studioRec['signal_entspannung']) {
@@ -4467,7 +4485,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.44.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.44.1</footer>
 
 
 </body>
