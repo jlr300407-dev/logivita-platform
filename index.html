@@ -325,7 +325,19 @@
        Vorher genügte der Zahlenvergleich, wer bewusst dasselbe Gewicht
        eintippte, zählte mit.
        (3) Bei übernommenem Gewicht zeigt die BMI-Karte kein "stabil gehalten",
-       sondern "kein echter Vergleich", und die Verlaufskarte erklärt, warum. -->
+       sondern "kein echter Vergleich", und die Verlaufskarte erklärt, warum.
+
+       v1.44.0 (Schritte als zweite Währung, gehört zu edge-2026-09-20.3):
+       Bewegungstipps nennen zuerst Minuten, dann die Schritte dazu
+       ("30 Minuten zügig gehen, rund 3.000 Schritte"). Grundlage: zügiges
+       Gehen ≈ 100 Schritte/Minute; Metaanalysen (Lancet Public Health 2022,
+       2025) sehen um 7.000 Schritte/Tag deutliche Vorteile, darüber flacht
+       der Zusatznutzen ab. Nie Prozentzahlen (Beobachtungsdaten), nie ein
+       Gerät voraussetzen ("mit Uhr oder Handy"). Ziele relativ zum eigenen
+       Stand ("1.500 mehr als bisher"), weil der Ausgangswert noch nicht
+       abgefragt wird. Die sanften Zweige bei niedrigem BMI bleiben ohne Zahl.
+       Hinweis: Ein Text in content_snippets (self_tip.activity) überschreibt
+       den eingebauten Tipp — dort die Schrittzahl ggf. nachtragen. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -3065,7 +3077,7 @@
     // Kategorie 1 — Das kannst du selbst tun (2–3 Anleitungen, Haupthebel zuerst)
     const selfTips = {
       nutrition: ["Ein Eiweißbaustein zu jeder Mahlzeit", "Eier, Quark, Hülsenfrüchte oder Fisch — Protein sättigt, unterstützt Muskeln und Regeneration. Starte heute mit einer Mahlzeit."],
-      activity: ["Bewegung fest in die Woche bauen", "Plane zwei feste Termine für zügiges Gehen, Radfahren oder Training — Termine halten besser als Vorsätze."],
+      activity: ["Bewegung fest in die Woche bauen", "Plane zwei feste Termine für zügiges Gehen, Radfahren oder Training — Termine halten besser als Vorsätze. Mit Uhr oder Handy: 30 Minuten zügiges Gehen sind rund 3.000 Schritte."],
       sleep: ["Abendroutine für besseren Schlaf", "30 Minuten vor dem Schlafen: Bildschirm aus, Licht dimmen, gleiche Zubettgehzeit. Eine Woche testen — der Unterschied ist meist spürbar."],
       vitamin_d: ["Täglich Tageslicht tanken", "15–25 Minuten im Freien, ideal vormittags — auch bei bewölktem Himmel wirksam."],
       mental: ["Kleine Entlastungs-Pausen einbauen", "Zwei, drei bewusste Kurzpausen am Tag — atmen, kurz gehen, Fenster auf — senken die Grundspannung spürbar."],
@@ -3485,7 +3497,7 @@
     }
     if (key === "activity") {
       const actDays = getRisk("activity_days"); const strength = getRisk("strength_training"); const sitting = getRisk("sitting_hours");
-      if (l === "low" || l === "medium") { if (bmiIsLow) return "Sanfte Alltagsbewegung wie kurze Spaziergänge — Fokus auf Energie und Regeneration."; if (actDays >= 3 && strength >= 3) return "Einen festen Trainingstag einplanen — 30 Minuten reichen als Einstieg."; if (actDays <= 1 && strength >= 3) return "Kraft ergänzen — 2 kurze Krafteinheiten pro Woche stärken Muskelmasse und Stoffwechsel."; if (sitting >= 3) return "Stehpause alle 60–90 Minuten einbauen — kurz aufstehen und 2 Minuten bewegen."; return "Einen konkreten Bewegungstermin in den Kalender setzen."; }
+      if (l === "low" || l === "medium") { if (bmiIsLow) return "Sanfte Alltagsbewegung wie kurze Spaziergänge — Fokus auf Energie und Regeneration."; if (actDays >= 3 && strength >= 3) return "Einen festen Trainingstag einplanen — 30 Minuten reichen als Einstieg."; if (actDays <= 1 && strength >= 3) return "Kraft ergänzen — 2 kurze Krafteinheiten pro Woche stärken Muskelmasse und Stoffwechsel."; if (sitting >= 3) return "Stehpause alle 60–90 Minuten einbauen — kurz aufstehen und 2 Minuten bewegen."; return "Einen konkreten Bewegungstermin in den Kalender setzen — z. B. 20 Minuten zügig gehen, mit Uhr oder Handy rund 2.000 Schritte."; }
       return "Mischung aus Alltag, Ausdauer und Kraft beibehalten.";
     }
     if (key === "nutrition") {
@@ -3525,7 +3537,7 @@
       if (l === "medium") return "Regelmäßige Mahlzeiten und ausreichend Trinken als Basis sicherstellen.";
       return "Energie und Wohlbefinden über die Woche aktiv beobachten.";
     }
-    const m = { sleep:{ low:"Heute feste Schlafenszeit wählen.", medium:"Kurze Abendroutine festlegen.", good:"Regelmäßige Schlafzeiten aktiv schützen." }, activity:{ low:"Heute 10 Minuten zügig gehen.", medium:"Einen konkreten Bewegungstermin setzen.", good:"Mischung aus Alltag, Ausdauer und Kraft beibehalten." } };
+    const m = { sleep:{ low:"Heute feste Schlafenszeit wählen.", medium:"Kurze Abendroutine festlegen.", good:"Regelmäßige Schlafzeiten aktiv schützen." }, activity:{ low:"Heute 10 Minuten zügig gehen — rund 1.000 Schritte.", medium:"Einen konkreten Bewegungstermin setzen.", good:"Mischung aus Alltag, Ausdauer und Kraft beibehalten." } };
     return m[key]?.[getLevel(score)] || "Diese Kategorie gibt dir eine erste Orientierung.";
   }
 
@@ -3551,8 +3563,8 @@
     }
     if (key === "activity") {
       const strength = getRisk("strength_training"); const sitting = getRisk("sitting_hours");
-      if (l === "low") { if (bmiIsLow) return "Sanfte Routine aufbauen — Spaziergänge, Dehnen, leichte Bewegung. Erst Ernährung stabilisieren."; if (strength >= 3) return "Zwei feste Bewegungstermine pro Woche einplanen — betreutes Training hilft beim Einstieg."; return "Zwei feste Termine pro Woche für Bewegung einplanen."; }
-      if (l === "medium") { if (bmiIsLow) return "Alltagsbewegung beibehalten — kein intensives Kraft- oder Ausdauertraining bei diesem Gewicht."; if (strength >= 2 && sitting >= 2) return "Krafttraining und Stehpausen kombinieren — 2 Einheiten Kraft + regelmäßige Bewegungspausen."; return "Alltagsbewegung erhöhen — Treppe, kurze Wege zu Fuß, Mittagspause aktiv nutzen."; }
+      if (l === "low") { if (bmiIsLow) return "Sanfte Routine aufbauen — Spaziergänge, Dehnen, leichte Bewegung. Erst Ernährung stabilisieren."; if (strength >= 3) return "Zwei feste Bewegungstermine pro Woche einplanen — betreutes Training hilft beim Einstieg."; return "Zwei feste Termine pro Woche für Bewegung einplanen — zum Beispiel je 30 Minuten zügig gehen, das sind rund 3.000 Schritte."; }
+      if (l === "medium") { if (bmiIsLow) return "Alltagsbewegung beibehalten — kein intensives Kraft- oder Ausdauertraining bei diesem Gewicht."; if (strength >= 2 && sitting >= 2) return "Krafttraining und Stehpausen kombinieren — 2 Einheiten Kraft + regelmäßige Bewegungspausen."; return "Alltagsbewegung erhöhen — Treppe, kurze Wege zu Fuß, Mittagspause aktiv nutzen. Mit Uhr oder Handy: etwa 1.500 Schritte mehr am Tag als bisher sind ein gutes erstes Ziel; große Studien sehen um 7.000 Schritte am Tag bereits deutliche Vorteile."; }
       return "Regeneration und Belastung bewusst ausbalancieren — Übertraining vermeiden.";
     }
     if (key === "nutrition") {
@@ -4455,7 +4467,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.43.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.44.0</footer>
 
 
 </body>
