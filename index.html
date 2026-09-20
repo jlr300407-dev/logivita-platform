@@ -427,7 +427,19 @@
        "Vitalkompass" ist von einem Gesundheitsshop belegt).
 
        v1.45.8: Teaser des Fahrplans nennt den Ausblick bis zum Re-Check
-       (Gegenstück zu edge-2026-09-20.7, Absatz "Woche 7–12" in der Mail). -->
+       (Gegenstück zu edge-2026-09-20.7, Absatz "Woche 7–12" in der Mail).
+
+       v1.46.0 (selektive Vertiefung, Wunsch Jörg: gezielt statt pauschal):
+       (1) Jede Bereichskarte hat aufklappbar "Was dieser Bereich zeigt":
+       was gemessen wird, warum es zählt, was für die eigene Altersgruppe
+       empfohlen ist — mit geprüften Quellen als Link. Altersstufen dort, wo
+       die Empfehlungen sich tatsächlich unterscheiden (Bewegung ab 60/65,
+       Schlaf ab 65, Eiweiß ab 65 mit Grammzahl aus dem eigenen Gewicht,
+       Vitamin D ab 65, BMI ab 70, B12 ab 65). Kein Vergleich mit
+       Gleichaltrigen (keine Referenzdaten). Nikotin-Satz nur bei Nutzung.
+       (2) Karten ab 85 Punkten sind wieder aufklappbar, zeigen aber nur die
+       Vertiefung, keine Tipps. Hinweis "Mehr erfahren ↓".
+       (3) Name durchgängig "LeVITA Vital-Check" (Entscheidung Jörg). -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -641,6 +653,13 @@
     .area-detail.open { display: block; }
     .insight-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; margin-top: 8px; }
     .insight-text { font-size: 12px; color: var(--text-secondary); line-height: 1.5; padding: 8px 10px; border-radius: 6px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); }
+    /* v1.46.0 — Vertiefung je Bereich */
+    .area-info { font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); text-transform: none; letter-spacing: 0; font-weight: 400; }
+    .area-info p { margin: 0 0 8px; }
+    .area-info .ai-age { background: rgba(59,158,255,0.07); border-left: 2px solid var(--accent-blue); padding: 8px 10px; margin: 8px 0; }
+    .area-info .ai-age b { color: var(--text-primary); }
+    .area-info .ai-src { font-size: 10.5px; color: var(--text-muted); margin-top: 6px; }
+    .area-info .ai-src a { color: var(--text-muted); text-decoration: underline; }
     .tap-hint { font-size: 10px; color: var(--text-muted); margin-top: 5px; text-align: right; }
     .bmi-detail { margin-top: 8px; padding: 8px 10px; background: rgba(255,255,255,0.03); border-radius: 6px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
     .hebel-box { background: var(--brand-card); border: 1px solid rgba(59,158,255,0.18); border-left: 4px solid var(--accent-blue); border-radius: var(--radius-sm); padding: 16px 18px; margin-bottom: 16px; display: flex; gap: 12px; align-items: flex-start; }
@@ -894,7 +913,7 @@
   <div id="hero-overlay" style="position:absolute;inset:0;background:linear-gradient(to bottom, rgba(10,22,40,0.0) 0%, rgba(10,22,40,0.0) 30%, rgba(10,22,40,0.78) 65%, rgba(10,22,40,1.0) 100%);"></div>
   <!-- Content -->
   <div id="hero-content" style="position:relative;z-index:2;padding:16px 22px 36px;text-align:center;">
-    <div id="hero-eyebrow"><span class="he-name">Vital-Check</span><span class="he-sep"> · </span><span class="he-claim">Dein Kompass für mehr Vitalität</span></div>
+    <div id="hero-eyebrow"><span class="he-name">LeVITA Vital-Check</span><span class="he-sep"> · </span><span class="he-claim">Dein Kompass für mehr Vitalität</span></div>
     <h1 id="hero-title" style="margin:0 0 12px;font-size:32px;font-weight:800;color:#ffffff;line-height:1.15;letter-spacing:-0.5px;">Was steckt in dir?</h1>
     <p id="hero-subline" style="margin:0 auto 20px;font-size:16px;color:rgba(255,255,255,0.78);line-height:1.55;max-width:360px;">Finde in 5–7 Minuten heraus, wo deine Stärken liegen, wo dein größter Hebel sitzt — und was dir ein kleiner Schritt konkret bringt.</p>
     <div id="hero-features" style="margin-bottom:24px;font-size:12px;color:rgba(255,255,255,0.6);letter-spacing:0.3px;">
@@ -903,7 +922,7 @@
     <button id="hero-cta" onclick="startDirectCheck();" style="display:block;width:100%;max-width:340px;margin:0 auto 12px;padding:16px 24px;background:#3ddc84;color:#0d1a14;font-size:17px;font-weight:800;border:none;border-radius:12px;cursor:pointer;">Jetzt kostenlos starten →</button>
     <p style="margin:0 0 12px;font-size:11.5px;color:rgba(255,255,255,0.5);">Ergebnis sofort · kostenlos · ohne Anmeldung · ohne App</p>
     <div id="hero-social-proof" style="font-size:12px;color:rgba(255,255,255,0.55);">
-      Über <span id="hero-count" style="font-weight:700;color:rgba(255,255,255,0.85);">100+</span> Menschen haben ihren Vital-Check gemacht
+      Über <span id="hero-count" style="font-weight:700;color:rgba(255,255,255,0.85);">100+</span> Menschen haben ihren LeVITA Vital-Check gemacht
     </div>
   </div>
 </section>
@@ -1053,7 +1072,7 @@
 
   <!-- 6 · Abschluss -->
   <div class="lp-final">
-    <h2 class="lp-h2">Bereit für deinen Vital-Check?</h2>
+    <h2 class="lp-h2">Bereit für deinen LeVITA Vital-Check?</h2>
     <button class="lp-final-btn" onclick="startDirectCheck();">Jetzt kostenlos starten →</button>
     <div class="lp-final-note">5–7 Minuten · Ergebnis sofort · ohne Konto, ohne App · ab 18</div>
   </div>
@@ -2123,7 +2142,7 @@
     } catch(e) { /* silent — Feedback ist optional */ }
   }
   // ── Content-Snippets (Stufe 2a, 20.08.2026): Redaktionstexte aus der DB, Code-Texte als Fallback ──
-  window._snips = { self_tip: {}, studio_rec: {}, measurement: {}, notice: {}, teaser_label: {} };
+  window._snips = { self_tip: {}, studio_rec: {}, measurement: {}, notice: {}, teaser_label: {}, area_info: {} };
   async function loadContentSnippets() {
     try {
       const { data } = await supabaseClient.from('content_snippets')
@@ -3708,6 +3727,123 @@
     }).join("");
   }
 
+  // v1.46.0 — SELEKTIVE VERTIEFUNG je Bereich (Wunsch Jörg: gezielt statt
+  // pauschal mehr). Aufklappbar in der Bereichskarte: was der Bereich zeigt,
+  // warum er zählt, was für die eigene Altersgruppe empfohlen ist — jeweils
+  // mit geprüfter Quelle (WHO, DGE, BfR, NSF, DEGAM, GLIM, Lancet), Stand
+  // 20.09.2026. Kein Vergleich mit Gleichaltrigen: dafür fehlen belastbare
+  // Referenzdaten. what/why per content_snippets überschreibbar
+  // (snippet_type area_info, context_key = area_key, title = what, body = why).
+  const SRC = {
+    who_pa:  ["WHO 2020, Leitlinie Bewegung", "https://www.ncbi.nlm.nih.gov/books/NBK566046/"],
+    paluch:  ["Paluch u. a., Lancet Public Health 2022", "https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(21)00302-9/fulltext"],
+    ding:    ["Ding u. a., Lancet Public Health 2025", "https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(25)00164-1/fulltext"],
+    nsf:     ["National Sleep Foundation", "https://www.thensf.org/how-many-hours-of-sleep-do-you-really-need/"],
+    degam:   ["DEGAM-Leitlinie Müdigkeit, Patienteninformation", "https://www.degam.de/files/Inhalte/Leitlinien-Inhalte/Dokumente/DEGAM-S3-Leitlinien/053-002_Leitlinie%20Muedigkeit/oeffentlich/Aktualisierung%20Dezember%202022%20-%20Dokumente%20Homepage/Patientenleitlinie%20Format%20A4%20Leitlinie%20Muedigkeit.pdf"],
+    dge_fbdg:["DGE, Gut essen und trinken (2024)", "https://www.dge.de/gesunde-ernaehrung/gut-essen-und-trinken/dge-empfehlungen/"],
+    dge_prot:["DGE, Referenzwerte Protein", "https://www.dge.de/presse/meldungen/2011-2018/wie-viel-protein-brauchen-wir/"],
+    dge_vitd:["DGE, FAQ Vitamin D", "https://www.dge.de/gesunde-ernaehrung/faq/vitamin-d/"],
+    glim:    ["GLIM-Konsens Mangelernährung 2019", "https://pubmed.ncbi.nlm.nih.gov/30175461/"],
+    who_soc: ["WHO, Soziale Verbundenheit (2025)", "https://www.who.int/news-room/questions-and-answers/item/social-connection"],
+    dge_alk: ["DGE-Positionspapier Alkohol 2024", "https://www.dge.de/presse/meldungen/2024/dge-positionspapier-zu-alkohol/"],
+    who_tob: ["WHO, Vorteile des Rauchstopps", "https://www.who.int/news-room/questions-and-answers/item/tobacco-health-benefits-of-smoking-cessation"],
+    bfr_age: ["BfR, Mikronährstoffe im Alter", "https://www.bfr.bund.de/fragen-und-antworten/thema/nutzen-und-risiken-von-mikronaehrstoffsupplementen-im-alter"],
+  };
+  const AREA_INFO = {
+    activity: {
+      what: "Wie oft du dich bewegst, ob du deine Muskeln kräftigst und wie viel du sitzt.",
+      why: "Bewegung wirkt auf fast alle anderen Bereiche — auf Energie, Schlaf, Stimmung und Stoffwechsel.",
+      age: (a) => a >= 65
+        ? "Ab 65 empfiehlt die WHO 150–300 Minuten moderate Bewegung pro Woche, an 2 oder mehr Tagen Kräftigung und zusätzlich an 3 oder mehr Tagen Übungen für Gleichgewicht und Kraft — sie stärken die Beweglichkeit im Alltag und beugen Stürzen vor. Große Studien sehen ab 60 den größten Nutzen bei etwa 6.000–8.000 Schritten am Tag."
+        : a >= 60
+        ? "Die WHO empfiehlt 150–300 Minuten moderate Bewegung pro Woche und an 2 oder mehr Tagen Kräftigung aller großen Muskelgruppen. Große Studien sehen ab 60 den größten Nutzen bei etwa 6.000–8.000 Schritten am Tag."
+        : "Die WHO empfiehlt 150–300 Minuten moderate Bewegung pro Woche und an 2 oder mehr Tagen Kräftigung aller großen Muskelgruppen. Große Studien sehen deutliche Vorteile ab etwa 7.000 Schritten am Tag, unter 60 wachsen sie bis etwa 8.000–10.000.",
+      src: ["who_pa", "paluch", "ding"]
+    },
+    sleep: {
+      what: "Wie lange und wie erholsam du schläfst, wie schnell du einschläfst und wie wach du tagsüber bist.",
+      why: "Im Schlaf regeneriert dein Körper. Zu wenig oder gestörter Schlaf kann Ursache wie Begleiterscheinung von Müdigkeit am Tag sein.",
+      age: (a) => a >= 65
+        ? "Ab 65 empfiehlt die National Sleep Foundation 7–8 Stunden pro Nacht."
+        : "Für Erwachsene bis 64 empfiehlt die National Sleep Foundation 7–9 Stunden pro Nacht.",
+      src: ["nsf", "degam"]
+    },
+    nutrition: {
+      what: "Wie oft du Gemüse, Obst, Eiweiß und Fisch isst, ob du regelmäßig isst und genug trinkst.",
+      why: "Ernährung liefert die Bausteine für Muskeln, Energie und Abwehr. Die DGE empfiehlt mindestens 5 Portionen Gemüse und Obst am Tag, 1–2-mal pro Woche Fisch und rund 1,5 Liter Wasser.",
+      age: (a, w) => {
+        const f = a >= 65 ? 1.0 : 0.8;
+        const g = (w && isFinite(w)) ? ` — bei deinem Gewicht rund ${Math.round(w * f / 5) * 5} g am Tag` : "";
+        return a >= 65
+          ? `Ab 65 liegt der Eiweiß-Schätzwert der DGE höher: 1,0 g pro Kilogramm Körpergewicht${g}. Eiweiß ist ein wichtiger Baustein für Muskelkraft und Beweglichkeit.`
+          : `Die DGE empfiehlt 0,8 g Eiweiß pro Kilogramm Körpergewicht${g}.`;
+      },
+      src: ["dge_fbdg", "dge_prot"]
+    },
+    vitamin_d: {
+      what: "Wie oft du im Winterhalbjahr tagsüber draußen bist.",
+      why: "Tageslicht taktet deinen Tag-Nacht-Rhythmus, und mit Sonnenlicht bildet die Haut Vitamin D. Von Oktober bis März ist die Sonne in Deutschland dafür zu schwach — umso wertvoller sind helle Stunden draußen und die Sommermonate: Gesicht, Hände und Arme zwei- bis dreimal pro Woche unbedeckt in die Sonne (DGE).",
+      age: (a) => a >= 65
+        ? "Im höheren Alter kann die Haut weniger als die Hälfte der Vitamin-D-Menge bilden wie in jüngeren Jahren (DGE). Zeit im Freien zählt dann besonders."
+        : "",
+      src: ["dge_vitd"]
+    },
+    bmi: {
+      what: "Das Verhältnis von Gewicht zu Größe — eine grobe Orientierung, die Muskeln und Fett nicht unterscheidet.",
+      why: "Aussagekräftiger ist die Körperzusammensetzung: Eine Tanita-Messung im LeVITA Studio zeigt Muskelmasse, Körperfett und Wasserhaushalt. Der stabile Orientierungsbereich liegt bei einem BMI von 18,5 bis 25.",
+      age: (a) => a >= 70
+        ? "Ab 70 gilt in der Ernährungsmedizin ein BMI unter 22 als Anlass, genauer hinzuschauen (GLIM). In diesem Alter zählen Muskelkraft und Beweglichkeit mehr als eine niedrige Zahl auf der Waage."
+        : "",
+      src: ["glim"]
+    },
+    mental: {
+      what: "Wie gestresst du dich fühlst, wie deine Stimmung ist und wie gut du sozial eingebunden bist.",
+      why: "Dauerhafte Anspannung wirkt auf Schlaf, Energie und Erholung. Gute Kontakte schützen: Einsamkeit ist laut WHO mit einem höheren Risiko für Herzerkrankungen, Typ-2-Diabetes, Depression und Angst verbunden.",
+      age: () => "",
+      src: ["who_soc"]
+    },
+    lifestyle: {
+      what: "Wie oft und wie viel du Alkohol trinkst und ob du Nikotin nutzt.",
+      why: "Die DGE sieht keine gesundheitlich unbedenkliche Alkoholmenge und empfiehlt, möglichst darauf zu verzichten. Für Erwachsene, die trinken, gelten 1–2 Getränke pro Woche als risikoarm.",
+      age: (a, w, r) => (Number(r.nicotine_use || 0) > 0)
+        ? "Aufhören lohnt sich in jedem Alter: Laut WHO gewinnt, wer mit 50 mit dem Rauchen aufhört, rund 6 Jahre Lebenserwartung, wer mit 60 aufhört, rund 3 Jahre."
+        : "",
+      src: ["dge_alk", "who_tob"]
+    },
+    micronutrients: {
+      what: "Deine Ernährungsweise, eingenommene Präparate und Anzeichen wie Schwindel oder brüchige Nägel.",
+      why: "Gesunde Erwachsene können ihren Nährstoffbedarf in der Regel über eine abwechslungsreiche Ernährung decken; Nahrungsergänzung ist meist nicht nötig (BfR). Bei bestimmten Ernährungsweisen, etwa vegan, werden einzelne Nährstoffe wie Vitamin B12 leicht knapp.",
+      age: (a) => a >= 65
+        ? "Im höheren Alter kann der Körper Vitamin B12 schlechter aufnehmen. Das BfR rät älteren Menschen, ihren B12-Status ärztlich prüfen zu lassen."
+        : "",
+      src: ["bfr_age"]
+    },
+    metabolic: {
+      what: "Deine Energie im Alltag, dein Appetit und ungewollte Gewichtsveränderungen.",
+      why: "Diese Signale zeigen, wie gut dein Körper mit dem Alltag zurechtkommt. Mehr Bewegung durchbricht oft den Kreislauf aus Müdigkeit und Rückzug. Hält die Müdigkeit länger an oder belastet sie dich stark, ist die Hausarztpraxis der richtige Ansprechpartner (DEGAM).",
+      age: () => "",
+      src: ["degam"]
+    }
+  };
+  function areaInfoHtml(areaKey, result) {
+    const info = AREA_INFO[areaKey];
+    if (!info) return "";
+    const snip = (window._snips && window._snips.area_info && window._snips.area_info[areaKey]) || {};
+    const age = Number(personalData.age || result?.submission?.age || 0);
+    const w = Number(personalData.weight_kg || result?.submission?.weight_kg || 0);
+    const risks = {};
+    (result?.answers || []).forEach(a => { risks[a.question_key] = Number(a.risk_points || 0); });
+    const ageTxt = age ? (info.age(age, w, risks) || "") : "";
+    const src = (info.src || []).map(k => SRC[k]).filter(Boolean)
+      .map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener" onclick="event.stopPropagation();">${t}</a>`).join(" · ");
+    return `<div class="area-info">
+        <div class="insight-label">🧭 Was dieser Bereich zeigt</div>
+        <p>${snip.title || info.what} ${snip.body || info.why}</p>
+        ${ageTxt ? `<div class="ai-age"><b>Für dich mit ${age} Jahren:</b> ${ageTxt}</div>` : ""}
+        ${src ? `<div class="ai-src">Quellen: ${src}</div>` : ""}
+      </div>`;
+  }
+
   function renderAreaCard(area, result) {
     // v1.32.4 — Karte folgt jetzt derselben Skala wie Legende und Mail.
     const band = scoreBand(area.score);
@@ -3742,15 +3878,19 @@
     }
     // v1.41.4 — Ab 85 Punkten (ausser BMI) keine Detailansicht: Die Tipps aus
     // dem good-Zweig ("Energie beobachten") waren dort Fuellmaterial.
-    const _noDetail = area.key !== "bmi" && Number(area.score) >= 85;
-    const detailHtml = _noDetail ? "" : `
+    // v1.46.0 — Die Vertiefung (areaInfoHtml) steht in JEDER Karte; die
+    // Tipps weiterhin nur unter 85 Punkten (sonst Füllmaterial, v1.41.4).
+    const _noTips = area.key !== "bmi" && Number(area.score) >= 85;
+    const _noDetail = false;
+    const detailHtml = `
         <div class="area-detail" id="detail-${area.key}">
-          <div class="insight-label">⚡ Sofort umsetzen</div>
+          ${_noTips ? "" : `<div class="insight-label">⚡ Sofort umsetzen</div>
           <div class="insight-text">${getInsightNow(area.key, area.score, result?.bmi, result)}</div>
           <div class="insight-label">📅 Mittelfristig</div>
-          <div class="insight-text">${getInsightSoon(area.key, area.score, result?.bmi, result)}</div>
+          <div class="insight-text">${getInsightSoon(area.key, area.score, result?.bmi, result)}</div>`}
+          ${areaInfoHtml(area.key, result)}
         </div>
-        <div class="tap-hint">Tippen für Details</div>`;
+        <div class="tap-hint">Mehr erfahren ↓</div>`;
     return `
       <div class="area-card ${cls}"${_noDetail ? ` style="cursor:default;"` : ` onclick="toggleAreaDetail('detail-${area.key}')"`}>
         <div class="area-card-header">
@@ -4775,7 +4915,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.45.8</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.46.0</footer>
 
 
 </body>
