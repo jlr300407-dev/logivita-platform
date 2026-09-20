@@ -424,7 +424,10 @@
        v1.45.7: Produktname und Claim über der Überschrift —
        "Vital-Check · Dein Kompass für mehr Vitalität" (Entscheidung Jörg:
        Name bleibt LeVITA Vital-Check, der Kompass ist Claim, nicht Name —
-       "Vitalkompass" ist von einem Gesundheitsshop belegt). -->
+       "Vitalkompass" ist von einem Gesundheitsshop belegt).
+
+       v1.45.8: Teaser des Fahrplans nennt den Ausblick bis zum Re-Check
+       (Gegenstück zu edge-2026-09-20.7, Absatz "Woche 7–12" in der Mail). -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -2942,7 +2945,7 @@
     const _planPromised = !window._safetyTier && !window._doctorFirst && !!goalKeyForTeaser;
     if (!isLinkedRecheck || !window._previousData.goal_scenario) {
       teaserRows += _planPromised
-        ? teaserRow("🎯", `Dein 6-Wochen-Fahrplan für „${goalTeaser}“`, "konkret, Schritt für Schritt")
+        ? teaserRow("🎯", `Dein 6-Wochen-Fahrplan für „${goalTeaser}“`, "konkret, Schritt für Schritt — mit Ausblick bis zu deinem Re-Check")
         : teaserRow("🎯", `Deine konkreten nächsten Schritte für „${goalTeaser}“`, "was du selbst tun kannst, wo wir helfen");
     }
     if (!isLinkedRecheck) {
@@ -4772,7 +4775,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.45.7</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.45.8</footer>
 
 
 </body>
