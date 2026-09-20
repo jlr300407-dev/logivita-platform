@@ -371,7 +371,12 @@
        wächst jetzt nur noch (Reset beim Neuaufbau nach den Basisdaten).
        (3) "fuer" -> "für" im Datenschutz-Hinweis über den Einwilligungen
        (reine Rechtschreibung, Inhalt unverändert; der gespeicherte
-       consent_text_snapshot in der Edge ist davon nicht berührt). -->
+       consent_text_snapshot in der Edge ist davon nicht berührt).
+
+       v1.45.2 (Hero auf dem Desktop): Das Desktop-Bild enthält eigene
+       Elemente (Logo links, Symbole in der Mitte), die zentrierte Überschrift
+       lag darauf. Ab 640 px jetzt zweispaltig: Text links auf dunklem Grund,
+       Bild rechts, Verlauf blendet Logo und Symbole aus. Handy unverändert. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -760,6 +765,27 @@
        Der Hero war mit 580 px so hoch, dass bei rund 620 px sichtbarer
        Fläche nichts darunter mehr zu sehen war — kein Hinweis, dass die
        Seite weitergeht. Auf kurzen Ansichten wird er deshalb flacher. */
+    /* v1.45.2 — Desktop zweispaltig. Das Desktop-Bild traegt eigene Elemente
+       (LeVITA-Logo links, Symbole Schlaf/Energie in der Mitte); die zentrierte
+       Ueberschrift lag direkt darauf. Jetzt: Text links auf dunklem Grund,
+       Bild rechts (das Paar), Logo und Symbole laufen im Verlauf ins Dunkle. */
+    @media (min-width: 640px) {
+      #hero-block { background: #0a1628 !important; justify-content: center !important; }
+      #hero-img-desktop { left: auto !important; right: 0 !important; top: -10% !important; width: 56% !important; height: 120% !important; object-position: 100% 22% !important; }
+      #hero-overlay { background:
+          linear-gradient(to right, #0a1628 0%, #0a1628 46%, rgba(10,22,40,0.85) 54%, rgba(10,22,40,0.3) 68%, rgba(10,22,40,0) 82%),
+          linear-gradient(to bottom, rgba(10,22,40,0) 75%, #0a1628 100%) !important; }
+      #hero-content { width: 100%; max-width: 1120px; margin: 0 auto; padding: 48px 40px !important; text-align: left !important; }
+      #hero-content > * { max-width: 500px; }
+      #hero-title { font-size: 44px !important; }
+      #hero-subline { margin-left: 0 !important; margin-right: 0 !important; }
+      #hero-cta { margin-left: 0 !important; margin-right: 0 !important; max-width: 380px !important; }
+    }
+    @media (min-width: 640px) and (max-width: 900px) {
+      #hero-img-desktop { width: 62% !important; }
+      #hero-content > * { max-width: 400px; }
+      #hero-title { font-size: 36px !important; }
+    }
     @media (min-width: 640px) and (max-height: 820px) {
       #hero-block { min-height: 430px !important; }
       #hero-title { font-size: 36px !important; }
@@ -775,9 +801,9 @@
   <img id="hero-img-mobile" src="assets/hero-mobile.jpg" width="800" height="999" fetchpriority="high" decoding="async"  style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;" alt="">
   <img id="hero-img-desktop" src="assets/hero-desktop.jpg" width="1200" height="675" fetchpriority="high" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 20%;" alt="">
   <!-- Overlay -->
-  <div style="position:absolute;inset:0;background:linear-gradient(to bottom, rgba(10,22,40,0.0) 0%, rgba(10,22,40,0.0) 30%, rgba(10,22,40,0.78) 65%, rgba(10,22,40,1.0) 100%);"></div>
+  <div id="hero-overlay" style="position:absolute;inset:0;background:linear-gradient(to bottom, rgba(10,22,40,0.0) 0%, rgba(10,22,40,0.0) 30%, rgba(10,22,40,0.78) 65%, rgba(10,22,40,1.0) 100%);"></div>
   <!-- Content -->
-  <div style="position:relative;z-index:2;padding:16px 22px 36px;text-align:center;">
+  <div id="hero-content" style="position:relative;z-index:2;padding:16px 22px 36px;text-align:center;">
     <h1 id="hero-title" style="margin:0 0 12px;font-size:32px;font-weight:800;color:#ffffff;line-height:1.15;letter-spacing:-0.5px;">Was steckt in dir?</h1>
     <p id="hero-subline" style="margin:0 auto 20px;font-size:16px;color:rgba(255,255,255,0.78);line-height:1.55;max-width:360px;">Finde in 5–7 Minuten heraus, wo deine Stärken liegen, wo dein größter Hebel sitzt — und was dir ein kleiner Schritt konkret bringt.</p>
     <div id="hero-features" style="margin-bottom:24px;font-size:12px;color:rgba(255,255,255,0.6);letter-spacing:0.3px;">
@@ -4647,7 +4673,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.45.1</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.45.2</footer>
 
 
 </body>
