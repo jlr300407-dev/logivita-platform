@@ -346,7 +346,32 @@
        Einschlafzeit >= 3, Schmerz/Gelenk/Rücken/Beschwerden in den Antworten)
        — aber nur in ihrer Rückfall-Liste, nicht bei vorhandenem Snippet.
        Jetzt an beiden Stellen dieselbe Prüfung; ohne Anlass kommt der
-       Präventionskurs §20. -->
+       Präventionskurs §20.
+
+       v1.45.0 (Startseite neu):
+       (1) HERO positiv ohne Einschränkungswörter: "Was steckt in dir?",
+       Zeitangabe 5–7 Minuten, Merkmale statt Allgemeinplätzen (9 Bereiche,
+       persönliche Auswertung, Verlauf). Die ★★★★★ vor der Nutzerzahl sind
+       entfernt — es gibt keine Bewertungen, die sie abbilden.
+       (2) ZIEL-CHIPS: Einstieg über Ziele statt Alter; ein Klick startet den
+       Check und beantwortet die Zielfrage (startWithGoal). Event
+       landing_goal_click.
+       (3) WERT: sechs Zeilen "was du bekommst → was du damit anfängst".
+       (4) BEISPIEL: erfundene Person, klar gekennzeichnet, mit Spinne,
+       Stärken, Hebel, Simulator und einem Mail-Auszug inkl. Schritten.
+       (5) UHR ALS PARTNER: "Deine Uhr misst Zahlen. Der Vital-Check gibt dir
+       Antworten." — mit Fassung ohne Uhr.
+       (6) VERTRAUEN + Abschluss-CTA.
+       IDs hero-block / hero-value-props / hero-count / hero-cta unverändert;
+       alle neuen Blöcke liegen in hero-value-props und verschwinden mit ihr.
+
+       v1.45.1 (aus dem Anbieter-Vergleichstest, Testperson "Thomas"):
+       (1) BMI mit Dezimalkomma ("27,2") in "Meine Angaben" und der BMI-Karte.
+       (2) Fragenzähler sprang zwischen "von 24" und "von 23" — die Gesamtzahl
+       wächst jetzt nur noch (Reset beim Neuaufbau nach den Basisdaten).
+       (3) "fuer" -> "für" im Datenschutz-Hinweis über den Einwilligungen
+       (reine Rechtschreibung, Inhalt unverändert; der gespeicherte
+       consent_text_snapshot in der Edge ist davon nicht berührt). -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -753,55 +778,167 @@
   <div style="position:absolute;inset:0;background:linear-gradient(to bottom, rgba(10,22,40,0.0) 0%, rgba(10,22,40,0.0) 30%, rgba(10,22,40,0.78) 65%, rgba(10,22,40,1.0) 100%);"></div>
   <!-- Content -->
   <div style="position:relative;z-index:2;padding:16px 22px 36px;text-align:center;">
-    <h1 id="hero-title" style="margin:0 0 12px;font-size:30px;font-weight:800;color:#ffffff;line-height:1.2;letter-spacing:-0.5px;">Wie vital bist du wirklich?</h1>
-    <p id="hero-subline" style="margin:0 auto 22px;font-size:16px;color:rgba(255,255,255,0.72);line-height:1.55;max-width:340px;">Der kostenlose Vitalitäts-Check zeigt dir in ca. 5 Minuten, wo du heute stehst — und was du konkret tun kannst, um dich spürbar zu verbessern.</p>
-    <div id="hero-features" style="margin-bottom:26px;font-size:12px;color:rgba(255,255,255,0.50);letter-spacing:0.3px;">
-      🔬 Wissenschaftlich fundiert&nbsp;&nbsp;·&nbsp;&nbsp;🔒 Datenschutz&nbsp;&nbsp;·&nbsp;&nbsp;🎯 Konkrete nächste Schritte
+    <h1 id="hero-title" style="margin:0 0 12px;font-size:32px;font-weight:800;color:#ffffff;line-height:1.15;letter-spacing:-0.5px;">Was steckt in dir?</h1>
+    <p id="hero-subline" style="margin:0 auto 20px;font-size:16px;color:rgba(255,255,255,0.78);line-height:1.55;max-width:360px;">Finde in 5–7 Minuten heraus, wo deine Stärken liegen, wo dein größter Hebel sitzt — und was dir ein kleiner Schritt konkret bringt.</p>
+    <div id="hero-features" style="margin-bottom:24px;font-size:12px;color:rgba(255,255,255,0.6);letter-spacing:0.3px;">
+      🕸️ 9 Lebensbereiche&nbsp;&nbsp;·&nbsp;&nbsp;✍️ Persönliche Auswertung&nbsp;&nbsp;·&nbsp;&nbsp;📈 Dein Verlauf
     </div>
-    <button id="hero-cta" onclick="startDirectCheck();" style="display:block;width:100%;max-width:340px;margin:0 auto 14px;padding:16px 24px;background:#3ddc84;color:#0d1a14;font-size:17px;font-weight:800;border:none;border-radius:12px;cursor:pointer;">Jetzt kostenlos starten →</button>
-    <p style="margin:0 0 14px;font-size:11px;color:rgba(255,255,255,0.35);">Ab 18 Jahren · Keine Registrierung · Keine Kosten · Kein Abo</p>
-    <div id="hero-social-proof" style="font-size:12px;color:rgba(255,255,255,0.45);">
-      <span style="color:#f5a623;">★★★★★</span>&nbsp; Bereits von <span id="hero-count" style="font-weight:700;color:rgba(255,255,255,0.75);">100+</span> Personen getestet
+    <button id="hero-cta" onclick="startDirectCheck();" style="display:block;width:100%;max-width:340px;margin:0 auto 12px;padding:16px 24px;background:#3ddc84;color:#0d1a14;font-size:17px;font-weight:800;border:none;border-radius:12px;cursor:pointer;">Jetzt kostenlos starten →</button>
+    <p style="margin:0 0 12px;font-size:11.5px;color:rgba(255,255,255,0.5);">Ergebnis sofort · kostenlos · ohne Anmeldung · ohne App</p>
+    <div id="hero-social-proof" style="font-size:12px;color:rgba(255,255,255,0.55);">
+      Über <span id="hero-count" style="font-weight:700;color:rgba(255,255,255,0.85);">100+</span> Menschen haben ihren Vital-Check gemacht
     </div>
   </div>
 </section>
 
 <section id="hero-value-props">
+  <!-- v1.45.0 — Startseite neu: Ziele statt Alter, Wert statt Aufzählung,
+       Beispiel statt Behauptung, die Uhr als Partner. Alle Blöcke leben in
+       dieser Section, damit startDirectCheck/resumeProgress/Neustart sie mit
+       einem einzigen display:none aus- und einblenden (IDs unverändert). -->
   <style>
-    #hero-value-props { max-width: 720px; margin: 0 auto; padding: 44px 20px 24px; }
-    #hero-value-props .vp-eyebrow { text-align: center; margin-bottom: 26px; font-size: 11px; font-weight: 700; color: var(--accent-green); letter-spacing: 1.8px; text-transform: uppercase; }
-    #hero-value-props .vp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px 22px; text-align: center; }
-    #hero-value-props .vp-icon { font-size: 28px; margin-bottom: 10px; line-height: 1; }
-    #hero-value-props .vp-title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
-    #hero-value-props .vp-desc { font-size: 12px; color: var(--text-muted); line-height: 1.55; }
+    #hero-value-props { max-width: 720px; margin: 0 auto; padding: 34px 18px 28px; }
+    .lp-block { margin-bottom: 44px; }
+    .lp-eyebrow { text-align: center; margin-bottom: 10px; font-size: 11px; font-weight: 700; color: var(--accent-green); letter-spacing: 1.8px; text-transform: uppercase; }
+    .lp-h2 { text-align: center; font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 26px; line-height: 1.2; color: var(--text-primary); margin-bottom: 8px; }
+    .lp-lead { text-align: center; font-size: 14px; color: var(--text-secondary); line-height: 1.6; max-width: 520px; margin: 0 auto 20px; }
+    .lp-goals { display: flex; flex-wrap: wrap; gap: 9px; justify-content: center; }
+    .lp-goal { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; color: var(--text-primary); background: var(--brand-card); border: 1px solid var(--border-hover); border-radius: 999px; padding: 11px 16px; min-height: 44px; cursor: pointer; transition: border-color .15s, background .15s, transform .15s; }
+    .lp-goal:hover, .lp-goal:focus-visible { border-color: var(--accent-green); background: var(--accent-green-dim); transform: translateY(-1px); outline: none; }
+    .lp-goal-hint { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 12px; }
+    .lp-value { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .lp-vrow { display: grid; grid-template-columns: 34px 1fr; gap: 4px 12px; background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; }
+    .lp-vicon { grid-row: span 2; font-size: 22px; line-height: 1.2; }
+    .lp-vget { font-size: 14px; font-weight: 700; color: var(--text-primary); line-height: 1.35; }
+    .lp-vuse { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+    .lp-vuse::before { content: '→ '; color: var(--accent-green); font-weight: 700; }
+    .lp-example { background: var(--brand-card); border: 1px solid rgba(34,201,122,0.25); border-radius: var(--radius); padding: 18px 16px 20px; }
+    .lp-ex-tag { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); border: 1px solid var(--border-hover); border-radius: 999px; padding: 3px 10px; margin-bottom: 12px; }
+    .lp-ex-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+    .lp-ex-who { font-size: 14px; color: var(--text-secondary); line-height: 1.45; }
+    .lp-ex-who strong { color: var(--text-primary); }
+    .lp-ex-score { text-align: right; flex-shrink: 0; }
+    .lp-ex-num { font-family: 'DM Serif Display', serif; font-size: 36px; line-height: 1; color: var(--accent-green); }
+    .lp-ex-lbl { font-size: 10.5px; color: var(--text-muted); }
+    .lp-ex-facts { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
+    .lp-ex-fact { font-size: 13px; color: var(--text-secondary); line-height: 1.5; padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,0.03); }
+    .lp-ex-fact b { color: var(--text-primary); }
+    .lp-ex-fact.hebel b { color: var(--accent-amber); }
+    .lp-ex-fact.sim b { color: var(--accent-blue); }
+    .lp-ex-mail { margin-top: 12px; border-left: 3px solid var(--accent-green); padding: 10px 14px; background: var(--accent-green-dim); font-size: 13px; line-height: 1.6; color: var(--text-secondary); font-style: italic; }
+    .lp-ex-mail span { display: block; font-style: normal; font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+    .lp-watch { background: linear-gradient(135deg, rgba(59,158,255,0.10), rgba(34,201,122,0.07)); border: 1px solid rgba(59,158,255,0.25); border-radius: var(--radius); padding: 22px 18px; }
+    .lp-watch-pair { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 14px; }
+    .lp-watch-col { border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13px; line-height: 1.55; color: var(--text-secondary); }
+    .lp-watch-col.num { background: rgba(0,0,0,0.18); }
+    .lp-watch-col.ans { background: var(--accent-green-dim); border: 1px solid rgba(34,201,122,0.25); }
+    .lp-watch-col b { display: block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .lp-watch-col.num b { color: var(--text-muted); }
+    .lp-watch-col.ans b { color: var(--accent-green); }
+    .lp-trust { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .lp-titem { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; }
+    .lp-titem-i { font-size: 20px; margin-bottom: 6px; }
+    .lp-titem-t { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 3px; }
+    .lp-titem-d { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+    .lp-final { text-align: center; }
+    .lp-final-btn { display: block; width: 100%; max-width: 360px; margin: 16px auto 10px; padding: 16px 24px; background: #3ddc84; color: #0d1a14; font-family: 'DM Sans', sans-serif; font-size: 17px; font-weight: 800; border: none; border-radius: 12px; cursor: pointer; }
+    .lp-final-note { font-size: 11.5px; color: var(--text-muted); }
     @media (min-width: 720px) {
-      #hero-value-props { padding: 56px 24px 36px; }
-      #hero-value-props .vp-grid { grid-template-columns: repeat(4, 1fr); gap: 32px 28px; }
-      #hero-value-props .vp-icon { font-size: 30px; margin-bottom: 12px; }
+      #hero-value-props { padding: 48px 24px 36px; }
+      .lp-h2 { font-size: 30px; }
+      .lp-value { grid-template-columns: 1fr 1fr; }
+      .lp-ex-body { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: center; }
+      .lp-watch-pair { grid-template-columns: 1fr 1fr; }
+      .lp-trust { grid-template-columns: repeat(4, 1fr); }
     }
   </style>
-  <div class="vp-eyebrow">Was du bekommst</div>
-  <div class="vp-grid">
-    <div class="vp-item">
-      <div class="vp-icon">⚡</div>
-      <div class="vp-title">Vitalitäts-Index</div>
-      <div class="vp-desc">Dein persönlicher Score von 0–100 — sofort nach dem Test.</div>
+
+  <!-- 1 · Ziele statt Alter: ein Klick startet den Check mit gesetztem Ziel -->
+  <div class="lp-block">
+    <div class="lp-eyebrow">Dein Einstieg</div>
+    <h2 class="lp-h2">Was möchtest du erreichen?</h2>
+    <div class="lp-lead">Wähle dein Ziel — der Check startet direkt damit und richtet deine Auswertung darauf aus.</div>
+    <div class="lp-goals">
+      <button class="lp-goal" onclick="startWithGoal('goal_energy')">⚡ Mehr Energie</button>
+      <button class="lp-goal" onclick="startWithGoal('goal_weight')">⚖️ Abnehmen &amp; Figur</button>
+      <button class="lp-goal" onclick="startWithGoal('goal_fitness')">💪 Fitter &amp; stärker</button>
+      <button class="lp-goal" onclick="startWithGoal('goal_longevity')">🌿 Langfristig fit &amp; vital</button>
+      <button class="lp-goal" onclick="startWithGoal('goal_prevention')">🛡️ Vorsorgen</button>
+      <button class="lp-goal" onclick="startWithGoal('goal_supplements')">💊 Klarheit bei Nährstoffen</button>
+      <button class="lp-goal" onclick="startWithGoal('goal_curious')">✨ Einfach neugierig</button>
     </div>
-    <div class="vp-item">
-      <div class="vp-icon">🧬</div>
-      <div class="vp-title">Vitalitäts-Alter</div>
-      <div class="vp-desc">Ein Orientierungswert basierend auf deinen Lebensgewohnheiten — überrascht oft.</div>
+  </div>
+
+  <!-- 2 · Wert: was du bekommst und was du damit anfängst -->
+  <div class="lp-block">
+    <div class="lp-eyebrow">Mehr als ein Fragebogen</div>
+    <h2 class="lp-h2">Was dir 5–7 Minuten bringen</h2>
+    <div class="lp-lead">Deine Antworten werden ausgewertet, verknüpft und in einen Plan übersetzt — so bekommst du Antworten statt Tabellen.</div>
+    <div class="lp-value">
+      <div class="lp-vrow"><div class="lp-vicon">🕸️</div><div class="lp-vget">Deine Vitalitäts-Spinne mit 9 Bereichen</div><div class="lp-vuse">Du siehst auf einen Blick, wo du stark bist.</div></div>
+      <div class="lp-vrow"><div class="lp-vicon">🎯</div><div class="lp-vget">Dein größter Hebel</div><div class="lp-vuse">Du weißt, wo sich der erste Schritt am meisten lohnt.</div></div>
+      <div class="lp-vrow"><div class="lp-vicon">🔮</div><div class="lp-vget">Der Potenzial-Simulator</div><div class="lp-vuse">Du siehst, was eine Veränderung bringt — bevor du sie machst.</div></div>
+      <div class="lp-vrow"><div class="lp-vicon">✍️</div><div class="lp-vget">Dein Vital-Plan per Mail</div><div class="lp-vuse">Persönlich auf deine Antworten geschrieben, mit einem 6-Wochen-Fahrplan.</div></div>
+      <div class="lp-vrow"><div class="lp-vicon">📈</div><div class="lp-vget">Dein Re-Check mit PIN</div><div class="lp-vuse">In 8–12 Wochen siehst du schwarz auf weiß, was sich verändert hat.</div></div>
+      <div class="lp-vrow"><div class="lp-vicon">🤝</div><div class="lp-vget">Ein Gespräch im Studio, wenn du magst</div><div class="lp-vuse">Du setzt deinen Plan mit Menschen um, die dich begleiten.</div></div>
     </div>
-    <div class="vp-item">
-      <div class="vp-icon">🎯</div>
-      <div class="vp-title">Deine Hebel</div>
-      <div class="vp-desc">Wo du mit kleinem Aufwand den größten Unterschied machst.</div>
+  </div>
+
+  <!-- 3 · Beispiel statt Behauptung (erfundene Person, klar gekennzeichnet) -->
+  <div class="lp-block">
+    <div class="lp-eyebrow">So sieht das aus</div>
+    <h2 class="lp-h2">Eine Auswertung im Beispiel</h2>
+    <div class="lp-example">
+      <div class="lp-ex-tag">Beispiel · erfundene Person</div>
+      <div class="lp-ex-body">
+        <div>
+          <div class="lp-ex-head">
+            <div class="lp-ex-who"><strong>Sandra, 46</strong><br>Ziel: mehr Energie</div>
+            <div class="lp-ex-score"><div class="lp-ex-num">71</div><div class="lp-ex-lbl">Vitalitäts-Index</div></div>
+          </div>
+          <svg viewBox="-34 0 368 256" width="100%" style="max-width:360px;display:block;margin:0 auto;" role="img" aria-label="Beispiel einer Vitalitäts-Spinne mit neun Bereichen"><polygon points="150.0,106.5 163.8,111.5 171.2,124.3 168.6,138.8 157.4,148.2 142.6,148.2 131.4,138.8 128.8,124.3 136.2,111.5" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,85.0 177.6,95.1 192.3,120.5 187.2,149.5 164.7,168.4 135.3,168.4 112.8,149.5 107.7,120.5 122.4,95.1" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,63.5 191.5,78.6 213.5,116.8 205.9,160.2 172.1,188.6 127.9,188.6 94.1,160.3 86.5,116.8 108.5,78.6" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,42.0 205.3,62.1 234.7,113.1 224.5,171.0 179.4,208.8 120.6,208.8 75.5,171.0 65.3,113.1 94.7,62.1" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><line x1="150" y1="128" x2="150.0" y2="42.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="205.3" y2="62.1" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="234.7" y2="113.1" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="224.5" y2="171.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="179.4" y2="208.8" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="120.6" y2="208.8" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="75.5" y2="171.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="65.3" y2="113.1" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="94.7" y2="62.1" stroke="rgba(255,255,255,0.08)"/><polygon points="150.0,60.9 182.1,89.8 211.0,117.2 197.7,155.5 173.5,192.7 127.6,189.4 84.5,165.8 90.7,117.5 113.5,84.5" fill="rgba(34,201,122,0.22)" stroke="#22c97a" stroke-width="2" stroke-linejoin="round"/><circle cx="150.0" cy="60.9" r="2.6" fill="#22c97a"/><text x="150.0" y="26.0" text-anchor="middle" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Schlaf</text><circle cx="182.1" cy="89.8" r="4" fill="#f5a623"/><text x="218.1" y="50.8" text-anchor="start" font-size="10.5" fill="#f5a623" font-family="DM Sans, sans-serif" font-weight="700">Bewegung</text><circle cx="211.0" cy="117.2" r="2.6" fill="#22c97a"/><text x="254.4" y="113.6" text-anchor="start" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Ernährung</text><circle cx="197.7" cy="155.5" r="2.6" fill="#22c97a"/><text x="241.8" y="185.0" text-anchor="start" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Tageslicht</text><circle cx="173.5" cy="192.7" r="2.6" fill="#22c97a"/><text x="186.3" y="231.6" text-anchor="start" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">BMI</text><circle cx="127.6" cy="189.4" r="2.6" fill="#22c97a"/><text x="113.7" y="231.6" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Balance</text><circle cx="84.5" cy="165.8" r="2.6" fill="#22c97a"/><text x="58.2" y="185.0" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Lifestyle</text><circle cx="90.7" cy="117.5" r="2.6" fill="#22c97a"/><text x="45.6" y="113.6" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Nährstoffe</text><circle cx="113.5" cy="84.5" r="2.6" fill="#22c97a"/><text x="81.9" y="50.8" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Energie</text></svg>
+        </div>
+        <div>
+          <div class="lp-ex-facts">
+            <div class="lp-ex-fact"><b>Stärken:</b> Schlaf und ein ausgewogener Lebensstil — ihre Basis.</div>
+            <div class="lp-ex-fact hebel"><b>Größter Hebel:</b> Bewegung — hier bringt der erste Schritt am meisten.</div>
+            <div class="lp-ex-fact sim"><b>Simulator:</b> Ein zweiter Bewegungstermin pro Woche bringt ihr rund +5 Punkte.</div>
+          </div>
+          <div class="lp-ex-mail">„Dein Schlaf ist eine echte Stärke, darauf kannst du aufbauen. Für mehr Energie liegt dein größter Hebel in der Bewegung: Starte mit einem zweiten festen Termin pro Woche — 30 Minuten zügig gehen, mit Uhr oder Handy rund 3.000 Schritte.“<span>Auszug aus einem Vital-Plan</span></div>
+        </div>
+      </div>
     </div>
-    <div class="vp-item">
-      <div class="vp-icon">📧</div>
-      <div class="vp-title">Dein Vital-Plan</div>
-      <div class="vp-desc">Dein persönlicher Vital-Plan — direkt per E-Mail.</div>
+  </div>
+
+  <!-- 4 · Die Uhr als Partner, nicht als Konkurrenz -->
+  <div class="lp-block">
+    <div class="lp-watch">
+      <div class="lp-eyebrow" style="text-align:left;">Smartwatch, Handy, Fitness-Tracker</div>
+      <h2 class="lp-h2" style="text-align:left;">Deine Uhr misst Zahlen.<br>Der Vital-Check gibt dir Antworten.</h2>
+      <div class="lp-lead" style="text-align:left;margin:0;">Schritte, Schlafdauer, Puls — gut zu wissen. Aber was bedeuten sie für dich, und was ist dein nächster Schritt? Der Vital-Check verbindet deinen Alltag mit einem Plan, den du mit deiner Uhr ganz einfach verfolgst.</div>
+      <div class="lp-watch-pair">
+        <div class="lp-watch-col num"><b>Deine Uhr</b>„5.200 Schritte heute.“</div>
+        <div class="lp-watch-col ans"><b>Dein Vital-Plan</b>„Geh jeden Tag 15 Minuten zügig — das sind rund 1.500 Schritte mehr. Genau dort liegt dein größter Hebel für mehr Energie.“</div>
+      </div>
+      <div style="font-size:11.5px;color:var(--text-muted);margin-top:10px;">Keine Uhr? Kein Problem — jede Empfehlung gibt es auch in Minuten.</div>
     </div>
+  </div>
+
+  <!-- 5 · Vertrauen -->
+  <div class="lp-block">
+    <div class="lp-trust">
+      <div class="lp-titem"><div class="lp-titem-i">📍</div><div class="lp-titem-t">Menschen vor Ort</div><div class="lp-titem-d">LeVITA in Gemünden (Wohra) — Training, Kurse und Physiotherapie unter einem Dach.</div></div>
+      <div class="lp-titem"><div class="lp-titem-i">🔒</div><div class="lp-titem-t">Datenschutz ernst genommen</div><div class="lp-titem-d">Gespeichert in der EU, keine Weitergabe, jederzeit löschbar.</div></div>
+      <div class="lp-titem"><div class="lp-titem-i">🧭</div><div class="lp-titem-t">Ehrliche Orientierung</div><div class="lp-titem-d">Auf Basis von WHO, DGE und BfR — keine Diagnose, kein Versprechen.</div></div>
+      <div class="lp-titem"><div class="lp-titem-i">🚫</div><div class="lp-titem-t">Kein Verkaufsdruck</div><div class="lp-titem-d">Deine Auswertung steht im Mittelpunkt — ehrlich und unabhängig.</div></div>
+    </div>
+  </div>
+
+  <!-- 6 · Abschluss -->
+  <div class="lp-final">
+    <h2 class="lp-h2">Bereit für deinen Vital-Check?</h2>
+    <button class="lp-final-btn" onclick="startDirectCheck();">Jetzt kostenlos starten →</button>
+    <div class="lp-final-note">5–7 Minuten · Ergebnis sofort · ohne Konto, ohne App · ab 18</div>
   </div>
 </section>
 
@@ -1658,7 +1795,7 @@
         <div style="font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;border:1px solid var(--border);">
           &#x2139;&#xfe0f; Deine Angaben zu Lebensstil, Schlaf, Ernährung und Wohlbefinden können Gesundheitsdaten im Sinne von Art. 9 DSGVO darstellen.
           Die Verarbeitung erfolgt ausschließlich auf Basis deiner ausdrücklichen Einwilligung.
-          Deine Daten werden auf Servern in der EU (Frankfurt) gespeichert und nicht fuer Werbezwecke genutzt.
+          Deine Daten werden auf Servern in der EU (Frankfurt) gespeichert und nicht für Werbezwecke genutzt.
         </div>
         <div class="checkbox-row">
           <input type="checkbox" id="consent_privacy" />
@@ -1712,6 +1849,7 @@
     }
     trackEvent('personal_completed', { step_index: currentStep, age: personalData.age, gender: personalData.gender });
     const nextStepIndex = currentStep + 1;
+    window._qTotalMax = 0;   // v1.45.1: Fragenplan wird neu gebaut, Zähler neu beginnen
     buildGroupedQuestionsForGender();
     buildSteps(nextStepIndex);
     currentStep = nextStepIndex;
@@ -2072,6 +2210,25 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  // v1.45.0 — Ziel-Chips auf der Startseite: Ein Klick startet den Check und
+  // beantwortet die erste Frage (Ziel) gleich mit. Die Frage bleibt die echte
+  // aus der DB: gesucht wird ihr Knopf in step-0 und angeklickt, damit saveGoal,
+  // Tracking (step_answered) und nextStep genau wie bei einem normalen Klick
+  // laufen. Sind die Fragen noch nicht geladen, wird bis ~3 s nachgesehen;
+  // danach bleibt einfach die Zielfrage stehen — nichts geht verloren.
+  function startWithGoal(goalKey) {
+    trackEvent('landing_goal_click', { goal_key: goalKey });
+    startDirectCheck();
+    let tries = 0;
+    (function pick() {
+      const step = document.getElementById('step-0');
+      const btn = step && Array.from(step.querySelectorAll('button'))
+        .find(b => (b.getAttribute('onclick') || '').includes("'" + goalKey + "'"));
+      if (btn) { btn.click(); return; }
+      if (++tries < 20) setTimeout(pick, 150);
+    })();
+  }
+
   function startDirectCheck() {
     window._isReviewMode = false; // Sicherstellen dass Tracking aktiv ist
     // v1.31.5: Engagement zuerst nachziehen, falls weder Scrollen noch 10 s gegriffen
@@ -2145,8 +2302,13 @@
       // aktuellen Fragenplan berechnet; Zusatzfragen erhöhen X und Y gemeinsam, nie rückwärts.
       const qSteps = groupedQuestions.filter(s => s.question_key);
       const qPos = qSteps.indexOf(q) + 1;
+      // v1.45.1 — Die Gesamtzahl sprang zwischen 24 und 23 hin und her, sobald
+      // eine Zusatzfrage (z. B. Supplement-Arten) ein- und wieder ausgeblendet
+      // wurde. Jetzt wächst sie nur noch; zurückgesetzt wird sie, wenn der
+      // Fragenplan nach den Basisdaten neu aufgebaut wird.
+      window._qTotalMax = Math.max(window._qTotalMax || 0, qSteps.length, qPos);
       document.getElementById("progressAreaLabel").textContent = `${icon} ${q.area_label || q.area_key}`;
-      document.getElementById("progressCount").textContent = qPos > 0 ? `Frage ${qPos} von ${qSteps.length}` : "";
+      document.getElementById("progressCount").textContent = qPos > 0 ? `Frage ${qPos} von ${window._qTotalMax}` : "";
     }
   }
 
@@ -2822,7 +2984,7 @@
           <span class="pill">Geschlecht: ${personalData.gender}</span>
           <span class="pill">Größe: ${personalData.height_cm} cm</span>
           <span class="pill">Gewicht: ${personalData.weight_kg} kg</span>
-          <span class="pill">BMI: ${result.bmi}</span>
+          <span class="pill">BMI: ${isFinite(Number(result.bmi)) ? Number(result.bmi).toFixed(1).replace(".", ",") : result.bmi}</span>
           ${bioAge ? `<span class="pill">Vitalitäts-Alter: ${bioAge} J.</span>` : ""}
           ${goalLabel ? `<span class="pill" style="background:var(--accent-green-dim);border-color:rgba(34,201,122,0.3);">${goalLabel}</span>` : ""}
         </div>
@@ -3481,7 +3643,7 @@
     const bmi = Number(result?.bmi);
     if (!isFinite(bmi)) return "";
     let lbl = bmi < 18.5 ? "unterhalb des üblichen Orientierungsbereichs" : bmi < 25 ? "im stabilen Orientierungsbereich" : bmi < 30 ? "leicht oberhalb des klassischen Orientierungsbereichs" : "deutlich oberhalb des klassischen Orientierungsbereichs";
-    return `<div class="bmi-detail"><strong>BMI: ${bmi.toFixed(1)}</strong> — ${lbl}.<br><small>Der BMI ist eine grobe Orientierung und sollte immer zusammen mit Muskelmasse, Aktivität und Wohlbefinden betrachtet werden.</small></div>`;
+    return `<div class="bmi-detail"><strong>BMI: ${bmi.toFixed(1).replace(".", ",")}</strong> — ${lbl}.<br><small>Der BMI ist eine grobe Orientierung und sollte immer zusammen mit Muskelmasse, Aktivität und Wohlbefinden betrachtet werden.</small></div>`;
   }
 
   function getLevel(s) { return s < 55 ? "low" : s < 75 ? "medium" : "good"; }
@@ -4485,7 +4647,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.44.1</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.45.1</footer>
 
 
 </body>
