@@ -414,7 +414,17 @@
        Hero, links über der Textspalte, nur ab 640 px. Auf dem Handy trägt
        hero-mobile.jpg das Logo bereits im Motiv. Dazu: flache Bildschirme
        halten den Abstand zum Logo, schmale Desktops dunkeln die Bildsymbole
-       stärker ab. Beide Dateien lagen bereits in assets/. -->
+       stärker ab. Beide Dateien lagen bereits in assets/.
+
+       v1.45.6 (Hero auf dem Handy): Das Bildzeichen fehlte dort, und der Text
+       lag auf dem unruhigen Motiv. Jetzt gestapelt: Logo oben auf dunklem
+       Grund, Bild zugeschnitten auf das Paar (ohne eingebauten Schriftzug,
+       unten weich ausgeblendet), Text darunter ohne Schatten.
+
+       v1.45.7: Produktname und Claim über der Überschrift —
+       "Vital-Check · Dein Kompass für mehr Vitalität" (Entscheidung Jörg:
+       Name bleibt LeVITA Vital-Check, der Kompass ist Claim, nicht Name —
+       "Vitalkompass" ist von einem Gesundheitsshop belegt). -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -785,15 +795,31 @@
 <section id="hero-block" style="width:100%;margin:0;padding:0;position:relative;overflow:hidden;min-height:520px;display:flex;flex-direction:column;justify-content:flex-end;background:#0d1a14;">
   <style>
     #hero-img-mobile { display:block; }
-    /* Handy: Das Hero-Bild trägt das Original-Logo bereits groß im Motiv —
-       das Logo hier erscheint deshalb nur ab 640 px (dort ist das Bild-Logo
-       abgeschnitten). */
-    #hero-brand { display:none; position:absolute; top:0; left:0; right:0; z-index:3; }
+    #hero-brand { position:absolute; top:0; left:0; right:0; z-index:3; }
+    /* v1.45.6 — Handy gestapelt: Logo auf dunklem Grund, darunter das Bild
+       (zugeschnitten auf das Paar, ohne den eingebauten Schriftzug), darunter
+       der Text auf ruhigem Grund. Vorher lag der Text auf dem unruhigen Motiv
+       mit Symbolen und war schwer lesbar; das Bildzeichen fehlte ganz. */
+    @media (max-width: 639px) {
+      #hero-block { min-height: 0 !important; justify-content: flex-start !important; background: #0a1628 !important; }
+      #hero-brand { position: relative; order: 0; }
+      #hero-brand .hb-inner { padding: 16px 22px 14px; }
+      #hero-img-mobile { position: relative !important; inset: auto !important; order: 1; width: 100% !important; height: 290px !important;
+        object-position: center 86% !important;
+        -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); }
+      #hero-overlay { display: none; }
+      #hero-content { order: 2; padding: 4px 22px 34px !important; }
+      #hero-title, #hero-subline, #hero-features { text-shadow: none !important; }
+    }
     #hero-brand .hb-inner { max-width:1120px; margin:0 auto; padding:16px 22px 26px; display:flex; align-items:center; justify-content:center; gap:10px; }
     #hero-brand .hb-mark { width:40px; height:40px; border-radius:11px; display:block; }
     #hero-brand .hb-word { height:30px; width:auto; max-width:160px; display:block; }
     #hero-brand .hb-fallback { font-family:'DM Serif Display',serif; font-size:24px; color:#fff; }
     #hero-brand .hb-fallback b { color:#22c97a; font-weight:400; }
+    /* v1.45.7 — Produktname + Claim über der Überschrift */
+    #hero-eyebrow { font-size: 10.5px; font-weight: 700; letter-spacing: 0.9px; text-transform: uppercase; color: #3ddc84; margin: 0 0 10px; text-shadow: 0 1px 6px rgba(0,0,0,0.6); }
+    @media (max-width: 639px) { #hero-eyebrow .he-sep { display: none; } #hero-eyebrow .he-name, #hero-eyebrow .he-claim { display: block; } #hero-eyebrow .he-name { font-size: 12px; letter-spacing: 2px; margin-bottom: 2px; } #hero-eyebrow .he-claim { color: rgba(255,255,255,0.7); } }
+    @media (min-width: 640px) { #hero-eyebrow { font-size: 12.5px; letter-spacing: 1.6px; margin-bottom: 12px; } }
     #hero-img-desktop { display:none; }
     /* Lesbarkeit auf Bild-Hintergrund: Text-Shadow für alle Hero-Textblöcke */
     #hero-title, #hero-subline, #hero-features {
@@ -818,7 +844,6 @@
        Bild rechts (das Paar), Logo und Symbole laufen im Verlauf ins Dunkle. */
     @media (min-width: 640px) {
       #hero-block { background: #0a1628 !important; justify-content: center !important; }
-      #hero-brand { display: block; }
       #hero-brand .hb-inner { justify-content: flex-start; padding: 26px 40px 0; }
       #hero-brand .hb-mark { width:46px; height:46px; border-radius:13px; }
       #hero-brand .hb-word { height:34px; max-width:180px; }
@@ -866,6 +891,7 @@
   <div id="hero-overlay" style="position:absolute;inset:0;background:linear-gradient(to bottom, rgba(10,22,40,0.0) 0%, rgba(10,22,40,0.0) 30%, rgba(10,22,40,0.78) 65%, rgba(10,22,40,1.0) 100%);"></div>
   <!-- Content -->
   <div id="hero-content" style="position:relative;z-index:2;padding:16px 22px 36px;text-align:center;">
+    <div id="hero-eyebrow"><span class="he-name">Vital-Check</span><span class="he-sep"> · </span><span class="he-claim">Dein Kompass für mehr Vitalität</span></div>
     <h1 id="hero-title" style="margin:0 0 12px;font-size:32px;font-weight:800;color:#ffffff;line-height:1.15;letter-spacing:-0.5px;">Was steckt in dir?</h1>
     <p id="hero-subline" style="margin:0 auto 20px;font-size:16px;color:rgba(255,255,255,0.78);line-height:1.55;max-width:360px;">Finde in 5–7 Minuten heraus, wo deine Stärken liegen, wo dein größter Hebel sitzt — und was dir ein kleiner Schritt konkret bringt.</p>
     <div id="hero-features" style="margin-bottom:24px;font-size:12px;color:rgba(255,255,255,0.6);letter-spacing:0.3px;">
@@ -4746,7 +4772,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.45.5</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.45.7</footer>
 
 
 </body>
