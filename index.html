@@ -450,7 +450,22 @@
        marketing_optin_requested, marketing_optin_confirmed, marketing_revoked.
        Der Satz "Wir erinnern dich nicht automatisch" entfällt.
        (2) HEBEL in drei Teilen auf Tab 3: neu "Woran du es merkst" —
-       vorsichtig formulierte Erfahrungswerte je Bereich, ohne Zahlen. -->
+       vorsichtig formulierte Erfahrungswerte je Bereich, ohne Zahlen.
+
+       v1.48.0 (gehört zu simulator_ansatzpunkt.sql):
+       (1) Das Wort "Hebel" stand an zwei Stellen für Verschiedenes: oben für
+       den schwächsten Bereich, unten für die größten Punktgewinne. Ein gering
+       gewichteter Bereich (Alkohol / Nikotin, 8 %) fiel damit aus dem
+       Simulator, obwohl er oben als größter Hebel stand (Befund Jörg,
+       20.09.2026, Check 000320: täglich Alkohol, kein Hebel angeboten).
+       Jetzt heißt die Box auf Tab 1 "Dein größter Ansatzpunkt"; die Funktion
+       calculate_score_scenarios reserviert diesem Bereich einen der drei
+       Plätze, sofern es dort eine günstigere Antwort gibt.
+       (2) Gibt es dort keine günstigere Antwort mehr, sagt der Simulator das
+       in einem Satz, statt den Bereich stillschweigend wegzulassen.
+       (3) Das Vitalitäts-Alter zeigt die Veränderung ("1 Jahr jünger"), nicht
+       nur den Zielwert. Rund 7 Indexpunkte entsprechen einem Jahr; unter einem
+       Jahr wird das offen benannt. Beide Werte kommen vom Server. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -780,6 +795,8 @@
     .sim-lever-title { font-size: 13px; font-weight: 700; color: var(--text-primary); line-height: 1.35; }
     .sim-lever-change { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-top: 2px; }
     .sim-lever-gain { font-size: 11px; font-weight: 700; color: var(--accent-blue); margin-top: 3px; }
+    /* v1.48.0 — Hinweis, wenn im größten Ansatzpunkt keine bessere Antwort bleibt */
+    .sim-note { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 10px 0 4px; padding: 9px 11px; border-radius: 8px; background: rgba(255,255,255,0.04); }
     .sim-switch { position: relative; width: 40px; height: 22px; border-radius: 12px; background: rgba(255,255,255,0.12); flex-shrink: 0; transition: background 0.2s; }
     .sim-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--text-secondary); transition: all 0.2s; }
     .sim-lever.on .sim-switch { background: var(--accent-blue); }
@@ -3184,7 +3201,7 @@
       // die Handlungsschritte (Sofort / Diese Woche) gehoeren zu "Was tue ich"
       // und stehen jetzt dort — verschoben, nicht doppelt.
       html += `<div class="hebel-box" onclick="switchResultTab('empfehlungen')" style="cursor:pointer;"><div class="hebel-icon">💡</div><div>
-        <div class="hebel-title">Dein größter Hebel</div>
+        <div class="hebel-title">Dein größter Ansatzpunkt</div>
         <div class="hebel-text"><strong>${AREA_ICONS[worst.key]||""} ${worst.label}</strong></div>
         <div style="margin-top:8px;font-size:12.5px;color:var(--accent-green);font-weight:600;">Was das konkret heißt → Nächste Schritte</div>
       </div></div>`;
@@ -3192,7 +3209,7 @@
 
     // ── V2: Potenzial-Simulator (Prio 2.3) — serverseitig vorberechnete Szenarien,
     // Auswahl vorbereiteter Hebel per Schalter, keine Freieingabe, keine Client-Rechnung.
-    html += renderSimulatorHtml(totalScore, bioAge);
+    html += renderSimulatorHtml(totalScore, bioAge, worst);
 
     // v1.35.0 — Die Vital-Plan-Box steht nicht mehr in Tab 1, sondern als
     // aufklappbare Leiste ueber den Tabs (siehe oben). Sie gehoert damit
@@ -4260,7 +4277,7 @@
     return combo ? { entry: combo, total: combo.new_total, bio_age: combo.new_bio_age, gain: combo.gain } : null;
   }
 
-  function renderSimulatorHtml(totalScore, bioAge) {
+  function renderSimulatorHtml(totalScore, bioAge, worst) {
     const outcomeHtml = renderGoalOutcomeHtml();
     if (!simScenarios || !simScenarios.levers.length) {
       // Kein Szenario verfügbar (z.B. bereits alles im Optimum) — Ziel-Auswertung
@@ -4282,6 +4299,14 @@
           <div class="sim-switch"></div>
         </div>`;
     });
+    // v1.48.0 — Tab 1 nennt oben den schwächsten Bereich als größten Ansatzpunkt.
+    // Steht dort kein Hebel zur Verfügung, liegt das daran, dass bereits die
+    // günstigste Antwort gewählt wurde. Ohne diesen Satz wirkt es wie ein
+    // Widerspruch zwischen den beiden Stellen.
+    let ansatzNote = "";
+    if (worst && worst.key && !simScenarios.levers.some(l => l.area_key === worst.key)) {
+      ansatzNote = `<div class="sim-note">Bei <strong>${AREA_ICONS[worst.key] || ""} ${escHtml(worst.label)}</strong> — deinem größten Ansatzpunkt — hast du bereits die günstigste Antwort gegeben. Was dort weiterhilft, steht in deinen nächsten Schritten.</div>`;
+    }
     return `
       <div class="sim-box" id="simBox">
         <div class="sim-badge">✦ Was wäre wenn</div>
@@ -4292,6 +4317,7 @@
           : 'Wähle bis zu drei Hebel aus deinen größten Ansatzpunkten — und sieh sofort, was das für deinen Index bedeuten würde. Serverseitig berechnet, mit derselben Formel wie dein Ergebnis.'}</div>
         <div id="simGoalCard">${renderGoalCardHtml()}</div>
         ${leversHtml}
+        ${ansatzNote}
         <div class="sim-projection">
           <div class="sim-proj-num" id="simProjNum">${Math.round(totalScore)}</div>
           <div class="sim-proj-meta" id="simProjMeta">Schalte oben einen Hebel ein, um dein Potenzial zu sehen.</div>
@@ -4595,7 +4621,19 @@
     } else if (proj) {
       if (num) { num.textContent = Math.round(proj.total); num.style.color = 'var(--accent-blue)'; }
       if (meta) {
-        const bioTxt = proj.bio_age ? ` · Vitalitäts-Alter ~<strong>${proj.bio_age} J.</strong>` : '';
+        // v1.48.0 — Nicht nur der Zielwert, sondern die Veränderung: sonst
+        // bleibt unklar, ob sich das Vitalitäts-Alter überhaupt bewegt.
+        // Beide Werte kommen vom Server, das Frontend rechnet nur die Differenz.
+        const baseBio = simScenarios.base && simScenarios.base.bio_age;
+        let bioTxt = '';
+        if (proj.bio_age) {
+          const dy = (baseBio && isFinite(baseBio)) ? Math.round(baseBio - proj.bio_age) : null;
+          const dTxt = dy === null ? ''
+            : dy >= 2 ? ` <span style="color:var(--accent-green);font-weight:600;">(${dy} Jahre jünger)</span>`
+            : dy === 1 ? ' <span style="color:var(--accent-green);font-weight:600;">(1 Jahr jünger)</span>'
+            : ' <span style="color:var(--text-muted);">(rechnerisch unter einem Jahr)</span>';
+          bioTxt = ` · Vitalitäts-Alter ~<strong>${proj.bio_age} J.</strong>${dTxt}`;
+        }
         const comboNote = simActiveKeys.length >= 2 ? ' <span style="color:var(--text-muted);">(Kombination exakt berechnet — Hebel addieren sich nicht einfach)</span>' : '';
         meta.innerHTML = `<strong>+${fmtGain(proj.gain)} Punkte</strong> gegenüber heute${bioTxt}${comboNote}`;
       }
@@ -5007,7 +5045,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.47.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.48.0</footer>
 
 
 </body>
