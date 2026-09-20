@@ -3,7 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LeVITA Vital-Check powered by LogiVita</title>
+  <title>LeVITA Vital-Check – kostenlos in 5–7 Minuten | Gemünden (Wohra)</title>
+  <!-- v1.45.4 — Meta-Angaben für Suchmaschinen und geteilte Links.
+       Kanonisch ist die Website-Seite /vital-check/start (dort steht der
+       indexierbare Text); diese Datei läuft als iFrame darin. -->
+  <meta name="description" content="Was steckt in dir? Der kostenlose LeVITA Vital-Check zeigt dir in 5–7 Minuten deine Stärken in 9 Lebensbereichen, deinen größten Hebel und einen persönlichen Plan. Ergebnis sofort, ohne Anmeldung." />
+  <link rel="canonical" href="https://www.le-vita.com/vital-check/start" />
+  <meta name="theme-color" content="#0a1628" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="de_DE" />
+  <meta property="og:site_name" content="LeVITA" />
+  <meta property="og:title" content="Was steckt in dir? – Der LeVITA Vital-Check" />
+  <meta property="og:description" content="9 Lebensbereiche, dein größter Hebel und ein persönlicher Plan – kostenlos in 5–7 Minuten, Ergebnis sofort." />
+  <meta property="og:url" content="https://www.le-vita.com/vital-check/start" />
+  <meta property="og:image" content="https://www.le-vita.com/app/vital-check/assets/hero-desktop.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="675" />
+  <meta property="og:image:alt" content="LeVITA Vital-Check" />
+  <meta name="twitter:card" content="summary_large_image" />
   <!-- META PIXEL DEAKTIVIERT (Stand: 24.06.2026)
        Grund: §25 TDDDG — Tracking erst nach aktiver Einwilligung erlaubt.
        Pixel-ID: 162833051672814
@@ -386,7 +403,18 @@
        Ersetzt den Maximalwert-Ansatz aus v1.45.1.
        (2) Sprache: "Kein Verkaufsdruck" / "ohne Verkaufsdruck" entfernt
        (Entscheidung Jörg). Zentrale Aussage: Wir kümmern uns um Gesundheit,
-       Vitalität und Fitness. -->
+       Vitalität und Fitness.
+
+       v1.45.4: Meta-Angaben (title, description, canonical auf
+       /vital-check/start, Open-Graph-Vorschau mit hero-desktop.jpg, theme-color).
+       Ohne sie erschien ein geteilter Link ohne Bild und Text.
+
+       v1.45.5: Original-Logo auf der Startseite (Wunsch Jörg) — Bildzeichen
+       levita-mark.png + heller Schriftzug levita-wordmark-light.png oben im
+       Hero, links über der Textspalte, nur ab 640 px. Auf dem Handy trägt
+       hero-mobile.jpg das Logo bereits im Motiv. Dazu: flache Bildschirme
+       halten den Abstand zum Logo, schmale Desktops dunkeln die Bildsymbole
+       stärker ab. Beide Dateien lagen bereits in assets/. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -757,6 +785,15 @@
 <section id="hero-block" style="width:100%;margin:0;padding:0;position:relative;overflow:hidden;min-height:520px;display:flex;flex-direction:column;justify-content:flex-end;background:#0d1a14;">
   <style>
     #hero-img-mobile { display:block; }
+    /* Handy: Das Hero-Bild trägt das Original-Logo bereits groß im Motiv —
+       das Logo hier erscheint deshalb nur ab 640 px (dort ist das Bild-Logo
+       abgeschnitten). */
+    #hero-brand { display:none; position:absolute; top:0; left:0; right:0; z-index:3; }
+    #hero-brand .hb-inner { max-width:1120px; margin:0 auto; padding:16px 22px 26px; display:flex; align-items:center; justify-content:center; gap:10px; }
+    #hero-brand .hb-mark { width:40px; height:40px; border-radius:11px; display:block; }
+    #hero-brand .hb-word { height:30px; width:auto; max-width:160px; display:block; }
+    #hero-brand .hb-fallback { font-family:'DM Serif Display',serif; font-size:24px; color:#fff; }
+    #hero-brand .hb-fallback b { color:#22c97a; font-weight:400; }
     #hero-img-desktop { display:none; }
     /* Lesbarkeit auf Bild-Hintergrund: Text-Shadow für alle Hero-Textblöcke */
     #hero-title, #hero-subline, #hero-features {
@@ -781,6 +818,11 @@
        Bild rechts (das Paar), Logo und Symbole laufen im Verlauf ins Dunkle. */
     @media (min-width: 640px) {
       #hero-block { background: #0a1628 !important; justify-content: center !important; }
+      #hero-brand { display: block; }
+      #hero-brand .hb-inner { justify-content: flex-start; padding: 26px 40px 0; }
+      #hero-brand .hb-mark { width:46px; height:46px; border-radius:13px; }
+      #hero-brand .hb-word { height:34px; max-width:180px; }
+      #hero-content { padding-top: 96px !important; }
       #hero-img-desktop { left: auto !important; right: 0 !important; top: -10% !important; width: 56% !important; height: 120% !important; object-position: 100% 22% !important; }
       #hero-overlay { background:
           linear-gradient(to right, #0a1628 0%, #0a1628 46%, rgba(10,22,40,0.85) 54%, rgba(10,22,40,0.3) 68%, rgba(10,22,40,0) 82%),
@@ -793,6 +835,9 @@
     }
     @media (min-width: 640px) and (max-width: 900px) {
       #hero-img-desktop { width: 62% !important; }
+      #hero-overlay { background:
+          linear-gradient(to right, #0a1628 0%, #0a1628 52%, rgba(10,22,40,0.8) 62%, rgba(10,22,40,0.25) 80%, rgba(10,22,40,0) 92%),
+          linear-gradient(to bottom, rgba(10,22,40,0) 75%, #0a1628 100%) !important; }
       #hero-content > * { max-width: 400px; }
       #hero-title { font-size: 36px !important; }
     }
@@ -801,7 +846,7 @@
       #hero-title { font-size: 36px !important; }
       #hero-subline { font-size: 16px !important; margin-bottom: 16px !important; }
       #hero-features { margin-bottom: 18px !important; }
-      #hero-block > div:last-child { padding: 14px 22px 24px !important; }
+      #hero-content { padding-top: 84px !important; padding-bottom: 24px !important; }
     }
     @media (min-width: 640px) and (max-height: 680px) {
       #hero-block { min-height: 360px !important; }
@@ -810,6 +855,13 @@
   </style>
   <img id="hero-img-mobile" src="assets/hero-mobile.jpg" width="800" height="999" fetchpriority="high" decoding="async"  style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;" alt="">
   <img id="hero-img-desktop" src="assets/hero-desktop.jpg" width="1200" height="675" fetchpriority="high" decoding="async" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 20%;" alt="">
+  <!-- v1.45.5 — Original-Logo (Bildzeichen + heller Schriftzug) oben im Hero -->
+  <div id="hero-brand">
+    <div class="hb-inner">
+      <img src="assets/levita-mark.png" alt="" width="40" height="40" class="hb-mark" onerror="this.style.display='none'">
+      <img src="assets/levita-wordmark-light.png" alt="LeVITA – Therapie, Gesundheit, Fitness" class="hb-word" onerror="this.outerHTML='&lt;span class=&quot;hb-fallback&quot;&gt;Le&lt;b&gt;VITA&lt;/b&gt;&lt;/span&gt;'">
+    </div>
+  </div>
   <!-- Overlay -->
   <div id="hero-overlay" style="position:absolute;inset:0;background:linear-gradient(to bottom, rgba(10,22,40,0.0) 0%, rgba(10,22,40,0.0) 30%, rgba(10,22,40,0.78) 65%, rgba(10,22,40,1.0) 100%);"></div>
   <!-- Content -->
@@ -4694,7 +4746,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.45.3</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.45.5</footer>
 
 
 </body>
