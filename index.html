@@ -439,7 +439,18 @@
        Gleichaltrigen (keine Referenzdaten). Nikotin-Satz nur bei Nutzung.
        (2) Karten ab 85 Punkten sind wieder aufklappbar, zeigen aber nur die
        Vertiefung, keine Tipps. Hinweis "Mehr erfahren ↓".
-       (3) Name durchgängig "LeVITA Vital-Check" (Entscheidung Jörg). -->
+       (3) Name durchgängig "LeVITA Vital-Check" (Entscheidung Jörg).
+
+       v1.47.0 (gehört zu edge-2026-09-20.8 + marketing_consents.sql):
+       (1) WERBEEINWILLIGUNG als eigener, freiwilliger Schritt — erst NACH dem
+       Versand des Vital-Plans und beim Wiederaufruf (dort nur, wenn noch
+       keine Anmeldung besteht). Ein Knopf, darunter der vollständige
+       Einwilligungstext. Double-Opt-in über ?optin=…, Abmeldung über
+       ?abmelden=… mit eigener Bestätigungsseite. Events:
+       marketing_optin_requested, marketing_optin_confirmed, marketing_revoked.
+       Der Satz "Wir erinnern dich nicht automatisch" entfällt.
+       (2) HEBEL in drei Teilen auf Tab 3: neu "Woran du es merkst" —
+       vorsichtig formulierte Erfahrungswerte je Bereich, ohne Zahlen. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -1050,8 +1061,8 @@
   <div class="lp-block">
     <div class="lp-watch">
       <div class="lp-eyebrow" style="text-align:left;">Smartwatch, Handy, Fitness-Tracker</div>
-      <h2 class="lp-h2" style="text-align:left;">Deine Uhr misst Zahlen.<br>Der Vital-Check gibt dir Antworten.</h2>
-      <div class="lp-lead" style="text-align:left;margin:0;">Schritte, Schlafdauer, Puls — gut zu wissen. Aber was bedeuten sie für dich, und was ist dein nächster Schritt? Der Vital-Check verbindet deinen Alltag mit einem Plan, den du mit deiner Uhr ganz einfach verfolgst.</div>
+      <h2 class="lp-h2" style="text-align:left;">Deine Uhr misst Zahlen.<br>Der LeVITA Vital-Check gibt dir Antworten.</h2>
+      <div class="lp-lead" style="text-align:left;margin:0;">Schritte, Schlafdauer, Puls — gut zu wissen. Aber was bedeuten sie für dich, und was ist dein nächster Schritt? Der LeVITA Vital-Check verbindet deinen Alltag mit einem Plan, den du mit deiner Uhr ganz einfach verfolgst.</div>
       <div class="lp-watch-pair">
         <div class="lp-watch-col num"><b>Deine Uhr</b>„5.200 Schritte heute.“</div>
         <div class="lp-watch-col ans"><b>Dein Vital-Plan</b>„Geh jeden Tag 15 Minuten zügig — das sind rund 1.500 Schritte mehr. Genau dort liegt dein größter Hebel für mehr Energie.“</div>
@@ -1515,6 +1526,12 @@
     // ── ?code= URL-Zugriff MIT PIN-VALIDIERUNG (ab 23.06.2026) ──
     // v1.31.4: auch aus der Adresse der einbettenden Seite (gleiche Herkunft)
     const urlParams = pageParams();
+    // v1.47.0 — Links aus der Bestätigungsmail bzw. Abmeldelink
+    const optinTok = urlParams.get("optin"), optoutTok = urlParams.get("abmelden");
+    if (optinTok || optoutTok) {
+      await handleMarketingLink(optinTok ? 'marketing_confirm' : 'marketing_revoke', optinTok || optoutTok);
+      return;
+    }
     const codeParam = urlParams.get("code");
     if (codeParam) {
       // PIN-Eingabe-Screen anzeigen
@@ -2602,7 +2619,7 @@
         // damit Re-Check und Ziel-Speichern ohne erneute Eingabe funktionieren.
         if (result.access_pin) window._accessPin = result.access_pin;
         const pinBlock = accessPinBlockHtml(result.access_pin, latestResult.public_code);
-        statusEl.innerHTML = `<div class="status-msg info-box box-success">✓ Dein Vital-Plan wurde an <strong>${email}</strong> versendet. Schau gleich in dein Postfach — ggf. auch im Spam-Ordner.</div>${pinBlock}${recheckReminderHtml()}`;
+        statusEl.innerHTML = `<div class="status-msg info-box box-success">✓ Dein Vital-Plan wurde an <strong>${email}</strong> versendet. Schau gleich in dein Postfach — ggf. auch im Spam-Ordner.</div>${pinBlock}${marketingOptinHtml('after_mail')}${recheckReminderHtml()}`;
         btn.disabled = true; btn.innerText = "✓ Vital-Plan wurde versendet";
         showFeedbackBox();
       } else {
@@ -3343,6 +3360,7 @@
         ${worst ? `<div style="margin-top:14px;background:rgba(0,0,0,0.18);border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.6;">
             ⚡ <strong style="color:var(--accent-green)">Sofort:</strong> ${getInsightNow(worst.key, worst.score, result.bmi, result)}<br><br>
             📅 <strong style="color:var(--accent-amber)">Diese Woche:</strong> ${getInsightSoon(worst.key, worst.score, result.bmi, result)}
+            ${HEBEL_SIGNS[worst.key] ? `<br><br>🔎 <strong style="color:var(--accent-blue)">Woran du es merkst:</strong> ${HEBEL_SIGNS[worst.key]}` : ``}
           </div>` : ``}
       </div>`;
     if (window._shown) window._shown.focus = true;   // v1.34.2: der eine Ort für die Kernbotschaft
@@ -3844,6 +3862,20 @@
       </div>`;
   }
 
+  // v1.47.0 — Hebel in drei Teilen (Tab 3): warum (Hero-Satz), so fängst du
+  // an (Sofort / Diese Woche) und neu: woran du merkst, dass es wirkt. Bewusst
+  // vorsichtig formuliert ("oft"), ohne Zahlen — Erfahrungswerte, keine Zusage.
+  const HEBEL_SIGNS = {
+    activity: "Oft schon nach zwei, drei Wochen fallen Treppen und Wege leichter, und abends bist du angenehm müde statt erschöpft.",
+    sleep: "Oft nach zwei, drei Wochen wachst du erholter auf, und der Nachmittag fühlt sich wacher an.",
+    nutrition: "Du bist länger satt, und deine Energie verteilt sich gleichmäßiger über den Tag.",
+    vitamin_d: "Dein Tag bekommt mehr Rhythmus — viele schlafen abends leichter ein.",
+    mental: "Du kommst abends schneller zur Ruhe, und Kleinigkeiten bringen dich seltener aus dem Takt.",
+    lifestyle: "Du schläfst tiefer und wachst morgens klarer auf.",
+    micronutrients: "Dein Teller wird bunter — und du weißt genauer, was du wirklich brauchst.",
+    metabolic: "Deine Energie verteilt sich gleichmäßiger über den Tag."
+  };
+
   function renderAreaCard(area, result) {
     // v1.32.4 — Karte folgt jetzt derselben Skala wie Legende und Mail.
     const band = scoreBand(area.score);
@@ -4296,6 +4328,7 @@
           Falls du ihn nicht findest, schau bitte auch im Spam-Ordner nach.
         </div>
         ${accessPinBlockHtml(window._accessPin, result?.public_code)}
+        ${(result?.marketing_status === 'confirmed' || result?.marketing_status === 'pending') ? '' : marketingOptinHtml('review')}
         <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;background:rgba(255,255,255,0.04);border-radius:var(--radius-sm);padding:12px 14px;text-align:left;">
           Diese Seite zeigt dir dieselbe Auswertung jederzeit interaktiv — mit Spinne, Bereichen und Simulator.
           Einen neuen Vital-Plan per Mail gibt es mit deinem nächsten Check.
@@ -4444,12 +4477,71 @@
     document.body.removeChild(ta);
   }
 
+  // v1.47.0 — WERBEEINWILLIGUNG, freiwillig und getrennt von der Auswertung.
+  // Angeboten erst NACH dem Versand (die Auswertung hängt nie daran) und beim
+  // Wiederaufruf per PIN. Ein Klick = Anfrage; gültig wird sie erst mit dem
+  // Link in der Bestätigungsmail (Double-Opt-in, Edge marketing_optin).
+  const MARKETING_CONSENT_TEXT = "Ich möchte von LeVITA per E-Mail Tipps rund um Gesundheit, Vitalität und Fitness, Hinweise auf Angebote und Kurse im LeVITA Studio sowie eine Erinnerung an meinen Re-Check erhalten. Diese Einwilligung ist freiwillig und unabhängig von meiner Auswertung. Ich kann sie jederzeit widerrufen, zum Beispiel über den Abmeldelink in jeder E-Mail oder an datenschutz@le-vita.com.";
+  function marketingOptinHtml(source) {
+    return `
+      <div id="mkOptin" style="margin-top:12px;padding:14px 16px;background:var(--accent-green-dim);border:1px solid rgba(34,201,122,0.3);border-radius:var(--radius-sm);text-align:left;">
+        <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">📬 Bleib dran — wir erinnern dich an deinen Re-Check</div>
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:10px;">Höchstens einmal im Monat Tipps für deine Vitalität, Neues aus dem LeVITA Studio und rechtzeitig eine Erinnerung an deinen nächsten Check. Jederzeit abbestellbar.</div>
+        <button id="mkBtn" onclick="requestMarketingOptin('${source}')" style="width:100%;padding:12px;border-radius:var(--radius-sm);border:none;background:var(--accent-green);color:#0a1628;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">Ja, halte mich auf dem Laufenden</button>
+        <div style="font-size:10.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">${MARKETING_CONSENT_TEXT} Du bekommst gleich eine E-Mail, in der du deine Anmeldung bestätigst.</div>
+        <div id="mkStatus" style="margin-top:8px;font-size:12.5px;"></div>
+      </div>`;
+  }
+  async function requestMarketingOptin(source) {
+    const btn = document.getElementById('mkBtn');
+    const st = document.getElementById('mkStatus');
+    const code = latestResult?.public_code || window._currentPublicCode;
+    if (!code || !window._accessPin) { if (st) st.textContent = 'Das hat nicht geklappt — bitte lade die Seite mit deinem PIN neu.'; return; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Einen Moment…'; }
+    try {
+      const r = await callFunction({ mode: 'marketing_optin', public_code: code, pin: window._accessPin, source });
+      trackEvent('marketing_optin_requested', { source, status: r.status || null });
+      const box = document.getElementById('mkOptin');
+      if (box) box.innerHTML = r.status === 'confirmed'
+        ? `<div style="font-size:13px;color:var(--text-secondary);">✓ Du bist bereits angemeldet — wir melden uns rechtzeitig vor deinem Re-Check.</div>`
+        : `<div style="font-size:13px;color:var(--text-secondary);line-height:1.55;"><strong style="color:var(--text-primary);">Fast geschafft:</strong> Wir haben dir eine E-Mail geschickt. Bitte bestätige deine Anmeldung über den Link darin — erst dann ist sie aktiv.</div>`;
+    } catch (e) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Ja, halte mich auf dem Laufenden'; }
+      if (st) st.textContent = 'Das hat gerade nicht geklappt. Bitte versuche es gleich noch einmal.';
+    }
+  }
+  // Bestätigungs- und Abmeldelinks (?optin=… / ?abmelden=…) — eigene Seite
+  async function handleMarketingLink(mode, token) {
+    ['hero-block', 'hero-value-props'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    document.getElementById("loading")?.classList.add("hidden");
+    const pw = document.getElementById("progressWrap"); if (pw) pw.style.display = "none";
+    const la = document.getElementById('logoArea'); if (la) la.style.display = '';
+    const qf = document.getElementById("quiz-flow"); qf.classList.remove("hidden");
+    const card = (title, text) => `<div class="card" style="text-align:center;"><div class="question-text">${title}</div><div class="help-text" style="margin-bottom:18px;">${text}</div><a href="${location.pathname}" style="color:var(--accent-green);font-weight:700;">Zum LeVITA Vital-Check →</a></div>`;
+    qf.innerHTML = card('Einen Moment…', '');
+    try {
+      const r = await callFunction({ mode, token });
+      if (mode === 'marketing_confirm') {
+        trackEvent('marketing_optin_confirmed', {});
+        qf.innerHTML = card('✓ Anmeldung bestätigt', `Danke${r.first_name ? ', ' + escHtml(r.first_name) : ''}! Du bekommst ab jetzt Tipps für deine Vitalität und rechtzeitig eine Erinnerung an deinen Re-Check. Abmelden kannst du dich jederzeit über den Link in jeder E-Mail.`);
+      } else {
+        trackEvent('marketing_revoked', {});
+        qf.innerHTML = card('Du bist abgemeldet', 'Du bekommst keine weiteren Tipps und Erinnerungen mehr per E-Mail. Deine Auswertung bleibt davon unberührt.');
+      }
+    } catch (e) {
+      const msg = String(e && e.message || '');
+      qf.innerHTML = mode === 'marketing_confirm'
+        ? card('Dieser Link ist nicht mehr gültig', msg.includes('EXPIRED') ? 'Der Bestätigungslink ist 7 Tage gültig und inzwischen abgelaufen. Du kannst die Anmeldung beim Wiederaufruf deiner Auswertung neu anfordern.' : 'Der Link ist nicht (mehr) gültig. Wenn du dich anmelden möchtest, fordere die Anmeldung beim Wiederaufruf deiner Auswertung neu an.')
+        : card('Abmeldung nicht möglich', 'Der Link ist nicht gültig. Schreib uns einfach an datenschutz@le-vita.com — wir tragen dich sofort aus.');
+    }
+  }
+
   function recheckReminderHtml() {
     return `
       <div style="margin-top:12px;padding:12px 14px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--radius-sm);text-align:left;">
         <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:10px;">
           <strong style="color:var(--text-primary);">Dein nächster Check lohnt sich in 8–12 Wochen.</strong>
-          So lange braucht es, bis sich Veränderungen im Alltag auch im Wert zeigen. Wir erinnern dich nicht automatisch — trag ihn dir am besten gleich selbst ein.
+          So lange braucht es, bis sich Veränderungen im Alltag auch im Wert zeigen. Trag ihn dir am besten gleich in deinen Kalender ein.
         </div>
         <button onclick="addRecheckToCalendar()" style="width:100%;padding:11px;border-radius:var(--radius-sm);border:1px solid rgba(59,158,255,0.4);background:transparent;color:var(--accent-blue);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;">
           📅 Re-Check in meinen Kalender eintragen
@@ -4915,7 +5007,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.46.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.47.0</footer>
 
 
 </body>
