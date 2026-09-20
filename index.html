@@ -376,7 +376,17 @@
        v1.45.2 (Hero auf dem Desktop): Das Desktop-Bild enthält eigene
        Elemente (Logo links, Symbole in der Mitte), die zentrierte Überschrift
        lag darauf. Ab 640 px jetzt zweispaltig: Text links auf dunklem Grund,
-       Bild rechts, Verlauf blendet Logo und Symbole aus. Handy unverändert. -->
+       Bild rechts, Verlauf blendet Logo und Symbole aus. Handy unverändert.
+
+       v1.45.3 (aus dem eigenen Testlauf LEV-2026-000317):
+       (1) Fragenzähler endete bei "23 von 24". Ursache: Zusatzfragen
+       (Muskelkrämpfe, soziale Kontakte, Fisch, Alkoholmenge) stehen vorab im
+       Plan und fallen nach ihrer Auslöser-Frage heraus. Sie zählen jetzt erst
+       mit, wenn die Auslöser-Frage beantwortet ist; die Gesamtzahl wächst nur.
+       Ersetzt den Maximalwert-Ansatz aus v1.45.1.
+       (2) Sprache: "Kein Verkaufsdruck" / "ohne Verkaufsdruck" entfernt
+       (Entscheidung Jörg). Zentrale Aussage: Wir kümmern uns um Gesundheit,
+       Vitalität und Fitness. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -956,7 +966,7 @@
       <div class="lp-titem"><div class="lp-titem-i">📍</div><div class="lp-titem-t">Menschen vor Ort</div><div class="lp-titem-d">LeVITA in Gemünden (Wohra) — Training, Kurse und Physiotherapie unter einem Dach.</div></div>
       <div class="lp-titem"><div class="lp-titem-i">🔒</div><div class="lp-titem-t">Datenschutz ernst genommen</div><div class="lp-titem-d">Gespeichert in der EU, keine Weitergabe, jederzeit löschbar.</div></div>
       <div class="lp-titem"><div class="lp-titem-i">🧭</div><div class="lp-titem-t">Ehrliche Orientierung</div><div class="lp-titem-d">Auf Basis von WHO, DGE und BfR — keine Diagnose, kein Versprechen.</div></div>
-      <div class="lp-titem"><div class="lp-titem-i">🚫</div><div class="lp-titem-t">Kein Verkaufsdruck</div><div class="lp-titem-d">Deine Auswertung steht im Mittelpunkt — ehrlich und unabhängig.</div></div>
+      <div class="lp-titem"><div class="lp-titem-i">💚</div><div class="lp-titem-t">Deine Gesundheit im Mittelpunkt</div><div class="lp-titem-d">Vitalität und Fitness sind unser Beruf — wir begleiten dich vom ersten Check an.</div></div>
     </div>
   </div>
 
@@ -1875,7 +1885,6 @@
     }
     trackEvent('personal_completed', { step_index: currentStep, age: personalData.age, gender: personalData.gender });
     const nextStepIndex = currentStep + 1;
-    window._qTotalMax = 0;   // v1.45.1: Fragenplan wird neu gebaut, Zähler neu beginnen
     buildGroupedQuestionsForGender();
     buildSteps(nextStepIndex);
     currentStep = nextStepIndex;
@@ -2332,9 +2341,21 @@
       // eine Zusatzfrage (z. B. Supplement-Arten) ein- und wieder ausgeblendet
       // wurde. Jetzt wächst sie nur noch; zurückgesetzt wird sie, wenn der
       // Fragenplan nach den Basisdaten neu aufgebaut wird.
-      window._qTotalMax = Math.max(window._qTotalMax || 0, qSteps.length, qPos);
+      // v1.45.3 — Zusatzfragen stehen teils schon im Plan und fallen erst nach
+      // ihrer Auslöser-Frage heraus (Test "Thomas": Ende bei "23 von 24").
+      // Sie zählen deshalb erst mit, wenn ihre Auslöser-Frage beantwortet ist —
+      // so wächst die Gesamtzahl nur und stimmt am Ende genau.
+      const COND_TRIGGER = { muscle_cramps: "strength_training", social_connection: "low_interest",
+        omega3_fish: "diet_type", alcohol_amount: "alcohol_frequency" };
+      const curIdx = qPos - 1;
+      const qTotal = qSteps.filter(s => {
+        const trig = COND_TRIGGER[s.question_key];
+        if (!trig) return true;
+        const tIdx = qSteps.findIndex(x => x.question_key === trig || (trig === "diet_type" && x.question_key === "nutrition_type"));
+        return tIdx === -1 || tIdx < curIdx;
+      }).length;
       document.getElementById("progressAreaLabel").textContent = `${icon} ${q.area_label || q.area_key}`;
-      document.getElementById("progressCount").textContent = qPos > 0 ? `Frage ${qPos} von ${window._qTotalMax}` : "";
+      document.getElementById("progressCount").textContent = qPos > 0 ? `Frage ${qPos} von ${Math.max(qTotal, qPos)}` : "";
     }
   }
 
@@ -3319,7 +3340,7 @@
       goal_energy: ["Gesundheit & Fitness", "Training, das Energie gibt statt kostet — mit persönlicher Begleitung im Studio."],
       goal_longevity: ["Gesundheit & Fitness", "Langfristig vital bleiben: betreutes Training mit regelmäßiger Standortbestimmung."],
       goal_prevention: ["Präventionskurse §20", "Strukturierter Einstieg in die Vorsorge — oft von der Krankenkasse bezuschusst."],
-      goal_supplements: ["Persönliche Einordnung", "Wir ordnen deine Fragen zu Nährstoffen fachlich ein — ehrlich und ohne Verkaufsdruck."],
+      goal_supplements: ["Persönliche Einordnung", "Wir sprechen mit dir über Ernährung im Alltag und finden gemeinsam heraus, was dir guttut."],
       goal_curious: ["Kostenloses Probetraining", "Unverbindlich reinschnuppern und das Studio kennenlernen."]
     };
     Object.entries(window._snips.studio_rec).forEach(([k, s]) => {
@@ -4673,7 +4694,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.45.2</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.45.3</footer>
 
 
 </body>
