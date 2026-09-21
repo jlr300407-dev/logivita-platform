@@ -465,7 +465,15 @@
        in einem Satz, statt den Bereich stillschweigend wegzulassen.
        (3) Das Vitalitäts-Alter zeigt die Veränderung ("1 Jahr jünger"), nicht
        nur den Zielwert. Rund 7 Indexpunkte entsprechen einem Jahr; unter einem
-       Jahr wird das offen benannt. Beide Werte kommen vom Server. -->
+       Jahr wird das offen benannt. Beide Werte kommen vom Server.
+
+       v1.49.0 (gehört zu simulator_potenzial.sql):
+       (1) Der Simulator zeigt je Hebel den nächsten Schritt — bei mehrstufigen
+       Fragen wirkte der Gewinn dadurch winzig, obwohl der ganze Weg ein
+       Vielfaches bringt (Alkohol: 0,73 statt 4,4 Punkte). Unter dem Gewinn
+       steht jetzt "Der ganze Weg bis ...: +X Punkte", geliefert als max_gain
+       und max_to_text von calculate_score_scenarios. Der Schalter selbst
+       schaltet weiterhin eine Stufe: erreichbar schlaegt vollstaendig. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -795,6 +803,8 @@
     .sim-lever-title { font-size: 13px; font-weight: 700; color: var(--text-primary); line-height: 1.35; }
     .sim-lever-change { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-top: 2px; }
     .sim-lever-gain { font-size: 11px; font-weight: 700; color: var(--accent-blue); margin-top: 3px; }
+    /* v1.49.0 — voller Weg bis zur günstigsten Antwort, ruhig gesetzt */
+    .sim-lever-max { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
     /* v1.48.0 — Hinweis, wenn im größten Ansatzpunkt keine bessere Antwort bleibt */
     .sim-note { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 10px 0 4px; padding: 9px 11px; border-radius: 8px; background: rgba(255,255,255,0.04); }
     .sim-switch { position: relative; width: 40px; height: 22px; border-radius: 12px; background: rgba(255,255,255,0.12); flex-shrink: 0; transition: background 0.2s; }
@@ -1260,6 +1270,9 @@
         from_text: pickStr(e, ['from_text', 'current_text', 'current_answer', 'answer_from', 'from']),
         to_text: pickStr(e, ['to_text', 'target_text', 'better_text', 'answer_to', 'to', 'improved_text']),
         gain: pickNum(e, ['gain', 'score_gain', 'delta']) || 0,
+        // v1.49.0 — voller Weg bis zur günstigsten Antwort (serverseitig)
+        max_gain: pickNum(e, ['max_gain']),
+        max_to_text: pickStr(e, ['max_to_text']),
         new_total: pickNum(e, ['new_total', 'new_total_score', 'new_score', 'projected_total', 'total_score']),
         new_bio_age: pickNum(e, ['new_bio_age', 'projected_bio_age', 'bio_age']),
         score_payload: (e.score_payload && typeof e.score_payload === 'object') ? e.score_payload
@@ -4295,6 +4308,8 @@
             <div class="sim-lever-title">${icon} ${escHtml(short)}${l.area_label ? ` <span style="font-weight:500;color:var(--text-muted);">· ${escHtml(l.area_label)}</span>` : ''}</div>
             <div class="sim-lever-change">${escHtml(l.from_text)} → <strong style="color:var(--text-primary);">${escHtml(l.to_text)}</strong></div>
             <div class="sim-lever-gain">+${fmtGain(l.gain)} Punkte</div>
+            ${(typeof l.max_gain === 'number' && l.max_gain > l.gain + 0.05 && l.max_to_text)
+              ? `<div class="sim-lever-max">Der ganze Weg bis „${escHtml(l.max_to_text)}“: +${fmtGain(l.max_gain)} Punkte</div>` : ''}
           </div>
           <div class="sim-switch"></div>
         </div>`;
@@ -5045,7 +5060,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.48.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.49.0</footer>
 
 
 </body>
