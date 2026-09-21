@@ -473,7 +473,21 @@
        Vielfaches bringt (Alkohol: 0,73 statt 4,4 Punkte). Unter dem Gewinn
        steht jetzt "Der ganze Weg bis ...: +X Punkte", geliefert als max_gain
        und max_to_text von calculate_score_scenarios. Der Schalter selbst
-       schaltet weiterhin eine Stufe: erreichbar schlaegt vollstaendig. -->
+       schaltet weiterhin eine Stufe: erreichbar schlaegt vollstaendig.
+
+       v1.50.0 (gehoert zu edge-2026-09-21.1 + wearable_werte.sql):
+       (1) WERTE AUS UHR ODER TRACKER, freiwillig, im letzten Schritt vor dem
+       Absenden: Ruhepuls, Schritte pro Tag, Schlafdauer, dazu optional das
+       Geraet. Eingeklappt, damit niemand aufgehalten wird. Entscheidung Joerg
+       21.09.2026: Die Werte gehen in die Auswertung und in die Mail, NICHT in
+       den Index — sonst haette jemand mit Uhr einen anderen Massstab als
+       jemand ohne, und der Vergleich Check/Re-Check braeche.
+       (2) Einordnung auf Tab 1 ("Deine Zahlen aus der Uhr") mit denselben
+       Schwellen wie im Prompt. Einordnend, nicht bewertend.
+       (3) Event check_submitted traegt watch_filled und watch_device — damit
+       laesst sich nach ein paar Wochen sehen, ob sich eine automatische
+       Anbindung lohnt. Herstellerscores (Schlafscore, Body Battery) bleiben
+       bewusst aussen vor. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -803,6 +817,21 @@
     .sim-lever-title { font-size: 13px; font-weight: 700; color: var(--text-primary); line-height: 1.35; }
     .sim-lever-change { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-top: 2px; }
     .sim-lever-gain { font-size: 11px; font-weight: 700; color: var(--accent-blue); margin-top: 3px; }
+    /* v1.50.0 — freiwillige Werte aus Uhr oder Tracker */
+    .btn-ghost { width: 100%; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-secondary); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-ghost:hover { border-color: var(--accent-green); color: var(--text-primary); }
+    .watch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 460px) { .watch-grid { grid-template-columns: 1fr; } }
+    .watch-field { display: block; }
+    .watch-field > span { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; }
+    .watch-field > span em { font-style: normal; font-weight: 400; color: var(--text-muted); }
+    .watch-field input, .watch-field select { width: 100%; padding: 11px 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; }
+    .watch-field input:focus, .watch-field select:focus { outline: none; border-color: var(--accent-green); }
+    .watch-box { margin: 14px 0 0; padding: 12px 14px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.04); border: 1px solid var(--border); }
+    .watch-box-title { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+    .watch-row { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; padding: 5px 0; border-top: 1px solid var(--border); }
+    .watch-row:first-of-type { border-top: none; }
+    .watch-row b { color: var(--text-primary); white-space: nowrap; }
     /* v1.49.0 — voller Weg bis zur günstigsten Antwort, ruhig gesetzt */
     .sim-lever-max { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
     /* v1.48.0 — Hinweis, wenn im größten Ansatzpunkt keine bessere Antwort bleibt */
@@ -1964,8 +1993,86 @@
     nextStep();
   }
 
-  function consentStepHtml() {
+  // v1.50.0 — FREIWILLIGE WERTE AUS UHR ODER TRACKER.
+  // Entscheidung Jörg, 21.09.2026: Die Werte gehen in die Auswertung, NICHT in
+  // den Index — sonst hätte jemand mit Uhr einen anderen Maßstab als jemand
+  // ohne, und der Vergleich zwischen erstem und zweitem Check bräche.
+  // Bewusst eingeklappt und klar als freiwillig gekennzeichnet: Der Block steht
+  // kurz vor dem Absenden und darf niemanden aufhalten.
+  const WATCH_DEVICES = [['apple','Apple Watch'],['garmin','Garmin'],['fitbit','Fitbit'],['samsung','Samsung'],['polar','Polar'],['withings','Withings'],['oura','Oura'],['xiaomi','Xiaomi / Amazfit'],['andere','andere']];
+
+  function watchStepHtml() {
     return `
+      <div class="card" id="watchCard" style="margin-bottom:14px;">
+        <div class="area-badge">⌚ Freiwillig</div>
+        <div class="question-text" style="margin-bottom:6px;">Trägst du eine Uhr oder einen Tracker?</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.55;margin-bottom:12px;">
+          Drei Werte aus deiner App machen deine Auswertung konkreter — zum Beispiel, wie viele Schritte dein nächster Schritt bedeutet. Du kannst diesen Teil auch einfach überspringen.
+        </div>
+        <button type="button" class="btn-ghost" id="watchToggle" onclick="toggleWatchFields()">Werte eintragen ↓</button>
+        <div id="watchFields" style="display:none;margin-top:14px;">
+          <div class="watch-grid">
+            <label class="watch-field">
+              <span>Ruhepuls <em>Schläge/Min</em></span>
+              <input type="number" id="watch_hr" inputmode="numeric" min="30" max="120" step="1" placeholder="z. B. 62" />
+            </label>
+            <label class="watch-field">
+              <span>Schritte pro Tag <em>im Schnitt</em></span>
+              <input type="number" id="watch_steps" inputmode="numeric" min="0" max="40000" step="100" placeholder="z. B. 7500" />
+            </label>
+            <label class="watch-field">
+              <span>Schlafdauer <em>Stunden</em></span>
+              <input type="number" id="watch_sleep" inputmode="decimal" min="3" max="14" step="0.5" placeholder="z. B. 6,5" />
+            </label>
+            <label class="watch-field">
+              <span>Gerät <em>freiwillig</em></span>
+              <select id="watch_device">
+                <option value="">keine Angabe</option>
+                ${WATCH_DEVICES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}
+              </select>
+            </label>
+          </div>
+          <div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-top:10px;">
+            Die Werte fließen in deine Auswertung ein und verändern deinen Vitalitäts-Index nicht. Leere Felder bleiben einfach leer.
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function toggleWatchFields() {
+    const f = document.getElementById('watchFields'), b = document.getElementById('watchToggle');
+    if (!f || !b) return;
+    const open = f.style.display !== 'none';
+    f.style.display = open ? 'none' : 'block';
+    b.textContent = open ? 'Werte eintragen ↓' : 'Ohne Werte fortfahren ↑';
+    if (!open) { trackEvent('watch_fields_opened', {}); setTimeout(() => document.getElementById('watch_hr')?.focus(), 80); }
+  }
+
+  // Liest die Felder aus und prüft dieselben Grenzen wie die Datenbank.
+  // Unplausibles wird still verworfen, damit niemand am Absenden gehindert wird.
+  function collectWatchValues() {
+    const g = (id) => {
+      const el = document.getElementById(id);
+      if (!el || !String(el.value).trim()) return null;
+      const n = parseFloat(String(el.value).replace(',', '.'));
+      return isFinite(n) ? n : null;
+    };
+    const lim = (n, lo, hi) => (n === null || n < lo || n > hi) ? null : n;
+    const hr = lim(g('watch_hr'), 30, 120);
+    const steps = lim(g('watch_steps'), 0, 40000);
+    const sleep = lim(g('watch_sleep'), 3, 14);
+    const device = document.getElementById('watch_device')?.value || null;
+    if (hr === null && steps === null && sleep === null) return null;
+    return {
+      resting_hr: hr === null ? null : Math.round(hr),
+      steps: steps === null ? null : Math.round(steps),
+      sleep_hours: sleep === null ? null : Math.round(sleep * 10) / 10,
+      device: device || null
+    };
+  }
+
+  function consentStepHtml() {
+    return watchStepHtml() + `
       <div class="card">
         ${(() => { const b = buddyForStep({ type:'consent' });
             return b ? `<div class="buddy-row">${b}<div class="area-badge">🔒 Datenschutz</div></div>`
@@ -2517,6 +2624,9 @@
       // V2: Re-Check-Verknüpfung — previous_public_code + previous_pin nur mitschicken,
       // wenn der Nutzer aus einer PIN-verifizierten Ansicht gestartet ist.
       const payload = { age:personalData.age, gender:personalData.gender, height_cm:personalData.height_cm, weight_kg:personalData.weight_kg, first_name:personalData.first_name||null, last_name:personalData.last_name||null, goal_key:personalData.goal_key||null, consent_privacy:true, consent_storage:true, answers:selectedAnswers };
+      // v1.50.0 — freiwillige Werte aus Uhr oder Tracker; null, wenn nichts eingetragen
+      const _watch = collectWatchValues();
+      if (_watch) payload.watch = _watch;
       const wasRecheck = !!(window._previousLink && window._previousLink.public_code && window._previousLink.pin);
       // Merker sichern, bevor _recheckPrefill weiter unten verworfen wird
       const _weightCarried = !!(window._recheckPrefill && window._recheckPrefill.weight_carried);
@@ -2532,12 +2642,15 @@
       if (wasRecheck && result.link_status === 'linked') {
         result.submission = Object.assign({}, result.submission || {}, { weight_carried: _weightCarried === true });
       }
+      // v1.50.0 — Die Submit-Antwort führt die Uhrenwerte nicht zurück; beim
+      // Wiederaufruf liefert sie die Edge über submission.watch.
+      if (_watch) result.submission = Object.assign({}, result.submission || {}, { watch: _watch });
       latestResult = result;
       absorbV2Result(result); // V2: Szenarien, Verlauf, link_status
       window._previousLink = null; window._recheckPrefill = null; // verbraucht — nie doppelt verwenden
       const rb = document.getElementById('recheckQuizNote'); if (rb) rb.remove();
       window._currentPublicCode = result.public_code || null;
-      trackEvent('check_submitted', { score: result.score?.total_score, public_code: result.public_code || null, is_recheck: wasRecheck || undefined, link_status: wasRecheck ? (result.link_status || null) : undefined, weight_carried: wasRecheck ? (_weightCarried === true) : undefined });
+      trackEvent('check_submitted', { score: result.score?.total_score, public_code: result.public_code || null, is_recheck: wasRecheck || undefined, link_status: wasRecheck ? (result.link_status || null) : undefined, weight_carried: wasRecheck ? (_weightCarried === true) : undefined, watch_filled: _watch ? Object.keys(_watch).filter(k => k !== 'device' && _watch[k] !== null).length : 0, watch_device: _watch?.device || undefined });
       if (typeof fbq !== 'undefined') fbq('track', 'CompleteRegistration', { content_name: 'check_complete', goal: personalData.goal_key || 'unknown' });
       showResult(result);
       setTimeout(initStickyCta, 800);
@@ -3222,6 +3335,9 @@
 
     // ── V2: Potenzial-Simulator (Prio 2.3) — serverseitig vorberechnete Szenarien,
     // Auswahl vorbereiteter Hebel per Schalter, keine Freieingabe, keine Client-Rechnung.
+    // v1.50.0 — Uhrenwerte direkt unter dem größten Ansatzpunkt, vor dem Simulator
+    html += watchBoxHtml(result.submission?.watch, result.submission?.age ?? personalData.age);
+
     html += renderSimulatorHtml(totalScore, bioAge, worst);
 
     // v1.35.0 — Die Vital-Plan-Box steht nicht mehr in Tab 1, sondern als
@@ -4290,6 +4406,45 @@
     return combo ? { entry: combo, total: combo.new_total, bio_age: combo.new_bio_age, gain: combo.gain } : null;
   }
 
+  // v1.50.0 — Einordnung der freiwillig angegebenen Uhrenwerte.
+  // Gleiche Schwellen wie im Mail-Prompt (edge-2026-09-21.1). Bewusst
+  // einordnend statt bewertend, und ohne Einfluss auf den Index.
+  function watchBoxHtml(watch, age) {
+    if (!watch) return "";
+    const a = Number(age) || 0;
+    const rows = [];
+    if (watch.resting_hr !== null && watch.resting_hr !== undefined) {
+      const hr = Number(watch.resting_hr);
+      const txt = hr < 60 ? "spricht für eine gute Ausdauergrundlage"
+        : hr < 80 ? "liegt im üblichen Bereich"
+        : hr < 90 ? "etwas höher — Training, Schlaf und Stress wirken hier zusammen"
+        : "dauerhaft in dieser Höhe lohnt sich eine ärztliche Einordnung bei Gelegenheit";
+      rows.push([`Ruhepuls ${hr}/Min`, txt]);
+    }
+    if (watch.steps !== null && watch.steps !== undefined) {
+      const st = Number(watch.steps);
+      const ziel = a >= 60 ? 7000 : 8500;
+      const zielTxt = a >= 60 ? "6.000–8.000" : "8.000–10.000";
+      const txt = st >= ziel ? `du liegst im Bereich, ab dem der Nutzen deutlich wird (${zielTxt})`
+        : `rund ${Math.max(500, Math.round((ziel - st) / 500) * 500).toLocaleString('de-DE')} Schritte mehr pro Tag bringen dich in den Bereich ${zielTxt}`;
+      rows.push([`${st.toLocaleString('de-DE')} Schritte am Tag`, txt]);
+    }
+    if (watch.sleep_hours !== null && watch.sleep_hours !== undefined) {
+      const sl = Number(watch.sleep_hours);
+      const txt = sl < 6 ? "unter dem Bereich, in dem Erholung zuverlässig gelingt (7–9 Stunden)"
+        : sl < 7 ? "knapp unter dem empfohlenen Bereich von 7–9 Stunden"
+        : sl <= 9 ? "im empfohlenen Bereich von 7–9 Stunden"
+        : "über dem üblichen Bereich — bei dauerhafter Müdigkeit trotz langer Nächte lohnt ein ärztlicher Blick";
+      rows.push([`${String(sl).replace('.', ',')} Stunden Schlaf`, txt]);
+    }
+    if (!rows.length) return "";
+    return `<div class="watch-box">
+      <div class="watch-box-title">⌚ Deine Zahlen aus der Uhr</div>
+      ${rows.map(([k, v]) => `<div class="watch-row"><b>${escHtml(k)}</b><span>${escHtml(v)}</span></div>`).join('')}
+      <div style="font-size:11px;color:var(--text-muted);line-height:1.5;margin-top:9px;">Von dir abgelesen, nicht von uns gemessen. Diese Werte ergänzen deine Auswertung und verändern deinen Vitalitäts-Index nicht.</div>
+    </div>`;
+  }
+
   function renderSimulatorHtml(totalScore, bioAge, worst) {
     const outcomeHtml = renderGoalOutcomeHtml();
     if (!simScenarios || !simScenarios.levers.length) {
@@ -5060,7 +5215,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.49.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.50.0</footer>
 
 
 </body>
