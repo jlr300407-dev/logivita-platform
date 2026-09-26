@@ -508,7 +508,23 @@
        (3) In der Mail vergleicht die KI die Uhrenwerte nur oberhalb einer
        Mindestdifferenz (1.000 Schritte, 0,5 h Schlaf, 3 Schlaege Ruhepuls;
        doppelt bei unterschiedlichen Zeitraeumen). Darunter heisst es
-       "auf aehnlichem Niveau". -->
+       "auf aehnlichem Niveau".
+
+       v1.53.0:
+       Der Hinweis unter den Bereichskarten wechselt mit dem Zustand:
+       "Mehr erfahren ↓" / "Weniger anzeigen ↑" (Befund aus dem Test,
+       27.09.2026). Vorher stand an einer bereits geoeffneten Karte weiter
+       "Mehr erfahren" — eine Aufforderung zu etwas, das gerade passiert war.
+
+       v1.53.1 (aus einem internen Testlauf, Ziel "Neugier"):
+       (1) Das Teaser-Label fuer goal_curious war ein Verb ("deinen Standort
+       bestimmen") und brach den Satz: "Fahrplan fuer 'deinen Standort
+       bestimmen'". Jetzt "Klarheit ueber deinen Stand" — Nominalphrase wie
+       bei allen anderen Zielen.
+       (2) BMI-Status sagte "Deutlich erhoehter Orientierungsbereich" — erhoeht
+       ist der Wert, nicht der Bereich. Jetzt "Deutlich ueber dem
+       Orientierungsbereich" (analog die drei anderen Stufen). Schwellen
+       unveraendert. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -3144,7 +3160,7 @@
       goal_energy: "Mehr Energie im Alltag", goal_weight: "Figur & Wohlfühlgewicht",
       goal_fitness: "Mehr Kraft & Fitness", goal_supplements: "Klarheit bei Nährstoffen",
       goal_longevity: "Gesund älter werden", goal_prevention: "Vorsorge & Prävention",
-      goal_curious: "deinen Standort bestimmen"
+      goal_curious: "Klarheit über deinen Stand"
     };
     Object.entries(window._snips.teaser_label).forEach(([k, s]) => { if (s.body) goalTeaserLabels[k] = s.body; });
     const goalKeyForTeaser = personalData.goal_key || result.submission?.goal_key || "";
@@ -4095,10 +4111,10 @@
       // "Optimierungspotenzial"), sodass im selben Raster drei verschiedene
       // Bezeichnungen für den grünen Bereich standen. Der BMI beschreibt
       // Orientierungsbereiche, keine Score-Stufen — das sagen die Wörter jetzt.
-      if (bmi < 18.5) { cls = "area-medium"; statusTxt = "△ Niedriger Orientierungsbereich"; }
-      else if (bmi < 25) { cls = "area-good"; statusTxt = "✓ Stabiler Orientierungsbereich"; }
-      else if (bmi < 30) { cls = "area-medium"; statusTxt = "△ Erhöhter Orientierungsbereich"; }
-      else { cls = "area-focus"; statusTxt = "⚠ Deutlich erhöhter Orientierungsbereich"; }
+      if (bmi < 18.5) { cls = "area-medium"; statusTxt = "△ Unter dem Orientierungsbereich"; }
+      else if (bmi < 25) { cls = "area-good"; statusTxt = "✓ Im stabilen Orientierungsbereich"; }
+      else if (bmi < 30) { cls = "area-medium"; statusTxt = "△ Über dem Orientierungsbereich"; }
+      else { cls = "area-focus"; statusTxt = "⚠ Deutlich über dem Orientierungsbereich"; }
     }
     const icon = AREA_ICONS[area.key] || "●";
     const bmiHtml = area.key === "bmi" ? renderBmiDetail(result) : "";
@@ -4128,7 +4144,7 @@
           <div class="insight-text">${getInsightSoon(area.key, area.score, result?.bmi, result)}</div>`}
           ${areaInfoHtml(area.key, result)}
         </div>
-        <div class="tap-hint">Mehr erfahren ↓</div>`;
+        <div class="tap-hint" id="hint-${area.key}">Mehr erfahren ↓</div>`;
     return `
       <div class="area-card ${cls}"${_noDetail ? ` style="cursor:default;"` : ` onclick="toggleAreaDetail('detail-${area.key}')"`}>
         <div class="area-card-header">
@@ -4143,7 +4159,15 @@
       </div>`;
   }
 
-  function toggleAreaDetail(id) { const el = document.getElementById(id); if (el) el.classList.toggle("open"); }
+  // v1.53.0 — Der Hinweis wechselt mit dem Zustand. "Mehr erfahren ↓" an einer
+  // bereits geöffneten Karte fordert zu etwas auf, das gerade passiert ist.
+  function toggleAreaDetail(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const open = el.classList.toggle("open");
+    const hint = document.getElementById('hint-' + id.replace(/^detail-/, ''));
+    if (hint) hint.textContent = open ? 'Weniger anzeigen ↑' : 'Mehr erfahren ↓';
+  }
 
   function renderBmiDetail(result) {
     const bmi = Number(result?.bmi);
@@ -5282,7 +5306,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.52.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.53.1</footer>
 
 
 </body>
