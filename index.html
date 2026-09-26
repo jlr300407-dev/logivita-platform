@@ -524,7 +524,15 @@
        (2) BMI-Status sagte "Deutlich erhoehter Orientierungsbereich" — erhoeht
        ist der Wert, nicht der Bereich. Jetzt "Deutlich ueber dem
        Orientierungsbereich" (analog die drei anderen Stufen). Schwellen
-       unveraendert. -->
+       unveraendert.
+
+       v1.53.2 (aus demselben Testlauf, Tab 3):
+       (1) Doppelter Punkt am Ende der Supplement-Hinweise: Der Baustein aus
+       der Datenbank endete bereits auf einem Punkt, das Frontend haengte einen
+       zweiten an ("... darauf an.."). Jetzt nur noch, wenn keiner da ist.
+       (2) Zieltitel goal_curious war "Deine Neugier als Antrieb" und ergab
+       "Dein Weg zu: Deine Neugier als Antrieb". Jetzt "Klarheit ueber deinen
+       Stand" — gleiche Formulierung wie im Teaser. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -3550,7 +3558,7 @@
       goal_longevity:"Länger vital leben", goal_prevention:"Vorsorge aktiv gestalten",
       goal_fitness:"Fitter & stärker werden", goal_weight:"Figur & Gewicht",
       goal_energy:"Mehr Energie im Alltag", goal_supplements:"Nährstoffstatus klären",
-      goal_curious:"Deine Neugier als Antrieb"
+      goal_curious:"Klarheit über deinen Stand"
     };
     const heroTitle3 = heroGoalTitles[heroGoalKey3] || "Dein nächster Schritt";
     // v1.31.3: Titel (aus dem Ziel) und Text (aus dem schwächsten Bereich) wurden
@@ -4357,7 +4365,7 @@
         else { hints.push(`<strong>Protein</strong> — eine Eiweißquelle zu jeder Mahlzeit bewusst einplanen: Eier, Quark, Fisch, mageres Fleisch oder Hülsenfrüchte unterstützen Sättigung und Regeneration.`); }
       }
       else if (key.includes("nutrition_first") || key.includes("ernaehrung")) { hints.push(`<strong>Ernährung zuerst</strong> — viele Nährstoffdefizite lassen sich über gezielte Ernährungsoptimierung lösen — Supplements erst wenn wirklich nötig.`); }
-      else if (item.label) { hints.push(`<strong>${item.label}</strong>${item.reason ? ` — ${item.reason}` : ""}.`); }
+      else if (item.label) { const _r = (item.reason || "").trim(); hints.push(`<strong>${item.label}</strong>${_r ? ` — ${_r}` : ""}${/[.!?]$/.test(_r || item.label) ? "" : "."}`); }
     });
 
     if (hints.length < 3 && isPlantBasedFinal && noFishFinal && !hints.some(h => h.includes("Jod"))) {
@@ -5306,7 +5314,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.53.1</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.53.2</footer>
 
 
 </body>
