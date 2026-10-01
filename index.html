@@ -532,7 +532,13 @@
        zweiten an ("... darauf an.."). Jetzt nur noch, wenn keiner da ist.
        (2) Zieltitel goal_curious war "Deine Neugier als Antrieb" und ergab
        "Dein Weg zu: Deine Neugier als Antrieb". Jetzt "Klarheit ueber deinen
-       Stand" — gleiche Formulierung wie im Teaser. -->
+       Stand" — gleiche Formulierung wie im Teaser.
+
+       v1.53.3 (Testlauf 01.10.2026, vegane Person):
+       Der Selbsthilfe-Tipp zum Eiweiss empfahl Eier, Quark und Fisch — auch bei
+       veganer oder vegetarischer Ernaehrung. Jetzt eigene Fassungen je
+       Ernaehrungsweise. Die Mail verbietet das seit edge-2026-08-27.4, das
+       Frontend hatte die Regel nicht. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -3660,6 +3666,16 @@
     if ((Number(personalData.age || 0) >= 70) || window._safetyTier || window._doctorFirst) {
       selfTips.bmi = ["Muskeln erhalten", "Zweimal pro Woche einfache Kraftübungen (Kniebeugen, Stütz) — im Alter ist der Erhalt von Muskelmasse wichtiger als jede Zahl auf der Waage."];
     }
+    // v1.53.3 — Ernährungsweise beachten (Befund aus dem Testlauf 01.10.2026):
+    // Der Eiweiß-Tipp empfahl einer vegan lebenden Person Eier, Quark und Fisch.
+    // Die Datenbank kann das nicht lösen, weil ein Baustein für alle gilt.
+    const _dietT3 = (answersT3.find(a => a.question_key === 'diet_type')?.answer_text || '').toLowerCase();
+    if (_dietT3.includes('vegan')) {
+      selfTips.nutrition = ["Ein Eiweißbaustein zu jeder Mahlzeit", "Hülsenfrüchte, Tofu, Tempeh, Nüsse oder Vollkorn — kombiniert liefern sie alle Bausteine. Starte heute mit einer Mahlzeit."];
+    } else if (_dietT3.includes('vegetar')) {
+      selfTips.nutrition = ["Ein Eiweißbaustein zu jeder Mahlzeit", "Eier, Quark, Hüttenkäse oder Hülsenfrüchte — Protein sättigt, unterstützt Muskeln und Regeneration. Starte heute mit einer Mahlzeit."];
+    }
+
     const usedAreas = new Set();
     const cat1 = [];
     (score.top_priorities || []).forEach(p => {
@@ -5314,7 +5330,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.53.2</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.53.3</footer>
 
 
 </body>
