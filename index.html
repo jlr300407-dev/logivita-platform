@@ -538,7 +538,15 @@
        Der Selbsthilfe-Tipp zum Eiweiss empfahl Eier, Quark und Fisch — auch bei
        veganer oder vegetarischer Ernaehrung. Jetzt eigene Fassungen je
        Ernaehrungsweise. Die Mail verbietet das seit edge-2026-08-27.4, das
-       Frontend hatte die Regel nicht. -->
+       Frontend hatte die Regel nicht.
+
+       v1.53.4 (Entscheidung Joerg, 02.10.2026):
+       B12-Altershinweis in der Mikronaehrstoff-Karte an die Mail angeglichen —
+       ab 70 immer, 60 bis 69 nur mit zweitem Anhaltspunkt (Schwindel/blasse
+       Naegel). Vorher ab 65 fuer alle; damit war er bei einem gesunden
+       65-Jaehrigen das einzige Thema und ohne Bezug zu seinen Antworten. Der
+       Wortlaut ist jetzt derselbe wie in der Mail, inklusive Holo-Transcobalamin
+       und Methylmalonsaeure. Ernaehrungsweise laeuft ueber supplement_rules. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -4077,9 +4085,18 @@
     micronutrients: {
       what: "Deine Ernährungsweise, eingenommene Präparate und Anzeichen wie Schwindel oder brüchige Nägel.",
       why: "Gesunde Erwachsene können ihren Nährstoffbedarf in der Regel über eine abwechslungsreiche Ernährung decken; Nahrungsergänzung ist meist nicht nötig (BfR). Bei bestimmten Ernährungsweisen, etwa vegan, werden einzelne Nährstoffe wie Vitamin B12 leicht knapp.",
-      age: (a) => a >= 65
-        ? "Im höheren Alter kann der Körper Vitamin B12 schlechter aufnehmen. Das BfR rät älteren Menschen, ihren B12-Status ärztlich prüfen zu lassen."
-        : "",
+      // v1.53.4 — Gleiche Logik wie in der Mail (edge-2026-10-02.2): ab 70 trägt
+      // das Alter den Hinweis allein, zwischen 60 und 69 braucht es einen
+      // zweiten Anhaltspunkt. Sonst steht er bei einem gesunden 65-Jährigen als
+      // einziges Thema da und hat mit seinen Antworten nichts zu tun.
+      // Die Ernährungsweise läuft über die Regeltabelle auf Tab 3.
+      age: (a, w, r) => {
+        const schwach = Number(r.dizziness_pale_nails || 0) >= 3;
+        if (a >= 70 || (a >= 60 && schwach)) {
+          return "Ab etwa 60 bildet der Magen das Eiweiß, das Vitamin B12 aufnimmt, oft nicht mehr in ausreichender Menge — unabhängig davon, wie gut du isst. Das BfR rät, den Status einmal ärztlich prüfen zu lassen. Aussagekräftig ist Holo-Transcobalamin zusammen mit Methylmalonsäure.";
+        }
+        return "";
+      },
       src: ["bfr_age"]
     },
     metabolic: {
@@ -5330,7 +5347,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.53.3</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.53.4</footer>
 
 
 </body>
