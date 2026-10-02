@@ -546,7 +546,25 @@
        Naegel). Vorher ab 65 fuer alle; damit war er bei einem gesunden
        65-Jaehrigen das einzige Thema und ohne Bezug zu seinen Antworten. Der
        Wortlaut ist jetzt derselbe wie in der Mail, inklusive Holo-Transcobalamin
-       und Methylmalonsaeure. Ernaehrungsweise laeuft ueber supplement_rules. -->
+       und Methylmalonsaeure. Ernaehrungsweise laeuft ueber supplement_rules.
+
+       v1.53.5 (externe Pruefung, 03.10.2026):
+       Das Altersfeld trug min="14", obwohl die Pruefung in savePersonalData
+       seit jeher 18 verlangt und die Pilotphase ab 18 gilt. Jetzt min="18" —
+       rein kosmetisch, die Sperre selbst war vorhanden. Die eigentliche Luecke
+       lag auf dem Server und ist mit edge-2026-10-03.1 geschlossen.
+
+       v1.53.6 (externe Pruefung, 03.10.2026):
+       _doctorFirst zaehlt jetzt _lightComboSenior mit — dieselbe Definition wie
+       doctorFirst in der Edge. Vorher unterschieden sich Seite und Mail um
+       diesen einen Term.
+
+       v1.53.7 (externe Pruefung, 03.10.2026):
+       Einordnung bei einem Index unter 25. Ursache ist der Malus, der sich
+       ueber mehrere schwache Bereiche summiert; der Wert faellt dadurch tief,
+       obwohl der Check keinen Gesundheitszustand misst. Formel unveraendert —
+       eine Aenderung braeche die Vergleichbarkeit zu allen bisherigen Checks
+       und gehoert nach dem Launch mit einer neuen Score-Version gemacht. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -1987,7 +2005,7 @@
           : 'Für deinen persönlichen Vitalitäts-Index brauchen wir noch drei Angaben — mehr nicht. Name ist optional.'}</div>
         <div class="form-grid">
 
-          <div class="form-field"><label>Alter *</label><input type="number" id="age" placeholder="z.B. 38" min="14" max="100" value="${pre ? v(pre.age) : ''}" /></div>
+          <div class="form-field"><label>Alter *</label><input type="number" id="age" placeholder="z.B. 38" min="18" max="100" value="${pre ? v(pre.age) : ''}" /></div>
           <div class="form-field"><label>Geschlecht *</label>
             <select id="gender">
               <option value="">Bitte wählen</option>
@@ -3058,7 +3076,13 @@
 
     // Ärztlicher Vorrang (Edge: doctorFirst) — plus die Senioren-Stufe,
     // bei der die Edge den Selbsttest ebenfalls ausdrücklich verbietet.
+    // v1.53.6 — _lightComboSenior ergaenzt (externe Pruefung 03.10.2026):
+    // Die Edge zaehlt diesen Fall seit jeher zu doctorFirst, das Frontend nicht.
+    // Praktisch war es folgenlos, weil an den laborrelevanten Stellen
+    // _redFlagNoBloodtest greift — aber zwei Definitionen derselben Schwelle
+    // sind eine Falle fuer jede kuenftige Aenderung.
     window._doctorFirst = _combinedRedFlag
+      || _lightComboSenior
       || (_ageSafe >= 65 && _metabolic < 55)
       || _wl >= 3;
     window._redFlagNoBloodtest = window._doctorFirst || _lightComboSenior;
@@ -3137,6 +3161,20 @@
         </div>
         <div style="font-size:22px;">⚡</div>
       </div>`;
+
+    // v1.53.7 — Einordnung bei sehr niedrigem Index (externe Prüfung 03.10.2026).
+    // Der Malus zieht je Bereich unter 35 nochmals ein Viertel der Differenz ab;
+    // bei vielen schwachen Bereichen summiert sich das und der Wert fällt tief.
+    // Rechnerisch richtig, aber "15 von 100" liest sich wie ein Zeugnis — und
+    // genau das misst der Check nicht. Die Formel bleibt unberührt (sonst bräche
+    // die Vergleichbarkeit zu allen bisherigen Checks), nur die Einordnung kommt
+    // dazu. Schwelle 25: in 318 Checks lag genau einer darunter.
+    if (Number(totalScore) < 25) {
+      html += `
+      <div class="info-box box-info" style="margin-bottom:14px;">
+        Dein Wert liegt niedrig, weil gleich mehrere Bereiche Luft nach oben haben — sie verstärken sich gegenseitig. Das ist eine Momentaufnahme deines Alltags, kein Urteil über deine Gesundheit. Und es heißt nicht, dass du an neun Stellen gleichzeitig ansetzen musst: Der erste Schritt liegt in einem Bereich, und von dort bewegt sich meist auch der Rest.
+      </div>`;
+    }
 
     // ══════════════════════════════════════════════════════════════
     // v1.34.0 — REGISTER: was einmal gesagt wurde, wird nicht wiederholt.
@@ -5347,7 +5385,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.53.4</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.53.7</footer>
 
 
 </body>
