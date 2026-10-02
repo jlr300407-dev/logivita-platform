@@ -564,7 +564,17 @@
        ueber mehrere schwache Bereiche summiert; der Wert faellt dadurch tief,
        obwohl der Check keinen Gesundheitszustand misst. Formel unveraendert —
        eine Aenderung braeche die Vergleichbarkeit zu allen bisherigen Checks
-       und gehoert nach dem Launch mit einer neuen Score-Version gemacht. -->
+       und gehoert nach dem Launch mit einer neuen Score-Version gemacht.
+
+       v1.53.8 (Anregung aus dem Vergleich mit InsideTracker, 03.10.2026):
+       (1) Die BMI-Karte erklaert jetzt, warum der BMI auch dann kein
+       Ansatzpunkt ist, wenn er rechnerisch der niedrigste Wert ist — er ist ein
+       Ergebnis, keine Handlung. Bisher wurde er nur stillschweigend aus der
+       Hebel-Logik genommen, was bei fitten aelteren Menschen eine offene Frage
+       hinterliess.
+       (2) Bewegung: 150 Minuten sind die Untergrenze, ab der der Nutzen
+       beginnt, nicht das Ziel. Zwischen 150 und 300 nimmt er weiter zu — das
+       sagt die WHO-Spanne, wir haben es bisher nicht ausgesprochen. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -4066,8 +4076,8 @@
       age: (a) => a >= 65
         ? "Ab 65 empfiehlt die WHO 150–300 Minuten moderate Bewegung pro Woche, an 2 oder mehr Tagen Kräftigung und zusätzlich an 3 oder mehr Tagen Übungen für Gleichgewicht und Kraft — sie stärken die Beweglichkeit im Alltag und beugen Stürzen vor. Große Studien sehen ab 60 den größten Nutzen bei etwa 6.000–8.000 Schritten am Tag."
         : a >= 60
-        ? "Die WHO empfiehlt 150–300 Minuten moderate Bewegung pro Woche und an 2 oder mehr Tagen Kräftigung aller großen Muskelgruppen. Große Studien sehen ab 60 den größten Nutzen bei etwa 6.000–8.000 Schritten am Tag."
-        : "Die WHO empfiehlt 150–300 Minuten moderate Bewegung pro Woche und an 2 oder mehr Tagen Kräftigung aller großen Muskelgruppen. Große Studien sehen deutliche Vorteile ab etwa 7.000 Schritten am Tag, unter 60 wachsen sie bis etwa 8.000–10.000.",
+        ? "Die WHO empfiehlt 150–300 Minuten moderate Bewegung pro Woche und an 2 oder mehr Tagen Kräftigung aller großen Muskelgruppen. Die 150 Minuten sind dabei die Untergrenze, ab der sich der Nutzen zeigt — zwischen 150 und 300 nimmt er weiter zu. Große Studien sehen ab 60 den größten Nutzen bei etwa 6.000–8.000 Schritten am Tag."
+        : "Die WHO empfiehlt 150–300 Minuten moderate Bewegung pro Woche und an 2 oder mehr Tagen Kräftigung aller großen Muskelgruppen. Die 150 Minuten sind dabei die Untergrenze, ab der sich der Nutzen zeigt — zwischen 150 und 300 nimmt er weiter zu. Große Studien sehen deutliche Vorteile ab etwa 7.000 Schritten am Tag, unter 60 wachsen sie bis etwa 8.000–10.000.",
       src: ["who_pa", "paluch", "ding"]
     },
     sleep: {
@@ -4100,7 +4110,7 @@
     },
     bmi: {
       what: "Das Verhältnis von Gewicht zu Größe — eine grobe Orientierung, die Muskeln und Fett nicht unterscheidet.",
-      why: "Aussagekräftiger ist die Körperzusammensetzung: Eine Tanita-Messung im LeVITA Studio zeigt Muskelmasse, Körperfett und Wasserhaushalt. Der stabile Orientierungsbereich liegt bei einem BMI von 18,5 bis 25.",
+      why: "Aussagekräftiger ist die Körperzusammensetzung: Eine Tanita-Messung im LeVITA Studio zeigt Muskelmasse, Körperfett und Wasserhaushalt. Der stabile Orientierungsbereich liegt bei einem BMI von 18,5 bis 25. Steht der BMI bei dir unter den niedrigsten Werten, bleibt er trotzdem nicht dein Ansatzpunkt — er ist ein Ergebnis, keine Handlung. Bewegt wird er über Bewegung und Ernährung, und dort liegt auch dein Hebel.",
       age: (a) => a >= 70
         ? "Ab 70 gilt in der Ernährungsmedizin ein BMI unter 22 als Anlass, genauer hinzuschauen (GLIM). In diesem Alter zählen Muskelkraft und Beweglichkeit mehr als eine niedrige Zahl auf der Waage."
         : "",
@@ -5385,7 +5395,7 @@
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.53.7</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.53.8</footer>
 
 
 </body>
