@@ -624,7 +624,37 @@
        damit "stabil", der Index mit +2 "+2 Punkte". Jetzt ueberall < 2.
        (4) Der Zwischenstand traegt jetzt eine Ablauf-Kennung (':f2'). Ohne sie
        haetten gespeicherte Staende aus der Fassung vor dem Befindensschritt um
-       einen Schritt verschobene Indizes. -->
+       einen Schritt verschobene Indizes.
+
+       v1.54.1 (03.10.2026):
+       Kanalerkennung im Funnel: logivita.de und die eigene Homepage bekommen
+       je einen eigenen Wert in 'source'. Bisher landeten beide in 'other',
+       zusammen mit Suchmaschinen, Maps und allem anderen — die Ziel-Kacheln auf
+       logivita.de waeren damit nicht messbar gewesen. Der Rohwert 'referrer'
+       bleibt daneben stehen, aeltere Ereignisse lassen sich also nachtraeglich
+       zuordnen.
+
+       v1.55.0 (Vorschlag aus der Datenschutz-Spur, 03.10.2026):
+       (1) TRAINER-EINWILLIGUNG. Dritte, freiwillige und nicht vorbelegte
+       Einwilligung im Consent-Schritt: Einsicht durch die Trainerinnen und
+       Trainer von LeVITA. Der Check funktioniert vollstaendig ohne sie. Der
+       Text nennt bewusst "meine Angaben und mein Ergebnis", weil das Dashboard
+       nicht nur den Index zeigt, sondern alle Antworten. Gespeichert wird der
+       Nachweis in submission_consents (consent_trainer_access) und der Zustand
+       auf der Submission (trainer_access) — darauf filtern die RLS-Policies des
+       Dashboards, sonst waere die Einwilligung ein Versprechen ohne Wirkung.
+       Entscheidung Joerg: Altfaelle (NULL) bleiben sichtbar, neue Checks
+       brauchen den Haken.
+       (2) WIDERRUF. Knopf in der Ergebnisansicht, mit PIN abgesichert wie das
+       Loeschen, sofort wirksam. Er erscheint nur, wenn eine Einwilligung
+       vorliegt.
+       (3) Der Einwilligungstext an der Mail-Box nennt jetzt auch Resend (USA)
+       als Versanddienst, mit dem Angemessenheitsbeschluss (EU-US Data Privacy
+       Framework, Art. 45 DSGVO) als Grundlage — Resend ist seit 2025 unter dem
+       DPF zertifiziert. Die Angabe zu Anthropic (Art. 46,
+       Standardvertragsklauseln) ist unveraendert geblieben und gehoert vor dem
+       Launch anwaltlich gegengeprueft.
+       (4) consent_version in der Edge auf levita-privacy-v3. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -1795,7 +1825,19 @@
       const enriched = {
         ...meta,
         public_code: window._currentPublicCode || null,
-        source: (function(){ const r = pageReferrer(); return r ? (r.includes('facebook') ? 'facebook' : r.includes('instagram') ? 'instagram' : 'other') : 'direct'; })(),
+        // v1.54.1 — logivita.de und die eigene Homepage bekommen einen eigenen
+        // Kanal. Vorher fielen beide in 'other' und waren im Dashboard nicht von
+        // Suchmaschinen und Maps zu unterscheiden. Der Rohwert 'referrer' steht
+        // weiter daneben, aeltere Daten lassen sich also nachtraeglich zuordnen.
+        source: (function(){
+          const r = pageReferrer();
+          if (!r) return 'direct';
+          if (r.includes('facebook')) return 'facebook';
+          if (r.includes('instagram')) return 'instagram';
+          if (r.includes('logivita')) return 'logivita';
+          if (r.includes('le-vita')) return 'homepage';
+          return 'other';
+        })(),
         referrer: (function(){ const r = pageReferrer(); return r ? String(r).slice(0, 200) : undefined; })(), // v1.33.0: Rohwert — nur damit lassen sich organische Suche, Maps und Direkteinstieg trennen (undefined wird von JSON.stringify entfernt)
         device: window.innerWidth < 600 ? 'mobile' : 'desktop',
         is_internal: window._isInternal === true ? true : undefined, // Sofort-Fix 5: Testdaten markieren (undefined wird von JSON.stringify entfernt)
@@ -2384,6 +2426,13 @@
           <input type="checkbox" id="consent_storage" />
           <label for="consent_storage">Ich willige ein, dass meine Angaben für den Vital-Check gespeichert werden. Diese werden nicht für andere Zwecke genutzt und können jederzeit gelöscht werden.</label>
         </div>
+        <!-- v1.55.0 — freiwillig, nicht vorbelegt, keine Bedingung fuer den Check.
+             Der Trainerzugriff gilt nur fuer Checks mit diesem Haken; ohne ihn
+             bleibt der Weg, bei dem das Mitglied selbst Pilot-ID und PIN zeigt. -->
+        <div class="checkbox-row" style="margin-top:4px;">
+          <input type="checkbox" id="consent_trainer_access" />
+          <label for="consent_trainer_access">Ich bin einverstanden, dass die Trainerinnen und Trainer von LeVITA meine Angaben und mein Ergebnis einsehen, um mich zu beraten und meinen Re-Check zu begleiten. <span style="color:var(--text-muted);">Diese Einwilligung ist freiwillig, der Vital-Check funktioniert auch ohne sie, und ich kann sie jederzeit widerrufen.</span></label>
+        </div>
         <button class="next-btn" id="submitBtn" onclick="submitInitialCheck()">Auswertung erstellen →</button>
       </div>`;
   }
@@ -2911,12 +2960,14 @@
     const cs = document.getElementById("consent_storage").checked;
     if (!cp || !cs) return alert("Bitte Datenschutz und Speicherung bestätigen.");
     personalData.consent_privacy = true; personalData.consent_storage = true;
+    // v1.55.0 — freiwillige Trainer-Einwilligung; fehlt der Haken, wird false gesendet
+    const _ta = document.getElementById("consent_trainer_access")?.checked === true;
     const btn = document.getElementById("submitBtn");
     btn.disabled = true; btn.innerText = "Auswertung wird erstellt…";
     try {
       // V2: Re-Check-Verknüpfung — previous_public_code + previous_pin nur mitschicken,
       // wenn der Nutzer aus einer PIN-verifizierten Ansicht gestartet ist.
-      const payload = { age:personalData.age, gender:personalData.gender, height_cm:personalData.height_cm, weight_kg:personalData.weight_kg, first_name:personalData.first_name||null, last_name:personalData.last_name||null, goal_key:personalData.goal_key||null, consent_privacy:true, consent_storage:true, answers:selectedAnswers };
+      const payload = { age:personalData.age, gender:personalData.gender, height_cm:personalData.height_cm, weight_kg:personalData.weight_kg, first_name:personalData.first_name||null, last_name:personalData.last_name||null, goal_key:personalData.goal_key||null, consent_privacy:true, consent_storage:true, consent_trainer_access:_ta, answers:selectedAnswers };
       // v1.50.0 — freiwillige Werte aus Uhr oder Tracker; null, wenn nichts eingetragen
       const _watch = collectWatchValues();
       if (_watch) payload.watch = _watch;
@@ -2942,6 +2993,7 @@
       // Wiederaufruf liefert sie die Edge über submission.watch.
       if (_watch) result.submission = Object.assign({}, result.submission || {}, { watch: _watch });
       latestResult = result;
+      window._trainerAccess = _ta;   // v1.55.0
       absorbV2Result(result); // V2: Szenarien, Verlauf, link_status
       window._previousLink = null; window._recheckPrefill = null; // verbraucht — nie doppelt verwenden
       const rb = document.getElementById('recheckQuizNote'); if (rb) rb.remove();
@@ -3483,7 +3535,7 @@
           <div class="checkbox-row">
             <input type="checkbox" id="consent_ai_analysis" />
             <label for="consent_ai_analysis">Ja, ich möchte meine persönliche KI-Auswertung erhalten.
-              <span id="consentDetail1" style="display:none;color:var(--text-muted);font-size:10px;line-height:1.5;margin-top:4px;">Deine Angaben werden zur Erstellung der Auswertung an Anthropic PBC (USA) übermittelt — ausschließlich für diesen Zweck, nicht zum Training von KI-Modellen. Grundlage: Standardvertragsklauseln (Art. 46 DSGVO).</span>
+              <span id="consentDetail1" style="display:none;color:var(--text-muted);font-size:10px;line-height:1.5;margin-top:4px;">Deine Angaben werden zur Erstellung der Auswertung an Anthropic PBC (USA) übermittelt — ausschließlich für diesen Zweck, nicht zum Training von KI-Modellen. Grundlage: Standardvertragsklauseln (Art. 46 DSGVO). Der Versand erfolgt über Resend (USA). Grundlage: Angemessenheitsbeschluss der EU-Kommission (EU-US Data Privacy Framework, Art. 45 DSGVO).</span>
               <span onclick="toggleConsent1(event)" style="color:var(--text-muted);font-size:10px;cursor:pointer;text-decoration:underline;margin-left:4px;" id="consentToggle1">Details</span>
             </label>
           </div>
@@ -4085,6 +4137,19 @@
 
     html += `${_mailLinkHtml}`;
     html += `<div class="disclaimer"><strong>Wichtiger Hinweis:</strong> Diese Auswertung ist keine Diagnose und ersetzt keine medizinische Beratung. Sie dient der Orientierung und Hilfe zur Selbsthilfe. Die Schwerpunkte basieren auf Empfehlungen von WHO, DGE und dem Bundesinstitut für Risikobewertung.</div>`;
+    // v1.55.0 — Widerruf der Trainer-Einwilligung. Steht nur da, wenn es etwas
+    // zu widerrufen gibt; der Zustand kommt beim Wiederaufruf aus der Edge.
+    const _taNow = (result.submission && result.submission.trainer_access === true) || window._trainerAccess === true;
+    if (_taNow) {
+      html += `
+      <div style="margin-top:14px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);">
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin-bottom:10px;">
+          Du hast zugestimmt, dass die Trainerinnen und Trainer von LeVITA deine Angaben einsehen dürfen. Das kannst du jederzeit zurücknehmen.
+        </div>
+        <button id="trainerRevokeBtn" onclick="revokeTrainerAccess()" style="width:100%;padding:11px;background:transparent;color:var(--text-secondary);border:1px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer;">Einsicht durch Trainer widerrufen</button>
+      </div>`;
+    }
+
     html += `
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
         <button class="danger-btn" onclick="deleteMyData()">🗑 Daten löschen</button>
@@ -5533,6 +5598,40 @@
     btn.textContent = isHidden ? "Ausblenden" : "Einblenden";
   }
 
+  // ── v1.55.0 — Widerruf der Trainer-Einwilligung ──────────────────────────
+  // Gleicher Schutz wie beim Loeschen: mit PIN, falls einer existiert. Der
+  // Widerruf wirkt sofort — die Policy im Dashboard filtert auf trainer_access.
+  async function revokeTrainerAccess() {
+    if (!latestResult?.public_code) { alert("Keine aktive Auswertung gefunden. Bitte wende dich an info@le-vita.com mit deiner Pilot-ID."); return; }
+    if (!confirm("Möchtest du die Einsicht durch die Trainerinnen und Trainer zurücknehmen?\n\nDeine Auswertung bleibt dir vollständig erhalten. Im Studio könnt ihr sie weiterhin gemeinsam ansehen, wenn du Pilot-ID und PIN zeigst.")) return;
+    const btn = document.getElementById('trainerRevokeBtn');
+    if (btn) { btn.disabled = true; btn.textContent = "Wird widerrufen…"; }
+    try {
+      let res;
+      try {
+        res = await callFunction({ mode: "revoke_trainer_access", public_code: latestResult.public_code, pin: window._accessPin || null });
+      } catch (innerErr) {
+        if (innerErr.message === "PIN_REQUIRED") {
+          const entered = prompt("Zum Widerruf benötigen wir deinen 8-stelligen Zugangs-PIN aus deiner Auswertungs-Mail.\n\nFalls du ihn nicht mehr hast: eine formlose Nachricht an datenschutz@le-vita.com mit deiner Pilot-ID " + latestResult.public_code + " genügt.");
+          if (!entered) { if (btn) { btn.disabled = false; btn.textContent = "Einsicht durch Trainer widerrufen"; } return; }
+          res = await callFunction({ mode: "revoke_trainer_access", public_code: latestResult.public_code, pin: entered.trim() });
+        } else { throw innerErr; }
+      }
+      if (res?.success) {
+        window._trainerAccess = false;
+        if (latestResult.submission) latestResult.submission.trainer_access = false;
+        const box = btn && btn.parentElement;
+        if (box) box.innerHTML = '<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;">✓ Widerrufen. Die Trainerinnen und Trainer sehen deine Angaben nicht mehr.</div>';
+      } else {
+        alert("Der Widerruf konnte nicht gespeichert werden. Bitte wende dich an datenschutz@le-vita.com mit deiner Pilot-ID: " + latestResult.public_code);
+        if (btn) { btn.disabled = false; btn.textContent = "Einsicht durch Trainer widerrufen"; }
+      }
+    } catch (err) {
+      alert(err.message && err.message.length > 30 ? err.message : "Verbindungsfehler. Bitte versuche es erneut oder kontaktiere uns: datenschutz@le-vita.com");
+      if (btn) { btn.disabled = false; btn.textContent = "Einsicht durch Trainer widerrufen"; }
+    }
+  }
+
   async function deleteMyData() {
     if (!latestResult?.public_code) { alert("Keine aktive Auswertung gefunden. Bitte wende dich an info@le-vita.com mit deiner Pilot-ID."); return; }
     const confirmed = confirm(`Möchtest du wirklich alle gespeicherten Daten zu Pilot-ID ${latestResult.public_code} löschen?\n\nFolgende Daten werden sofort gelöscht:\n- Deine Antworten und Angaben\n- Dein Score und alle Bereichswerte\n- Deine Kontaktdaten\n- Deine KI-Auswertung\n\nDas E-Mail-Protokoll wird innerhalb von 30 Tagen entfernt.\n\nDiese Aktion kann nicht rückgängig gemacht werden.`);
@@ -5615,7 +5714,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.54.0</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.55.0</footer>
 
 
 </body>
