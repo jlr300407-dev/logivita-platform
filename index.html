@@ -665,7 +665,14 @@
        wenig wert, weil Links in einem iFrame der Elternseite nicht zugerechnet
        werden und /app/vital-check/ per canonical ohnehin nicht indexiert werden
        soll. Der wirksame Link gehoert in die Fusszeile von le-vita.com selbst.
-       Hier geht es um Urheberschaft und Vertrauen. -->
+       Hier geht es um Urheberschaft und Vertrauen.
+
+       v1.55.2 (03.10.2026, beim Gegenlesen der Funnel-Auswertung gefunden):
+       Der Befindensschritt meldete sich mit zwei verschiedenen Schluesseln:
+       step_view mit 'wellbeing' (dem Schritt-Typ), step_answered mit
+       'wellbeing_self'. Die Abbruch-Analyse haette daraus zwei Zeilen gemacht,
+       eine mit 100 Prozent Abbruch und eine ohne Aufrufe. Jetzt beide
+       'wellbeing', wie bei 'personal' auch. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -2210,7 +2217,11 @@
     }
     setTimeout(() => {
       personalData.wellbeing_self = v;
-      trackEvent('step_answered', { step_index: currentStep, step_key: 'wellbeing_self', answer_key: String(v) });
+      // v1.55.2 — step_key MUSS zu dem passen, was nextStep() als step_view
+      // sendet (dort der Schritt-Typ, also 'wellbeing'). Mit 'wellbeing_self'
+      // standen in der Funnel-Auswertung zwei Zeilen: eine mit 100 % Abbruch
+      // und eine ohne Aufrufe.
+      trackEvent('step_answered', { step_index: currentStep, step_key: 'wellbeing', answer_key: String(v) });
       nextStep();
     }, 200);
   }
@@ -5728,7 +5739,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer">Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v1.55.1</footer>
+<footer class="app-footer">Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v1.55.2</footer>
 
 
 </body>
