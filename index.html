@@ -600,7 +600,31 @@
        ist fuer alle Nutzer gleich. Technisch aus einem eigenen DOM-Element mit
        Sichtbarkeitsschalter zu einer Funktion promoBlockHtml() geworden, die
        der Tab-3-Aufbau einsetzt; die vier Konstanten bleiben unveraendert.
-       Auf der Startseite erscheint er dadurch nicht mehr. -->
+       Auf der Startseite erscheint er dadurch nicht mehr.
+
+       v1.54.0 (03.10.2026):
+       (1) BEFINDEN. Neuer Schritt direkt nach der Zielfrage: "Wie vital fuehlst
+       du dich im Moment?" mit fuenf Stufen (Sehr gut bis Gar nicht gut).
+       Gespeichert als wellbeing_self 5..1, hoeher gleich besser wie beim Index.
+       Zaehlt NICHT in den Vitalitaets-Index — sonst mischte sich ein Gefuehl in
+       eine Rechnung, die vergleichbar bleiben muss. Gefragt wird VOR dem
+       Fragebogen, weil die Einschaetzung danach vom Fragebogen gepraegt waere.
+       Auf der Ergebnisseite steht nur eine ruhige Zeile ohne Vergleich; die
+       Einordnung beider Werte uebernimmt die Mail. In der Verlaufskarte
+       erscheint "Befinden: vorher -> heute", sobald beide Werte vorliegen.
+       Bewusst ohne Buddy (Leitplanke "Rueckzug bei ernsten Inhalten").
+       (2) ZIEL PER LINK. ?ziel=goal_energy startet den Check so, als haette der
+       Nutzer den Ziel-Chip angetippt — fuer die Kacheln auf logivita.de.
+       Erlaubt sind die sieben bestehenden Ziele; ?code=, Mail-Links, ein
+       laufender Re-Check-Start und ein gespeicherter Zwischenstand haben
+       Vorrang, dann passiert nichts.
+       (3) RAUSCH-REGEL vereinheitlicht: Die Bereichskarte wertete eine
+       Veraenderung bis einschliesslich 2 Punkten als "stabil gehalten", die
+       Verlaufskarte und die Mail dagegen unter 2. Ein Bereich mit +2 hiess
+       damit "stabil", der Index mit +2 "+2 Punkte". Jetzt ueberall < 2.
+       (4) Der Zwischenstand traegt jetzt eine Ablauf-Kennung (':f2'). Ohne sie
+       haetten gespeicherte Staende aus der Fassung vor dem Befindensschritt um
+       einen Schritt verschobene Indizes. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -1501,7 +1525,7 @@
       if (result.scenarios && !simScenarios) console.warn('[V2] Szenarien vorhanden, aber nicht normalisierbar — Feldnamen prüfen (siehe normalizeScenarios).');
     }
   }
-  const personalData = { age:null, gender:"", height_cm:null, weight_kg:null, first_name:"", last_name:"", consent_privacy:false, consent_storage:false, goal_key:"", goal_option_id:"" };
+  const personalData = { age:null, gender:"", height_cm:null, weight_kg:null, first_name:"", last_name:"", consent_privacy:false, consent_storage:false, goal_key:"", goal_option_id:"", wellbeing_self:null };
 
   // ── PIN-Screen bauen ──────────────────────────────────
   function buildPinScreen(publicCode) {
@@ -1990,6 +2014,7 @@
     const fishQuestionKeys = ["omega3_fish", "fish_frequency", "fish_consumption", "fish_intake"];
     groupedQuestions = [
       goalQuestion ? { type:"goal", question:goalQuestion } : null,
+      { type:"wellbeing" },
       { type:"personal" },
       ...tierFiltered(questions).filter(q => !fishQuestionKeys.some(fk => q.question_key?.includes(fk))),
       
@@ -2022,6 +2047,7 @@
     const goalQuestion = window._goalQuestion || null;
     groupedQuestions = [
       goalQuestion ? { type:"goal", question:goalQuestion } : null,
+      { type:"wellbeing" },
       { type:"personal" },
       ...filtered,
       
@@ -2037,6 +2063,7 @@
       div.className = `question-step${index === activeIndex ? " active" : ""}`;
       div.id = `step-${index}`;
       if (step.type === "goal") div.innerHTML = goalStepHtml(step.question);
+      else if (step.type === "wellbeing") div.innerHTML = wellbeingStepHtml();
       else if (step.type === "personal") div.innerHTML = personalStepHtml();
       else if (step.type === "consent") div.innerHTML = consentStepHtml();
       else div.innerHTML = questionStepHtml(step);
@@ -2072,6 +2099,64 @@
     });
     html += `</div></div>`;
     return html;
+  }
+
+  // ══ Befinden: die eigene Einschätzung VOR dem Fragebogen (v1.54.0) ══════
+  // Sie zählt NICHT in den Vitalitäts-Index — sonst mischte sich ein Gefühl in
+  // eine Rechnung, die zwischen Personen und zwischen Check und Re-Check
+  // vergleichbar bleiben muss. Sie steht hier aus zwei Gründen:
+  //   1. Sie zeigt, ob unser Index zu dem passt, was Menschen über sich sagen.
+  //   2. Sie entscheidet über den Ton der Auswertung. Wer sich gut fühlt und
+  //      einen niedrigen Index hat, braucht eine andere Ansprache als jemand,
+  //      dem es schlecht geht, während die Zahlen gut aussehen.
+  // Gefragt wird VOR dem Fragebogen: Nach dreissig Fragen zu Schlaf, Alkohol
+  // und Gewicht schätzt sich jeder anders ein — dann messen wir den Fragebogen,
+  // nicht das Befinden.
+  // Fünf Stufen statt 0–10: Sie liegen deckungsgleich auf den fünf Bändern der
+  // SCORE_SCALE, und zwischen 6 und 7 entscheidet ohnehin niemand ernsthaft.
+  // Bewusst ohne Buddy — an einer Frage nach dem eigenen Befinden steht keine
+  // Comicfigur (Leitplanke "Rückzug bei ernsten Inhalten").
+  const WELLBEING_SCALE = [
+    { value: 5, label: "Sehr gut" },
+    { value: 4, label: "Gut" },
+    { value: 3, label: "Mittel" },
+    { value: 2, label: "Weniger gut" },
+    { value: 1, label: "Gar nicht gut" }
+  ];
+  const WELLBEING_LABEL = WELLBEING_SCALE.reduce((m, o) => (m[o.value] = o.label, m), {});
+
+  function wellbeingStepHtml() {
+    const prev = Number(window._recheckPrefill && window._recheckPrefill.wellbeing_self) || 0;
+    const prevTxt = WELLBEING_LABEL[prev]
+      ? `<div class="help-text">Beim letzten Check hast du <strong style="color:var(--text-primary);">${WELLBEING_LABEL[prev]}</strong> angegeben. Wie ist es heute?</div>`
+      : "";
+    const opts = WELLBEING_SCALE.map(o =>
+      `<button class="option-btn" onclick="saveWellbeing(${o.value})">${o.label}</button>`
+    ).join("");
+    return `
+      <div class="card">
+        <div class="area-badge">💚 Dein Befinden</div>
+        <div class="question-text">Wie vital fühlst du dich im Moment?</div>
+        ${prevTxt}
+        <div class="help-text">Dein Bauchgefühl genügt. Diese Angabe zählt nicht in deinen Index — sie hilft uns, deine Auswertung passend für dich zu formulieren.</div>
+        <div class="options-grid">${opts}</div>
+      </div>`;
+  }
+
+  function saveWellbeing(value) {
+    const v = Number(value);
+    if (!WELLBEING_LABEL[v]) return;
+    const activeStep = document.getElementById(`step-${currentStep}`);
+    if (activeStep) {
+      activeStep.querySelectorAll(".option-btn").forEach(btn => {
+        if ((btn.getAttribute("onclick") || "").includes(`saveWellbeing(${v})`)) btn.classList.add("selected-flash");
+      });
+    }
+    setTimeout(() => {
+      personalData.wellbeing_self = v;
+      trackEvent('step_answered', { step_index: currentStep, step_key: 'wellbeing_self', answer_key: String(v) });
+      nextStep();
+    }, 200);
   }
 
   function personalStepHtml() {
@@ -2373,7 +2458,10 @@
       const ids = (questions || []).map(q => q.question_id).join('|');
       let h = 0;
       for (let i = 0; i < ids.length; i++) { h = ((h << 5) - h + ids.charCodeAt(i)) | 0; }
-      return String(h) + ':' + (questions || []).length;
+      // ':f2' — Fassung des Ablaufs selbst. Mit v1.54.0 kam der Befindensschritt
+      // dazu; ein Zwischenstand aus der Fassung davor haette danach um einen
+      // Schritt verschobene Indizes. Lieber verwerfen als halb falsch fortsetzen.
+      return String(h) + ':' + (questions || []).length + ':f2';
     } catch (e) { return null; }
   }
 
@@ -2787,6 +2875,7 @@
     if (!q) return;
     if (q.type === "intro") { document.getElementById("progressAreaLabel").textContent = "LeVITA Vital-Check"; document.getElementById("progressCount").textContent = ""; }
     else if (q.type === "goal") { document.getElementById("progressAreaLabel").textContent = "🎯 Dein Ziel"; document.getElementById("progressCount").textContent = ""; }
+    else if (q.type === "wellbeing") { document.getElementById("progressAreaLabel").textContent = "💚 Dein Befinden"; document.getElementById("progressCount").textContent = ""; }
     else if (q.type === "personal") { document.getElementById("progressAreaLabel").textContent = "👤 Basisdaten"; document.getElementById("progressCount").textContent = ""; }
     else if (q.type === "consent") { document.getElementById("progressAreaLabel").textContent = "🔒 Fast fertig"; document.getElementById("progressCount").textContent = ""; }
     else {
@@ -2831,6 +2920,9 @@
       // v1.50.0 — freiwillige Werte aus Uhr oder Tracker; null, wenn nichts eingetragen
       const _watch = collectWatchValues();
       if (_watch) payload.watch = _watch;
+      // v1.54.0 — Selbsteinschätzung: wird gespeichert und in die Mail gegeben,
+      // fliesst aber NICHT in den Index (Vergleichbarkeit).
+      if (personalData.wellbeing_self) payload.wellbeing_self = personalData.wellbeing_self;
       const wasRecheck = !!(window._previousLink && window._previousLink.public_code && window._previousLink.pin);
       // Merker sichern, bevor _recheckPrefill weiter unten verworfen wird
       const _weightCarried = !!(window._recheckPrefill && window._recheckPrefill.weight_carried);
@@ -3488,6 +3580,17 @@
           ` : ""}
         </div>
       </div>`;
+
+    // ── Eigene Einschätzung (v1.54.0) ──
+    // Eine ruhige Zeile, kein Vergleich und keine Wertung: Der Index wird
+    // nicht gegen das Gefühl gestellt. Die Einordnung beider Werte uebernimmt
+    // die Mail, wo sie in ganzen Saetzen und mit Ton passieren kann.
+    const _wbSelf = Number(result.submission?.wellbeing_self || personalData.wellbeing_self) || 0;
+    if (WELLBEING_LABEL[_wbSelf]) {
+      html += `<div style="text-align:center;font-size:12px;color:var(--text-muted);margin:-4px 0 14px;">
+        Vor dem Check hast du dein Befinden mit <strong style="color:var(--text-secondary);">${WELLBEING_LABEL[_wbSelf]}</strong> angegeben.
+      </div>`;
+    }
 
     // ── V2: Verlaufs-Karte (nur bei verknüpftem Vorgänger-Check) ──
     window._prevAreaMap = null;
@@ -4292,13 +4395,15 @@
     const icon = AREA_ICONS[area.key] || "●";
     const bmiHtml = area.key === "bmi" ? renderBmiDetail(result) : "";
     // V2: Vorher→Heute-Delta je Bereich (nur bei verknüpftem Re-Check).
-    // Rausch-Regel wie in der Mail: |Delta| <= 2 gilt als "stabil gehalten".
+    // Rausch-Regel wie in der Mail und in der Verlaufskarte: |Delta| < 2 gilt
+    // als "stabil gehalten". v1.54.0: hier stand <= 2, dadurch hiess ein Bereich
+    // mit +2 "stabil gehalten", der Index mit +2 dagegen "+2 Punkte".
     let prevDeltaHtml = "";
     if (window._prevAreaMap && isFinite(window._prevAreaMap[area.key])) {
       const prevS = Math.round(window._prevAreaMap[area.key]);
       const curS = Math.round(area.score);
       const d = curS - prevS;
-      const deltaTxt = Math.abs(d) <= 2 ? `<span>· stabil gehalten</span>` : (d > 0 ? `<span class="up">▲ +${d}</span>` : `<span class="down">▼ ${d}</span>`);
+      const deltaTxt = Math.abs(d) < 2 ? `<span>· stabil gehalten</span>` : (d > 0 ? `<span class="up">▲ +${d}</span>` : `<span class="down">▼ ${d}</span>`);
       prevDeltaHtml = (area.key === "bmi" && window._weightCarried)
         ? `<div class="area-prev-delta">Vorher ${prevS} → heute ${curS} <span>· Gewicht vom letzten Check übernommen — kein echter Vergleich</span></div>`
         : `<div class="area-prev-delta">Vorher ${prevS} → heute ${curS} ${deltaTxt}</div>`;
@@ -4635,6 +4740,13 @@
       bioHtml = `<div class="verlauf-row">Vitalitäts-Alter: ${prev.bio_age} J. → <strong style="color:var(--text-primary);">${bioAge} J.</strong>${bd !== 0 ? ` <span class="${bd < 0 ? 'verlauf-delta-up' : 'verlauf-delta-down'}">(${bd > 0 ? '+' : ''}${bd} J.)</span>` : ''}</div>`;
     }
     const prevDate = new Date(prev.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    // v1.54.0 — Befinden im Verlauf. Nur wenn BEIDE Werte vorliegen; ohne
+    // Vergleichswert sagt eine einzelne Stufe hier nichts.
+    const wbPrev = Number(prev.wellbeing_self) || 0;
+    const wbCur = Number(personalData.wellbeing_self) || 0;
+    const wbHtml = (WELLBEING_LABEL[wbPrev] && WELLBEING_LABEL[wbCur])
+      ? `<div class="verlauf-row">Dein Befinden: ${WELLBEING_LABEL[wbPrev]} → <strong style="color:var(--text-primary);">${WELLBEING_LABEL[wbCur]}</strong></div>`
+      : "";
     return `
       <div class="verlauf-card">
         <div class="verlauf-head">
@@ -4643,6 +4755,7 @@
         </div>
         <div class="verlauf-row" style="font-size:15px;">Vitalitäts-Index: ${prevTotal} → <strong style="color:var(--text-primary);font-size:17px;">${curTotal}</strong> ${deltaHtml}</div>
         ${bioHtml}
+        ${wbHtml}
         ${window._weightCarried ? `<div style="font-size:11.5px;color:var(--accent-amber);line-height:1.5;margin-top:8px;">Dein Gewicht ist unverändert vom letzten Check übernommen. Der BMI-Vergleich sagt deshalb nichts über eine echte Veränderung — trag beim nächsten Check dein aktuelles Gewicht ein.</div>` : ''}
         <div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">Die Bereichs-Entwicklung siehst du unter „Meine Bereiche“ — dort kannst du in der Spinne die Vorher-Ebene einblenden.</div>
       </div>`;
@@ -5245,6 +5358,9 @@
       // submitAll() schickt ihn mit, die Edge speichert ihn auf der Submission.
       weight_carried: true,
       weight_touched: false,
+      // v1.54.0 — die fruehere Selbsteinschaetzung wird GEZEIGT, nicht gesetzt:
+      // die Frage wird neu beantwortet, sonst waere der Verlauf wertlos.
+      wellbeing_self: latestResult.submission?.wellbeing_self || null,
       // v1.52.0 — Zeitraum und Gerät der Uhrenwerte übernehmen, die Werte NICHT
       watch_period: latestResult.submission?.watch?.period_days || 0,
       watch_device: latestResult.submission?.watch?.device || ''
@@ -5465,7 +5581,7 @@
       const rn = document.getElementById('recheckQuizNote'); if (rn) rn.remove();
     }
     if (radarChart) { radarChart.destroy(); radarChart=null; }
-    Object.assign(personalData, { age:null, gender:"", height_cm:null, weight_kg:null, email:"", first_name:"", last_name:"", consent_privacy:false, consent_storage:false, goal_key:"", goal_option_id:"" });
+    Object.assign(personalData, { age:null, gender:"", height_cm:null, weight_kg:null, email:"", first_name:"", last_name:"", consent_privacy:false, consent_storage:false, goal_key:"", goal_option_id:"", wellbeing_self:null });
     document.getElementById("result-area").style.display = "none";
     document.getElementById("result-content").innerHTML = "";
     document.getElementById("quiz-flow").style.display = "";
@@ -5478,8 +5594,28 @@
   }
 
   init();
+
+  // ══ Einstieg mit Ziel per Link (v1.54.0) ════════════════════════════════
+  // logivita.de verlinkt den Check mit ?ziel=goal_energy. Der Check startet
+  // dann genau so, als haette der Nutzer den passenden Ziel-Chip auf der
+  // Startseite angetippt — gleicher Weg, gleiches Event (landing_goal_click).
+  // Laeuft nach init(), also einmal pro Seitenaufruf und nicht nach einem
+  // Neustart ueber resetVitalCheck().
+  (function () {
+    const ALLOWED = ['goal_energy','goal_weight','goal_fitness','goal_longevity',
+                     'goal_prevention','goal_supplements','goal_curious'];
+    try {
+      const p = pageParams();              // liest auch die Parameter der Elternseite (iFrame)
+      const ziel = p.get('ziel');
+      if (!ziel || !ALLOWED.includes(ziel)) return;
+      if (p.get('code') || p.get('optin') || p.get('abmelden')) return;  // PIN-Aufruf und Mail-Links haben Vorrang
+      if (window._autoStartCheck) return;  // Re-Check-Start laeuft bereits
+      if (loadProgress()) return;          // angefangener Check: erst fragen, nicht ueberfahren
+      startWithGoal(ziel);
+    } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
+  })();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.53.10</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.54.0</footer>
 
 
 </body>
