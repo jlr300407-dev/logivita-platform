@@ -574,7 +574,22 @@
        hinterliess.
        (2) Bewegung: 150 Minuten sind die Untergrenze, ab der der Nutzen
        beginnt, nicht das Ziel. Zwischen 150 und 300 nimmt er weiter zu — das
-       sagt die WHO-Spanne, wir haben es bisher nicht ausgesprochen. -->
+       sagt die WHO-Spanne, wir haben es bisher nicht ausgesprochen.
+
+       v1.53.9 (Uebergabe Joerg, 03.10.2026):
+       Hinweis-Block auf die beiden neuen LeVITA-Seiten (LeVITA Auswahl /
+       BIOGENA und Bluttests fuer zuhause / Verisana). Der Block ist fuer alle
+       Nutzer identisch und haengt an keiner Antwort, keinem Score und keinem
+       bloodtest_hint — Vital-Check und Nahrungsergaenzung bleiben getrennte
+       Bereiche. Er liegt ausserhalb von .container am Seitenende, also nicht
+       neben Score-Ring, Haupthebel, Bereichskarten, Simulator oder Mail-Box,
+       und ist waehrend des Fragebogens ausgeblendet, damit er nicht neben den
+       Einwilligungen steht. Vier Konstanten steuern alles: SUPPLEMENT_PAGE_URL,
+       BLOODTEST_PAGE_URL, PROMO_BLOCK_ENABLED, BLOODTEST_LINK_ENABLED. Der
+       Bluttest-Schalter bleibt aus bis zur rechtlichen Freigabe; mit ihm
+       entfaellt auch der letzte Satz des Textes. Links mit target="_top", weil
+       der Check im iFrame laeuft. Keine Rabatt- oder Partnercodes, kein
+       Buddy-Text, keine Funnel-Events. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -862,6 +877,18 @@
       .score-number { font-size: 46px; }
       .form-grid { grid-template-columns: 1fr; }
     }
+    /* ── Hinweis-Block auf LeVITA-Angebote (v1.53.9) ──
+       Steht bewusst ausserhalb der Auswertung, am Seitenende. Zurueckhaltend
+       gehalten: keine Farbflaeche, kein Banner, kein Button-Gruen wie bei den
+       Studio-CTAs — der Block informiert, er fordert nicht. */
+    .promo-block { max-width: 720px; margin: 8px auto 0; padding: 0 18px 10px; }
+    .promo-inner { background: var(--brand-card); border: 0.5px solid var(--border); border-radius: 14px; padding: 18px 18px 16px; }
+    .promo-eyebrow { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); margin-bottom: 8px; }
+    .promo-title { font-size: 15.5px; font-weight: 700; color: var(--text-primary); line-height: 1.35; margin-bottom: 9px; }
+    .promo-text { font-size: 13px; color: var(--text-secondary); line-height: 1.65; }
+    .promo-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .promo-btn { flex: 1 1 200px; display: block; padding: 11px 16px; border: 1px solid rgba(34,201,122,0.45); border-radius: 10px; background: rgba(34,201,122,0.08); color: var(--accent-green); font-size: 13.5px; font-weight: 600; text-align: center; text-decoration: none; line-height: 1.35; }
+    @media (max-width: 480px) { .promo-actions { flex-direction: column; } .promo-btn { flex: 1 1 auto; } }
     .app-footer { text-align: center; padding: 12px 0 20px; font-size: 11px; color: var(--text-muted); opacity: 0.5; letter-spacing: 0.03em; user-select: none; }
     .result-tabs { display: flex; gap: 0; background: var(--brand-card); border: 0.5px solid var(--border); border-radius: 14px; padding: 4px; margin: 0 0 16px; }
     .result-tab { flex: 1; padding: 10px 4px; text-align: center; font-size: 11.5px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-radius: 10px; transition: all .2s; border: none; background: none; line-height: 1.3; }
@@ -1259,6 +1286,13 @@
     <div id="result-content"></div>
   </div>
 </div>
+
+<!-- Hinweis-Block auf LeVITA-Angebote (v1.53.9) — Inhalt kommt aus
+     renderPromoBlock(), damit URL und Schalter nur an einer Stelle stehen.
+     Der Block liegt ausserhalb von .container und damit ausserhalb der
+     Auswertung. Waehrend des Fragebogens ist er ausgeblendet, damit er nicht
+     neben den Einwilligungen steht. -->
+<section id="promo-block" class="promo-block" style="display:none;"></section>
 <script>
   const SUPABASE_URL = "https://koctweetotpqaazeicwj.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
@@ -1785,6 +1819,54 @@
   // Affiliate-/Rabatt-Elemente (Verisana) bis zur UWG/HWG-Freigabe deaktiviert.
   // Studio-eigene CTAs (Probetraining etc.) bleiben aktiv — Eigenwerbung, kein Affiliate.
   const AFFILIATE_ENABLED = false;
+
+  // ══ Hinweis-Block auf LeVITA-Angebote (v1.53.9, Uebergabe Joerg 03.10.2026) ══
+  // Grundsatz: Vital-Check und Nahrungsergaenzung sind getrennte Bereiche. Der
+  // Block ist deshalb fuer ALLE Nutzer identisch — keine Ausloesung durch
+  // Antworten, Scores, bloodtest_hint oder top_priorities — und steht nicht in
+  // der Auswertung, sondern am Seitenende. Keine Rabatt- oder Partnercodes,
+  // kein Buddy-Text, keine Personalisierung, keine Funnel-Events.
+  const SUPPLEMENT_PAGE_URL = "/auswahl";
+  const BLOODTEST_PAGE_URL  = "/gesundheit/bluttest";
+  const PROMO_BLOCK_ENABLED = true;
+  // Bleibt aus, bis die Bluttest-Seite rechtlich freigegeben ist — gleiche
+  // Linie wie AFFILIATE_ENABLED. Mit dem Schalter entfaellt auch der letzte
+  // Satz des Textes, der auf den Bluttest verweist.
+  const BLOODTEST_LINK_ENABLED = false;
+
+  function renderPromoBlock() {
+    const host = document.getElementById('promo-block');
+    if (!host) return;
+    if (!PROMO_BLOCK_ENABLED) { host.innerHTML = ''; host.style.display = 'none'; return; }
+    const satz3 = BLOODTEST_LINK_ENABLED
+      ? ' Und wer vorher wissen will, wo er steht, kann einzelne Werte wie Vitamin D, Eisen oder B12 mit einem Bluttest für zuhause prüfen.'
+      : '';
+    // target="_top" — der Check laeuft auf le-vita.com in einem iFrame, die
+    // Seiten sollen im ganzen Fenster oeffnen, nicht im Rahmen.
+    const btn2 = BLOODTEST_LINK_ENABLED
+      ? `<a class="promo-btn" href="${BLOODTEST_PAGE_URL}" target="_top">Zu den Bluttests</a>`
+      : '';
+    host.innerHTML = `
+      <div class="promo-inner">
+        <div class="promo-eyebrow">LeVITA</div>
+        <div class="promo-title">Gut zu wissen: Unser Angebot rund um Versorgung</div>
+        <div class="promo-text">Bewegung, Ernährung und Erholung sind die Basis – daran arbeitest du mit uns im Studio. Wer zusätzlich ergänzen möchte, findet in der LeVITA Auswahl wenige, sorgfältig ausgewählte Produkte unseres Partners BIOGENA.${satz3}</div>
+        <div class="promo-actions">
+          <a class="promo-btn" href="${SUPPLEMENT_PAGE_URL}" target="_top">Zur LeVITA Auswahl</a>
+          ${btn2}
+        </div>
+      </div>`;
+  }
+
+  // Sichtbarkeit: Startseite und Ergebnisseite ja, Fragebogen nein. Der Ort ist
+  // in beiden Faellen derselbe (Seitenende) und haengt an keinem Nutzerprofil.
+  function setPromoBlockVisible(show) {
+    const host = document.getElementById('promo-block');
+    if (!host) return;
+    host.style.display = (show && PROMO_BLOCK_ENABLED) ? 'block' : 'none';
+  }
+
+  try { renderPromoBlock(); setPromoBlockVisible(true); } catch(e) { /* silent */ }
 
   // ── Sofort-Fix 3: landingpage_view — Funnel-Stufe VOR dem Check-Start ──
   // Feuert genau einmal pro Seitenladen (= einmal pro session_id, konsistent zu allen anderen Events).
@@ -2664,6 +2746,7 @@
     document.getElementById('progressWrap')?.classList.remove('hidden');
     document.getElementById('quiz-flow')?.classList.remove('hidden');
     document.getElementById('step-0')?.classList.add('active');
+    setPromoBlockVisible(false);   // v1.53.9: nicht neben Fragen und Einwilligungen
     // Kein Intro-Step mehr: step-0 (Ziel-Frage) ist bereits aktiv durch buildSteps(0)
     currentStep = 0;
     updateProgress();
@@ -2952,6 +3035,7 @@
     document.getElementById("loading").classList.add("hidden");
     const ra = document.getElementById("result-area");
     ra.style.display = "block";
+    setPromoBlockVisible(true);   // v1.53.9: am Seitenende, unterhalb der Auswertung
     const sp = result.score?.score_payload || {};
     const areas = Object.entries(sp)
       .filter(([key]) => key !== "general")
@@ -5390,12 +5474,13 @@
     document.getElementById("progressWrap").classList.remove("hidden");
     document.getElementById("loading").classList.remove("hidden");
     document.getElementById("loading").textContent = "Fragen werden geladen…";
+    setPromoBlockVisible(true);   // v1.53.9: zurueck auf der Startseite
     init();
   }
 
   init();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.53.8</footer>
+<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.53.9</footer>
 
 
 </body>
