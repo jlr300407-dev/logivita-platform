@@ -654,7 +654,18 @@
        DPF zertifiziert. Die Angabe zu Anthropic (Art. 46,
        Standardvertragsklauseln) ist unveraendert geblieben und gehoert vor dem
        Launch anwaltlich gegengeprueft.
-       (4) consent_version in der Edge auf levita-privacy-v3. -->
+       (4) consent_version in der Edge auf levita-privacy-v3.
+
+       v1.55.1 (03.10.2026):
+       Rueckverweis auf LogiVita. Die Fusszeile nennt jetzt "eine Loesung von
+       LogiVita" mit Link, und "powered by LogiVita" im Logo-Bereich ist
+       klickbar. Beide mit target="_blank" und rel="noopener" — nicht "_top":
+       Der Check laeuft im iFrame, ein Klick mitten im Fragebogen darf ihn nicht
+       beenden. Einordnung: Als Rueckverweis im Sinne der Suchmaschinen ist das
+       wenig wert, weil Links in einem iFrame der Elternseite nicht zugerechnet
+       werden und /app/vital-check/ per canonical ohnehin nicht indexiert werden
+       soll. Der wirksame Link gehoert in die Fusszeile von le-vita.com selbst.
+       Hier geht es um Urheberschaft und Vertrauen. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -1334,7 +1345,10 @@
   <div class="logo-area" id="logoArea" style="display:none;">
     <div id="logoDisplay"></div>
     <div class="logo-name">Le<span>VITA</span></div>
-    <div class="logo-sub">powered by <strong>LogiVita</strong></div>
+    <!-- v1.55.1 — Urheberschaft wird klickbar. target="_blank", nicht "_top":
+         Der Check laeuft im iFrame, und wer mitten im Fragebogen klickt, soll
+         ihn nicht verlieren. -->
+    <div class="logo-sub">powered by <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:none;border-bottom:1px solid currentColor;">LogiVita</a></div>
   </div>
   <div class="progress-wrap hidden" id="progressWrap">
     <div class="progress-meta">
@@ -5714,7 +5728,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer">LeVITA Vital-Check &nbsp;·&nbsp; v1.55.0</footer>
+<footer class="app-footer">Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v1.55.1</footer>
 
 
 </body>
