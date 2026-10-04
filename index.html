@@ -672,7 +672,49 @@
        step_view mit 'wellbeing' (dem Schritt-Typ), step_answered mit
        'wellbeing_self'. Die Abbruch-Analyse haette daraus zwei Zeilen gemacht,
        eine mit 100 Prozent Abbruch und eine ohne Aufrufe. Jetzt beide
-       'wellbeing', wie bei 'personal' auch. -->
+       'wellbeing', wie bei 'personal' auch.
+
+       v1.56.0 (Entscheidung Joerg, 04.10.2026):
+       Kontraindikationen werden dort benannt, wo der Hinweis steht — statt eine
+       Frage nach Krankheiten und Medikamenten zu stellen. Begruendung: Eine
+       kurze Krankheitsliste erzeugt falsche Sicherheit (wer seine Erkrankung
+       nicht findet, haekelt nichts an und bekommt den Hinweis danach mit mehr
+       Autoritaet), und eine Medikamentenabfrage ruecke das Produkt Richtung
+       Zweckbestimmung eines Medizinprodukts.
+       Ergaenzt wurden drei Vorbehalte, je ein Halbsatz: Omega-3 bei
+       Gerinnungshemmern, Vitamin D bei Nierensteinen/Sarkoidose/entwaessernden
+       Medikamenten, Eiweiss ab 65 bei Nierenerkrankung.
+       BEWUSST OHNE Vorbehalt bleiben B12 (es gibt keinen) und reine
+       Ernaehrungstipps (eisenreiche Lebensmittel mit Vitamin C, jodiertes
+       Speisesalz) — sonst wird aus Verantwortung eine Textwand. Ebenso kein
+       zusammenfassender Sicherheitssatz am Ende: Der Hinweis, dass die
+       Auswertung keine Beratung ersetzt, steht bereits im Fussbereich.
+
+       v1.56.1 (Entscheidung Joerg, 04.10.2026):
+       Stehender Hinweis zu Vorerkrankungen und Medikamenten vor der Einnahme
+       von Nahrungsergaenzungsmitteln — ein Hinweis, der unabhaengig von diesem
+       Check gilt. Er steht bei den stehenden Hinweisen am Ende von Tab 3 und
+       NICHT im Naehrstoff-Abschnitt; in der Mail an derselben Art von Ort, unter
+       der Score-Tabelle. Beide fest hinterlegt, nicht vom Modell erzeugt. Die
+       Prompt-Regel, die dem Modell einen eigenen Sammelsatz verbietet, bleibt
+       deshalb bestehen und stimmt jetzt woertlich: Der Satz steht im
+       Fussbereich.
+
+       v1.56.2 (kritische Durchsicht, 04.10.2026):
+       Von vier Vorbehalten bleiben zwei. Der stehende Hinweis im Fussbereich
+       deckt "Vorerkrankung oder Medikamente → vorher aerztlich besprechen" fuer
+       jedes Praeparat ab; was er abdeckt, muss nicht zusaetzlich am Einzelthema
+       stehen.
+       BLEIBT: Omega-3 bei Gerinnungshemmern — hohe Tragweite, grosse Gruppe,
+       und der Zusammenhang ist nicht naheliegend (wer Marcumar nimmt, denkt bei
+       Fischoel nicht daran). Eiweiss bei Nierenerkrankung — der einzige Fall,
+       der von Lebensmitteln handelt und damit vom Fussbereich-Satz gar nicht
+       erfasst wird, waehrend wir ab 65 ausdruecklich MEHR empfehlen.
+       ENTFAELLT: Vitamin D (der Text verweist ohnehin ins aerztliche Gespraech,
+       die Krankheitsliste war Dekoration, "Sarkoidose" dazu Fachvokabular) und
+       Kreatin (vom Fussbereich gedeckt, kleine Gruppe). Beim Kreatin bleibt der
+       Satz zum Kreatinin-Wert — der ist keine Warnung, sondern verhindert einen
+       Fehlalarm bei der naechsten Blutuntersuchung. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -4161,7 +4203,10 @@
 
 
     html += `${_mailLinkHtml}`;
-    html += `<div class="disclaimer"><strong>Wichtiger Hinweis:</strong> Diese Auswertung ist keine Diagnose und ersetzt keine medizinische Beratung. Sie dient der Orientierung und Hilfe zur Selbsthilfe. Die Schwerpunkte basieren auf Empfehlungen von WHO, DGE und dem Bundesinstitut für Risikobewertung.</div>`;
+    // v1.56.1 — Stehender Hinweis zu Vorerkrankungen und Medikamenten. Er steht
+    // hier und NUR hier: bei den stehenden Hinweisen, nicht im Naehrstoff-Teil.
+    // Dort gilt weiter ein Halbsatz je Thema, damit der Abschnitt lesbar bleibt.
+    html += `<div class="disclaimer"><strong>Wichtiger Hinweis:</strong> Diese Auswertung ist keine Diagnose und ersetzt keine medizinische Beratung. Sie dient der Orientierung und Hilfe zur Selbsthilfe. Die Schwerpunkte basieren auf Empfehlungen von WHO, DGE und dem Bundesinstitut für Risikobewertung.<br><br>Wenn du dauerhaft Medikamente einnimmst oder eine Vorerkrankung hast, sprich vor der Einnahme von Nahrungsergänzungsmitteln mit deiner Ärztin oder deinem Arzt. Das gilt unabhängig von diesem Check.</div>`;
     // v1.55.0 — Widerruf der Trainer-Einwilligung. Steht nur da, wenn es etwas
     // zu widerrufen gibt; der Zustand kommt beim Wiederaufruf aus der Edge.
     const _taNow = (result.submission && result.submission.trainer_access === true) || window._trainerAccess === true;
@@ -4716,13 +4761,18 @@
       if (key.includes("jod") || key.includes("iod")) { hints.push(`<strong>Jod</strong> — bei vegetarischer Ernährung ohne Fisch oft unterschätzt. Jodiertes Speisesalz konsequent verwenden ist die einfachste Lösung.`); }
       else if (key.includes("b12") && isVeganFinal) { hints.push(`<strong>Vitamin B12</strong> — bei veganer Ernährung empfiehlt die DGE eine zuverlässige Ergänzung, da pflanzliche Lebensmittel kein verwertbares B12 liefern.`); }
       else if (key.includes("b12") && isVegetarianFinal) { hints.push(`<strong>Vitamin B12</strong> — bei vegetarischer Ernährung meist über Milchprodukte gedeckt. Bei Müdigkeit oder Konzentrationsproblemen lohnt eine Kontrolle.`); }
-      else if (key.includes("omega")) { if (noFishFinal || isPlantBasedFinal) { hints.push(`<strong>Omega-3</strong> — kein Fisch in der Ernährung. Gute pflanzliche Quellen: Leinöl, Walnüsse, Chiasamen. ${isVeganFinal ? "Algenöl liefert direkt EPA und DHA." : "Bei Bedarf Algenöl als Alternative."}`); } }
+      else if (key.includes("omega")) { if (noFishFinal || isPlantBasedFinal) { hints.push(`<strong>Omega-3</strong> — kein Fisch in der Ernährung. Gute pflanzliche Quellen: Leinöl, Walnüsse, Chiasamen. ${isVeganFinal ? "Algenöl liefert direkt EPA und DHA." : "Bei Bedarf Algenöl als Alternative."} Wer gerinnungshemmende Medikamente einnimmt, bespricht ein Präparat vorher ärztlich.`); } }
       else if (key.includes("eisen") || key.includes("iron")) { hints.push(`<strong>Eisen</strong> — pflanzliches Eisen wird schlechter aufgenommen. Tipp: Eisenreiche Lebensmittel immer mit Vitamin C kombinieren.`); }
       else if (key.includes("vitamin_d") || key.includes("vitamin d")) { hints.push(`<strong>Vitamin D</strong> — bei wenig Tageslicht besonders relevant. ${isVeganFinal ? "Auf pflanzliches D3 aus Flechten achten." : "Eine fachlich begleitete Laborkontrolle zeigt den tatsächlichen Wert."}`); }
       else if (key.includes("protein")) {
         if (isVeganFinal) { hints.push(`<strong>Protein</strong> — pflanzliches Protein ist vollwertig wenn die Quellen kombiniert werden: Hülsenfrüchte, Nüsse, Tofu und Vollkornprodukte.`); }
         else if (isVegetarianFinal) { hints.push(`<strong>Protein</strong> — eine Eiweißquelle zu jeder Mahlzeit einplanen: Eier, Quark, Hüttenkäse, Hülsenfrüchte.`); }
         else { hints.push(`<strong>Protein</strong> — eine Eiweißquelle zu jeder Mahlzeit bewusst einplanen: Eier, Quark, Fisch, mageres Fleisch oder Hülsenfrüchte unterstützen Sättigung und Regeneration.`); }
+        // Nur hier, nicht bei jeder Variante: Wer eine Nierenerkrankung hat,
+        // bekommt aus der Praxis eine eigene Eiweissvorgabe. Ein Halbsatz.
+        if (Number(personalData.age || result.submission?.age || 0) >= 65) {
+          hints.push(`<span style="color:var(--text-muted);">Bei einer Nierenerkrankung gilt die Eiweißmenge, die deine Praxis vorgibt.</span>`);
+        }
       }
       else if (key.includes("nutrition_first") || key.includes("ernaehrung")) { hints.push(`<strong>Ernährung zuerst</strong> — viele Nährstoffdefizite lassen sich über gezielte Ernährungsoptimierung lösen — Supplements erst wenn wirklich nötig.`); }
       else if (item.label) { const _r = (item.reason || "").trim(); hints.push(`<strong>${item.label}</strong>${_r ? ` — ${_r}` : ""}${/[.!?]$/.test(_r || item.label) ? "" : "."}`); }
@@ -5739,7 +5789,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer">Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v1.55.2</footer>
+<footer class="app-footer">Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v1.56.2</footer>
 
 
 </body>
