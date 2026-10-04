@@ -714,7 +714,31 @@
        die Krankheitsliste war Dekoration, "Sarkoidose" dazu Fachvokabular) und
        Kreatin (vom Fussbereich gedeckt, kleine Gruppe). Beim Kreatin bleibt der
        Satz zum Kreatinin-Wert — der ist keine Warnung, sondern verhindert einen
-       Fehlalarm bei der naechsten Blutuntersuchung. -->
+       Fehlalarm bei der naechsten Blutuntersuchung.
+
+       v1.56.3 (Testlauf LEV-2026-000334, 04.10.2026):
+       (1) NIKOTIN. Die Bereichs-Info zeigte "Aufhoeren lohnt sich in jedem
+       Alter" auch dort, wo jemand "frueher, heute nicht mehr" geantwortet hat —
+       die Risikopunkte unterscheiden das nicht, der Antworttext schon. Die
+       Alters-Funktionen bekommen deshalb einen vierten Parameter mit den
+       Antworttexten. Ex-Raucher bekommen jetzt eine Bestaetigung statt einer
+       Aufforderung.
+       (2) GRUPPENGRENZE. Die Abschnitte schnitten bei 75, die Abzeichen der
+       SCORE_SCALE bei 70 — ein Bereich mit 73 stand unter "Mit
+       Optimierungspotenzial" und trug zugleich "Gute Basis mit Potenzial".
+       Jetzt ueberall 70.
+       (3) DOPPELTER SATZ bei Mentale Balance: "Erholungsanker" unter Sofort und
+       "Pausenanker" mittelfristig waren bis auf ein Wort derselbe Satz.
+       (4) BMI. Der Satz zum niedrigsten Wert stand auf jeder BMI-Karte, auch
+       bei Bestwert 100. Er erscheint jetzt nur noch, wenn der BMI-Bereich
+       tatsaechlich schwach ist; die GLIM-Quelle haengt am Text ab 70 statt an
+       jeder Karte.
+       (5) Der Stress-Hinweis behauptete "auch wenn andere Werte hier gut
+       aussehen" — auch wenn keiner gut aussah.
+       (6) Der Mikronaehrstoff-Tipp unter "Sofort umsetzen" war keine Handlung,
+       sondern eine Beobachtung, und sagte "Bluttest", wo die Mail von einer
+       fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
+       den man heute tun kann. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -3831,10 +3855,14 @@
     // zählte alle unter 75. Beide Zahlen stimmten, standen aber unverbunden
     // nebeneinander: "2 Fokusbereiche →" führte auf eine Liste mit fünf.
     // Jetzt zwei Überschriften statt einer, damit die Kachel bestätigt wird.
+    // v1.56.3 — Die Gruppen schnitten bei 75, die Abzeichen der SCORE_SCALE bei
+    // 70. Ein Bereich mit 73 stand damit unter "Mit Optimierungspotenzial" und
+    // trug zugleich das Abzeichen "Gute Basis mit Potenzial". Jetzt dieselbe
+    // Grenze wie die Skala.
     const fokusAreas = sortedAreas.filter(a => a.score < 55);
-    const optimierAreas = sortedAreas.filter(a => a.score >= 55 && a.score < 75);
-    const wachstumAreas = sortedAreas.filter(a => a.score < 75);
-    const staerkenAreas = sortedAreas.filter(a => a.score >= 75);
+    const optimierAreas = sortedAreas.filter(a => a.score >= 55 && a.score < 70);
+    const wachstumAreas = sortedAreas.filter(a => a.score < 70);
+    const staerkenAreas = sortedAreas.filter(a => a.score >= 70);
 
     if (fokusAreas.length > 0) {
       html += `<div class="bereiche-header">
@@ -4349,7 +4377,7 @@
     { q: "sleep_latency", area: "sleep", title: "Lange Einschlafzeit",
       text: "Mehr als eine Stunde zum Einschlafen ist ein relevantes Signal. Häufig stecken Stress, Bildschirmzeit oder ein unregelmäßiger Rhythmus dahinter." },
     { q: "stress_level", area: "mental", title: "Hoher Stresslevel",
-      text: "Du gibst einen hohen Stresslevel an. Dauerhafter Stress wirkt sich auf Schlaf, Energie und Regeneration aus — auch wenn andere Werte hier gut aussehen." },
+      text: "Du gibst einen hohen Stresslevel an. Dauerhafter Stress wirkt sich auf Schlaf, Energie und Regeneration aus." },
     { q: "nicotine_use", area: "lifestyle", title: "Nikotin",
       text: "Regelmäßiger Nikotinkonsum ist einer der stärksten beeinflussbaren Faktoren. Jede Reduktion zählt — auch kleine Schritte wirken." }
   ];
@@ -4432,11 +4460,19 @@
     },
     bmi: {
       what: "Das Verhältnis von Gewicht zu Größe — eine grobe Orientierung, die Muskeln und Fett nicht unterscheidet.",
-      why: "Aussagekräftiger ist die Körperzusammensetzung: Eine Tanita-Messung im LeVITA Studio zeigt Muskelmasse, Körperfett und Wasserhaushalt. Der stabile Orientierungsbereich liegt bei einem BMI von 18,5 bis 25. Steht der BMI bei dir unter den niedrigsten Werten, bleibt er trotzdem nicht dein Ansatzpunkt — er ist ein Ergebnis, keine Handlung. Bewegt wird er über Bewegung und Ernährung, und dort liegt auch dein Hebel.",
-      age: (a) => a >= 70
-        ? "Ab 70 gilt in der Ernährungsmedizin ein BMI unter 22 als Anlass, genauer hinzuschauen (GLIM). In diesem Alter zählen Muskelkraft und Beweglichkeit mehr als eine niedrige Zahl auf der Waage."
-        : "",
-      src: ["glim"]
+      // v1.56.3 — Der Satz "Steht der BMI bei dir unter den niedrigsten Werten"
+      // stand hier unbedingt und war bei einem BMI-Bestwert blosses Rauschen.
+      // Er wandert in die Altersfunktion, die den tatsaechlichen Bereichswert kennt.
+      why: "Aussagekräftiger ist die Körperzusammensetzung: Eine Tanita-Messung im LeVITA Studio zeigt Muskelmasse, Körperfett und Wasserhaushalt. Der stabile Orientierungsbereich liegt bei einem BMI von 18,5 bis 25.",
+      age: (a, w, r, t, areaScore) => {
+        const parts = [];
+        if (Number(areaScore) <= 55) parts.push("Auch wenn der BMI rechnerisch dein niedrigster Wert ist, bleibt er nicht dein Ansatzpunkt — er ist ein Ergebnis, keine Handlung. Bewegt wird er über Bewegung und Ernährung, und dort liegt auch dein Hebel.");
+        if (a >= 70) parts.push("Ab 70 gilt in der Ernährungsmedizin ein BMI unter 22 als Anlass, genauer hinzuschauen (GLIM). In diesem Alter zählen Muskelkraft und Beweglichkeit mehr als eine niedrige Zahl auf der Waage.");
+        return parts.join(" ");
+      },
+      // Die GLIM-Quelle gehoert zum Satz ab 70, nicht zu jedem BMI-Kaertchen.
+      srcFn: (a) => a >= 70 ? ["glim"] : [],
+      src: []
     },
     mental: {
       what: "Wie gestresst du dich fühlst, wie deine Stimmung ist und wie gut du sozial eingebunden bist.",
@@ -4447,9 +4483,16 @@
     lifestyle: {
       what: "Wie oft und wie viel du Alkohol trinkst und ob du Nikotin nutzt.",
       why: "Die DGE sieht keine gesundheitlich unbedenkliche Alkoholmenge und empfiehlt, möglichst darauf zu verzichten. Für Erwachsene, die trinken, gelten 1–2 Getränke pro Woche als risikoarm.",
-      age: (a, w, r) => (Number(r.nicotine_use || 0) > 0)
-        ? "Aufhören lohnt sich in jedem Alter: Laut WHO gewinnt, wer mit 50 mit dem Rauchen aufhört, rund 6 Jahre Lebenserwartung, wer mit 60 aufhört, rund 3 Jahre."
-        : "",
+      // v1.56.3 — Wer aufgehoert hat, bekam bisher denselben Text wie jemand,
+      // der noch raucht ("Aufhoeren lohnt sich"). Die Risikopunkte unterscheiden
+      // das nicht, der Antworttext schon. Drei Faelle:
+      age: (a, w, r, t) => {
+        const n = String((t && t.nicotine_use) || "");
+        const exRaucher = /früher|frueher|aufgehört|aufgehoert|nicht mehr|ehemal/.test(n);
+        if (exRaucher) return "Dass du aufgehört hast, wirkt weiter: Laut WHO gewinnt, wer mit 50 aufhört, rund 6 Jahre Lebenserwartung, wer mit 60 aufhört, rund 3 Jahre. Der Nutzen wächst mit jedem rauchfreien Jahr.";
+        if (Number((r && r.nicotine_use) || 0) > 0) return "Aufhören lohnt sich in jedem Alter: Laut WHO gewinnt, wer mit 50 mit dem Rauchen aufhört, rund 6 Jahre Lebenserwartung, wer mit 60 aufhört, rund 3 Jahre.";
+        return "";
+      },
       src: ["dge_alk", "who_tob"]
     },
     micronutrients: {
@@ -4482,10 +4525,22 @@
     const snip = (window._snips && window._snips.area_info && window._snips.area_info[areaKey]) || {};
     const age = Number(personalData.age || result?.submission?.age || 0);
     const w = Number(personalData.weight_kg || result?.submission?.weight_kg || 0);
-    const risks = {};
-    (result?.answers || []).forEach(a => { risks[a.question_key] = Number(a.risk_points || 0); });
-    const ageTxt = age ? (info.age(age, w, risks) || "") : "";
-    const src = (info.src || []).map(k => SRC[k]).filter(Boolean)
+    const risks = {}, texts = {};
+    (result?.answers || []).forEach(a => {
+      risks[a.question_key] = Number(a.risk_points || 0);
+      texts[a.question_key] = String(a.answer_text || "").toLowerCase();
+    });
+    // v1.56.3 — vierter Parameter: der Antworttext. Risikopunkte allein konnten
+    // "rauche gelegentlich" nicht von "frueher, heute nicht mehr" trennen.
+    // Der eigene Bereichswert — nur der BMI-Text braucht ihn bisher.
+    const areaScore = (() => {
+      const sp = result?.score?.score_payload || {};
+      const v = sp[areaKey] && sp[areaKey].score;
+      return v === undefined || v === null ? null : Number(v);
+    })();
+    const ageTxt = age ? (info.age(age, w, risks, texts, areaScore) || "") : "";
+    const srcKeys = typeof info.srcFn === "function" ? info.srcFn(age) : (info.src || []);
+    const src = srcKeys.map(k => SRC[k]).filter(Boolean)
       .map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener" onclick="event.stopPropagation();">${t}</a>`).join(" · ");
     return `<div class="area-info">
         <div class="insight-label">🧭 Was dieser Bereich zeigt</div>
@@ -4650,7 +4705,7 @@
     if (key === "micronutrients") {
       const dizzy = getRisk("dizziness_pale_nails"); const nutType = getText("nutrition_type") || getText("diet_type"); const gender = latestResult?.submission?.gender || "";
       const isPlant = nutType.includes("vegan") || nutType.includes("vegetar"); const isFemale = gender === "female" || gender === "weiblich";
-      if (l === "low") { if (dizzy >= 2 && isPlant && isFemale) return "Eisenreiche Lebensmittel mit Vitamin C kombinieren — Hülsenfrüchte + Paprika oder Orangensaft."; if (dizzy >= 2) return window._redFlagNoBloodtest ? "Schwindel oder blasse Nägel sind Signale, die zusammen mit deinen Angaben zu Gewicht und Appetit in ärztliche Hände gehören — bitte hausärztlich abklären lassen." : "Schwindel oder blasse Nägel sind mögliche Signale — ein Bluttest kann dir hier mehr Klarheit geben."; return "Ernährung nicht pauschal supplementieren — zuerst Muster und Qualität der Mahlzeiten prüfen."; }
+      if (l === "low") { if (dizzy >= 2 && isPlant && isFemale) return "Eisenreiche Lebensmittel mit Vitamin C kombinieren — Hülsenfrüchte + Paprika oder Orangensaft."; if (dizzy >= 2) return window._redFlagNoBloodtest ? "Schwindel oder blasse Nägel sind Signale, die zusammen mit deinen Angaben zu Gewicht und Appetit in ärztliche Hände gehören — bitte hausärztlich abklären lassen." : "Eisenreiche Lebensmittel mit Vitamin C kombinieren — Hülsenfrüchte oder Vollkorn zusammen mit Paprika, Brokkoli oder einem Glas Orangensaft."; return "Ernährung nicht pauschal supplementieren — zuerst Muster und Qualität der Mahlzeiten prüfen."; }
       if (l === "medium") { if (dizzy >= 2 && isPlant) return "Eisenreiche Lebensmittel immer mit Vitamin C kombinieren."; return "Eiweiß, Eisenquellen, Omega-3 und B12 im Alltag bewusster einbauen."; }
       return "Abwechslungsreiche Ernährung bleibt die beste Basis — Supplemente nur gezielt.";
     }
@@ -4705,7 +4760,8 @@
     if (key === "mental") {
       const stress = getRisk("stress_level"); const mood = getRisk("low_mood"); const social = getRisk("social_connection");
       if (l === "low") { if (stress >= 3) return "Stressquellen identifizieren — was lässt sich langfristig reduzieren oder delegieren?"; if (mood >= 2) return "Professionelle Unterstützung kann helfen wenn Niedergeschlagenheit anhält."; return "Nur eine Routine wählen und 7 Tage konsequent durchhalten."; }
-      if (l === "medium") { if (social >= 2) return "Regelmäßige soziale Kontakte einplanen — einmal pro Woche reicht als Anker."; return "Einen festen Pausenanker pro Tag setzen — zur gleichen Zeit, ohne Ausnahme."; }
+      // v1.56.3 — stand bis auf ein Wort identisch unter "Sofort umsetzen"
+      if (l === "medium") { if (social >= 2) return "Regelmäßige soziale Kontakte einplanen — einmal pro Woche reicht als Anker."; return "Eine Sache in der Woche bewusst streichen, die dich Kraft kostet und nicht sein muss."; }
       return "Bewegung und Schlaf als aktive Schutzfaktoren für mentale Balance nutzen.";
     }
     if (key === "lifestyle") {
@@ -5789,7 +5845,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer">Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v1.56.2</footer>
+<footer class="app-footer">Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v1.56.3</footer>
 
 
 </body>
