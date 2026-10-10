@@ -740,6 +740,37 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.3.0 (10.10.2026, Jörg: Vitalitäts-Alter als Baustein): Beispiel auf der
+       Startseite mit Vitalitäts-Alter (Sandra 46, Index 71 → 46; Simulator +5 →
+       76 → 45, gerechnet mit der DB-Formel Alter + (70 − Score)/70 × 10).
+       Verlaufskarte: "X Jahre jünger als bei deinem letzten Check" groß oben,
+       nur bei mindestens 4 Wochen Abstand. Gehört zu edge-2026-10-10.2.
+
+       v2.2.1 (10.10.2026, Jörg): Beispiel-Spinne auf der Startseite zeigt wieder
+       das Potenzial — gestrichelte blaue Kontur wie im Ergebnis (Bewegung 58 → 84,
+       Energie 66 → 72; passt zu "+5 Punkte" im Simulator-Satz), Legende darunter.
+
+       v2.2.0 (10.10.2026, Jörg: "das Vitalitätsalter dürfen wir nicht ganz
+       untergehen lassen — wer fühlt sich nicht gern jünger"): Im Stufenmodell
+       steht das Vitalitäts-Alter gross neben dem Score (stageAgeColumnHtml),
+       mit einer positiven, belegten Zeile; Szenario-Jahre kommen aus der Edge.
+
+       v2.1.0 (10.10.2026, Entscheidung Jörg: "verstecken sollten wir so etwas
+       nicht"): Weiterempfehlung an vier Stellen statt nur nach dem Ziel-Speichern —
+       Stufe 1 am Seitenende, Stufe 2 am Ende von "Mein Plan", nach dem Ziel im
+       Simulator (ersetzt dann den Plan-Kasten, nie doppelt) und in der
+       Bestätigung der Studio-Anfrage ("Bring jemanden mit"). Link trägt
+       utm_content=<Stelle>; Events referral_prompt_view/referral_shared mit place.
+
+       v2.0.2 (10.10.2026, Entscheidung Jörg): In Stufe 2 entfällt der Satz
+       "Eine ausführlichere Einordnung erhältst du ... per E-Mail" unter den
+       Unterstützungs-Hinweisen; wer in Stufe 2 ist, hat die Mail schon.
+
+       v2.0.1 (10.10.2026, Entscheidung Jörg): "auch ohne Mail" in Stufe 3 entfernt
+       (Schritt-Untertitel und Angebotsauswahl). Das Formular fragt ohnehin nur
+       Vorname und Telefon; der Hinweis schwächte Stufe 2 und passte nach dem
+       Mailversand nicht mehr.
+
        v2.0.0 (Stufenmodell, Konzept und Entscheidungen Jörg 10.10.2026):
        Die Ergebnisseite zeigt nicht mehr alles auf einmal, sondern in Stufen.
        STUFE 1 (ohne Kontaktdaten): Score, Vitalitäts-Alter, drei Sätze
@@ -1470,16 +1501,16 @@
       <div class="lp-ex-body">
         <div>
           <div class="lp-ex-head">
-            <div class="lp-ex-who"><strong>Sandra, 46</strong><br>Ziel: mehr Energie</div>
+            <div class="lp-ex-who"><strong>Sandra, 46</strong><br>Ziel: mehr Energie<br><span style="font-size:12.5px;">Vitalitäts-Alter <strong style="color:var(--text-primary);">46</strong> · im Takt ihres Kalenders</span></div>
             <div class="lp-ex-score"><div class="lp-ex-num">71</div><div class="lp-ex-lbl">Vitalitäts-Index</div></div>
           </div>
-          <svg viewBox="-34 0 368 256" width="100%" style="max-width:360px;display:block;margin:0 auto;" role="img" aria-label="Beispiel einer Vitalitäts-Spinne mit neun Bereichen"><polygon points="150.0,106.5 163.8,111.5 171.2,124.3 168.6,138.8 157.4,148.2 142.6,148.2 131.4,138.8 128.8,124.3 136.2,111.5" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,85.0 177.6,95.1 192.3,120.5 187.2,149.5 164.7,168.4 135.3,168.4 112.8,149.5 107.7,120.5 122.4,95.1" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,63.5 191.5,78.6 213.5,116.8 205.9,160.2 172.1,188.6 127.9,188.6 94.1,160.3 86.5,116.8 108.5,78.6" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,42.0 205.3,62.1 234.7,113.1 224.5,171.0 179.4,208.8 120.6,208.8 75.5,171.0 65.3,113.1 94.7,62.1" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><line x1="150" y1="128" x2="150.0" y2="42.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="205.3" y2="62.1" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="234.7" y2="113.1" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="224.5" y2="171.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="179.4" y2="208.8" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="120.6" y2="208.8" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="75.5" y2="171.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="65.3" y2="113.1" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="94.7" y2="62.1" stroke="rgba(255,255,255,0.08)"/><polygon points="150.0,60.9 182.1,89.8 211.0,117.2 197.7,155.5 173.5,192.7 127.6,189.4 84.5,165.8 90.7,117.5 113.5,84.5" fill="rgba(34,201,122,0.22)" stroke="#22c97a" stroke-width="2" stroke-linejoin="round"/><circle cx="150.0" cy="60.9" r="2.6" fill="#22c97a"/><text x="150.0" y="26.0" text-anchor="middle" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Schlaf</text><circle cx="182.1" cy="89.8" r="4" fill="#f5a623"/><text x="218.1" y="50.8" text-anchor="start" font-size="10.5" fill="#f5a623" font-family="DM Sans, sans-serif" font-weight="700">Bewegung</text><circle cx="211.0" cy="117.2" r="2.6" fill="#22c97a"/><text x="254.4" y="113.6" text-anchor="start" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Ernährung</text><circle cx="197.7" cy="155.5" r="2.6" fill="#22c97a"/><text x="241.8" y="185.0" text-anchor="start" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Tageslicht</text><circle cx="173.5" cy="192.7" r="2.6" fill="#22c97a"/><text x="186.3" y="231.6" text-anchor="start" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">BMI</text><circle cx="127.6" cy="189.4" r="2.6" fill="#22c97a"/><text x="113.7" y="231.6" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Balance</text><circle cx="84.5" cy="165.8" r="2.6" fill="#22c97a"/><text x="58.2" y="185.0" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Lifestyle</text><circle cx="90.7" cy="117.5" r="2.6" fill="#22c97a"/><text x="45.6" y="113.6" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Nährstoffe</text><circle cx="113.5" cy="84.5" r="2.6" fill="#22c97a"/><text x="81.9" y="50.8" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Energie</text></svg>
+          <svg viewBox="-34 0 368 266" width="100%" style="max-width:360px;display:block;margin:0 auto;" role="img" aria-label="Beispiel einer Vitalitäts-Spinne mit neun Bereichen, heute und mit Potenzial"><polygon points="150.0,106.5 163.8,111.5 171.2,124.3 168.6,138.8 157.4,148.2 142.6,148.2 131.4,138.8 128.8,124.3 136.2,111.5" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,85.0 177.6,95.1 192.3,120.5 187.2,149.5 164.7,168.4 135.3,168.4 112.8,149.5 107.7,120.5 122.4,95.1" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,63.5 191.5,78.6 213.5,116.8 205.9,160.2 172.1,188.6 127.9,188.6 94.1,160.3 86.5,116.8 108.5,78.6" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,42.0 205.3,62.1 234.7,113.1 224.5,171.0 179.4,208.8 120.6,208.8 75.5,171.0 65.3,113.1 94.7,62.1" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><line x1="150" y1="128" x2="150.0" y2="42.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="205.3" y2="62.1" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="234.7" y2="113.1" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="224.5" y2="171.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="179.4" y2="208.8" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="120.6" y2="208.8" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="75.5" y2="171.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="65.3" y2="113.1" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="94.7" y2="62.1" stroke="rgba(255,255,255,0.08)"/><polygon points="150.0,60.9 182.1,89.8 211.0,117.2 197.7,155.5 173.5,192.7 127.6,189.4 84.5,165.8 90.7,117.5 113.5,84.5" fill="rgba(34,201,122,0.22)" stroke="#22c97a" stroke-width="2" stroke-linejoin="round"/><polygon points="150.0,60.9 196.4,72.7 211.0,117.2 197.7,155.5 173.5,192.7 127.6,189.4 84.5,165.8 90.7,117.5 110.2,80.6" fill="none" stroke="#3b9eff" stroke-width="2" stroke-dasharray="6 4" stroke-linejoin="round"/><circle cx="196.4" cy="72.7" r="3" fill="#3b9eff"/><circle cx="110.2" cy="80.6" r="3" fill="#3b9eff"/><circle cx="150.0" cy="60.9" r="2.6" fill="#22c97a"/><text x="150.0" y="26.0" text-anchor="middle" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Schlaf</text><circle cx="182.1" cy="89.8" r="4" fill="#f5a623"/><text x="218.1" y="50.8" text-anchor="start" font-size="10.5" fill="#f5a623" font-family="DM Sans, sans-serif" font-weight="700">Bewegung</text><circle cx="211.0" cy="117.2" r="2.6" fill="#22c97a"/><text x="254.4" y="113.6" text-anchor="start" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Ernährung</text><circle cx="197.7" cy="155.5" r="2.6" fill="#22c97a"/><text x="241.8" y="185.0" text-anchor="start" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Tageslicht</text><circle cx="173.5" cy="192.7" r="2.6" fill="#22c97a"/><text x="186.3" y="231.6" text-anchor="start" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">BMI</text><circle cx="127.6" cy="189.4" r="2.6" fill="#22c97a"/><text x="113.7" y="231.6" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Balance</text><circle cx="84.5" cy="165.8" r="2.6" fill="#22c97a"/><text x="58.2" y="185.0" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Lifestyle</text><circle cx="90.7" cy="117.5" r="2.6" fill="#22c97a"/><text x="45.6" y="113.6" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Nährstoffe</text><circle cx="113.5" cy="84.5" r="2.6" fill="#22c97a"/><text x="81.9" y="50.8" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Energie</text><g font-family="DM Sans, sans-serif" font-size="10.5"><line x1="62" y1="252" x2="80" y2="252" stroke="#22c97a" stroke-width="2.5"/><text x="85" y="255.5" fill="#8da0b8">heute</text><line x1="132" y1="252" x2="150" y2="252" stroke="#3b9eff" stroke-width="2" stroke-dasharray="6 4"/><text x="155" y="255.5" fill="#8da0b8">Potenzial mit dem Simulator</text></g></svg>
         </div>
         <div>
           <div class="lp-ex-facts">
             <div class="lp-ex-fact"><b>Stärken:</b> Schlaf und ein ausgewogener Lebensstil — ihre Basis.</div>
             <div class="lp-ex-fact hebel"><b>Größter Hebel:</b> Bewegung — hier bringt der erste Schritt am meisten.</div>
-            <div class="lp-ex-fact sim"><b>Simulator:</b> Ein zweiter Bewegungstermin pro Woche bringt ihr rund +5 Punkte.</div>
+            <div class="lp-ex-fact sim"><b>Simulator:</b> Ein zweiter Bewegungstermin pro Woche bringt ihr rund +5 Punkte – und macht sie rund 1 Jahr jünger.</div>
           </div>
           <div class="lp-ex-mail">„Dein Schlaf ist eine echte Stärke, darauf kannst du aufbauen. Für mehr Energie liegt dein größter Hebel in der Bewegung: Starte mit einem zweiten festen Termin pro Woche — 30 Minuten zügig gehen, mit Uhr oder Handy rund 3.000 Schritte.“<span>Auszug aus einem Vital-Plan</span></div>
         </div>
@@ -3446,6 +3477,7 @@
     setTimeout(() => { updateSimulatorUI(); syncRadarToggleButtons(); }, 120); // V2: Startzustand Simulator + Radar-Schalter
     setTimeout(() => { document.querySelectorAll(".area-bar-fill[data-w]").forEach(el => { el.style.width = el.getAttribute("data-w") + "%"; }); }, 300);
     setTimeout(initStageTracking, 400);
+    setTimeout(initReferralTracking, 450);
     if (!opts.rerender) ra.scrollIntoView({ behavior:"smooth" });
   }
 
@@ -3879,7 +3911,7 @@
           </div>
         </div>
         <div style="flex:1;min-width:0;">
-          ${bioAge ? `
+          ${bioAge && RESULT_STAGES_ENABLED ? stageAgeColumnHtml(bioAge, personalData.age) : bioAge ? `
             <div style="font-size:13px;color:var(--text-secondary);margin-bottom:2px;">
               Vitalitäts-Alter: <strong style="color:${bioColor};">${bioAge} J.</strong>
               ${personalData.age ? ` <span style="color:var(--text-muted);">· ${personalData.age} J. kalendarisch</span>` : ""}
@@ -4479,6 +4511,49 @@
 
   // Das stärkste vorberechnete Szenario (Kombination oder Einzelhebel).
   // Bevorzugt eines mit Bereichswerten, damit die Spinne es zeichnen kann.
+  // v2.2.0 — Vitalitäts-Alter als zweiter Held neben dem Score ("wer fühlt sich
+  // nicht gern jünger"). Gross, positiv gerahmt, ehrlich:
+  //  - jünger als der Kalender  → das wird gefeiert
+  //  - gleich                   → "im Takt"
+  //  - älter                    → kein "älter"-Satz; stattdessen das, was die
+  //    Szenarien belegen ("rund N Jahre jünger möglich"), sonst Startwert für
+  //    den Re-Check. Zahlen nur aus den serverseitigen Szenarien, nie geschätzt.
+  // Der Hinweis "Orientierungswert, kein Biomarker" bleibt direkt darunter.
+  function stageAgeColumnHtml(bioAge, age) {
+    const b = Number(bioAge), a = Number(age) || 0;
+    const yrs = n => `${n} ${n === 1 ? "Jahr" : "Jahre"}`;
+    let line = "", color = "var(--accent-green)";
+    if (a && b < a) {
+      line = `Rund ${yrs(a - b)} jünger als dein Kalender – darauf kannst du bauen.`;
+    } else if (a && b === a) {
+      line = "Genau im Takt deines Kalenders.";
+    } else {
+      const best = stageBestScenario();
+      // gleiche Rechnung wie die Potenzial-Box (stagePotentialHtml), damit beide dieselbe Zahl nennen
+      const baseBio = simScenarios && simScenarios.base && Number(simScenarios.base.bio_age);
+      const gain = (best && isFinite(baseBio) && isFinite(Number(best.new_bio_age)) && best.new_bio_age !== null)
+        ? Math.round(baseBio - Number(best.new_bio_age)) : 0;
+      const n = best ? ((best.question_keys && best.question_keys.length) || 1) : 0;
+      if (gain >= 1) {
+        const how = n === 1 ? "einer gezielten Veränderung" : (n === 2 ? "zwei" : n === 3 ? "drei" : String(n)) + " gezielten Veränderungen";
+        line = `Mit ${how} rund ${yrs(gain)} jünger – ${window._stage === 2 ? "wie, steht in deinem Plan" : "das zeigen wir dir in deinem Vital-Plan"}.`;
+        color = "var(--accent-blue)";
+      } else {
+        line = "Dein Startwert – beim Re-Check siehst du, wie er sich bewegt.";
+        color = "var(--text-secondary)";
+      }
+    }
+    return `
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Dein Vitalitäts-Alter</div>
+            <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:2px 0 4px;">
+              <span style="font-family:'DM Serif Display',serif;font-size:34px;line-height:1;color:var(--text-primary);">${b}</span>
+              <span style="font-size:13px;color:var(--text-secondary);">Jahre</span>
+              ${a ? `<span style="font-size:12px;color:var(--text-muted);">· kalendarisch ${a}</span>` : ""}
+            </div>
+            <div class="stage-age-line" style="font-size:13px;font-weight:600;color:${color};line-height:1.45;margin-bottom:6px;">${line}</div>
+            <div style="font-size:11px;color:var(--text-muted);line-height:1.5;">Orientierungswert aus Lebensstilantworten — kein medizinischer Biomarker</div>`;
+  }
+
   function stageBestScenario() {
     if (!simScenarios) return null;
     const all = [...(simScenarios.combos || []), ...(simScenarios.levers || [])]
@@ -4688,7 +4763,7 @@
     return `<div class="stage-studio" id="stageStudio">
         <div class="stage-step">
           <div class="stage-step-num blue">3</div>
-          <div><div class="stage-step-title">Dein Gespräch im Studio</div><div class="stage-step-sub">Auch ohne Mail – 15 Minuten, kostenlos</div></div>
+          <div><div class="stage-step-title">Dein Gespräch im Studio</div><div class="stage-step-sub">15 Minuten, kostenlos</div></div>
         </div>
         <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">Unsere Trainer und Sportwissenschaftler ordnen dein Ergebnis ein und messen, was der Fragebogen nur schätzen kann.</div>
         <div style="font-size:11px;color:var(--text-secondary);">Für dich passt besonders</div>
@@ -4717,7 +4792,7 @@
     return `
       <div class="stage-form">
         <div class="stage-form-legend">Was möchtest du?</div>
-        ${radio("sr_offer", "gespraech", "Ergebnisgespräch", "15 Minuten · kostenlos · auch ohne Mail", true)}
+        ${radio("sr_offer", "gespraech", "Ergebnisgespräch", "15 Minuten · kostenlos", true)}
         ${radio("sr_offer", "vital_analyse_plus", "Vital-Analyse Plus · 49,00 €", "rund 45 Minuten: Tanita, Griffkraft, Aufsteh- und Gleichgewichtstest, Ziel und Re-Check. Wird bei neuen und bestehenden Mitgliedschaften vollständig angerechnet.", false)}
         <label class="stage-form-label" for="sr_name">Vorname</label>
         <input type="text" id="sr_name" class="stage-input" autocomplete="given-name" maxlength="60" value="${name}">
@@ -4753,7 +4828,7 @@
           <div class="stage-step-sub">Deine Anfrage für ${what} ist bei uns. Wir rufen dich an${slot ? `, am liebsten ${escHtml(slot)}` : ""}.</div></div>
         </div>
         ${window._stage === 1 ? `<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;background:rgba(0,0,0,0.18);border-radius:8px;padding:10px 12px;margin-top:8px;"><strong style="color:var(--text-primary);">Noch keinen Vital-Plan?</strong> Im Studio schalten wir ihn mit dir frei – dann bekommst du Pilot-ID und PIN für deinen Re-Check.</div>` : ""}
-      </div>`;
+      </div>${referralBoxHtml('studio')}`;
   }
 
   async function submitStudioRequest() {
@@ -4784,6 +4859,9 @@
       trackEvent("studio_request_sent", { from_stage: window._stage, offer, trainer_access: c2 });
       const box = document.getElementById("stageStudioForm");
       if (box) box.innerHTML = stageStudioDoneHtml(window._studioRequest);
+      // Nie doppelt: "Bring jemanden mit" ersetzt den allgemeinen Kasten.
+      document.querySelectorAll('.referral-box[data-place="stufe1"], .referral-box[data-place="plan"]').forEach(el => el.remove());
+      setTimeout(initReferralTracking, 100);
     } catch (e) {
       const m = String((e && e.message) || "");
       fail(/PIN_REQUIRED|SESSION_EXPIRED/.test(m)
@@ -4907,6 +4985,7 @@
       html += stagePotentialHtml(S);
       html += stageAreasHtml(S);
       html += stageLadderHtml(S);
+      if (!window._studioRequest) html += referralBoxHtml('stufe1');  // sonst steht "Bring jemanden mit" in der Studio-Karte
       html += stageFooterHtml(S);
       return html;
     }
@@ -4962,6 +5041,7 @@
       html += `<div class="t3-zone-title">Dein Zugang und dein Re-Check</div>${S.mailBox || ""}`;
     }
     html += stageStudioCardHtml(S);
+    if (!window._studioRequest) html += referralBoxHtml('plan');
     html += S.feedback || "";
     html += `</div>`;
     html += stageFooterHtml(S);
@@ -5628,7 +5708,7 @@
         <h3>Was deine Vitalität aktuell besonders unterstützen könnte</h3>
         <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;line-height:1.5;">Nicht alles muss gleichzeitig verändert werden. Entscheidend ist, welche kleinen Hebel zu deinem Alltag passen.</p>
         <ul class="support-hints">${hints.slice(0,3).map(h => `<li>${h}</li>`).join("")}</ul>
-        <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Diese Hinweise dienen der allgemeinen Orientierung und ersetzen keine medizinische Beratung.${window._isReviewMode ? `` : ` Eine ausführlichere Einordnung erhältst du in der individuellen Auswertung per E-Mail.`}</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Diese Hinweise dienen der allgemeinen Orientierung und ersetzen keine medizinische Beratung.${(window._isReviewMode || (RESULT_STAGES_ENABLED && window._stage === 2)) ? `` : ` Eine ausführlichere Einordnung erhältst du in der individuellen Auswertung per E-Mail.`}</div>
       </div>`;
     return { html, bloodtestShown };
   }
@@ -5671,9 +5751,21 @@
       : delta > 0
         ? `<span class="verlauf-delta-up">▲ +${fmtGain(delta)} Punkte</span>`
         : `<span class="verlauf-delta-down">▼ ${fmtGain(delta)} Punkte</span>`;
-    let bioHtml = "";
+    let bioHtml = "", youngerHtml = "";
     if (prev.bio_age && bioAge) {
       const bd = Number(bioAge) - Number(prev.bio_age);
+      // v2.3.0 — "Seit deinem letzten Check X Jahre jünger" ist die stärkste
+      // Erfolgsgeschichte des Checks und steht deshalb groß oben in der Karte.
+      // Unter 4 Wochen Abstand nicht feiern (gleiche Vorsichtsregel wie die Mail):
+      // dann ist eine geänderte Antwort wahrscheinlicher als eine echte Veränderung.
+      if (bd < 0 && weeks >= 4) {
+        const n = -bd;
+        youngerHtml = `<div class="verlauf-younger" style="background:var(--accent-green-dim);border:1px solid rgba(34,201,122,0.35);border-radius:10px;padding:12px 14px;margin:4px 0 10px;">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Dein Vitalitäts-Alter</div>
+          <div style="font-size:18px;font-weight:700;color:var(--accent-green);line-height:1.35;margin-top:2px;">${n} ${n === 1 ? "Jahr" : "Jahre"} jünger als bei deinem letzten Check</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${prev.bio_age} → ${bioAge} Jahre in rund ${weeks} Wochen – das hast du selbst bewegt.</div>
+        </div>`;
+      }
       bioHtml = `<div class="verlauf-row">Vitalitäts-Alter: ${prev.bio_age} J. → <strong style="color:var(--text-primary);">${bioAge} J.</strong>${bd !== 0 ? ` <span class="${bd < 0 ? 'verlauf-delta-up' : 'verlauf-delta-down'}">(${bd > 0 ? '+' : ''}${bd} J.)</span>` : ''}</div>`;
     }
     const prevDate = new Date(prev.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -5690,6 +5782,7 @@
           <div class="verlauf-title">📈 Dein Verlauf</div>
           <div class="verlauf-date">Letzter Check: ${prevDate} · vor ca. ${weeks} Woche${weeks === 1 ? '' : 'n'}</div>
         </div>
+        ${youngerHtml}
         <div class="verlauf-row" style="font-size:15px;">Vitalitäts-Index: ${prevTotal} → <strong style="color:var(--text-primary);font-size:17px;">${curTotal}</strong> ${deltaHtml}</div>
         ${bioHtml}
         ${wbHtml}
@@ -6162,39 +6255,88 @@
   // Der Link traegt utm_source=empfehlung, damit der Kanal im Dashboard
   // sichtbar wird (Quelle dort seit der Funnel-Runde angelegt).
   // ══════════════════════════════════════════════════════════════
-  const REFERRAL_TEXT = "Ich habe gerade meinen Vital-Check gemacht — 5 Minuten, kostenlos, und man sieht direkt, wo man steht. Schau mal:";
+  const REFERRAL_TEXT_BASE = "Ich habe gerade meinen Vital-Check gemacht — 5 Minuten, kostenlos, und man sieht direkt, wo man steht. Schau mal:";
 
-  function referralLink() {
+  // v2.1.0 — Die Stelle, an der geteilt wurde, reist als utm_content mit.
+  // Das Funnel-Dashboard zeigt so im Varianten-Aufriss der Quelle
+  // "Empfehlung", welcher Kasten die meisten neuen Checks bringt.
+  function referralLink(place) {
     const base = (location.origin + location.pathname).replace(/[?&]+$/, "");
-    return base + (base.includes("?") ? "&" : "?") + "utm_source=empfehlung&utm_medium=referral";
+    return base + (base.includes("?") ? "&" : "?") + "utm_source=empfehlung&utm_medium=referral"
+      + (place ? "&utm_content=" + encodeURIComponent(place) : "");
+  }
+
+  // Studio-Variante: wer gerade ein Gespräch angefragt hat, nimmt am ehesten
+  // jemanden mit. Auch hier nur der Anlass, kein Wert.
+  const REFERRAL_TEXT_STUDIO = "Ich habe gerade meinen Vital-Check gemacht und gehe zum Gespräch ins LeVITA Studio. Mach ihn auch — 5 Minuten, kostenlos, dann gehen wir zusammen hin:";
+
+  // v2.1.0 — Empfehlung sichtbar statt versteckt. Ein Baustein für alle
+  // Stellen: Stufe 1 (Seitenende), Stufe 2 (Ende "Mein Plan"), nach dem
+  // Ziel-Speichern im Simulator und in der Bestätigung der Studio-Anfrage.
+  const REFERRAL_COPY = {
+    stufe1: ["🤝 Kennst du jemanden, für den das auch passt?", "Schick den Check weiter — geteilt wird nur der Link, keine deiner Angaben."],
+    plan:   ["🤝 Kennst du jemanden, für den das auch passt?", "Zu zweit fällt der Anfang leichter. Geteilt wird nur der Link, keine deiner Angaben."],
+    ziel:   ["🤝 Kennst du jemanden, für den das auch passt?", "Schick den Check weiter — geteilt wird nur der Link, keine deiner Angaben."],
+    studio: ["🤝 Bring jemanden mit", "Training in Gruppen macht mehr Spaß. Schick den Check an jemanden, der mitkommen möchte — geteilt wird nur der Link."]
+  };
+  function referralBoxHtml(place) {
+    const c = REFERRAL_COPY[place] || REFERRAL_COPY.stufe1;
+    return `
+      <div class="referral-box" data-place="${place}" style="background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.25);
+           border-radius:var(--radius);padding:16px;margin:14px 0;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:5px;">${c[0]}</div>
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">${c[1]}</div>
+        <button onclick="shareReferral(this,'${place}')"
+          style="width:100%;min-height:48px;background:rgba(245,166,35,0.15);color:#ffb347;
+                 border:1px solid rgba(245,166,35,0.35);border-radius:10px;font-family:inherit;
+                 font-size:14px;font-weight:700;cursor:pointer;">Check weiterempfehlen</button>
+      </div>`;
+  }
+
+  // Sichtbarkeit je Stelle einmal pro Seitenaufruf melden (referral_prompt_view
+  // mit place), damit der Funnel gesehen → geteilt je Stelle zeigen kann.
+  function initReferralTracking() {
+    if (typeof IntersectionObserver === 'undefined') return;
+    window._refSeen = window._refSeen || {};
+    document.querySelectorAll('.referral-box[data-place]').forEach(el => {
+      const place = el.dataset.place;
+      if (window._refSeen[place] || el.dataset.obs === '1') return;
+      el.dataset.obs = '1';
+      const ob = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting && !window._refSeen[place]) {
+            window._refSeen[place] = true;
+            try { trackEvent('referral_prompt_view', { place }); } catch (x) { /* still */ }
+            ob.disconnect();
+          }
+        });
+      }, { threshold: 0.5 });
+      ob.observe(el);
+    });
   }
 
   function showReferralPrompt() {
     const host = document.getElementById('referralHost');
     if (!host || host.dataset.shown === '1') return;
     host.dataset.shown = '1';
-    host.innerHTML = `
-      <div style="background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.25);
-           border-radius:var(--radius);padding:16px;margin-top:14px;">
-        <div style="font-size:14px;font-weight:700;margin-bottom:5px;">🤝 Kennst du jemanden, für den das auch passt?</div>
-        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">
-          Schick den Check weiter — geteilt wird nur der Link, keine deiner Angaben.
-        </div>
-        <button id="referralBtn" onclick="shareReferral(this)"
-          style="width:100%;min-height:48px;background:rgba(245,166,35,0.15);color:#ffb347;
-                 border:1px solid rgba(245,166,35,0.35);border-radius:10px;font-family:inherit;
-                 font-size:14px;font-weight:700;cursor:pointer;">Check weiterempfehlen</button>
-      </div>`;
+    // Nie doppelt: der feste Kasten am Ende von "Mein Plan" weicht dem Ziel-Moment.
+    document.querySelectorAll('.referral-box[data-place="plan"]').forEach(el => el.remove());
+    host.innerHTML = referralBoxHtml('ziel');
     host.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    try { trackEvent('referral_prompt_view'); } catch (e) { /* still */ }
+    if (!(window._refSeen && window._refSeen.ziel)) {
+      window._refSeen = window._refSeen || {}; window._refSeen.ziel = true;
+      try { trackEvent('referral_prompt_view', { place: 'ziel' }); } catch (e) { /* still */ }
+    }
   }
 
-  async function shareReferral(btn) {
-    const url = referralLink();
+  async function shareReferral(btn, place) {
+    place = place || 'ziel';
+    const url = referralLink(place);
+    const REFERRAL_TEXT = place === 'studio' ? REFERRAL_TEXT_STUDIO : REFERRAL_TEXT_BASE;
     const done = (how) => {
       btn.textContent = how === 'copy' ? '✓ Link kopiert' : '✓ Danke fürs Weitersagen';
       setTimeout(() => { btn.textContent = 'Check weiterempfehlen'; }, 2600);
-      try { trackEvent('referral_shared', { how }); } catch (e) { /* still */ }
+      try { trackEvent('referral_shared', { how, place }); } catch (e) { /* still */ }
     };
     // Handy: oeffnet WhatsApp, Signal, Mail — was der Nutzer installiert hat
     if (navigator.share) {
@@ -6592,7 +6734,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer">Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.0.0</footer>
+<footer class="app-footer">Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.3.0</footer>
 
 
 </body>
