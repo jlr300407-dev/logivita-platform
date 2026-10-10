@@ -738,7 +738,41 @@
        (6) Der Mikronaehrstoff-Tipp unter "Sofort umsetzen" war keine Handlung,
        sondern eine Beobachtung, und sagte "Bluttest", wo die Mail von einer
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
-       den man heute tun kann. -->
+       den man heute tun kann.
+
+       v2.0.0 (Stufenmodell, Konzept und Entscheidungen Jörg 10.10.2026):
+       Die Ergebnisseite zeigt nicht mehr alles auf einmal, sondern in Stufen.
+       STUFE 1 (ohne Kontaktdaten): Score, Vitalitäts-Alter, drei Sätze
+       "Deine Einschätzung", Spinne mit gestrichelter Potenzial-Linie des
+       stärksten Szenarios, Stärken, Potenzial-Box (Bereich und Punktgewinn je
+       Hebel, die Handlung gesperrt), nur die Fokusbereiche als Auswahl mit
+       wissenschaftlicher Einordnung, die übrigen Bereiche als gesperrter Block,
+       am Ende die Stufenleiter (Vital-Plan-Formular, Studio-Karte).
+       STUFE 2 (sofort nach bestätigtem Mailversand, beim Wiederaufruf mit PIN
+       und beim verknüpften Re-Check): Tabs "Übersicht" (alle neun Bereiche mit
+       Schritten) und "Mein Plan" (Hebel, Simulator, weitere Hebel, Nährstoffe,
+       Uhrenwerte, Wissen/Vermuten/Messen, Studio). Pilot-ID und PIN erst hier.
+       STUFE 3: Studio-Karte mit 15-Minuten-Gespräch und Vital-Analyse Plus
+       (49,00 €, angerechnet bei neuen und bestehenden Mitgliedschaften).
+       SICHERHEIT IST NIE GESPERRT: Sicherheitsband, Red Flag, ärztliche
+       Abklärung, mentales Wohlbefinden, Einzelsignale aus allen Bereichen und
+       Altershinweise mit ärztlichem Bezug (B12, BMI ab 70) stehen in Stufe 1.
+       TECHNIK: buildResultHtml legt jeden Block zusätzlich in S ab;
+       composeStagedResult setzt ihn neu zusammen. Jeder Text existiert einmal.
+       Schalter RESULT_STAGES_ENABLED = false stellt die Seite von v1.56.3
+       wieder her, ohne weiteren Rückbau.
+       STUDIO: Präventionskurse werden nicht mehr empfohlen (Ziel "Vorsorgen"
+       und 60+ ohne Reha-Anlass führen auf betreutes Training), betreutes
+       Training und Kurse in der Gruppe stehen in der Leistungsliste vorn.
+       EVENTS neu: stage1_potential_view, stage2_unlocked, stage3_cta_click.
+       STUFE 3 (gehört zu edge-2026-10-10.1 + studio_requests.sql): Anfrage-
+       formular in der Studio-Karte (Ergebnisgespräch oder Vital-Analyse Plus,
+       Vorname, Telefon, Zeitfenster, Kontakt-Einwilligung, freiwillige
+       Trainer-Einwilligung). Ohne PIN über client_token aus dem Submit.
+       Die Trainer-Einwilligung ist aus dem Fragebogen hierher gewandert.
+       FAHRPLAN: Die Edge liefert ihn strukturiert (Woche 1–2 … 7–12) mit der
+       Freischaltung und beim Wiederaufruf; die Seite zeigt denselben Text
+       wie die Mail. Event studio_request_sent ersetzt stage3_cta_click. -->
   <script src="assets/supabase-js@2.js"></script>
   <script src="assets/chart.umd.min.js"></script>
   <style>
@@ -1147,6 +1181,77 @@
     .radar-legend .leg-prev i { border-color: rgba(141,160,184,0.8); border-top-width: 1.5px; }
     .radar-legend .leg-pot i { border-color: #3b9eff; border-top-style: dashed; }
     .radar-toggles { display: flex; gap: 6px; }
+    /* ══ v2.0.0 — Stufenmodell der Ergebnisseite ══ */
+    .stage-kicker { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--accent-green); margin-bottom: 8px; }
+    .stage-kicker.blue { color: var(--accent-blue); }
+    .stage-kicker.muted { color: var(--text-muted); }
+    .stage-summary { background: linear-gradient(135deg, rgba(34,201,122,0.10), rgba(59,158,255,0.07)); border: 1px solid rgba(34,201,122,0.28); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
+    .stage-summary p { font-size: 14.5px; line-height: 1.65; color: var(--text-primary); }
+    .stage-caption { font-size: 12px; color: var(--text-secondary); line-height: 1.55; text-align: center; margin-top: 8px; }
+    .stage-strengths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+    .stage-strength { background: var(--brand-card); border: 1px solid rgba(34,201,122,0.25); border-radius: var(--radius-sm); padding: 14px; }
+    .stage-strength-head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .stage-strength-sub { font-size: 11px; color: var(--text-secondary); }
+    .stage-potential { background: var(--brand-card); border: 1px solid rgba(59,158,255,0.3); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
+    .stage-lever { display: flex; align-items: center; gap: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; }
+    .stage-lever-body { flex: 1; min-width: 0; }
+    .stage-lever-title { font-size: 13px; font-weight: 700; line-height: 1.35; }
+    .stage-lever-gain { font-size: 14px; font-weight: 800; color: var(--accent-blue); white-space: nowrap; }
+    .stage-lock-line { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-top: 4px; }
+    .stage-lock-line svg { flex-shrink: 0; }
+    .area-detail .stage-lock-line { border: 1px dashed rgba(255,255,255,0.15); border-radius: 8px; padding: 9px 10px; margin-top: 10px; }
+    .stage-btn-outline { display: block; width: 100%; padding: 13px; border-radius: var(--radius-sm); border: 1px solid rgba(59,158,255,0.45); background: transparent; color: var(--accent-blue); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; margin-top: 4px; }
+    .stage-locked { background: var(--brand-card); border: 1px dashed rgba(59,158,255,0.45); border-radius: 14px; padding: 16px; margin: 6px 0 16px; }
+    .stage-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+    .stage-chip { font-size: 12px; color: var(--text-secondary); background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 999px; padding: 5px 11px; }
+    .stage-age { background: var(--brand-card); border: 1px solid rgba(59,158,255,0.3); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+    .stage-age .ai-age { font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); background: rgba(59,158,255,0.07); border-left: 2px solid var(--accent-blue); padding: 8px 10px; margin-top: 8px; }
+    .stage-age .ai-age b { color: var(--text-primary); }
+    .stage-signals { margin-bottom: 16px; }
+    .stage-signals .area-signal { font-size: 12.5px; border-radius: 6px; margin-top: 8px; }
+    .stage-ladder-title { font-family: 'DM Serif Display', serif; font-size: 24px; line-height: 1.2; margin: 18px 0 4px; }
+    .stage-step { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .stage-step-num { width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; border: 2px solid var(--accent-green); color: var(--accent-green); }
+    .stage-step-num.done { background: var(--accent-green); color: #0a1628; }
+    .stage-step-num.blue { border-color: var(--accent-blue); color: var(--accent-blue); }
+    .stage-step-title { font-size: 15px; font-weight: 700; }
+    .stage-step-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .stage-done { background: var(--brand-card); border: 1px solid rgba(34,201,122,0.3); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+    .stage-done .stage-step { margin-bottom: 0; }
+    .stage-studio { background: var(--brand-card2); border: 1px solid rgba(59,158,255,0.25); border-radius: var(--radius); padding: 18px 16px; margin-bottom: 16px; }
+    .stage-service { background: rgba(255,255,255,0.04); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; }
+    .stage-service-title { font-size: 13.5px; font-weight: 700; margin-bottom: 3px; }
+    .stage-service-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+    .stage-btn-blue { display: block; text-align: center; padding: 14px; border-radius: var(--radius-sm); background: var(--accent-blue); color: #0a1628; font-size: 14.5px; font-weight: 800; text-decoration: none; margin: 12px 0 10px; }
+    .stage-unlock { background: rgba(34,201,122,0.10); border: 1px solid rgba(34,201,122,0.4); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+    .stage-wissen { background: var(--brand-card); border: 1px solid rgba(167,139,250,0.3); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
+    .stage-wissen-grid { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px 12px; font-size: 12.5px; line-height: 1.55; margin-top: 10px; }
+    .stage-wissen-grid .k { font-weight: 700; }
+    .stage-wissen-grid .v { color: var(--text-secondary); }
+    .stage-plan-note { background: rgba(245,166,35,0.07); border: 1px solid rgba(245,166,35,0.25); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    .stage-plan-note strong { color: var(--text-primary); }
+    .stage-form { margin: 6px 0 12px; }
+    .stage-form-legend { font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; }
+    .stage-form-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--text-secondary); margin: 12px 0 6px; }
+    .stage-input { width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; }
+    .stage-input:focus { outline: none; border-color: var(--accent-blue); }
+    .stage-choice { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; font-size: 13.5px; line-height: 1.45; cursor: pointer; }
+    .stage-choice input { width: 18px; height: 18px; margin: 2px 0 0; flex-shrink: 0; accent-color: var(--accent-blue); }
+    .stage-choice:has(input:checked) { border-color: var(--accent-blue); background: var(--accent-blue-dim); }
+    .stage-choice-sub { font-size: 12px; color: var(--text-secondary); }
+    .stage-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .stage-slot { position: relative; }
+    .stage-slot input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+    .stage-slot span { display: flex; align-items: center; justify-content: center; min-height: 44px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12.5px; color: var(--text-secondary); }
+    .stage-slot input:checked + span { border-color: var(--accent-blue); background: var(--accent-blue-dim); color: var(--text-primary); font-weight: 700; }
+    .stage-slot input:focus-visible + span { outline: 2px solid var(--accent-blue); outline-offset: 2px; }
+    .stage-fahrplan { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
+    .stage-fp-row { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 12px; position: relative; padding-bottom: 14px; }
+    .stage-fp-row:not(.last)::before { content: ''; position: absolute; left: 6px; top: 16px; bottom: 0; width: 2px; background: rgba(255,255,255,0.1); }
+    .stage-fp-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--accent-green); margin-top: 4px; box-sizing: border-box; }
+    .stage-fp-dot.first { background: var(--accent-green); }
+    .stage-fp-label { font-size: 12px; font-weight: 700; color: var(--accent-green); margin-bottom: 2px; }
+    .stage-fp-text { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
   </style>
 </head>
 <body>
@@ -1629,6 +1734,19 @@
       }
     }
 
+    // v2.0.0 — Stufenmodell: vorbelegt ist das stärkste Szenario (meist die
+    // Kombination aus drei Hebeln). Stufe 1 verspricht genau diese Zahl, und
+    // Stufe 2 öffnet den Simulator mit derselben Auswahl. Ein gespeichertes
+    // Ziel hat weiter Vorrang.
+    if (RESULT_STAGES_ENABLED && !simGoalSaved && simScenarios) {
+      const _best = stageBestScenario();
+      if (_best && _best.score_payload && Array.isArray(_best.question_keys) && _best.question_keys.length) {
+        const _prev = simActiveKeys.slice();
+        simActiveKeys = _best.question_keys.slice(0, 3);
+        if (!getActiveProjection()) simActiveKeys = _prev;
+      }
+    }
+
     // v1.31.1 — Ebenen-Vorgabe: der Nutzer soll die Erkenntnis sehen, nicht
     // erst freischalten. Wiederhergestelltes Ziel → Potenzial-Ebene an;
     // sonst bei verknüpftem Re-Check → Vorher-Ebene an (das ist dort die
@@ -1978,6 +2096,16 @@
   // Affiliate-/Rabatt-Elemente (Verisana) bis zur UWG/HWG-Freigabe deaktiviert.
   // Studio-eigene CTAs (Probetraining etc.) bleiben aktiv — Eigenwerbung, kein Affiliate.
   const AFFILIATE_ENABLED = false;
+
+  // ══ v2.0.0 — Stufenmodell der Ergebnisseite (Konzept 10.10.2026) ══
+  // Stufe 1: Einschätzung ohne Kontaktdaten. Stufe 2: Vital-Plan nach dem
+  // Mailversand (Seite wird sofort freigeschaltet). Stufe 3: Gespräch im Studio.
+  // Ein Schalter: false = die bisherige Seite mit drei Tabs, unverändert.
+  const RESULT_STAGES_ENABLED = true;
+  const STAGE_LOCK_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+  window._stage = 1;
+  window._stageUnlocked = false;
+  window._unlockInfo = null;
 
   // ══ Hinweis-Block auf LeVITA-Angebote (v1.53.9, Uebergabe Joerg 03.10.2026) ══
   // Grundsatz: Vital-Check und Nahrungsergaenzung sind getrennte Bereiche. Der
@@ -2517,6 +2645,10 @@
           <input type="checkbox" id="consent_storage" />
           <label for="consent_storage">Ich willige ein, dass meine Angaben für den Vital-Check gespeichert werden. Diese werden nicht für andere Zwecke genutzt und können jederzeit gelöscht werden.</label>
         </div>
+        <!-- v2.0.0 — Die Trainer-Einwilligung steht jetzt bei der Studio-Anfrage
+             (Stufe 3), also dort, wo ihr Zweck entsteht. Der Fragebogen hat
+             wieder zwei Häkchen. -->
+        ${RESULT_STAGES_ENABLED ? '' : `
         <!-- v1.55.0 — freiwillig, nicht vorbelegt, keine Bedingung fuer den Check.
              Der Trainerzugriff gilt nur fuer Checks mit diesem Haken; ohne ihn
              bleibt der Weg, bei dem das Mitglied selbst Pilot-ID und PIN zeigt. -->
@@ -2524,6 +2656,7 @@
           <input type="checkbox" id="consent_trainer_access" />
           <label for="consent_trainer_access">Ich bin einverstanden, dass die Trainerinnen und Trainer von LeVITA meine Angaben und mein Ergebnis einsehen, um mich zu beraten und meinen Re-Check zu begleiten. <span style="color:var(--text-muted);">Diese Einwilligung ist freiwillig, der Vital-Check funktioniert auch ohne sie, und ich kann sie jederzeit widerrufen.</span></label>
         </div>
+        `}
         <button class="next-btn" id="submitBtn" onclick="submitInitialCheck()">Auswertung erstellen →</button>
       </div>`;
   }
@@ -3052,7 +3185,8 @@
     if (!cp || !cs) return alert("Bitte Datenschutz und Speicherung bestätigen.");
     personalData.consent_privacy = true; personalData.consent_storage = true;
     // v1.55.0 — freiwillige Trainer-Einwilligung; fehlt der Haken, wird false gesendet
-    const _ta = document.getElementById("consent_trainer_access")?.checked === true;
+    // v2.0.0 — die Trainer-Einwilligung kommt mit der Studio-Anfrage
+    const _ta = RESULT_STAGES_ENABLED ? false : (document.getElementById("consent_trainer_access")?.checked === true);
     const btn = document.getElementById("submitBtn");
     btn.disabled = true; btn.innerText = "Auswertung wird erstellt…";
     try {
@@ -3085,6 +3219,7 @@
       if (_watch) result.submission = Object.assign({}, result.submission || {}, { watch: _watch });
       latestResult = result;
       window._trainerAccess = _ta;   // v1.55.0
+      window._clientToken = result.client_token || null;   // v2.0.0: Studio-Anfrage ohne PIN
       absorbV2Result(result); // V2: Szenarien, Verlauf, link_status
       window._previousLink = null; window._recheckPrefill = null; // verbraucht — nie doppelt verwenden
       const rb = document.getElementById('recheckQuizNote'); if (rb) rb.remove();
@@ -3204,6 +3339,8 @@
         statusEl.innerHTML = `<div class="status-msg info-box box-success">✓ Dein Vital-Plan wurde an <strong>${email}</strong> versendet. Schau gleich in dein Postfach — ggf. auch im Spam-Ordner.</div>${pinBlock}${marketingOptinHtml('after_mail')}${recheckReminderHtml()}`;
         btn.disabled = true; btn.innerText = "✓ Vital-Plan wurde versendet";
         showFeedbackBox();
+        // v2.0.0 — Stufe 2 sofort freischalten (Konzept: Freischaltung bei email_sent)
+        unlockStage2({ email, firstName: firstName || null, pin: result.access_pin || window._accessPin || null, fahrplan: Array.isArray(result.fahrplan) ? result.fahrplan : [] });
       } else {
         trackEvent('mail_sent_unconfirmed', { email_sent: false });
         statusEl.innerHTML = `<div class="status-msg info-box box-warning">Deine Auswertung wurde erstellt, aber der E-Mail-Versand konnte nicht bestätigt werden. Bitte prüfe in ein paar Minuten dein Postfach (auch Spam). Falls nichts ankommt: <strong>info@le-vita.com</strong></div>`;
@@ -3216,6 +3353,7 @@
         statusEl.innerHTML = `<div class="status-msg info-box box-info">✓ Deine Auswertung wurde bereits per Mail versendet. Schau in dein Postfach — auch im Spam-Ordner.</div>`;
         btn.disabled = true; btn.innerText = "✓ Bereits versendet";
         showFeedbackBox();
+        unlockStage2({ email, firstName: (document.getElementById("ai_firstname")?.value || "").trim() || null, pin: window._accessPin || null });
       } else {
         // Ehrliche Fehlermeldung statt beschwichtigendem "prüfe dein Postfach" (v1.28.14)
         trackEvent('mail_send_error', { error_message: String(error.message || '').slice(0, 200) });
@@ -3233,13 +3371,23 @@
   }
 
   function switchResultTab(id) {
+    // v2.0.0 — Verweise aus der alten Tab-Struktur auf die Stufen umleiten.
+    if (!document.getElementById('rtab-' + id)) {
+      const alias = { ergebnis: 'uebersicht', bereiche: 'uebersicht', empfehlungen: 'plan', uebersicht: 'ergebnis', plan: 'empfehlungen' }[id];
+      if (alias && document.getElementById('rtab-' + alias)) { id = alias; }
+      else {
+        const target = document.getElementById(id === 'empfehlungen' || id === 'plan' ? 'stageStudio' : 'stageAreas');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+    }
     document.querySelectorAll('.result-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.result-tab-content').forEach(t => t.classList.remove('active'));
     const tab = document.getElementById('rtab-' + id);
     const content = document.getElementById('rtc-' + id);
     if (tab) tab.classList.add('active');
     if (content) content.classList.add('active');
-    if (id === 'bereiche' && window._lastResultData) {
+    if ((id === 'bereiche' || id === 'uebersicht') && window._lastResultData) {
       setTimeout(() => { renderRadarChart(window._lastResultData.areas); syncRadarToggleButtons(); }, 50);
     }
   }
@@ -3258,8 +3406,15 @@
     }
   }
 
-  function showResult(result) {
-    trackEvent('result_view');
+  function showResult(result, opts) {
+    opts = opts || {};
+    // v2.0.0 — Re-Render nach der Freischaltung zählt nicht als neuer Aufruf
+    if (!opts.rerender) trackEvent('result_view');
+    // v2.0.0 — Stufe: 2 nach Mailversand, beim Wiederaufruf mit PIN und beim
+    // verknüpften Re-Check (wer zurückkommt, hat Stufe 2 schon erreicht).
+    if (RESULT_STAGES_ENABLED) {
+      window._stage = (window._stageUnlocked || (window._isReviewMode && window._accessPin) || window._previousData) ? 2 : 1;
+    }
     document.getElementById("quiz-flow").style.display = "none";
     document.getElementById("progressWrap").style.display = "none";
     document.getElementById("loading").classList.add("hidden");
@@ -3290,7 +3445,8 @@
     setTimeout(() => renderRadarChart(areas), 200);
     setTimeout(() => { updateSimulatorUI(); syncRadarToggleButtons(); }, 120); // V2: Startzustand Simulator + Radar-Schalter
     setTimeout(() => { document.querySelectorAll(".area-bar-fill[data-w]").forEach(el => { el.style.width = el.getAttribute("data-w") + "%"; }); }, 300);
-    ra.scrollIntoView({ behavior:"smooth" });
+    setTimeout(initStageTracking, 400);
+    if (!opts.rerender) ra.scrollIntoView({ behavior:"smooth" });
   }
 
   // v1.32.1 — Der Buddy stellt das Ergebnis vor. Beim Wiederaufruf über PIN
@@ -3327,6 +3483,11 @@
     const scoreLabel = correctedScoreLabel || score.score_label;
     const answersData = result.answers || [];
     let html = "";
+    // v2.0.0 — Jeder Block der Seite landet zusätzlich in S. Die alte Seite
+    // (Schalter aus) wird unverändert aus html zusammengesetzt; das Stufenmodell
+    // setzt dieselben Blöcke in neuer Reihenfolge zusammen (composeStagedResult).
+    // So gibt es jeden Text und jede Regel nur einmal.
+    const S = {};
 
     const sc = getScoreColor(totalScore);
     // v1.32.2 — Die Kachel zeigte bisher ALLE Bereiche unter 75. Bei einem
@@ -3433,7 +3594,7 @@
       const _recheckReady = _weeksSince === null || _weeksSince >= 8;
 
       if (_recheckReady) {
-        html += `
+        html += S.recheckBanner = `
           <div class="recheck-banner">
             <div class="recheck-banner-title">🔄 Zeit für deinen Re-Check?</div>
             <div class="recheck-banner-sub">${_weeksSince !== null ? `Dein letzter Check ist ${_weeksSince} Wochen her — jetzt wird der Vergleich aussagekräftig. ` : ``}Der neue Check wird mit diesem Ergebnis (${result.public_code}) verknüpft, du siehst danach direkt, was sich verändert hat.</div>
@@ -3441,7 +3602,7 @@
           </div>`;
       } else {
         const _wk = _weeksSince <= 0 ? "wenige Tage" : `${_weeksSince} Woche${_weeksSince > 1 ? "n" : ""}`;
-        html += `
+        html += S.recheckBanner = `
           <div class="recheck-banner" style="background:rgba(255,255,255,0.03);border-color:var(--border);">
             <div class="recheck-banner-title" style="color:var(--text-secondary);">🔄 Dein Ergebnis ist ${_wk} alt</div>
             <div class="recheck-banner-sub">Aussagekräftig wird der Vergleich ab etwa 8 Wochen — so lange braucht es, bis sich Veränderungen im Alltag auch im Wert zeigen.</div>
@@ -3454,14 +3615,14 @@
     // ── V2: Ehrlicher Hinweis, wenn die Re-Check-Verknüpfung nicht geklappt hat ──
     // (ungültiger PIN bricht den Check bewusst nicht ab — Edge-Regel)
     if (window._linkStatus === 'invalid') {
-      html += `
+      html += S.linkInvalid = `
         <div class="info-box box-warning" style="margin-top:0;margin-bottom:14px;font-size:13px;">
           Die Verknüpfung mit deinem letzten Check hat nicht geklappt (PIN stimmte nicht) — dein neues Ergebnis ist davon unberührt und vollständig.
         </div>`;
     }
 
     // ── KPI-Bar ──
-    html += `
+    html += S.kpi = `
       <div class="kpi-row" style="margin-bottom:10px;">
         <div class="kpi-card"><span class="kpi-icon">⚡</span><div class="kpi-val" style="color:${sc}">${Math.round(totalScore)}</div><div class="kpi-label">Vitalitäts-Index</div></div>
         <div class="kpi-card"><span class="kpi-icon">🧬</span><div class="kpi-val" style="color:${bioColor}">${bioAge||"–"}</div><div class="kpi-label">Vitalitäts-Alter</div></div>
@@ -3475,7 +3636,7 @@
       </div>`;
 
     // Level-Badge
-    html += `
+    html += S.levelBadge = `
       <div style="background:var(--brand-card);border:0.5px solid var(--border);border-radius:14px;
            padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
         <div>
@@ -3493,7 +3654,7 @@
     // die Vergleichbarkeit zu allen bisherigen Checks), nur die Einordnung kommt
     // dazu. Schwelle 25: in 318 Checks lag genau einer darunter.
     if (Number(totalScore) < 25) {
-      html += `
+      html += S.lowIndex = `
       <div class="info-box box-info" style="margin-bottom:14px;">
         Dein Wert liegt niedrig, weil gleich mehrere Bereiche Luft nach oben haben — sie verstärken sich gegenseitig. Das ist eine Momentaufnahme deines Alltags, kein Urteil über deine Gesundheit. Und es heißt nicht, dass du an neun Stellen gleichzeitig ansetzen musst: Der erste Schritt liegt in einem Bereich, und von dort bewegt sich meist auch der Rest.
       </div>`;
@@ -3520,7 +3681,7 @@
           : (_sn.weight_appetite_single?.body || "Du hast Veränderungen bei Gewicht oder Appetit angegeben. Behalte das im Blick und sprich es bei Gelegenheit hausärztlich an.");
       const _bandTitle = (window._safetyTier === "combined" || window._safetyTier === "senior")
         ? "Bitte ärztlich abklären lassen" : "Zuerst das Wichtigste";
-      html += `
+      html += S.safetyBand = `
         <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);
              border-radius:14px;padding:14px 16px;margin-bottom:12px;display:flex;gap:11px;align-items:flex-start;">
           <div style="font-size:17px;line-height:1.2;flex-shrink:0;" aria-hidden="true">⚠️</div>
@@ -3602,10 +3763,13 @@
     // versendet (der PIN entsteht erst mit ihr). Ein leeres Eingabefeld wäre
     // dort schlicht falsch: ein zweiter Versand wird serverseitig ohnehin
     // abgelehnt. Statt Formular also der Status.
-    let mailBoxHtml = (window._isReviewMode && window._accessPin) ? renderMailAlreadySentHtml(result) : `
+    // v2.0.0 — Die Box ist eine Bauvorschrift mit austauschbaren Zeilen, damit
+    // die Stufenleiter dasselbe Formular (gleiche IDs, gleicher Einwilligungstext)
+    // mit eigenen Nutzen-Zeilen verwenden kann.
+    const buildAiBox = (rows, o = {}) => `
       <div class="ai-box">
-        <div class="ai-badge">✦ Dein persönlicher Vital-Plan</div>
-        <div class="ai-title">Das steht in deinem Vital-Plan:</div>
+        <div class="ai-badge">${o.badge || '✦ Dein persönlicher Vital-Plan'}</div>
+        <div class="ai-title">${o.title || 'Das steht in deinem Vital-Plan:'}</div>
         ${(() => {
           // v1.32.5 — Der Buddy steht hier NEUTRAL: kein Sprechtext, keine
           // Empfehlung. Diese Box fragt eine E-Mail-Adresse und zwei
@@ -3615,9 +3779,9 @@
           const b = buddyHtml("buddy-neutral", "sm");
           return b ? `<div style="display:flex;justify-content:center;margin:10px 0 2px;">${b}</div>` : "";
         })()}
-        <div style="display:flex;flex-direction:column;gap:9px;margin:12px 0 14px;">${teaserRows}</div>
-        <div style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:14px;">
-          Kostenlos &nbsp;·&nbsp; kommt in wenigen Minuten
+        <div style="display:flex;flex-direction:column;gap:9px;margin:12px 0 14px;">${rows}</div>
+        <div style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:14px;line-height:1.55;">
+          ${o.note || 'Kostenlos &nbsp;·&nbsp; kommt in wenigen Minuten'}
         </div>
         <div class="ai-sub" style="margin-bottom:8px;">Wohin dürfen wir deinen Plan schicken?</div>
         <input type="text" id="ai_firstname" placeholder="Vorname (optional)" style="margin-bottom:8px;" />
@@ -3635,10 +3799,17 @@
             <label for="consent_email_delivery">Ja, die angeforderte Auswertung (mein Vital-Plan) darf mir einmalig per E-Mail zugesendet werden.</label>
           </div>
         </div>
-        <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">Meinen kostenlosen Vital-Plan anfordern →</button>
+        <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">${o.btn || 'Meinen kostenlosen Vital-Plan anfordern →'}</button>
         <div id="ai-status"></div>
         <div style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center;"><span style="color:var(--accent-green);">✓</span> Keine Werbung, keine Weitergabe an Dritte, jederzeit löschbar</div>
       </div>`;
+    let mailBoxHtml = (window._isReviewMode && window._accessPin) ? renderMailAlreadySentHtml(result) : buildAiBox(teaserRows);
+    S.buildAiBox = buildAiBox;
+    S.teaserRow = teaserRow;
+    S.mailBox = mailBoxHtml;
+    S.planPromised = _planPromised;
+    S.goalTeaser = goalTeaser;
+    S.isLinkedRecheck = isLinkedRecheck;
 
     // v1.41.4 — Der Link am Ende von Tab 2 und Tab 3 scrollte zu #ai_email.
     // Seit v1.35.0 liegt die Box eingeklappt ueber den Tabs, das Feld war also
@@ -3650,7 +3821,7 @@
         style="text-align:center;padding:14px;margin-top:4px;cursor:pointer;">
         <span style="font-size:12px;font-weight:600;color:var(--accent-green);">✦ Meinen persönlichen Vital-Plan per Mail sichern →</span>
       </div>`;
-    html += `
+    html += S.vitalPlanBar = `
       <div style="background:rgba(34,201,122,0.07);border:1px solid rgba(34,201,122,0.25);
            border-radius:14px;margin-bottom:14px;overflow:hidden;">
         <button id="vitalplanToggle" onclick="toggleVitalPlan()" aria-expanded="false" aria-controls="vitalplanBody"
@@ -3671,7 +3842,7 @@
     if (window._shown) window._shown.mail = true;
 
     // ── TABS ──
-    html += `
+    html += S.tabs = `
       <div class="result-tabs">
         <button class="result-tab active" id="rtab-ergebnis" onclick="switchResultTab('ergebnis')">Mein Ergebnis</button>
         <button class="result-tab" id="rtab-bereiche" onclick="switchResultTab('bereiche')">Meine Bereiche</button>
@@ -3684,10 +3855,10 @@
     html += `<div class="result-tab-content active" id="rtc-ergebnis">`;
 
     // v1.32.1 — Der Buddy eröffnet die Auswertung, bevor die Zahlen kommen.
-    html += renderResultBuddyHtml(totalScore, !!window._previousData);
+    html += S.resultBuddy = renderResultBuddyHtml(totalScore, !!window._previousData);
 
     // ── PATCH 6: Score-Ring kompakt (links Ring, rechts Meta) wie Prototyp ──
-    html += `
+    html += S.scoreRing = `
       <div style="display:flex;align-items:center;gap:16px;background:var(--brand-card);
            border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:12px;">
         <div style="position:relative;width:110px;height:110px;flex-shrink:0;">
@@ -3730,7 +3901,7 @@
     // die Mail, wo sie in ganzen Saetzen und mit Ton passieren kann.
     const _wbSelf = Number(result.submission?.wellbeing_self || personalData.wellbeing_self) || 0;
     if (WELLBEING_LABEL[_wbSelf]) {
-      html += `<div style="text-align:center;font-size:12px;color:var(--text-muted);margin:-4px 0 14px;">
+      html += S.wellbeing = `<div style="text-align:center;font-size:12px;color:var(--text-muted);margin:-4px 0 14px;">
         Vor dem Check hast du dein Befinden mit <strong style="color:var(--text-secondary);">${WELLBEING_LABEL[_wbSelf]}</strong> angegeben.
       </div>`;
     }
@@ -3744,12 +3915,12 @@
       const pm = {};
       Object.entries(window._previousData.score_payload).forEach(([k, v]) => { if (k !== 'general' && v && isFinite(Number(v.score))) pm[k] = Number(v.score); });
       window._prevAreaMap = Object.keys(pm).length > 0 ? pm : null;
-      html += renderVerlaufCard(window._previousData, totalScore, bioAge);
+      html += S.verlauf = renderVerlaufCard(window._previousData, totalScore, bioAge);
     }
 
     // Basisdaten — aufklappbar
     const basisdatenId = 'basisdaten_' + Date.now();
-    html += `
+    html += S.angaben = `
       <div style="margin-bottom:10px;">
         <button onclick="const p=document.getElementById('${basisdatenId}');const b=this;p.style.display=p.style.display==='none'?'flex':'none';b.textContent=p.style.display==='none'?'Meine Angaben anzeigen ↓':'Meine Angaben ausblenden ↑';"
           style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;padding:0;text-decoration:underline;">
@@ -3769,7 +3940,7 @@
 
     // Level-Erklärung — aufklappbar
     const vitalIndexId = 'vitalindex_' + Date.now();
-    html += `
+    html += S.levelInfo = `
       <div style="margin-bottom:12px;">
         <button onclick="const p=document.getElementById('${vitalIndexId}');const b=this;p.style.display=p.style.display==='none'?'block':'none';b.textContent=p.style.display==='none'?'Was bedeutet mein Level? ↓':'Was bedeutet mein Level? ↑';"
           style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;padding:0;text-decoration:underline;">
@@ -3786,7 +3957,7 @@
     // Haupthebel
     if (totalScore >= 85) {
       if (worst && worst.score < 90) {
-        html += `<div class="hebel-box"><div class="hebel-icon">✨</div><div>
+        html += S.hebel = `<div class="hebel-box"><div class="hebel-icon">✨</div><div>
           <div class="hebel-title">Dein einziger kleiner Feinschliff</div>
           <div class="hebel-text"><strong>${AREA_ICONS[worst.key]||""} ${worst.label}</strong> ist der einzige Bereich mit noch etwas Luft nach oben. Alles andere läuft bereits sehr stabil.</div>
         </div></div>`;
@@ -3796,7 +3967,7 @@
       // bisher fast wortgleich auf Tab 3. Tab 1 beantwortet "Wo stehe ich",
       // die Handlungsschritte (Sofort / Diese Woche) gehoeren zu "Was tue ich"
       // und stehen jetzt dort — verschoben, nicht doppelt.
-      html += `<div class="hebel-box" onclick="switchResultTab('empfehlungen')" style="cursor:pointer;"><div class="hebel-icon">💡</div><div>
+      html += S.hebel = `<div class="hebel-box" onclick="switchResultTab('empfehlungen')" style="cursor:pointer;"><div class="hebel-icon">💡</div><div>
         <div class="hebel-title">Dein größter Ansatzpunkt</div>
         <div class="hebel-text"><strong>${AREA_ICONS[worst.key]||""} ${worst.label}</strong></div>
         <div style="margin-top:8px;font-size:12.5px;color:var(--accent-green);font-weight:600;">Was das konkret heißt → Nächste Schritte</div>
@@ -3806,9 +3977,9 @@
     // ── V2: Potenzial-Simulator (Prio 2.3) — serverseitig vorberechnete Szenarien,
     // Auswahl vorbereiteter Hebel per Schalter, keine Freieingabe, keine Client-Rechnung.
     // v1.50.0 — Uhrenwerte direkt unter dem größten Ansatzpunkt, vor dem Simulator
-    html += watchBoxHtml(result.submission?.watch, result.submission?.age ?? personalData.age);
+    html += S.watch = watchBoxHtml(result.submission?.watch, result.submission?.age ?? personalData.age);
 
-    html += renderSimulatorHtml(totalScore, bioAge, worst);
+    html += S.simulator = renderSimulatorHtml(totalScore, bioAge, worst);
 
     // v1.35.0 — Die Vital-Plan-Box steht nicht mehr in Tab 1, sondern als
     // aufklappbare Leiste ueber den Tabs (siehe oben). Sie gehoert damit
@@ -3817,7 +3988,7 @@
     // Feedback-Box — erscheint erst NACH erfolgreicher Mail-Anforderung (v1.28.14):
     // konkurriert sonst mit der Vital-Plan-Box um denselben Moment.
     // VELUS-JET-Gutschein entfernt (Angebot war am 15.07.2026 abgelaufen).
-    html += `
+    html += S.feedback = `
       <div class="feedback-box" id="feedbackBox" style="margin-top:8px;margin-bottom:4px;display:none;">
         <h3>Wie hilfreich war der Check für dich? 🚀</h3>
         <p>Dein Vital-Plan ist unterwegs. Magst du uns kurz sagen, wie der Check für dich war?<br>
@@ -3837,7 +4008,7 @@
     // gefüllt), Potenzial (gestrichelt, ungefüllt). Maximal zwei gleichzeitig sichtbar.
     const hasPrevLayer = !!window._prevAreaMap;
     const hasPotLayer = potentialLayerAvailable();
-    html += `<div class="section-card">
+    html += S.radar = `<div class="section-card">
       <div class="section-header">
         <div class="section-title">Vitalitäts-Spinne</div>
         <div class="radar-toggles">
@@ -3848,7 +4019,7 @@
       <canvas id="vitalChart" height="300"></canvas>
       <div class="radar-legend" id="radarLegend"></div>
     </div>`;
-    html += renderRadarExplanation(areas);
+    html += S.radarExplain = renderRadarExplanation(areas);
 
     const sortedAreas = [...areas].sort((a, b) => a.score - b.score);
     // v1.34.1 — Die Kachel oben zählt Fokusbereiche (<55), dieser Abschnitt
@@ -3864,6 +4035,7 @@
     const wachstumAreas = sortedAreas.filter(a => a.score < 70);
     const staerkenAreas = sortedAreas.filter(a => a.score >= 70);
 
+    const _markAreas = html.length;
     if (fokusAreas.length > 0) {
       html += `<div class="bereiche-header">
         <div class="bereiche-header-label">Deine Fokusbereiche — schwächster zuerst</div>
@@ -3890,8 +4062,9 @@
       staerkenAreas.forEach(area => { html += renderAreaCard(area, result); });
       html += `</div>`;
     }
+    S.areasAll = html.slice(_markAreas);
 
-    html += renderRedFlagBox(score, totalScore);
+    html += S.redFlag = renderRedFlagBox(score, totalScore);
 
     if (answersData && answersData.length > 0) {
       const areaLabels = { activity:"Bewegung & Kraft", sleep:"Schlaf & Regeneration", nutrition:"Ernährung", mental:"Mentale Balance & Stress", vitamin_d:"Vitamin D & Tageslicht", bmi:"BMI", lifestyle:"Alkohol / Nikotin", micronutrients:"Mikronährstoffe", metabolic:"Energie & Stoffwechsel", general:"Allgemein" };
@@ -3921,7 +4094,7 @@
               <div style="font-size:12px;color:var(--text-primary);font-weight:500;text-align:right;margin-left:12px;max-width:55%;">${a.answer_text}</div>
             </div>`).join("")}
         </div>`).join("");
-      html += `
+      html += S.answers = `
         <div class="section-card" style="margin-bottom:16px;">
           <div class="section-header" onclick="toggleAnswers()" style="cursor:pointer;user-select:none;">
             <div class="section-title">📋 Meine Antworten aus diesem Check</div>
@@ -3970,7 +4143,7 @@
     // aus v1.31.3 bleibt im Satz erhalten.
     const heroHead3 = worst ? `${AREA_ICONS[worst.key]||""} ${worst.label}` : heroTitle3;
     const heroKicker3 = worst && heroTitle3 ? `✦ Dein Weg zu: ${heroTitle3}` : "✦ Dein wichtigster nächster Schritt";
-    html += `
+    html += S.hero = `
       <div style="background:linear-gradient(135deg,rgba(34,201,122,0.12),rgba(59,158,255,0.08));
            border:1px solid rgba(34,201,122,0.3);border-radius:var(--radius);padding:18px;margin-bottom:16px;">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
@@ -4014,7 +4187,7 @@
           : (_sn.weight_appetite_single?.body || "Du hast Veränderungen bei Gewicht oder Appetit angegeben. Behalte das im Blick und sprich es bei Gelegenheit hausärztlich an.");
       const _safetyTitle = (window._safetyTier === "combined" || window._safetyTier === "senior")
         ? "Bitte ärztlich abklären lassen" : "Zuerst das Wichtigste";
-      html += `<div class="hint-box" style="background:rgba(245,166,35,0.08);border-left:3px solid var(--accent-amber);border-radius:0;padding:14px 16px;margin-bottom:16px;">
+      html += S.safetyFallback = `<div class="hint-box" style="background:rgba(245,166,35,0.08);border-left:3px solid var(--accent-amber);border-radius:0;padding:14px 16px;margin-bottom:16px;">
         <strong style="color:#ffb347;">${_safetyTitle}</strong><br>
         <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${_safetyText}</span>
       </div>`;
@@ -4024,7 +4197,7 @@
     // durchs Top-Prioritäten-Raster fallen — eigenständige ruhige Box, nie als "Tipp" verpackt
     const mentalRisk = Math.max(riskOf('low_interest'), riskOf('low_mood'));
     if (mentalRisk >= 2) {
-      html += `<div class="hint-box" style="background:rgba(139,92,246,0.08);border-left:3px solid var(--accent-purple);border-radius:0;padding:14px 16px;margin-bottom:16px;">
+      html += S.mental = `<div class="hint-box" style="background:rgba(139,92,246,0.08);border-left:3px solid var(--accent-purple);border-radius:0;padding:14px 16px;margin-bottom:16px;">
         <strong style="color:#a78bfa;">🌱 Mentales Wohlbefinden</strong><br>
         <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${(window._snips.notice.mental?.body) || "Deine Angaben zeigen, dass du an manchen Tagen weniger Freude oder Energie empfindest, als du dir wünschen würdest. Das ist ein Signal, das es wert ist, aufmerksam zu bleiben."}${mentalRisk >= 3 ? " Wenn sich das über längere Zeit so anfühlt, kann ein Gespräch mit deiner Hausärztin oder deinem Hausarzt gut tun." : ""}</span>
       </div>`;
@@ -4064,12 +4237,13 @@
     const cat1 = [];
     (score.top_priorities || []).forEach(p => {
       const key = p.area_key || p.key;
-      if (cat1.length < 3 && selfTips[key] && !usedAreas.has(key)) { usedAreas.add(key); cat1.push(selfTips[key]); }
+      if (cat1.length < 3 && selfTips[key] && !usedAreas.has(key)) { usedAreas.add(key); cat1.push([...selfTips[key].slice(0, 2), key]); }
     });
-    if (cat1.length < 3 && riskOf('sleep_latency') >= 3 && !usedAreas.has('sleep')) { usedAreas.add('sleep'); cat1.push(selfTips.sleep); }
-    if (cat1.length < 3 && riskOf('nicotine_use') >= 3 && !usedAreas.has('lifestyle')) { usedAreas.add('lifestyle'); cat1.push(selfTips.lifestyle); }
+    if (cat1.length < 3 && riskOf('sleep_latency') >= 3 && !usedAreas.has('sleep')) { usedAreas.add('sleep'); cat1.push([...selfTips.sleep.slice(0, 2), 'sleep']); }
+    if (cat1.length < 3 && riskOf('nicotine_use') >= 3 && !usedAreas.has('lifestyle')) { usedAreas.add('lifestyle'); cat1.push([...selfTips.lifestyle.slice(0, 2), 'lifestyle']); }
     if (cat1.length === 0) cat1.push(["Dranbleiben, was gut läuft", "Deine Basis stimmt — halte deine Routinen und beobachte, was dir Energie gibt."]);
 
+    S.cat1Items = cat1;
     html += `<div class="t3-zone-title">🏠 1 · Das kannst du selbst tun</div>`;
     cat1.forEach(([t, d]) => {
       html += `<div class="hint-box" style="background:var(--accent-green-dim);border-left:3px solid var(--accent-green);border-radius:0;padding:13px 16px;margin-bottom:8px;">
@@ -4079,7 +4253,7 @@
 
     // Ernährungsweise-Hinweise (BfR-konform) als Teil von Kategorie 1
     const { html: supportHtml, bloodtestShown } = renderVitalitySupportBox(areas, result, suppFocus);
-    html += supportHtml;
+    html += S.support = supportHtml;
 
     // Kategorie 2 — Mit uns im Studio (genau EINE Empfehlung, genau EIN Button)
     const studioRec = {
@@ -4087,13 +4261,19 @@
       goal_fitness: ["Kraft & Ausdauer", "Professionelle Trainingsbegleitung mit Plan, Technik-Feedback und Progression."],
       goal_energy: ["Gesundheit & Fitness", "Training, das Energie gibt statt kostet — mit persönlicher Begleitung im Studio."],
       goal_longevity: ["Gesundheit & Fitness", "Langfristig vital bleiben: betreutes Training mit regelmäßiger Standortbestimmung."],
-      goal_prevention: ["Präventionskurse §20", "Strukturierter Einstieg in die Vorsorge — oft von der Krankenkasse bezuschusst."],
+      goal_prevention: ["Betreutes Training", "Vorsorge beginnt mit Bewegung: betreutes Training mit regelmäßiger Standortbestimmung – oder abwechslungsreiche Kurse in der Gruppe, denn gemeinsam macht Training mehr Spaß."],
       goal_supplements: ["Persönliche Einordnung", "Wir sprechen mit dir über Ernährung im Alltag und finden gemeinsam heraus, was dir guttut."],
       goal_curious: ["Kostenloses Probetraining", "Unverbindlich reinschnuppern und das Studio kennenlernen."]
     };
     Object.entries(window._snips.studio_rec).forEach(([k, s]) => {
       if (s.title && s.body) studioRec[k] = [s.title, s.body, Array.isArray(s.benefits) ? s.benefits : []];
     });
+    // v2.0.0 — Entscheidung Jörg 10.10.2026: Präventionskurse sind nicht die
+    // Kernkompetenz. Ein Textbaustein aus der Datenbank, der beim Ziel
+    // "Vorsorgen" noch auf §20 führt, wird hier auf betreutes Training umgelenkt.
+    if (/§\s*20|präventionskurs/i.test(String((studioRec.goal_prevention || [])[0] || '') + ' ' + String((studioRec.goal_prevention || [])[1] || ''))) {
+      studioRec.goal_prevention = ["Betreutes Training", "Vorsorge beginnt mit Bewegung: betreutes Training mit regelmäßiger Standortbestimmung – oder abwechslungsreiche Kurse in der Gruppe, denn gemeinsam macht Training mehr Spaß."];
+    }
     // v1.28.40: Bedürfnis-Ebene — starkes Antwort-Signal schlägt das Ziel-Programm.
     // Es bleibt bei genau EINER Empfehlung; sie trifft nur öfter das echte Bedürfnis.
     // Schutzregel (Geist von Pilotfreigabe 4.8): bei echtem mentalen Warnsignal (Stufe 3,
@@ -4111,8 +4291,9 @@
       || _txtT3.some(t => t.includes('schmerz') || t.includes('gelenk') || t.includes('rücken') || t.includes('beschwerden'));
     if (ageT3 >= 60 && areaScoreT3('activity') < 45 && _rehaAnlassT3 && studioRec['signal_reha']) {
       studioKeyT3 = 'signal_reha';
-    } else if (ageT3 >= 60 && areaScoreT3('activity') < 45 && !_rehaAnlassT3 && studioRec['goal_prevention']) {
-      studioKeyT3 = 'goal_prevention';
+    } else if (ageT3 >= 60 && areaScoreT3('activity') < 45 && !_rehaAnlassT3 && studioRec['goal_longevity']) {
+      // v2.0.0 — ohne Reha-Anlass betreutes Training statt Präventionskurs
+      studioKeyT3 = 'goal_longevity';
     } else if (riskOf('sitting_hours') >= 3 && areaScoreT3('activity') < 55 && studioRec['signal_ruecken']) {
       studioKeyT3 = 'signal_ruecken';
     } else if (worstAreaT3 === 'mental' && areaScoreT3('mental') < 50 && mentalRisk < 3 && studioRec['signal_entspannung']) {
@@ -4124,6 +4305,8 @@
     const rec2Benefits = (rec2[2] || []).slice(0, 3).map(b =>
       `<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-top:6px;"><span style="color:var(--accent-green);">✓</span> ${b}</div>`
     ).join('');
+    S.rec2 = rec2;
+    S.rec2Benefits = rec2Benefits;
     html += `<div class="t3-zone-title" style="margin-top:16px;">🏋️ 2 · Mit uns im Studio — professionelle Begleitung</div>`;
     html += `<div style="background:var(--brand-card2);border:1px solid rgba(59,158,255,0.25);border-radius:var(--radius-sm);padding:15px 16px;margin-bottom:8px;">
       <strong>${rec2[0]}</strong><br>
@@ -4150,6 +4333,7 @@
       const mL = window._snips.measurement.labor || {};
       cat3.push([mL.title || "Fachlich begleitete Laborkontrolle", mL.body || "Kann je nach Situation sinnvoll sein — sprich uns im Studio darauf an, wir beraten dich, was für dich passt."]);
     }
+    S.cat3Items = cat3;
     if (cat3.length > 0) {
       html += `<div class="t3-zone-title" style="margin-top:16px;">🔬 3 · Genauer hinschauen — vertiefende Messungen</div>`;
       cat3.forEach(([t, d]) => {
@@ -4161,6 +4345,7 @@
 
     // Studio-Leistungen — aufklappbar
     const studioId = 'studio_' + Date.now();
+    const _markStudio = html.length;
     html += `
       <div style="margin-bottom:12px;">
         <button onclick="const p=document.getElementById('${studioId}');const b=this;p.style.display=p.style.display==='none'?'block':'none';b.textContent=p.style.display==='none'?'Leistungen im LeVITA Studio ansehen ↓':'Leistungen ausblenden ↑';"
@@ -4170,6 +4355,22 @@
         <div id="${studioId}" style="display:none;">
     `;
     html += `
+      <div class="t3-leistung-row">
+        <div class="t3-leistung-icon">💪</div>
+        <div class="t3-leistung-body">
+          <div class="t3-leistung-title">Betreutes Training</div>
+          <div class="t3-leistung-desc">Mit Plan, Technik und persönlicher Begleitung durch Trainer und Sportwissenschaftler</div>
+        </div>
+        <a class="t3-link" href="https://le-vita.com/probetraining" target="_blank">→</a>
+      </div>
+      <div class="t3-leistung-row">
+        <div class="t3-leistung-icon">👥</div>
+        <div class="t3-leistung-body">
+          <div class="t3-leistung-title">Kurse in der Gruppe</div>
+          <div class="t3-leistung-desc">Abwechslungsreich – gemeinsam macht Training mehr Spaß</div>
+        </div>
+        <a class="t3-link" href="https://le-vita.com/probetraining" target="_blank">→</a>
+      </div>
       <div class="t3-leistung-row">
         <div class="t3-leistung-icon">🫧</div>
         <div class="t3-leistung-body">
@@ -4213,8 +4414,8 @@
       <div class="t3-leistung-row">
         <div class="t3-leistung-icon">📋</div>
         <div class="t3-leistung-body">
-          <div class="t3-leistung-title">§20 Präventionskurse <span class="t3-coming-soon">In Planung</span></div>
-          <div class="t3-leistung-desc">Online-Kurse werden sukzessive ausgebaut — von der Krankenkasse bezuschusst</div>
+          <div class="t3-leistung-title">Präventionskurse <span class="t3-coming-soon">In Planung</span></div>
+          <div class="t3-leistung-desc">Online-Kurse werden sukzessive ausgebaut</div>
         </div>
       </div>`;
 
@@ -4222,24 +4423,25 @@
 
 
     html += `</div></div>`; // Ende aufklappbare Studio-Leistungen
+    S.studioList = html.slice(_markStudio);
 
     // ── Hinweis auf die LeVITA-Angebote (v1.53.10) ──
     // Steht hinter den Studio-Leistungen, also im Angebotsteil und nicht in der
     // Auswertung. Fuer ALLE Nutzer identisch: kein Bezug zu Antworten, Scores,
     // bloodtest_hint oder top_priorities, keine Codes, keine Funnel-Events.
-    html += promoBlockHtml();
+    html += S.promo = promoBlockHtml();
 
 
     html += `${_mailLinkHtml}`;
     // v1.56.1 — Stehender Hinweis zu Vorerkrankungen und Medikamenten. Er steht
     // hier und NUR hier: bei den stehenden Hinweisen, nicht im Naehrstoff-Teil.
     // Dort gilt weiter ein Halbsatz je Thema, damit der Abschnitt lesbar bleibt.
-    html += `<div class="disclaimer"><strong>Wichtiger Hinweis:</strong> Diese Auswertung ist keine Diagnose und ersetzt keine medizinische Beratung. Sie dient der Orientierung und Hilfe zur Selbsthilfe. Die Schwerpunkte basieren auf Empfehlungen von WHO, DGE und dem Bundesinstitut für Risikobewertung.<br><br>Wenn du dauerhaft Medikamente einnimmst oder eine Vorerkrankung hast, sprich vor der Einnahme von Nahrungsergänzungsmitteln mit deiner Ärztin oder deinem Arzt. Das gilt unabhängig von diesem Check.</div>`;
+    html += S.disclaimer = `<div class="disclaimer"><strong>Wichtiger Hinweis:</strong> Diese Auswertung ist keine Diagnose und ersetzt keine medizinische Beratung. Sie dient der Orientierung und Hilfe zur Selbsthilfe. Die Schwerpunkte basieren auf Empfehlungen von WHO, DGE und dem Bundesinstitut für Risikobewertung.<br><br>Wenn du dauerhaft Medikamente einnimmst oder eine Vorerkrankung hast, sprich vor der Einnahme von Nahrungsergänzungsmitteln mit deiner Ärztin oder deinem Arzt. Das gilt unabhängig von diesem Check.</div>`;
     // v1.55.0 — Widerruf der Trainer-Einwilligung. Steht nur da, wenn es etwas
     // zu widerrufen gibt; der Zustand kommt beim Wiederaufruf aus der Edge.
     const _taNow = (result.submission && result.submission.trainer_access === true) || window._trainerAccess === true;
     if (_taNow) {
-      html += `
+      html += S.trainerRevoke = `
       <div style="margin-top:14px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);">
         <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin-bottom:10px;">
           Du hast zugestimmt, dass die Trainerinnen und Trainer von LeVITA deine Angaben einsehen dürfen. Das kannst du jederzeit zurücknehmen.
@@ -4248,14 +4450,547 @@
       </div>`;
     }
 
-    html += `
+    html += S.actions = `
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
         <button class="danger-btn" onclick="deleteMyData()">🗑 Daten löschen</button>
         <button class="danger-btn" onclick="resetVitalCheck()">🔄 Erneut testen →</button>
       </div>`;
 
     html += `</div>`; // Ende Tab 3
+
+    // v2.0.0 — Stufenmodell: dieselben Blöcke, neue Reihenfolge.
+    if (RESULT_STAGES_ENABLED) {
+      Object.assign(S, { result, areas, totalScore, bioAge, worst, scoreLabel, sc, mentalRisk, goalKey: heroGoalKey3, heroTitle: heroTitle3 });
+      return composeStagedResult(S);
+    }
     return html;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // v2.0.0 — STUFENMODELL. Setzt die Blöcke aus buildResultHtml (S) neu
+  // zusammen. Grundsätze (Konzept 10.10.2026):
+  //  1. Sicherheit steht nie hinter einer Stufe (Band, Red Flag, mentales
+  //     Wohlbefinden, Einzelsignale, Altershinweise mit ärztlichem Bezug).
+  //  2. Jede Zahl im Teaser ist aus den eigenen Antworten berechnet.
+  //  3. Stufe 1 erklärt, Stufe 2 handelt.
+  //  4. Der Bereich wird genannt, die Handlung nicht.
+  // ══════════════════════════════════════════════════════════════════════
+  const STAGE_NUM_WORDS = { 1: "einer", 2: "zwei", 3: "drei" };
+
+  // Das stärkste vorberechnete Szenario (Kombination oder Einzelhebel).
+  // Bevorzugt eines mit Bereichswerten, damit die Spinne es zeichnen kann.
+  function stageBestScenario() {
+    if (!simScenarios) return null;
+    const all = [...(simScenarios.combos || []), ...(simScenarios.levers || [])]
+      .filter(e => e && isFinite(Number(e.gain)) && Number(e.gain) > 0);
+    if (!all.length) return null;
+    const byGain = (a, b) => Number(b.gain) - Number(a.gain);
+    return all.filter(e => e.score_payload).sort(byGain)[0] || all.sort(byGain)[0];
+  }
+
+  function stageStrengths(areas) {
+    return areas.filter(a => a.key !== "bmi" && Number(a.score) >= 70)
+      .sort((a, b) => b.score - a.score).slice(0, 2);
+  }
+
+  // Fokusbereiche für Stufe 1: alle unter 55, höchstens drei. Gibt es keine,
+  // die zwei schwächsten unter 70. Sonst keine Auswahl.
+  function stageFocusSelection(areas) {
+    const sorted = [...areas].sort((a, b) => a.score - b.score);
+    const focus = sorted.filter(a => a.score < 55).slice(0, 3);
+    if (focus.length) return { list: focus, isFocus: true };
+    return { list: sorted.filter(a => a.score < 70).slice(0, 2), isFocus: false };
+  }
+
+  function stageSummaryHtml(S) {
+    const strengths = stageStrengths(S.areas);
+    const best = stageBestScenario();
+    // Bereichsnamen als Satzglied: "Alkohol / Nikotin trägt dich" liest sich falsch.
+    const N = { activity: "deine Bewegung", sleep: "dein Schlaf", nutrition: "deine Ernährung", vitamin_d: "dein Tageslicht",
+      mental: "deine mentale Balance", lifestyle: "dein Umgang mit Alkohol und Nikotin", micronutrients: "deine Nährstoffversorgung", metabolic: "deine Energie" };
+    const nm = (a, first) => { const t = N[a.key] || a.label; return `<strong>${first ? t.charAt(0).toUpperCase() + t.slice(1) : t}</strong>`; };
+    let s1;
+    if (strengths.length === 2) s1 = `${nm(strengths[0], true)} und ${nm(strengths[1], false)} tragen dich – darauf kannst du bauen.`;
+    else if (strengths.length === 1) s1 = `${nm(strengths[0], true)} trägt dich – darauf kannst du bauen.`;
+    else s1 = `Dein Ergebnis zeigt mehrere Bereiche mit Luft nach oben – ein klarer Ausgangspunkt.`;
+    const s2 = S.worst ? ` Am meisten Luft ist bei <strong>${S.worst.label}</strong>.` : "";
+    let s3 = "";
+    if (best && Number(best.gain) >= 1) {
+      const n = (best.question_keys || []).length || 1;
+      s3 = ` Mit ${STAGE_NUM_WORDS[n] || n} gezielten Veränderung${n > 1 ? "en" : ""} sind bei dir rund <strong style="color:var(--accent-blue);">${Math.round(Number(best.gain))} Punkte mehr</strong> realistisch.`;
+    }
+    return `<div class="stage-summary">
+        <div class="stage-kicker">Deine Einschätzung</div>
+        <p>${s1}${s2}${s3}</p>
+      </div>`;
+  }
+
+  function stageRadarHtml() {
+    const best = stageBestScenario();
+    const n = best ? ((best.question_keys || []).length || 1) : 0;
+    const caption = best && best.score_payload
+      ? `Die gestrichelte Linie zeigt, wohin du mit ${STAGE_NUM_WORDS[n] || n} Veränderung${n > 1 ? "en" : ""} kommst. Welche das sind, steht in deinem Vital-Plan.`
+      : `Je weiter außen ein Punkt liegt, desto stabiler wirkt dieser Bereich.`;
+    return `<div class="section-card">
+        <div class="section-header">
+          <div class="section-title">Deine Vitalitäts-Spinne</div>
+          <div style="font-size:11px;color:var(--text-muted);">9 Bereiche</div>
+        </div>
+        <canvas id="vitalChart" height="300"></canvas>
+        <div class="radar-legend" id="radarLegend"></div>
+        <div class="stage-caption">${caption}</div>
+      </div>`;
+  }
+
+  function stageStrengthsHtml(S) {
+    const st = stageStrengths(S.areas);
+    if (!st.length) return "";
+    return `<div class="stage-kicker">Deine Stärken</div>
+      <div class="stage-strengths">${st.map(a => `
+        <div class="stage-strength">
+          <div class="stage-strength-head"><span>${AREA_ICONS[a.key] || ""} ${a.label}</span><span style="color:${scoreBand(a.score).color};">${Math.round(a.score)}</span></div>
+          <div class="stage-strength-sub">${scoreBand(a.score).label}</div>
+        </div>`).join("")}
+      </div>`;
+  }
+
+  function stagePotentialHtml(S) {
+    const best = stageBestScenario();
+    const worst = S.worst;
+    if (!best && !worst) return "";
+    let body = "";
+    if (worst) {
+      body += `<div style="font-size:12px;color:var(--text-secondary);">Dein größter Ansatzpunkt</div>
+        <div style="font-size:19px;font-weight:700;margin:2px 0 12px;">${AREA_ICONS[worst.key] || ""} ${worst.label}</div>`;
+    }
+    if (best) {
+      const baseT = Number(simScenarios.base && simScenarios.base.total) || Number(S.totalScore);
+      const newT = Number(best.new_total);
+      const baseBio = simScenarios.base && Number(simScenarios.base.bio_age);
+      const dy = (isFinite(baseBio) && isFinite(Number(best.new_bio_age))) ? Math.round(baseBio - Number(best.new_bio_age)) : null;
+      const bioTxt = dy === null ? "" : dy >= 2 ? ` · Vitalitäts-Alter rund <strong style="color:var(--accent-green);">${dy} Jahre jünger</strong>`
+        : dy === 1 ? ` · Vitalitäts-Alter rund <strong style="color:var(--accent-green);">1 Jahr jünger</strong>` : "";
+      const keys = best.question_keys && best.question_keys.length ? best.question_keys : [best.question_key];
+      const n = keys.length;
+      body += `<div class="sim-projection" style="margin-top:0;">
+          <div class="sim-proj-num"><span style="color:var(--text-muted);">${Math.round(baseT)}</span> <span style="font-size:18px;color:var(--text-muted);">→</span> ${isFinite(newT) ? Math.round(newT) : "–"}</div>
+          <div class="sim-proj-meta"><strong>+${fmtGain(best.gain)} Punkte</strong> mit ${STAGE_NUM_WORDS[n] || n} Veränderung${n > 1 ? "en" : ""}${bioTxt}</div>
+        </div>`;
+      keys.forEach((k, i) => {
+        const l = (simScenarios.levers || []).find(x => x.question_key === k);
+        if (!l) return;
+        const area = l.area_label || (S.areas.find(a => a.key === l.area_key) || {}).label || "";
+        body += `<div class="stage-lever">
+            <div class="stage-lever-body">
+              <div class="stage-lever-title">Hebel ${i + 1} · ${escHtml(area)}</div>
+              <div class="stage-lock-line">${STAGE_LOCK_ICON} Was du änderst: im Vital-Plan</div>
+            </div>
+            <div class="stage-lever-gain">+${fmtGain(l.gain)}</div>
+          </div>`;
+      });
+      if (worst && !(simScenarios.levers || []).some(l => l.area_key === worst.key)) {
+        body += `<div class="sim-note">Bei <strong>${worst.label}</strong> hast du bereits die günstigste Antwort gegeben. Was dort weiterhilft, steht in deinem Vital-Plan.</div>`;
+      }
+      body += `<div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin:4px 0 10px;">Berechnet aus deinen Antworten, mit derselben Formel wie dein Ergebnis. Hebel addieren sich nicht einfach – die Kombination ist exakt gerechnet.</div>
+        <button type="button" class="stage-btn-outline" onclick="scrollToAiBox()">Meine Hebel freischalten</button>`;
+    }
+    return `<div class="stage-potential" id="stagePotential">
+        <div class="stage-kicker blue">Dein Potenzial</div>
+        ${body}
+      </div>`;
+  }
+
+  // Altershinweise mit ärztlichem Bezug stehen in Stufe 1 frei, auch wenn
+  // ihr Bereich nicht zur Auswahl gehört (Grundsatz 1).
+  function stageFreeAgeHintsHtml(S, selectedKeys) {
+    const result = S.result;
+    const age = Number(personalData.age || result?.submission?.age || 0);
+    if (!age) return "";
+    const w = Number(personalData.weight_kg || result?.submission?.weight_kg || 0);
+    const risks = {}, texts = {};
+    (result?.answers || []).forEach(a => { risks[a.question_key] = Number(a.risk_points || 0); texts[a.question_key] = String(a.answer_text || "").toLowerCase(); });
+    const rows = [], src = [];
+    if (!selectedKeys.includes("micronutrients") && AREA_INFO.micronutrients) {
+      const t = AREA_INFO.micronutrients.age(age, w, risks, texts);
+      if (t) { rows.push(`<div class="ai-age"><b>Vitamin B12:</b> ${t}</div>`); src.push("bfr_age"); }
+    }
+    if (!selectedKeys.includes("bmi") && age >= 70) {
+      rows.push(`<div class="ai-age"><b>Gewicht:</b> Ab 70 gilt in der Ernährungsmedizin ein BMI unter 22 als Anlass, genauer hinzuschauen (GLIM). In diesem Alter zählen Muskelkraft und Beweglichkeit mehr als eine niedrige Zahl auf der Waage.</div>`);
+      src.push("glim");
+    }
+    if (!rows.length) return "";
+    const srcHtml = src.map(k => SRC[k]).filter(Boolean)
+      .map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener" style="color:var(--text-muted);">${t}</a>`).join(" · ");
+    return `<div class="stage-age">
+        <div style="font-size:14px;font-weight:700;">Für dich mit ${age} Jahren besonders wichtig</div>
+        ${rows.join("")}
+        <div style="font-size:10.5px;color:var(--text-muted);margin-top:8px;">Quellen: ${srcHtml}</div>
+      </div>`;
+  }
+
+  function stageFreeSignalsHtml(S, selectedKeys) {
+    const html = S.areas.filter(a => !selectedKeys.includes(a.key))
+      .map(a => areaSignalsHtml(a.key, S.result)).join("");
+    return html ? `<div class="stage-signals"><div class="stage-kicker muted">Hinweise aus deinen Antworten</div>${html}</div>` : "";
+  }
+
+  function stageAreasHtml(S) {
+    const sel = stageFocusSelection(S.areas);
+    const keys = sel.list.map(a => a.key);
+    let html = `<div id="stageAreas"></div>`;
+    if (sel.list.length) {
+      html += `<div class="bereiche-header">
+          <div class="bereiche-header-label">${sel.isFocus ? "Deine Fokusbereiche" : "Deine Ansatzpunkte"} · Auswahl</div>
+          <div class="bereiche-wachstum-badge">${sel.list.length} von ${S.areas.length}</div>
+        </div>
+        <div class="areas-grid">${sel.list.map((a, i) => renderAreaCard(a, S.result, { lockTips: true, open: i === 0 })).join("")}</div>`;
+    }
+    html += stageFreeSignalsHtml(S, keys);
+    html += stageFreeAgeHintsHtml(S, keys);
+    const rest = S.areas.filter(a => !keys.includes(a.key));
+    if (rest.length) {
+      html += `<div class="stage-locked">
+          <div style="display:flex;align-items:center;gap:8px;color:var(--accent-blue);">${STAGE_LOCK_ICON}<span style="font-size:14px;font-weight:700;color:var(--text-primary);">${rest.length} weitere Bereiche in deinem Vital-Plan</span></div>
+          <div class="stage-chips">${rest.map(a => `<span class="stage-chip">${a.label}</span>`).join("")}</div>
+          <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;">Jeder Bereich mit Wert, Einordnung für dein Alter und konkreten Schritten – dazu deine Hebel und dein Fahrplan.</div>
+          <button type="button" class="stage-btn-outline" onclick="scrollToAiBox()">Alle Bereiche freischalten</button>
+        </div>`;
+    }
+    return html;
+  }
+
+  // Passende Studioleistungen zu den schwächsten Bereichen; Schwerpunkt
+  // betreutes Training und Kurse in der Gruppe (Entscheidung 10.10.2026).
+  function stageMatchedServices(S) {
+    const SERV = {
+      training: ["Betreutes Training", "Mit Plan, Technik und persönlicher Begleitung."],
+      kurse: ["Kurse in der Gruppe", "Abwechslungsreich und gemeinsam – Training in der Gruppe macht mehr Spaß."],
+      ernaehrung: ["Ernährungsberatung", "Erstgespräch kostenlos – passend zu deiner Ernährung."],
+      velus: ["VELUS JET Wasserstrahlmassage", "Tiefe Entspannung und Regeneration – nur bei uns."],
+      tanita: ["Tanita-Körperanalyse", "Muskelmasse und Körperfett – die Zahlen hinter deinem Ergebnis."]
+    };
+    const map = { activity: "training", nutrition: "ernaehrung", micronutrients: "ernaehrung", sleep: "velus", mental: "velus", bmi: "tanita", metabolic: "tanita", vitamin_d: "kurse", lifestyle: "training" };
+    const picks = [];
+    const add = k => { if (k && !picks.includes(k) && picks.length < 3) picks.push(k); };
+    [...S.areas].sort((a, b) => a.score - b.score).filter(a => a.score < 70).forEach(a => {
+      const k = map[a.key];
+      if (k === "velus" && a.key === "mental" && S.mentalRisk >= 3) return; // kein Verkauf bei Warnsignal
+      add(k);
+    });
+    add("training"); add("kurse"); add("tanita");
+    return picks.slice(0, 3).map(k => SERV[k]);
+  }
+
+  function stageStudioCardHtml(S) {
+    const rec = S.rec2 || ["Betreutes Training", "Gemeinsam deine Auswertung einordnen und den passenden Einstieg finden."];
+    const services = stageMatchedServices(S).map(([t, d]) => `
+        <div class="stage-service"><div class="stage-service-title">${t}</div><div class="stage-service-desc">${d}</div></div>`).join("");
+    return `<div class="stage-studio" id="stageStudio">
+        <div class="stage-step">
+          <div class="stage-step-num blue">3</div>
+          <div><div class="stage-step-title">Dein Gespräch im Studio</div><div class="stage-step-sub">Auch ohne Mail – 15 Minuten, kostenlos</div></div>
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">Unsere Trainer und Sportwissenschaftler ordnen dein Ergebnis ein und messen, was der Fragebogen nur schätzen kann.</div>
+        <div style="font-size:11px;color:var(--text-secondary);">Für dich passt besonders</div>
+        <div style="font-size:15px;font-weight:700;margin:2px 0 4px;">${rec[0]}</div>
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:10px;">${rec[1]}</div>
+        ${S.rec2Benefits || ""}
+        ${services}
+        <div id="stageStudioForm">${stageStudioFormHtml()}</div>
+        ${S.studioList || ""}
+        ${S.promo || ""}
+      </div>`;
+  }
+
+
+  // ── v2.0.0 Stufe 3: Anfrage an das Studio (Edge-Modus studio_request) ──
+  // Die freiwillige Trainer-Einwilligung steht hier, wo ihr Zweck entsteht.
+  function stageStudioFormHtml() {
+    const done = window._studioRequest || (latestResult && latestResult.studio_request) || null;
+    if (done) return stageStudioDoneHtml(done);
+    const name = escHtml((window._unlockInfo && window._unlockInfo.firstName) || personalData.first_name || "");
+    const radio = (n, v, label, sub, checked) => `
+      <label class="stage-choice">
+        <input type="radio" name="${n}" value="${v}"${checked ? " checked" : ""}>
+        <span><strong>${label}</strong>${sub ? `<br><span class="stage-choice-sub">${sub}</span>` : ""}</span>
+      </label>`;
+    return `
+      <div class="stage-form">
+        <div class="stage-form-legend">Was möchtest du?</div>
+        ${radio("sr_offer", "gespraech", "Ergebnisgespräch", "15 Minuten · kostenlos · auch ohne Mail", true)}
+        ${radio("sr_offer", "vital_analyse_plus", "Vital-Analyse Plus · 49,00 €", "rund 45 Minuten: Tanita, Griffkraft, Aufsteh- und Gleichgewichtstest, Ziel und Re-Check. Wird bei neuen und bestehenden Mitgliedschaften vollständig angerechnet.", false)}
+        <label class="stage-form-label" for="sr_name">Vorname</label>
+        <input type="text" id="sr_name" class="stage-input" autocomplete="given-name" maxlength="60" value="${name}">
+        <label class="stage-form-label" for="sr_phone">Telefon</label>
+        <input type="tel" id="sr_phone" class="stage-input" autocomplete="tel" maxlength="25" placeholder="0170 …">
+        <div class="stage-form-legend" style="margin-top:12px;">Wann passt es dir am besten?</div>
+        <div class="stage-slots">
+          <label class="stage-slot"><input type="radio" name="sr_slot" value="vormittags"><span>vormittags</span></label>
+          <label class="stage-slot"><input type="radio" name="sr_slot" value="nachmittags"><span>nachmittags</span></label>
+          <label class="stage-slot"><input type="radio" name="sr_slot" value="abends"><span>abends</span></label>
+        </div>
+        <div class="checkbox-row" style="margin-top:12px;">
+          <input type="checkbox" id="sr_c1">
+          <label for="sr_c1" style="font-size:12.5px;">LeVITA darf mich zur Terminabsprache anrufen.</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="sr_c2">
+          <label for="sr_c2" style="font-size:12.5px;">Die Trainerinnen und Trainer von LeVITA dürfen meine Angaben und mein Ergebnis einsehen, damit sie das Gespräch vorbereiten können. <span style="color:var(--text-muted);">Freiwillig, das Gespräch geht auch ohne, und ich kann es jederzeit widerrufen.</span></label>
+        </div>
+        <button type="button" class="stage-btn-blue" id="srBtn" onclick="submitStudioRequest()" style="width:100%;border:none;cursor:pointer;font-family:inherit;">Gespräch anfragen →</button>
+        <div id="sr-status"></div>
+      </div>`;
+  }
+
+  function stageStudioDoneHtml(r) {
+    const slot = r && (r.slot || r.preferred_slot);
+    const nm = r && r.name ? `, ${escHtml(r.name)}` : "";
+    const what = r && r.offer === "vital_analyse_plus" ? "deine Vital-Analyse Plus" : "dein Ergebnisgespräch";
+    return `<div class="stage-unlock" style="margin:10px 0 14px;">
+        <div class="stage-step" style="margin-bottom:6px;">
+          <div class="stage-step-num done">✓</div>
+          <div><div class="stage-step-title">Danke${nm} – wir melden uns</div>
+          <div class="stage-step-sub">Deine Anfrage für ${what} ist bei uns. Wir rufen dich an${slot ? `, am liebsten ${escHtml(slot)}` : ""}.</div></div>
+        </div>
+        ${window._stage === 1 ? `<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;background:rgba(0,0,0,0.18);border-radius:8px;padding:10px 12px;margin-top:8px;"><strong style="color:var(--text-primary);">Noch keinen Vital-Plan?</strong> Im Studio schalten wir ihn mit dir frei – dann bekommst du Pilot-ID und PIN für deinen Re-Check.</div>` : ""}
+      </div>`;
+  }
+
+  async function submitStudioRequest() {
+    const offer = document.querySelector('input[name="sr_offer"]:checked')?.value || "gespraech";
+    const slot = document.querySelector('input[name="sr_slot"]:checked')?.value || "";
+    const name = (document.getElementById("sr_name")?.value || "").trim().slice(0, 60);
+    const phone = (document.getElementById("sr_phone")?.value || "").trim();
+    const c1 = document.getElementById("sr_c1")?.checked === true;
+    const c2 = document.getElementById("sr_c2")?.checked === true;
+    const st = document.getElementById("sr-status");
+    const btn = document.getElementById("srBtn");
+    const fail = (msg) => { if (st) st.innerHTML = `<div class="status-msg info-box box-warning">${msg}</div>`; };
+    if (!name) return fail("Bitte gib deinen Vornamen an.");
+    if (!/^[+0-9][0-9 ()\/-]{5,24}$/.test(phone)) return fail("Bitte gib eine gültige Telefonnummer an.");
+    if (!slot) return fail("Bitte wähle, wann es dir am besten passt.");
+    if (!c1) return fail("Bitte bestätige, dass wir dich zur Terminabsprache anrufen dürfen.");
+    if (!latestResult || !latestResult.public_code) return fail("Es liegt kein Ergebnis vor. Bitte lade die Seite neu.");
+    if (btn) { btn.disabled = true; btn.textContent = "Wird gesendet …"; }
+    try {
+      await callFunction({
+        mode: "studio_request", public_code: latestResult.public_code,
+        pin: window._accessPin || null, client_token: window._clientToken || null,
+        first_name: name, phone, preferred_slot: slot, offer,
+        consent_contact: true, consent_trainer_access: c2
+      });
+      window._studioRequest = { name, slot, offer };
+      if (c2) window._trainerAccess = true;
+      trackEvent("studio_request_sent", { from_stage: window._stage, offer, trainer_access: c2 });
+      const box = document.getElementById("stageStudioForm");
+      if (box) box.innerHTML = stageStudioDoneHtml(window._studioRequest);
+    } catch (e) {
+      const m = String((e && e.message) || "");
+      fail(/PIN_REQUIRED|SESSION_EXPIRED/.test(m)
+        ? "Die Anfrage geht nur aus deiner aktuellen Sitzung. Ruf uns gern direkt an oder komm einfach vorbei."
+        : "Das hat gerade nicht geklappt. Bitte versuche es gleich noch einmal oder schreib uns an info@le-vita.com.");
+      if (btn) { btn.disabled = false; btn.textContent = "Gespräch anfragen →"; }
+    }
+  }
+
+  // ── v2.0.0: Fahrplan auf der Seite — derselbe Text wie in der Mail ──
+  function stageFahrplanHtml(S) {
+    const fp = (window._unlockInfo && Array.isArray(window._unlockInfo.fahrplan) && window._unlockInfo.fahrplan.length)
+      ? window._unlockInfo.fahrplan
+      : (Array.isArray(S.result.fahrplan) ? S.result.fahrplan : []);
+    if (fp.length) {
+      return `<div class="stage-fahrplan">
+          <div class="stage-kicker" style="color:var(--accent-amber);">Dein Fahrplan</div>
+          <div style="font-size:16px;font-weight:700;margin-bottom:12px;">${S.goalTeaser ? `Für „${S.goalTeaser}“` : "Woche für Woche"}</div>
+          ${fp.map((f, i) => `
+            <div class="stage-fp-row${i === fp.length - 1 ? " last" : ""}">
+              <div class="stage-fp-dot${i === 0 ? " first" : ""}"></div>
+              <div><div class="stage-fp-label">${escHtml(f.label || "")}</div><div class="stage-fp-text">${escHtml(f.text || "")}</div></div>
+            </div>`).join("")}
+        </div>`;
+    }
+    if (S.planPromised) {
+      return `<div class="stage-plan-note"><strong>Dein 6-Wochen-Fahrplan für „${S.goalTeaser}“</strong> steht in deiner Mail – Woche für Woche, mit Ausblick bis zu deinem Re-Check.</div>`;
+    }
+    return "";
+  }
+  function stageLadderHtml(S) {
+    const best = stageBestScenario();
+    const row = S.teaserRow;
+    let rows = "";
+    if (best && Number(best.gain) >= 1) {
+      const n = (best.question_keys || []).length || 1;
+      rows += row("🎯", n > 1 ? `Deine ${n} Hebel` : "Dein Hebel", `was du genau änderst, für +${fmtGain(best.gain)} Punkte`);
+    }
+    rows += S.planPromised
+      ? row("🗓️", `Dein 6-Wochen-Fahrplan für „${S.goalTeaser}“`, "konkret, Schritt für Schritt – mit Ausblick bis zu deinem Re-Check")
+      : row("🗓️", `Deine konkreten nächsten Schritte für „${S.goalTeaser}“`, "was du selbst tun kannst, wo wir helfen");
+    rows += row("📊", "Alle neun Bereiche", "mit Wert, Einordnung für dein Alter und konkreten Schritten");
+    rows += row("💬", "Deine persönliche Einordnung", "geschrieben auf deine Antworten, per Mail");
+    rows += row("🔑", "Pilot-ID und PIN", "für deinen Vergleich in 8–12 Wochen");
+    const box = S.buildAiBox(rows, {
+      badge: "✦ Kostenlos",
+      title: "Was du konkret tust – sofort hier und per Mail",
+      btn: "Meinen Vital-Plan freischalten →",
+      note: "Kostenlos &nbsp;·&nbsp; sofort hier sichtbar &nbsp;·&nbsp; die Mail kommt in wenigen Minuten<br>Ohne Vital-Plan bleibt dieses Ergebnis nur auf diesem Bildschirm."
+    });
+    return `<div class="stage-ladder-title">Wie geht es weiter?</div>
+      <div style="font-size:13px;color:var(--text-secondary);line-height:1.55;margin-bottom:14px;">Drei Stufen – du entscheidest, wie weit du gehst.</div>
+      <div class="stage-done"><div class="stage-step">
+        <div class="stage-step-num done">✓</div>
+        <div><div class="stage-step-title">1 · Deine Einschätzung</div><div class="stage-step-sub">Erledigt – du weißt, wo du stehst.</div></div>
+      </div></div>
+      <div class="stage-step" style="margin-top:6px;">
+        <div class="stage-step-num">2</div>
+        <div><div class="stage-step-title">Dein Vital-Plan</div><div class="stage-step-sub">Was du konkret tust</div></div>
+      </div>
+      ${box}
+      ${stageStudioCardHtml(S)}`;
+  }
+
+  function stageUnlockBannerHtml(S) {
+    const info = window._unlockInfo || {};
+    const pin = info.pin || window._accessPin || null;
+    return `<div class="stage-unlock">
+        <div class="stage-step" style="margin-bottom:8px;">
+          <div class="stage-step-num done">✓</div>
+          <div><div class="stage-step-title">Dein Vital-Plan ist freigeschaltet</div>
+          <div class="stage-step-sub">Alles ist ab sofort hier sichtbar.${info.email ? ` Die Mail mit deiner persönlichen Einordnung ist unterwegs an <strong>${escHtml(info.email)}</strong> – schau ggf. auch im Spam-Ordner.` : ""}</div></div>
+        </div>
+        ${pin ? accessPinBlockHtml(pin, S.result.public_code) : ""}
+        ${marketingOptinHtml('after_mail')}
+        ${recheckReminderHtml()}
+      </div>`;
+  }
+
+  function stageWissenHtml(S) {
+    const items = (S.cat3Items && S.cat3Items.length) ? S.cat3Items
+      : [["Tanita-Körperanalyse im Studio", "Muskelmasse, Körperfett und Wasserhaushalt – die Zahlen hinter deinem Ergebnis."]];
+    const vermuten = S.worst ? `Dass sich bei dir über ${S.worst.label} am meisten bewegen lässt.` : "Dass deine Basis stabil ist und Feinschliff genügt.";
+    return `<div class="stage-wissen">
+        <div style="font-size:15px;font-weight:700;">Was wir wissen – und was wir messen könnten</div>
+        <div class="stage-wissen-grid">
+          <div class="k" style="color:var(--accent-green);">Wir wissen</div><div class="v">Wie du dich bewegst, schläfst, isst und erholst – aus deinen Antworten.</div>
+          <div class="k" style="color:var(--accent-amber);">Wir vermuten</div><div class="v">${vermuten}</div>
+          <div class="k" style="color:#a78bfa;">Wir könnten messen</div><div class="v">${items.map(([t, d]) => `<strong style="color:var(--text-primary);">${t}:</strong> ${d}`).join("<br><br>")}</div>
+        </div>
+      </div>`;
+  }
+
+  function stageFooterHtml(S) {
+    return `${S.disclaimer || ""}${S.trainerRevoke || ""}${S.actions || ""}`;
+  }
+
+  function composeStagedResult(S) {
+    const stage = window._stage === 2 ? 2 : 1;
+    let html = "";
+    if (stage === 1) {
+      html += S.safetyBand || "";
+      html += S.resultBuddy || "";
+      html += S.levelBadge || "";
+      html += S.scoreRing || "";
+      html += S.wellbeing || "";
+      html += S.angaben || "";
+      html += S.levelInfo || "";
+      html += S.lowIndex || "";
+      html += stageSummaryHtml(S);
+      html += S.mental || "";
+      html += S.redFlag || "";
+      const doctorItem = (S.cat3Items || []).find(([t]) => t === "Ärztliche Abklärung zuerst");
+      if (doctorItem) {
+        html += `<div class="hint-box" style="background:rgba(167,139,250,0.07);border-left:3px solid var(--accent-purple);border-radius:0;padding:13px 16px;margin-bottom:16px;">
+          <strong>${doctorItem[0]}</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${doctorItem[1]}</span></div>`;
+      }
+      html += stageRadarHtml();
+      html += S.radarExplain || "";
+      html += stageStrengthsHtml(S);
+      html += stagePotentialHtml(S);
+      html += stageAreasHtml(S);
+      html += stageLadderHtml(S);
+      html += stageFooterHtml(S);
+      return html;
+    }
+
+    // ── Stufe 2 ──
+    if (window._unlockInfo) html += stageUnlockBannerHtml(S);
+    else if (window._isReviewMode && window._accessPin) html += S.recheckBanner || "";
+    else if (S.mailBox) {
+      // Verknüpfter Re-Check ohne neue Mail: der neue Vital-Plan wird hier angefordert.
+      html += `<div style="margin-bottom:14px;">${S.mailBox}</div>`;
+    }
+    html += S.linkInvalid || "";
+    html += S.safetyBand || "";
+    html += `<div class="result-tabs">
+        <button class="result-tab active" id="rtab-uebersicht" onclick="switchResultTab('uebersicht')">Übersicht</button>
+        <button class="result-tab" id="rtab-plan" onclick="switchResultTab('plan')">Mein Plan</button>
+      </div>`;
+
+    html += `<div class="result-tab-content active" id="rtc-uebersicht">`;
+    html += S.resultBuddy || "";
+    html += S.levelBadge || "";
+    html += S.scoreRing || "";
+    html += S.wellbeing || "";
+    html += S.verlauf || "";
+    html += S.angaben || "";
+    html += S.levelInfo || "";
+    html += S.lowIndex || "";
+    html += stageSummaryHtml(S);
+    html += S.mental || "";
+    html += S.redFlag || "";
+    html += S.radar || "";
+    html += S.radarExplain || "";
+    html += S.areasAll || "";
+    html += S.answers || "";
+    html += `</div>`;
+
+    html += `<div class="result-tab-content" id="rtc-plan">`;
+    html += S.hero || "";
+    html += S.simulator || "";
+    html += stageFahrplanHtml(S);
+    const more = (S.cat1Items || []).filter(it => !S.worst || it[2] !== S.worst.key);
+    if (more.length) {
+      html += `<div class="t3-zone-title">Deine weiteren Hebel</div>`;
+      more.forEach(([t, d]) => {
+        html += `<div class="hint-box" style="background:var(--accent-green-dim);border-left:3px solid var(--accent-green);border-radius:0;padding:13px 16px;margin-bottom:8px;">
+          <strong>${t}</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${d}</span></div>`;
+      });
+    }
+    html += S.support || "";
+    html += S.watch || "";
+    html += stageWissenHtml(S);
+    if (!window._unlockInfo && window._isReviewMode && window._accessPin) {
+      html += `<div class="t3-zone-title">Dein Zugang und dein Re-Check</div>${S.mailBox || ""}`;
+    }
+    html += stageStudioCardHtml(S);
+    html += S.feedback || "";
+    html += `</div>`;
+    html += stageFooterHtml(S);
+    return html;
+  }
+
+  // Nach bestätigtem Mailversand: Seite sofort auf Stufe 2 umstellen.
+  function unlockStage2(info) {
+    if (!RESULT_STAGES_ENABLED || !latestResult) return;
+    window._stageUnlocked = true;
+    window._unlockInfo = info || {};
+    trackEvent('stage2_unlocked', {});
+    showResult(latestResult, { rerender: true });
+    setTimeout(() => {
+      switchResultTab('plan');
+      showFeedbackBox();
+      document.getElementById('result-area')?.scrollIntoView({ behavior: 'smooth' });
+    }, 60);
+  }
+
+  // Misst, ob die Potenzial-Box in Stufe 1 überhaupt gesehen wird.
+  function initStageTracking() {
+    if (!RESULT_STAGES_ENABLED || window._stage !== 1) return;
+    const el = document.getElementById('stagePotential');
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const ob = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { trackEvent('stage1_potential_view'); ob.disconnect(); } });
+    }, { threshold: 0.5 });
+    ob.observe(el);
   }
 
   // ══ Bewertungsskala — EINE Quelle für Farbe UND Wort (v1.32.4) ══════════
@@ -4564,7 +5299,10 @@
     metabolic: "Deine Energie verteilt sich gleichmäßiger über den Tag."
   };
 
-  function renderAreaCard(area, result) {
+  // v2.0.0 — opts.lockTips: Stufe 1 zeigt die Einordnung, die Schritte stehen
+  // im Vital-Plan. opts.open: Karte startet aufgeklappt.
+  function renderAreaCard(area, result, opts) {
+    opts = opts || {};
     // v1.32.4 — Karte folgt jetzt derselben Skala wie Legende und Mail.
     const band = scoreBand(area.score);
     let cls = band.cls, statusTxt = `${band.badge} ${band.label}`;
@@ -4602,17 +5340,20 @@
     // dem good-Zweig ("Energie beobachten") waren dort Fuellmaterial.
     // v1.46.0 — Die Vertiefung (areaInfoHtml) steht in JEDER Karte; die
     // Tipps weiterhin nur unter 85 Punkten (sonst Füllmaterial, v1.41.4).
-    const _noTips = area.key !== "bmi" && Number(area.score) >= 85;
+    const _noTips = (area.key !== "bmi" && Number(area.score) >= 85) || opts.lockTips === true;
     const _noDetail = false;
+    const _lockLine = (opts.lockTips === true && !(area.key !== "bmi" && Number(area.score) >= 85))
+      ? `<div class="stage-lock-line">${STAGE_LOCK_ICON} Deine Schritte für diesen Bereich stehen in deinem Vital-Plan.</div>` : "";
     const detailHtml = `
-        <div class="area-detail" id="detail-${area.key}">
+        <div class="area-detail${opts.open ? ' open' : ''}" id="detail-${area.key}">
           ${_noTips ? "" : `<div class="insight-label">⚡ Sofort umsetzen</div>
           <div class="insight-text">${getInsightNow(area.key, area.score, result?.bmi, result)}</div>
           <div class="insight-label">📅 Mittelfristig</div>
           <div class="insight-text">${getInsightSoon(area.key, area.score, result?.bmi, result)}</div>`}
           ${areaInfoHtml(area.key, result)}
+          ${_lockLine}
         </div>
-        <div class="tap-hint" id="hint-${area.key}">Mehr erfahren ↓</div>`;
+        <div class="tap-hint" id="hint-${area.key}">${opts.open ? 'Weniger anzeigen ↑' : 'Mehr erfahren ↓'}</div>`;
     return `
       <div class="area-card ${cls}"${_noDetail ? ` style="cursor:default;"` : ` onclick="toggleAreaDetail('detail-${area.key}')"`}>
         <div class="area-card-header">
@@ -5341,7 +6082,7 @@
   }
 
   function goToRadar() {
-    document.getElementById('rtab-bereiche')?.click();
+    (document.getElementById('rtab-bereiche') || document.getElementById('rtab-uebersicht'))?.click();
     setTimeout(() => document.getElementById('vitalChart')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 140);
   }
 
@@ -5649,7 +6390,12 @@
     if (!leg) return;
     let items = `<span class="leg-ist"><i></i>Heute</span>`;
     if (radarLayerPrev && window._prevAreaMap) items = `<span class="leg-prev"><i></i>Vorher</span>` + items;
-    if (radarLayerPot && getPotentialAreaMap()) items += `<span class="leg-pot"><i></i>Potenzial (Simulation)</span>`;
+    if (radarLayerPot && getPotentialAreaMap()) {
+      const _n = simActiveKeys.length;
+      const _potLabel = (RESULT_STAGES_ENABLED && window._stage === 1)
+        ? `Mit ${STAGE_NUM_WORDS[_n] || _n} Veränderung${_n > 1 ? 'en' : ''}` : 'Potenzial (Simulation)';
+      items += `<span class="leg-pot"><i></i>${_potLabel}</span>`;
+    }
     leg.innerHTML = items;
   }
 
@@ -5691,7 +6437,7 @@
       const note = document.createElement("div");
       note.id = "potNote";
       note.style.cssText = "font-size:12px;color:var(--text-muted);text-align:center;margin-top:8px;line-height:1.5;";
-      note.innerHTML = `Wähle zuerst im Potenzial-Simulator einen Hebel — <a onclick="document.getElementById('rtab-ergebnis').click();setTimeout(()=>document.getElementById('simBox')?.scrollIntoView({behavior:'smooth',block:'center'}),120);" style="color:var(--accent-blue);cursor:pointer;text-decoration:underline;">dorthin wechseln →</a>`;
+      note.innerHTML = `Wähle zuerst im Potenzial-Simulator einen Hebel — <a onclick="(document.getElementById('rtab-ergebnis')||document.getElementById('rtab-plan'))?.click();setTimeout(()=>document.getElementById('simBox')?.scrollIntoView({behavior:'smooth',block:'center'}),120);" style="color:var(--accent-blue);cursor:pointer;text-decoration:underline;">dorthin wechseln →</a>`;
       const host = document.getElementById("radarLegend");
       if (host && host.parentNode) host.parentNode.appendChild(note);
       return;
@@ -5806,6 +6552,7 @@
     simScenarios=null; simActiveKeys=[]; simGoalSaved=null; simInteractTracked=false;
     radarLayerPrev=false; radarLayerPot=false;
     window._previousData=null; window._linkStatus=null; window._prevAreaMap=null; window._lastResultData=null;
+    window._stage = 1; window._stageUnlocked = false; window._unlockInfo = null;   // v2.0.0
     if (!keepPreviousLink) {
       window._previousLink=null; window._recheckPrefill=null;
       const rn = document.getElementById('recheckQuizNote'); if (rn) rn.remove();
@@ -5845,7 +6592,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer">Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v1.56.3</footer>
+<footer class="app-footer">Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.0.0</footer>
 
 
 </body>
