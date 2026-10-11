@@ -740,6 +740,22 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.5.0 (11.10.2026): Check zentral unter app.logivita.de/check/, von le-vita.com
+       per iFrame (fremde Herkunft) eingebettet. Das Einbettungs-Skript reicht die
+       Parameter der Seite durch und ergänzt embed_host / embed_ref / embed_url;
+       Herkunft, Referrer, Umgebung (logivita.de = prod), Teilen- und Kalenderlinks
+       nutzen diese Angaben. Gleiche-Herkunft-Weg (window.parent) bleibt als Rückfall.
+       Gehört zu edge-2026-10-10.5 (app.logivita.de in der CORS-Liste).
+
+       v2.4.2 (10.10.2026): Namen je Teil groß ("Anna-Lena", "von der Heide"), wie edge-2026-10-10.4.
+
+       v2.4.1 (10.10.2026, aus dem Live-Test auf der Testseite): "Am meisten Luft"
+       nur bei Bereichen unter 70, die nicht zugleich Stärke sind (sonst "Alle
+       Bereiche stehen stabil"); Potenzial-Box ohne "größter Ansatzpunkt" ab 70;
+       Vitalitäts-Alter ohne Jubel bei ärztlichem Vorrang; Verlauf nennt "heute" /
+       "vor N Tagen" statt immer "vor ca. 1 Woche"; Verweis auf den alten Reiter
+       "Meine Bereiche" im Stufenmodell ersetzt.
+
        v2.4.0 (10.10.2026, Paket "Vereinfachung" nach zweiter externer Einschätzung):
        je Stufe EIN Hauptschritt — Stufe 1 "Meinen Vital-Plan anfordern", Stufe 2
        "Mein Ziel festlegen" (Knopf in "Das bedeutet dein Ergebnis" + Simulator-Knopf
@@ -1907,7 +1923,7 @@
     const ok = confirm('Ein neuer Check startet von vorn: dein bisheriger Verlauf wird nicht fortgeführt und die Werte lassen sich später nicht vergleichen.\n\nTrotzdem neu starten?');
     if (!ok) return;
     try { trackEvent('recheck_abandoned_no_pin'); } catch (e) { /* still */ }
-    window.location.href = window.location.pathname;
+    window.location.href = selfUrlKeepEmbed();
   }
 
   function pinKey(event, index) {
@@ -1979,6 +1995,36 @@
   // haben, dürfen wir die Adresse der Elternseite lesen — die eigenen
   // Parameter haben dabei immer Vorrang. Läuft die Seite eigenständig oder
   // fremdeingebettet, greift der Versuch ins Leere und alles bleibt beim Alten.
+  // v2.5.0 — Der Check liegt zentral auf app.logivita.de/check/ und wird von
+  // le-vita.com per iFrame eingebettet (fremde Herkunft). Das Einbettungs-Skript
+  // auf le-vita.com reicht deshalb seine Parameter in die iFrame-Adresse durch
+  // und ergänzt embed_host, embed_ref (Referrer der Seite) und embed_url (Adresse
+  // der Seite für Teilen- und Kalenderlinks). Beim Laden einmal gemerkt, weil
+  // spätere replaceState-Aufrufe die Adresse leeren.
+  window._embed = (function () {
+    try {
+      const q = new URLSearchParams(window.location.search);
+      const host = (q.get('embed_host') || '').toLowerCase();
+      const okHost = /(^|\.)(le-vita\.com|logivita\.de|github\.io)$/.test(host);
+      const url = q.get('embed_url') || '';
+      return okHost ? { host, ref: (q.get('embed_ref') || '').slice(0, 200),
+        url: /^https:\/\/[^/]*(le-vita\.com|logivita\.de|github\.io)\//.test(url) ? url.split(/[?#]/)[0] : '' } : null;
+    } catch (e) { return null; }
+  })();
+  // Öffentliche Adresse des Checks (für Teilen, Kalender): eingebettet die Seite auf le-vita.com
+  function publicPageUrl() {
+    if (window._embed && window._embed.url) return window._embed.url;
+    return location.origin + location.pathname;
+  }
+  // Neustart im iFrame, ohne die Einbettungs-Angaben zu verlieren
+  function selfUrlKeepEmbed() {
+    if (!window._embed) return window.location.pathname;
+    const q = new URLSearchParams({ embed_host: window._embed.host });
+    if (window._embed.url) q.set('embed_url', window._embed.url);
+    if (window._embed.ref) q.set('embed_ref', window._embed.ref);
+    return window.location.pathname + '?' + q.toString();
+  }
+
   function pageParams() {
     const own = new URLSearchParams(window.location.search);
     try {
@@ -1997,7 +2043,8 @@
       if (window.parent && window.parent !== window && window.parent.location.hostname) {
         return window.parent.location.hostname;
       }
-    } catch (e) { /* andere Herkunft — eigener Hostname ist das Beste, was wir haben */ }
+    } catch (e) { /* andere Herkunft — Angabe des Einbettungs-Skripts nutzen */ }
+    if (window._embed && window._embed.host) return window._embed.host;   // v2.5.0
     return location.hostname;
   }
 
@@ -2009,6 +2056,7 @@
         return window.parent.document.referrer || document.referrer || '';
       }
     } catch (e) { /* andere Herkunft */ }
+    if (window._embed) return window._embed.ref || '';   // v2.5.0: eigener Referrer wäre nur le-vita.com
     return document.referrer || '';
   }
 
@@ -2104,7 +2152,7 @@
         referrer: (function(){ const r = pageReferrer(); return r ? String(r).slice(0, 200) : undefined; })(), // v1.33.0: Rohwert — nur damit lassen sich organische Suche, Maps und Direkteinstieg trennen (undefined wird von JSON.stringify entfernt)
         device: window.innerWidth < 600 ? 'mobile' : 'desktop',
         is_internal: window._isInternal === true ? true : undefined, // Sofort-Fix 5: Testdaten markieren (undefined wird von JSON.stringify entfernt)
-        env: (function(){ const h = pageHostname(); return h.endsWith('le-vita.com') ? 'prod' : h.endsWith('github.io') ? 'dev' : 'local'; })(), // v1.33.0: Hostname der einbettenden Seite — im iFrame ist der eigene immer 'dev'
+        env: (function(){ const h = pageHostname(); return (h.endsWith('le-vita.com') || h.endsWith('logivita.de')) ? 'prod' : h.endsWith('github.io') ? 'dev' : 'local'; })(), // v1.33.0: Hostname der einbettenden Seite — im iFrame ist der eigene immer 'dev'
         ...(window._utm || {})
       };
       await supabaseClient.from('funnel_events').insert({
@@ -3558,7 +3606,7 @@
     const growthCount = areas.filter(a => a.score < 75).length;
     const bioColor = bioAge && bioAge < personalData.age ? "var(--accent-green)" : "var(--accent-amber)";
 
-    const capName = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
+    const capName = (s) => s ? s.split(/([\s-])/).map((p, i) => !p || /^[\s-]$/.test(p) ? p : (i > 0 && /^(von|van|der|den|de|zu|zum|zur|vom|und)$/i.test(p)) ? p.toLowerCase() : p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join("") : "";   // v2.4.2: Doppelnamen
     const name = [capName(personalData.first_name), capName(personalData.last_name)].filter(Boolean).join(" ");
     const goalLabels = { goal_energy:"⚡ Mehr Energie", goal_weight:"⚖️ Abnehmen / Figur", goal_fitness:"💪 Fitter werden", goal_supplements:"💊 Nährstoffstatus", goal_prevention:"🛡️ Vorsorge", goal_longevity:"🌿 Longevity", goal_curious:"🔍 Neugier" };
     const goalLabel = personalData.goal_key && goalLabels[personalData.goal_key] ? goalLabels[personalData.goal_key] : "";
@@ -4550,7 +4598,11 @@
     const b = Number(bioAge), a = Number(age) || 0;
     const yrs = n => `${n} ${n === 1 ? "Jahr" : "Jahre"}`;
     let line = "", color = "var(--accent-green)";
-    if (a && b < a) {
+    if (window._doctorFirst) {
+      // v2.4.1 — bei ärztlichem Vorrang keine Feier: erst abklären, dann weiter
+      line = "Ein Orientierungswert – wichtiger ist jetzt der Hinweis zur ärztlichen Abklärung.";
+      color = "var(--text-secondary)";
+    } else if (a && b < a) {
       line = `Rund ${yrs(a - b)} jünger als dein Kalender – darauf kannst du bauen.`;
     } else if (a && b === a) {
       line = "Genau im Takt deines Kalenders.";
@@ -4615,7 +4667,10 @@
     if (strengths.length === 2) s1 = `${nm(strengths[0], true)} und ${nm(strengths[1], false)} tragen dich – darauf kannst du bauen.`;
     else if (strengths.length === 1) s1 = `${nm(strengths[0], true)} trägt dich – darauf kannst du bauen.`;
     else s1 = `Dein Ergebnis zeigt mehrere Bereiche mit Luft nach oben – ein klarer Ausgangspunkt.`;
-    const s2 = S.worst ? ` Am meisten Luft ist bei <strong>${S.worst.label}</strong>.` : "";
+    // v2.4.1 — nur wenn der Bereich wirklich Luft hat (< 70) und nicht zugleich als Stärke genannt wurde
+    const s2 = (S.worst && Number(S.worst.score) < 70 && !strengths.some(a => a.key === S.worst.key))
+      ? ` Am meisten Luft ist bei <strong>${S.worst.label}</strong>.`
+      : (S.worst && Number(S.worst.score) >= 70 ? ` Alle Bereiche stehen stabil – jetzt geht es ums Halten.` : "");
     let s3 = "";
     if (best && Number(best.gain) >= 1) {
       const n = (best.question_keys || []).length || 1;
@@ -4691,7 +4746,7 @@
     const worst = S.worst;
     if (!best && !worst) return "";
     let body = "";
-    if (worst) {
+    if (worst && Number(worst.score) < 70) {
       body += `<div style="font-size:12px;color:var(--text-secondary);">Dein größter Ansatzpunkt</div>
         <div style="font-size:19px;font-weight:700;margin:2px 0 12px;">${AREA_ICONS[worst.key] || ""} ${worst.label}</div>`;
     }
@@ -5811,7 +5866,9 @@
     const prevTotal = Math.round(Number(prev.total_score));
     const curTotal = Math.round(Number(totalScore));
     const delta = Math.round((Number(totalScore) - Number(prev.total_score)) * 10) / 10;
-    const weeks = Math.max(1, Math.round((Date.now() - new Date(prev.created_at).getTime()) / (7 * 24 * 3600 * 1000)));
+    const days = Math.max(0, Math.round((Date.now() - new Date(prev.created_at).getTime()) / (24 * 3600 * 1000)));
+    const weeks = Math.max(1, Math.round(days / 7));
+    const agoTxt = days < 1 ? 'heute' : days < 7 ? `vor ${days} Tag${days === 1 ? '' : 'en'}` : `vor ca. ${weeks} Woche${weeks === 1 ? '' : 'n'}`;
     const stable = Math.abs(delta) < 2;
     const deltaHtml = stable
       ? `<span class="verlauf-delta-stable">stabil gehalten</span>`
@@ -5825,7 +5882,7 @@
       // Erfolgsgeschichte des Checks und steht deshalb groß oben in der Karte.
       // Unter 4 Wochen Abstand nicht feiern (gleiche Vorsichtsregel wie die Mail):
       // dann ist eine geänderte Antwort wahrscheinlicher als eine echte Veränderung.
-      if (bd < 0 && weeks >= 4) {
+      if (bd < 0 && days >= 28) {
         const n = -bd;
         youngerHtml = `<div class="verlauf-younger" style="background:var(--accent-green-dim);border:1px solid rgba(34,201,122,0.35);border-radius:10px;padding:12px 14px;margin:4px 0 10px;">
           <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Dein Vitalitäts-Alter</div>
@@ -5847,14 +5904,14 @@
       <div class="verlauf-card">
         <div class="verlauf-head">
           <div class="verlauf-title">📈 Dein Verlauf</div>
-          <div class="verlauf-date">Letzter Check: ${prevDate} · vor ca. ${weeks} Woche${weeks === 1 ? '' : 'n'}</div>
+          <div class="verlauf-date">Letzter Check: ${prevDate} · ${agoTxt}</div>
         </div>
         ${youngerHtml}
         <div class="verlauf-row" style="font-size:15px;">Vitalitäts-Index: ${prevTotal} → <strong style="color:var(--text-primary);font-size:17px;">${curTotal}</strong> ${deltaHtml}</div>
         ${bioHtml}
         ${wbHtml}
         ${window._weightCarried ? `<div style="font-size:11.5px;color:var(--accent-amber);line-height:1.5;margin-top:8px;">Dein Gewicht ist unverändert vom letzten Check übernommen. Der BMI-Vergleich sagt deshalb nichts über eine echte Veränderung — trag beim nächsten Check dein aktuelles Gewicht ein.</div>` : ''}
-        <div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">Die Bereichs-Entwicklung siehst du unter „Meine Bereiche“ — dort kannst du in der Spinne die Vorher-Ebene einblenden.</div>
+        <div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">${RESULT_STAGES_ENABLED ? 'Die Bereichs-Entwicklung siehst du in der Spinne – dort kannst du die Vorher-Ebene einblenden.' : 'Die Bereichs-Entwicklung siehst du unter „Meine Bereiche“ — dort kannst du in der Spinne die Vorher-Ebene einblenden.'}</div>
       </div>`;
   }
 
@@ -6071,7 +6128,7 @@
       const end = new Date(start.getTime() + 24 * 3600 * 1000);
       const ymd = (d) => d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
       const stamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-      const url = location.origin + location.pathname + (code ? '?code=' + encodeURIComponent(code) : '');
+      const url = publicPageUrl() + (code ? '?code=' + encodeURIComponent(code) : '');
       const desc = 'Zeit für deinen LeVITA Re-Check. Vergleiche\\, was sich seit dem letzten Mal verändert hat.'
         + (code ? '\\n\\nDeine Pilot-ID: ' + code + '\\nDen PIN findest du in deiner Auswertungs-Mail.' : '')
         + '\\n\\n' + url;
@@ -6184,7 +6241,7 @@
     const pw = document.getElementById("progressWrap"); if (pw) pw.style.display = "none";
     const la = document.getElementById('logoArea'); if (la) la.style.display = '';
     const qf = document.getElementById("quiz-flow"); qf.classList.remove("hidden");
-    const card = (title, text) => `<div class="card" style="text-align:center;"><div class="question-text">${title}</div><div class="help-text" style="margin-bottom:18px;">${text}</div><a href="${location.pathname}" style="color:var(--accent-green);font-weight:700;">Zum LeVITA Vital-Check →</a></div>`;
+    const card = (title, text) => `<div class="card" style="text-align:center;"><div class="question-text">${title}</div><div class="help-text" style="margin-bottom:18px;">${text}</div><a href="${selfUrlKeepEmbed()}" style="color:var(--accent-green);font-weight:700;">Zum LeVITA Vital-Check →</a></div>`;
     qf.innerHTML = card('Einen Moment…', '');
     try {
       const r = await callFunction({ mode, token });
@@ -6328,7 +6385,7 @@
   // Das Funnel-Dashboard zeigt so im Varianten-Aufriss der Quelle
   // "Empfehlung", welcher Kasten die meisten neuen Checks bringt.
   function referralLink(place) {
-    const base = (location.origin + location.pathname).replace(/[?&]+$/, "");
+    const base = publicPageUrl().replace(/[?&]+$/, "");
     return base + (base.includes("?") ? "&" : "?") + "utm_source=empfehlung&utm_medium=referral"
       + (place ? "&utm_content=" + encodeURIComponent(place) : "");
   }
@@ -6513,7 +6570,7 @@
     };
     window._isReviewMode = false;      // neuer Check = neuer Funnel
     window._currentPublicCode = null;  // Events gehören zum neuen Check
-    try { history.replaceState({}, '', window.location.pathname); } catch (e) { /* still */ }
+    try { history.replaceState({}, '', selfUrlKeepEmbed()); } catch (e) { /* still */ }
     trackEvent('recheck_start', { previous_public_code: window._previousLink.public_code });
     window._autoStartCheck = true;
     resetVitalCheck(true, true);
@@ -6801,7 +6858,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer">Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.4.0</footer>
+<footer class="app-footer">Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.5.0</footer>
 
 
 </body>
