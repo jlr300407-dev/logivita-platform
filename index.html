@@ -740,6 +740,15 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.6.0 (13.10.2026): Persönliche Konten, Konto-Schritt in Stufe 3. Nach einer
+       Studio-Anfrage MIT PIN erscheint unter der Bestätigung der Konto-Schritt
+       (assets/konto.js): Mailadresse aus dem Check vorbelegt, Pflicht-Häkchen
+       Konto, Plan-Mail und Erinnerungen freiwillig, "Ohne Konto weiter" immer
+       möglich. Ohne PIN (Stufe 1) erscheint nichts. Die Studio-Anfrage selbst ist
+       unverändert und hängt nicht am Konto. Im Fuß ein Link "Mein Bereich"
+       (konto.html, öffnet in neuem Tab, weil der Check auf le-vita.com im iFrame
+       läuft). Gehört zu EDGE_account_1.1.0.ts und konto-fundament_1.2.0.sql.
+
        v2.5.0 (11.10.2026): Check zentral unter app.logivita.de/check/, von le-vita.com
        per iFrame (fremde Herkunft) eingebettet. Das Einbettungs-Skript reicht die
        Parameter der Seite durch und ergänzt embed_host / embed_ref / embed_url;
@@ -838,6 +847,7 @@
        Freischaltung und beim Wiederaufruf; die Seite zeigt denselben Text
        wie die Mail. Event studio_request_sent ersetzt stage3_cta_click. -->
   <script src="assets/supabase-js@2.js"></script>
+  <script src="assets/konto.js?v=1.0.0"></script>   <!-- v2.6.0: Persönliche Konten -->
   <script src="assets/chart.umd.min.js"></script>
   <style>
     /* ── Lokale Fonts (v1.28.19) — ersetzt fonts.googleapis.com ── */
@@ -4942,7 +4952,15 @@
           <div class="stage-step-sub">Deine Anfrage für ${what} ist bei uns. Wir rufen dich an${slot ? `, am liebsten ${escHtml(slot)}` : ""}. Im Gespräch schauen wir gemeinsam auf deine Stärken, deinen wichtigsten Ansatzpunkt und zwei passende nächste Schritte.</div></div>
         </div>
         ${window._stage === 1 ? `<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;background:rgba(0,0,0,0.18);border-radius:8px;padding:10px 12px;margin-top:8px;"><strong style="color:var(--text-primary);">Noch keinen Vital-Plan?</strong> Im Studio schalten wir ihn mit dir frei – dann bekommst du Pilot-ID und PIN für deinen Re-Check.</div>` : ""}
-      </div>${referralBoxHtml('studio')}`;
+      </div>${kontoStepHtml()}${referralBoxHtml('studio')}`;
+  }
+
+  // v2.6.0 — Konto-Schritt (Stufe 3). Nur mit PIN; konto.js befüllt den Platzhalter
+  // selbst und liest die PIN aus window._accessPin (steht nie im HTML).
+  function kontoStepHtml() {
+    if (!window._accessPin || !latestResult || !latestResult.public_code || !window.LeVitaKonto) return "";
+    const mail = (window._unlockInfo && window._unlockInfo.email) || "";
+    return `<div data-konto-step data-context="studio" data-code="${escHtml(latestResult.public_code)}" data-email="${escHtml(mail)}"></div>`;
   }
 
   function openStudioForm() {
@@ -6858,7 +6876,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer">Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.5.0</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.6.0</footer>
 
 
 </body>
