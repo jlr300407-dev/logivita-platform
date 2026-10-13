@@ -15,6 +15,9 @@
   Aufruf mit ?code=LEV-2026-000123 füllt die Pilot-ID vor.
 
   Versionen:
+  0.3.0 (13.10.2026) Persönliche Konten: Im Ergebnis steht oben der Konto-Schritt (assets/konto.js),
+        Mailadresse aus dem Check vorbelegt, "Ohne Konto weiter" immer möglich; Fuß mit Link
+        "Mein Bereich" — gehört zu EDGE_account_1.1.0.ts und konto-fundament_1.2.0.sql
   0.2.0 (13.10.2026) nach Fachgutachten: "Unser erster Vorschlag" statt "stärkster Hebel", Einstieg nach Ziel,
         "Warum für dich" aus den eigenen Antworten, Vorauswahl "Damit möchte ich beginnen", bedingte Fragen,
         Gescheitertes im Parkplatz markiert — gehört zu Edge nutrition-edge-2026-10-13.4 und update_v2.sql
@@ -160,12 +163,13 @@
 
   <main id="app"><div class="spinner"></div></main>
 
-  <footer>LeVITA · Ernährungs-Check mit Begleitung · Beta <span id="fe-version"></span></footer>
+  <footer><a href="konto.html" style="color:inherit">Mein Bereich</a> · LeVITA · Ernährungs-Check mit Begleitung · Beta <span id="fe-version"></span></footer>
 </div>
 
+<script src="assets/konto.js?v=1.0.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "0.2.0";
+  const FE_VERSION = "0.3.0";
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
@@ -444,6 +448,8 @@
         ? "Unsere Vorschläge kommen aus deinen Antworten: was in deinem Alltag oft vorkommt und gut untersucht ist. Welche du angehst, entscheidest du."
         : "Nach deinen Antworten machst du schon vieles richtig. Im Gespräch schauen wir gemeinsam, wo du trotzdem ansetzen möchtest."}</p>
 
+      <div id="konto-step"></div>
+
       ${r.clearance_text ? `<div class="card warn"><h3>${esc(r.clearance_text.title)}</h3><p class="muted">${esc(r.clearance_text.body)}</p></div>` : ""}
       ${r.bia_text ? `<div class="card info"><h3>${esc(r.bia_text.title)}</h3><p class="muted">${esc(r.bia_text.body)}</p></div>` : ""}
 
@@ -472,6 +478,8 @@
       ${INTERNAL ? `<p class="small" style="margin-top:14px">Regelwerk ${esc(res?.rules_version)} · ${esc(r.edge_version)} · Status ${esc(r.status)} · Altersstufe ${esc(r.age_stage)}</p>` : ""}`);
     document.getElementById("b-edit").onclick = async () => { spinner(); route(await call("edit")); };
     if (st.canChoose) { renderChoiceBar(); bindChoose(); }
+    // 0.3.0 — Konto-Schritt: die PIN bleibt im Speicher dieser Seite und geht nur an die Edge
+    if (window.LeVitaKonto) window.LeVitaKonto.mountStep(document.getElementById("konto-step"), { publicCode: st.code, pin: st.pin, context: "nutrition" });
   }
 
   // ── Vorauswahl "Damit möchte ich beginnen" (höchstens drei) ─────────
