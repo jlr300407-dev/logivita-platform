@@ -15,6 +15,9 @@
   Aufruf mit ?code=LEV-2026-000123 füllt die Pilot-ID vor.
 
   Versionen:
+  0.2.0 (13.10.2026) nach Fachgutachten: "Unser erster Vorschlag" statt "stärkster Hebel", Einstieg nach Ziel,
+        "Warum für dich" aus den eigenen Antworten, Vorauswahl "Damit möchte ich beginnen", bedingte Fragen,
+        Gescheitertes im Parkplatz markiert — gehört zu Edge nutrition-edge-2026-10-13.4 und update_v2.sql
   0.1.0 (13.10.2026) erste Beta — gehört zu Edge nutrition-edge-2026-10-13.3
 -->
 <style>
@@ -105,6 +108,14 @@
   .kv ul { padding-left: 18px; font-size: 14px; }
   .evidence { font-size: 12px; color: var(--text-muted); margin-top: 12px; }
   .imag { font-size: 12px; color: var(--accent-green); margin-left: 6px; }
+  .why { font-size: 14px; background: rgba(255,255,255,.04); border-radius: var(--radius-sm); padding: 10px 12px; margin: 4px 0 12px; }
+  .why strong { color: var(--text-secondary); font-weight: 600; }
+  .choose { margin-top: 12px; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--accent-green); background: transparent;
+    color: var(--accent-green); font: 600 14px 'DM Sans', sans-serif; cursor: pointer; }
+  .choose.on { background: var(--accent-green); color: #062214; }
+  .choicebar { position: sticky; bottom: 12px; z-index: 5; background: var(--brand-card2); border: 1px solid var(--border-hover); border-radius: 999px;
+    padding: 10px 18px; font-size: 14px; text-align: center; margin: 16px 0; }
+  .tag-failed { font-size: 12px; color: var(--accent-amber); }
   .variant { font-size: 14px; border-left: 3px solid var(--accent-blue); padding-left: 12px; margin: 10px 0; color: var(--text-secondary); }
   .parking li { list-style: none; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px; display: flex; justify-content: space-between; gap: 10px; }
   .parking li:last-child { border-bottom: 0; }
@@ -154,7 +165,7 @@
 
 <script>
 (() => {
-  const FE_VERSION = "0.1.0";
+  const FE_VERSION = "0.2.0";
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
@@ -174,7 +185,7 @@
   document.getElementById("fe-version").textContent = FE_VERSION;
 
   // Zustand — die PIN bleibt nur im Speicher dieser Seite
-  const st = { code: (params.get("code") || "").trim().toUpperCase(), pin: "", data: null, answers: {}, partIdx: 0, parts: [] };
+  const st = { code: (params.get("code") || "").trim().toUpperCase(), pin: "", data: null, answers: {}, partIdx: 0, parts: [], choice: [], canChoose: false };
 
   // ── Hilfen ──────────────────────────────────────────────
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -287,6 +298,21 @@
     renderPart();
   }
 
+  // Bedingte Fragen (show_if): Bezugsfrage im Bogen → nach aktueller Antwort; Bezug aus dem Check → hat die Edge schon entschieden
+  function isVisible(q) {
+    return (q.show_if || []).every((a) => {
+      if (!a.q) return true;
+      if (!st.data.questions.some((x) => x.question_key === a.q)) return true;
+      return (st.answers[a.q]?.options || []).some((o) => a.in.includes(o));
+    });
+  }
+  function updateVisibility() {
+    st.data.questions.forEach((q) => {
+      const el = document.querySelector(`[data-qwrap="${q.question_key}"]`);
+      if (el) el.classList.toggle("hidden", !isVisible(q));
+    });
+  }
+
   function isAnswered(q) {
     const a = st.answers[q.question_key];
     if (q.type === "text") return true;
@@ -327,6 +353,7 @@
           }
           st.answers[q.question_key] = { options: [...cur] };
           document.querySelectorAll(`[data-q="${q.question_key}"]`).forEach((b) => b.classList.toggle("on", cur.has(b.dataset.o)));
+          updateVisibility();
         };
       });
     });
@@ -335,7 +362,7 @@
     if (back) back.onclick = () => { st.partIdx--; renderPart(); };
     document.getElementById("b-next").onclick = () => {
       if (REQUIRED_PARTS.includes(part)) {
-        const miss = qs.filter((q) => !isAnswered(q)).map((q) => q.question_key);
+        const miss = qs.filter((q) => isVisible(q) && !isAnswered(q)).map((q) => q.question_key);
         if (miss.length) return renderPart(miss);
       }
       if (st.partIdx < st.parts.length - 1) { st.partIdx++; renderPart(); }
@@ -346,11 +373,11 @@
   function renderQuestion(q, missing) {
     const cur = new Set(st.answers[q.question_key]?.options || []);
     if (q.type === "text") {
-      return `<div class="q"><div class="q-label">${esc(q.label)}</div>
+      return `<div class="q ${isVisible(q) ? "" : "hidden"}" data-qwrap="${q.question_key}"><div class="q-label">${esc(q.label)}</div>
         ${q.help ? `<div class="q-help">${esc(q.help)}</div>` : ""}
         <textarea id="t-${q.question_key}" maxlength="500">${esc(st.answers[q.question_key]?.text || "")}</textarea></div>`;
     }
-    return `<div class="q ${missing ? "missing" : ""}">
+    return `<div class="q ${missing ? "missing" : ""} ${isVisible(q) ? "" : "hidden"}" data-qwrap="${q.question_key}">
       <div class="q-label">${esc(q.label)}</div>
       ${q.help ? `<div class="q-help">${esc(q.help)}</div>` : ""}
       <div class="opts">${q.options.map((o) => `
@@ -360,7 +387,8 @@
 
   async function submit() {
     spinner();
-    const answers = Object.entries(st.answers).map(([question_key, a]) =>
+    const hiddenNow = new Set(st.data.questions.filter((q) => !isVisible(q)).map((q) => q.question_key));
+    const answers = Object.entries(st.answers).filter(([k]) => !hiddenNow.has(k)).map(([question_key, a]) =>
       a.text != null ? { question_key, value_text: a.text } : { question_key, option_keys: a.options || [] });
     const r = await call("submit", { answers });
     if (!r.success && r.error === "MISSING") {
@@ -378,7 +406,7 @@
   function leverCard(l) {
     const tip = l.tip || {};
     const b = tip.benefits || {};
-    const label = l.is_top ? "Dein stärkster Hebel" : (l.tier === "also" ? "Lohnt sich auch" : "Starker Hebel");
+    const label = l.is_top ? "Unser erster Vorschlag" : (l.tier === "also" ? "Ebenfalls möglich" : "Passt auch zu dir");
     const cls = l.is_top ? "t-top" : (l.tier === "also" ? "t-also" : "t-strong");
     const title = l.variant?.title || tip.title || l.lever_key;
     const body = l.variant?.body || tip.body || "";
@@ -389,6 +417,7 @@
         <span class="tier ${cls}">${label}</span>${l.imaginable ? '<span class="imag">✓ kannst du dir vorstellen</span>' : ""}
         <h3>${esc(title)}</h3>
         <p class="lever-body">${esc(body)}</p>
+        ${(l.why || []).length ? `<div class="why"><strong>Warum für dich:</strong> Du hast angegeben — ${l.why.map((w) => `${esc(w.topic || "")}${w.topic ? ": " : ""}${esc(w.answer)}`).join(" · ")}</div>` : ""}
         <details ${l.is_top ? "open" : ""}><summary>Warum, woran du es merkst, Beispiele</summary>
           <dl class="kv">
             ${b.warum ? `<dt>Warum</dt><dd>${esc(b.warum)}</dd>` : ""}
@@ -398,6 +427,7 @@
           </dl>
           <div class="evidence">Studienlage: ${esc(EVIDENCE[l.evidence_level] || "nicht wissenschaftlich untersucht")}</div>
         </details>
+        ${st.canChoose ? `<button type="button" class="choose ${st.choice.includes(l.lever_key) ? "on" : ""}" data-choose="${esc(l.lever_key)}">${st.choice.includes(l.lever_key) ? "✓ Damit möchte ich beginnen" : "Damit möchte ich beginnen"}</button>` : ""}
       </div>`;
   }
 
@@ -405,10 +435,13 @@
     const res = r.result;
     const shown = res?.shown || [];
     const parking = res?.parking || [];
+    st.choice = [...(r.member_choice || [])];
+    st.canChoose = ["ready", "pending_clearance"].includes(r.status) && shown.length > 0;
     h(`
-      <h1>Dein Ergebnis</h1>
-      <p class="lead">${shown.length
-        ? "Das sind die Hebel, die bei dir am meisten bewegen können — sortiert nach dem, was in deinem Alltag oft vorkommt und gut untersucht ist."
+      <h1>${esc(r.intro?.title || "Dein Ergebnis")}</h1>
+      <p class="lead">${esc(r.intro?.body || "")}${r.intro_tried ? " " + esc(r.intro_tried.body) : ""}</p>
+      <p class="muted" style="margin:-8px 0 20px">${shown.length
+        ? "Unsere Vorschläge kommen aus deinen Antworten: was in deinem Alltag oft vorkommt und gut untersucht ist. Welche du angehst, entscheidest du."
         : "Nach deinen Antworten machst du schon vieles richtig. Im Gespräch schauen wir gemeinsam, wo du trotzdem ansetzen möchtest."}</p>
 
       ${r.clearance_text ? `<div class="card warn"><h3>${esc(r.clearance_text.title)}</h3><p class="muted">${esc(r.clearance_text.body)}</p></div>` : ""}
@@ -422,8 +455,9 @@
         <div class="card">
           <h2>Später, wenn die ersten laufen</h2>
           <p class="muted" style="margin-bottom:8px">Diese Hebel bleiben für dich sichtbar. Ab Woche 6 kann einer davon dazukommen.</p>
-          <ul class="parking">${parking.map((l) => `<li><span>${esc(l.tip?.title || l.lever_key)}</span><span class="small">${l.tier === "also" ? "lohnt sich auch" : "starker Hebel"}</span></li>`).join("")}</ul>
+          <ul class="parking">${parking.map((l) => `<li><span>${esc(l.tip?.title || l.lever_key)}${l.failed_before ? `<br><span class="tag-failed">${esc(r.failed_text?.body || "Hast du schon einmal probiert.")}</span>` : ""}</span><span class="small">${l.failed_before ? "schon probiert" : (l.tier === "also" ? "ebenfalls möglich" : "passt auch zu dir")}</span></li>`).join("")}</ul>
         </div>` : ""}
+      ${st.canChoose ? `<div class="choicebar" id="choicebar"></div>` : ""}
 
       <div class="card">
         <h2>So geht es weiter</h2>
@@ -437,6 +471,36 @@
       </div>
       ${INTERNAL ? `<p class="small" style="margin-top:14px">Regelwerk ${esc(res?.rules_version)} · ${esc(r.edge_version)} · Status ${esc(r.status)} · Altersstufe ${esc(r.age_stage)}</p>` : ""}`);
     document.getElementById("b-edit").onclick = async () => { spinner(); route(await call("edit")); };
+    if (st.canChoose) { renderChoiceBar(); bindChoose(); }
+  }
+
+  // ── Vorauswahl "Damit möchte ich beginnen" (höchstens drei) ─────────
+  function renderChoiceBar(msg = "") {
+    const el = document.getElementById("choicebar");
+    if (!el) return;
+    el.textContent = msg || (st.choice.length
+      ? `Deine Auswahl: ${st.choice.length} von 3 — deine Begleitperson sieht sie im ersten Gespräch.`
+      : "Markiere bis zu drei Vorschläge, mit denen du beginnen möchtest.");
+  }
+  function bindChoose() {
+    document.querySelectorAll("[data-choose]").forEach((btn) => {
+      btn.onclick = async () => {
+        const k = btn.dataset.choose;
+        const next = st.choice.includes(k) ? st.choice.filter((x) => x !== k) : [...st.choice, k];
+        if (next.length > 3) return renderChoiceBar("Höchstens drei — nimm erst einen anderen Vorschlag heraus.");
+        btn.disabled = true;
+        const r = await call("choose", { lever_keys: next });
+        btn.disabled = false;
+        if (!r.success) return renderChoiceBar(errorText(r.error));
+        st.choice = r.member_choice || next;
+        document.querySelectorAll("[data-choose]").forEach((b) => {
+          const on = st.choice.includes(b.dataset.choose);
+          b.classList.toggle("on", on);
+          b.textContent = on ? "✓ Damit möchte ich beginnen" : "Damit möchte ich beginnen";
+        });
+        renderChoiceBar();
+      };
+    });
   }
 
   // ── Testmodus ───────────────────────────────────────────
@@ -472,6 +536,7 @@
       }
       st.partIdx = st.parts.length - 1;
       renderPart();
+      updateVisibility();
     };
   }
 
