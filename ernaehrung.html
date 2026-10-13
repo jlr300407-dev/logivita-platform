@@ -15,6 +15,10 @@
   Aufruf mit ?code=LEV-2026-000123 füllt die Pilot-ID vor.
 
   Versionen:
+  0.5.0 (13.10.2026) Konto ist Pflicht ab Stufe 3: Auf der Bestätigungsseite steht der Konto-Schritt
+        direkt unter der Auswahl, ohne "Ohne Konto weiter" (konto.js 1.1.0, required). Liegt der Check
+        schon im Konto, nur ein kurzer Hinweis. Die Rückrufbitte geht unabhängig davon sofort ans Studio
+        — gehört zu EDGE_nutrition-check_v1-6.ts (nutrition-edge-2026-10-13.7) und konto.js 1.1.0
   0.4.1 (13.10.2026) Wer selten oder nie Krafttraining macht: Bewegungskarte steht auf der Bestätigungsseite
         oben, das Häkchen "Interesse an betreutem Training oder Probetraining" ist vorab gesetzt (abwählbar)
         — gehört zu EDGE_nutrition-check_v1-5.ts (nutrition-edge-2026-10-13.6) und update_v4.sql
@@ -195,10 +199,10 @@
   <footer><a href="konto.html" style="color:inherit">Mein Bereich</a> · LeVITA · Ernährungs-Check mit Begleitung · Beta <span id="fe-version"></span></footer>
 </div>
 
-<script src="assets/konto.js?v=1.0.0"></script>
+<script src="assets/konto.js?v=1.1.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "0.4.1";
+  const FE_VERSION = "0.5.0";
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
@@ -661,6 +665,9 @@
       <p class="lead">${keys.length === 1 ? "Mit diesem Schritt" : "Mit diesen Schritten"} startest du. Im Erstgespräch macht dein Trainer oder deine Trainerin
         mit dir aus jedem einen Plan: <em>„Wenn ich …, dann …“</em> — und ihr bucht gleich alle Termine der nächsten zwölf Wochen.</p>
       <div class="card top">${pickedList(r, keys)}</div>
+      ${r.account?.in_account ? "" : `<h2 style="margin-top:6px">Letzter Schritt: dein Konto</h2>
+        <p class="muted" id="konto-hint">Für die Begleitung im Studio brauchst du ein persönliches Konto. Wir schicken dir dafür einen Link per Mail.</p>`}
+      <div id="konto-step"></div>
       ${r.movement?.low ? movementHtml(r.movement) : ""}
       ${r.clearance_text ? `<div class="card warn"><h3>${esc(r.clearance_text.title)}</h3><p class="muted">${esc(r.clearance_text.body)}</p></div>` : ""}
       ${cf.contact_preference === "callback" ? `
@@ -669,7 +676,6 @@
         <div class="card info"><h3>So erreichst du uns</h3>${contactHtml(r.studio_contact)}</div>`}
       ${r.movement?.low ? "" : movementHtml(r.movement)}
       <p class="muted" style="margin:4px 0 12px">Nach deinem Erstgespräch findest du deinen Plan in deinem persönlichen Bereich und kannst ihn dir dort per Mail schicken.</p>
-      <div id="konto-step"></div>
       <div class="row">
         <button class="btn ghost" id="b-change">Auswahl ändern</button>
         <button class="btn ghost" id="b-all">Alle Vorschläge ansehen</button>
@@ -679,7 +685,11 @@
     document.getElementById("b-change").onclick = toResult;
     document.getElementById("b-all").onclick = toResult;
     // Konto-Schritt (Stufe 3): die PIN bleibt im Speicher dieser Seite und geht nur an die Edge
-    if (window.LeVitaKonto) window.LeVitaKonto.mountStep(document.getElementById("konto-step"), { publicCode: st.code, pin: st.pin, context: "nutrition" });
+    // 0.5.0: Pflicht (required) — kein "Ohne Konto weiter"; die PIN bleibt im Speicher dieser Seite
+    if (window.LeVitaKonto) window.LeVitaKonto.mountStep(document.getElementById("konto-step"), {
+      publicCode: st.code, pin: st.pin, context: "nutrition", required: true,
+      onRequested: () => { const hn = document.getElementById("konto-hint"); if (hn) hn.textContent = "Bitte bestätige den Link in deiner Mail — erst dann ist dein Konto aktiv."; },
+    });
   }
 
   // ── Testmodus ───────────────────────────────────────────
