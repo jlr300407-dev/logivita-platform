@@ -740,6 +740,11 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.6.1 (13.10.2026): Konto nach der Studio-Anfrage ist Pflicht (data-required="1",
+       konto.js 1.1.0): kein "Ohne Konto weiter", Linie Jörg "wer den Trainer in Anspruch
+       nimmt, bekommt ein Konto". Die Anfrage selbst geht vorher und unabhängig raus.
+       Plan-Mail-Häkchen entfällt (Nutzer fordert den Plan selbst an).
+
        v2.6.0 (13.10.2026): Persönliche Konten, Konto-Schritt in Stufe 3. Nach einer
        Studio-Anfrage MIT PIN erscheint unter der Bestätigung der Konto-Schritt
        (assets/konto.js): Mailadresse aus dem Check vorbelegt, Pflicht-Häkchen
@@ -847,7 +852,7 @@
        Freischaltung und beim Wiederaufruf; die Seite zeigt denselben Text
        wie die Mail. Event studio_request_sent ersetzt stage3_cta_click. -->
   <script src="assets/supabase-js@2.js"></script>
-  <script src="assets/konto.js?v=1.0.0"></script>   <!-- v2.6.0: Persönliche Konten -->
+  <script src="assets/konto.js?v=1.1.0"></script>   <!-- v2.6.0: Persönliche Konten · v2.6.1: konto.js 1.1.0 -->
   <script src="assets/chart.umd.min.js"></script>
   <style>
     /* ── Lokale Fonts (v1.28.19) — ersetzt fonts.googleapis.com ── */
@@ -4960,7 +4965,7 @@
   function kontoStepHtml() {
     if (!window._accessPin || !latestResult || !latestResult.public_code || !window.LeVitaKonto) return "";
     const mail = (window._unlockInfo && window._unlockInfo.email) || "";
-    return `<div data-konto-step data-context="studio" data-code="${escHtml(latestResult.public_code)}" data-email="${escHtml(mail)}"></div>`;
+    return `<div data-konto-step data-required="1" data-context="studio" data-code="${escHtml(latestResult.public_code)}" data-email="${escHtml(mail)}"></div>`;
   }
 
   function openStudioForm() {
@@ -6876,7 +6881,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.6.0</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.6.1</footer>
 
 
 </body>
