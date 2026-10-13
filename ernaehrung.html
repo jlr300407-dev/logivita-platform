@@ -15,6 +15,9 @@
   Aufruf mit ?code=LEV-2026-000123 füllt die Pilot-ID vor.
 
   Versionen:
+  0.4.1 (13.10.2026) Wer selten oder nie Krafttraining macht: Bewegungskarte steht auf der Bestätigungsseite
+        oben, das Häkchen "Interesse an betreutem Training oder Probetraining" ist vorab gesetzt (abwählbar)
+        — gehört zu EDGE_nutrition-check_v1-5.ts (nutrition-edge-2026-10-13.6) und update_v4.sql
   0.4.0 (13.10.2026) Livetest Jörg: "dein Trainer oder deine Trainerin" statt "Begleitperson"; Knopf
         "Auswahl bestätigen" → Bestätigungsseite mit zwei Wegen zum Erstgespräch (Rückrufbitte landet als
         studio_requests-Zeile im Anfragen-Reiter, oder Studio-Kontakt zum Selbstmelden), Bewegungskarte
@@ -195,7 +198,7 @@
 <script src="assets/konto.js?v=1.0.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "0.4.0";
+  const FE_VERSION = "0.4.1";
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
@@ -560,7 +563,7 @@
   function screenConfirm(r, msg = "", form = {}) {
     const keys = st.choice.slice(0, 3);
     if (!keys.length) return screenResult(r);
-    const f = { way: "", first_name: r.prefill?.first_name || "", phone: "", slot: "", consent: false, training: false, ...form };
+    const f = { way: "", first_name: r.prefill?.first_name || "", phone: "", slot: "", consent: false, training: !!r.movement?.low, ...form };
     h(`
       <h1>Deine Auswahl</h1>
       <p class="lead">Mit diesen Schritten möchtest du beginnen. Im Erstgespräch machst du mit deinem Trainer oder deiner Trainerin
@@ -658,12 +661,13 @@
       <p class="lead">${keys.length === 1 ? "Mit diesem Schritt" : "Mit diesen Schritten"} startest du. Im Erstgespräch macht dein Trainer oder deine Trainerin
         mit dir aus jedem einen Plan: <em>„Wenn ich …, dann …“</em> — und ihr bucht gleich alle Termine der nächsten zwölf Wochen.</p>
       <div class="card top">${pickedList(r, keys)}</div>
+      ${r.movement?.low ? movementHtml(r.movement) : ""}
       ${r.clearance_text ? `<div class="card warn"><h3>${esc(r.clearance_text.title)}</h3><p class="muted">${esc(r.clearance_text.body)}</p></div>` : ""}
       ${cf.contact_preference === "callback" ? `
         <div class="card info"><h3>Wir rufen dich an</h3>
           <p class="muted">Deine Rückrufbitte ist bei uns${cb?.preferred_slot ? ` — am liebsten ${esc(cb.preferred_slot)}` : ""}. Wir melden uns, um dein Erstgespräch zu vereinbaren.</p></div>` : `
         <div class="card info"><h3>So erreichst du uns</h3>${contactHtml(r.studio_contact)}</div>`}
-      ${movementHtml(r.movement)}
+      ${r.movement?.low ? "" : movementHtml(r.movement)}
       <p class="muted" style="margin:4px 0 12px">Nach deinem Erstgespräch findest du deinen Plan in deinem persönlichen Bereich und kannst ihn dir dort per Mail schicken.</p>
       <div id="konto-step"></div>
       <div class="row">
