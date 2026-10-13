@@ -8,13 +8,19 @@
 <!--
   Ernährungs-Check mit Begleitung — Teilnehmerseite (Beta)
   Liegt neben index.html des Vital-Checks und nutzt dessen assets/ (Schriften, Buddy).
-  Backend: Edge-Funktion nutrition-check (Modi start, submit, load, edit).
+  Backend: Edge-Funktion nutrition-check (Modi start, submit, load, edit, choose, confirm_choice).
   Alle Inhalte (Fragen, Optionen, Texte) kommen aus der Datenbank; hier steht nur die Darstellung.
 
   Testmodus: ?internal=1 blendet eine Testleiste ein (Zufallsantworten, Rohdaten, Versionen).
   Aufruf mit ?code=LEV-2026-000123 füllt die Pilot-ID vor.
 
   Versionen:
+  0.4.0 (13.10.2026) Livetest Jörg: "dein Trainer oder deine Trainerin" statt "Begleitperson"; Knopf
+        "Auswahl bestätigen" → Bestätigungsseite mit zwei Wegen zum Erstgespräch (Rückrufbitte landet als
+        studio_requests-Zeile im Anfragen-Reiter, oder Studio-Kontakt zum Selbstmelden), Bewegungskarte
+        (allein oder im Studio unter Anleitung, kein §20-Kurs), Konto-Schritt von der Ergebnisanzeige auf
+        die Bestätigungsseite verschoben (dort entsteht Stufe 3) — gehört zu EDGE_nutrition-check_v1-4.ts
+        (nutrition-edge-2026-10-13.5), update_v3.sql und update_v3b_nach-edge.sql
   0.3.0 (13.10.2026) Persönliche Konten: Im Ergebnis steht oben der Konto-Schritt (assets/konto.js),
         Mailadresse aus dem Check vorbelegt, "Ohne Konto weiter" immer möglich; Fuß mit Link
         "Mein Bereich" — gehört zu EDGE_account_1.1.0.ts und konto-fundament_1.2.0.sql
@@ -61,7 +67,7 @@
 
   .field { margin-bottom: 16px; }
   .field label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
-  input[type=text], input[type=password], textarea {
+  input[type=text], input[type=password], input[type=tel], textarea {
     width: 100%; padding: 13px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border);
     background: rgba(255,255,255,.04); color: var(--text-primary); font: 500 15px 'DM Sans', sans-serif; -webkit-appearance: none; }
   input:focus, textarea:focus { outline: none; border-color: var(--accent-green); }
@@ -127,6 +133,26 @@
   .consent-box { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; color: var(--text-secondary); cursor: pointer; margin: 16px 0; }
   .consent-box input { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--accent-green); flex: 0 0 18px; }
 
+  /* 0.4.0 Bestätigung */
+  .picked { list-style: none; margin: 4px 0 0; }
+  .picked li { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px; display: flex; gap: 10px; align-items: baseline; }
+  .picked li:last-child { border-bottom: 0; }
+  .picked .num { flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--accent-green); color: #062214; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
+  .way { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(255,255,255,.03); cursor: pointer; margin-bottom: 8px; }
+  .way.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
+  .way input { margin-top: 4px; accent-color: var(--accent-green); }
+  .way strong { display: block; font-size: 15px; }
+  .slots { display: flex; gap: 8px; flex-wrap: wrap; }
+  .slots label { flex: 1; min-width: 110px; text-align: center; padding: 11px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border); cursor: pointer; font-size: 14px; }
+  .slots input { display: none; }
+  .slots label.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
+  .move-grid { display: grid; gap: 10px; margin-top: 12px; }
+  @media (min-width: 560px) { .move-grid { grid-template-columns: 1fr 1fr; } }
+  .move-grid > div { background: rgba(255,255,255,.04); border-radius: var(--radius-sm); padding: 14px; }
+  .choicebar .btn { margin-top: 8px; padding: 10px 18px; font-size: 14px; }
+  .contact-line { font-size: 15px; margin: 4px 0; }
+  .contact-line a { color: var(--accent-green); }
+
   footer { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 40px; }
   .hidden { display: none !important; }
   .spinner { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--brand-card2); border-top-color: var(--accent-green); animation: spin .8s linear infinite; margin: 60px auto; }
@@ -169,7 +195,7 @@
 <script src="assets/konto.js?v=1.0.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "0.3.0";
+  const FE_VERSION = "0.4.0";
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
@@ -178,7 +204,7 @@
     B: { title: "Deine Mahlzeiten", lead: "Wann und wie du isst und trinkst." },
     C: { title: "Was auf den Teller kommt", lead: "Ein grober Überblick reicht — es geht nicht ums Zählen." },
     D: { title: "Was du schon probiert hast", lead: "Was schon einmal nicht geklappt hat, schlagen wir dir nicht noch einmal vor." },
-    E: { title: "Was du dir vorstellen kannst", lead: "Entscheiden musst du dich erst im Gespräch mit deiner Begleitperson." },
+    E: { title: "Was du dir vorstellen kannst", lead: "Entscheiden musst du dich erst im Gespräch mit deinem Trainer oder deiner Trainerin." },
   };
   const REQUIRED_PARTS = ["S", "A", "B", "C"];
   const EVIDENCE = { 1: "sehr gut untersucht", 2: "gut untersucht", 3: "begrenzt untersucht", 4: "plausibel, wenig untersucht" };
@@ -214,7 +240,15 @@
       LOCKED: "Zu viele Versuche. Bitte warte 15 Minuten und versuche es dann erneut.",
       PIN_REQUIRED: "Bitte gib Pilot-ID und PIN ein.",
       NOT_FOUND: "Zu dieser Pilot-ID haben wir keinen Vital-Check gefunden.",
-      NOT_EDITABLE: "Deine Begleitung läuft bereits — Änderungen besprichst du jetzt direkt mit deiner Begleitperson.",
+      NOT_EDITABLE: "Deine Begleitung läuft bereits — Änderungen besprichst du jetzt direkt mit deinem Trainer oder deiner Trainerin.",
+      CHOICE_EMPTY: "Wähle mindestens einen Schritt aus.",
+      MAX_THREE: "Höchstens drei Schritte — nimm erst einen anderen heraus.",
+      CONTACT_WAY: "Bitte wähle, wie wir zusammenkommen.",
+      FIRST_NAME: "Bitte gib deinen Vornamen an.",
+      PHONE: "Bitte gib eine gültige Telefonnummer an.",
+      SLOT: "Bitte wähle, wann es dir am besten passt.",
+      CONSENT_CONTACT: "Bitte bestätige, dass wir dich zur Terminabsprache anrufen dürfen.",
+      REQUEST_FAILED: "Die Rückrufbitte konnte gerade nicht gespeichert werden. Versuche es gleich noch einmal oder melde dich direkt im Studio.",
       AGE: "Dieses Programm richtet sich an Erwachsene ab 18 Jahren.",
     })[e] || "Da ist etwas schiefgegangen. Bitte versuche es gleich noch einmal.";
   }
@@ -224,7 +258,7 @@
     h(`
       <h1>Dein Ernährungs-Check</h1>
       <p class="lead">Ein paar Fragen zu deinem Alltag — danach siehst du, wo bei dir das meiste Potenzial liegt.
-        Gemeinsam mit deiner Begleitperson wählst du dann ein bis drei Schritte für die nächsten zwölf Wochen.</p>
+        Gemeinsam mit deinem Trainer oder deiner Trainerin im Studio wählst du dann ein bis drei Schritte für die nächsten zwölf Wochen.</p>
       <div class="card">
         <div class="field"><label for="f-code">Pilot-ID aus deinem Vital-Check</label>
           <input type="text" id="f-code" autocomplete="off" placeholder="LEV-2026-000123" value="${esc(st.code)}"></div>
@@ -254,6 +288,7 @@
     if (r.status === "not_eligible") return screenText(r.text, "info");
     if (r.status === "excluded") return screenExcluded(r);
     if (r.status === "screening" || r.editing) return startQuestionnaire(r);
+    if (r.confirmation && r.result) return screenConfirmed(r);
     return screenResult(r);
   }
 
@@ -261,7 +296,7 @@
   function screenConsent(c) {
     h(`
       <h1>Bevor es losgeht</h1>
-      <p class="lead">Damit wir dich begleiten können, speichern wir deine Antworten und machen sie deiner Begleitperson im Studio zugänglich.</p>
+      <p class="lead">Damit wir dich begleiten können, speichern wir deine Antworten und machen sie deinem Trainer oder deiner Trainerin im Studio zugänglich.</p>
       <div class="card">
         <label class="consent-box"><input type="checkbox" id="c-ok"><span>${esc(c?.text)}</span></label>
         <button class="btn block" id="b-c" disabled>Einverstanden, weiter</button>
@@ -448,8 +483,6 @@
         ? "Unsere Vorschläge kommen aus deinen Antworten: was in deinem Alltag oft vorkommt und gut untersucht ist. Welche du angehst, entscheidest du."
         : "Nach deinen Antworten machst du schon vieles richtig. Im Gespräch schauen wir gemeinsam, wo du trotzdem ansetzen möchtest."}</p>
 
-      <div id="konto-step"></div>
-
       ${r.clearance_text ? `<div class="card warn"><h3>${esc(r.clearance_text.title)}</h3><p class="muted">${esc(r.clearance_text.body)}</p></div>` : ""}
       ${r.bia_text ? `<div class="card info"><h3>${esc(r.bia_text.title)}</h3><p class="muted">${esc(r.bia_text.body)}</p></div>` : ""}
 
@@ -467,7 +500,7 @@
 
       <div class="card">
         <h2>So geht es weiter</h2>
-        <p class="muted">Im ersten Gespräch suchst du dir gemeinsam mit deiner Begleitperson <strong>ein bis drei</strong> dieser Schritte aus —
+        <p class="muted">Im ersten Gespräch suchst du dir gemeinsam mit deinem Trainer oder deiner Trainerin <strong>ein bis drei</strong> dieser Schritte aus —
           welche, entscheidest du. Aus jedem Schritt machen wir einen konkreten Plan: <em>„Wenn ich …, dann …“</em>.
           Dabei buchen wir gleich alle sechs Termine der nächsten zwölf Wochen.</p>
       </div>
@@ -478,17 +511,19 @@
       ${INTERNAL ? `<p class="small" style="margin-top:14px">Regelwerk ${esc(res?.rules_version)} · ${esc(r.edge_version)} · Status ${esc(r.status)} · Altersstufe ${esc(r.age_stage)}</p>` : ""}`);
     document.getElementById("b-edit").onclick = async () => { spinner(); route(await call("edit")); };
     if (st.canChoose) { renderChoiceBar(); bindChoose(); }
-    // 0.3.0 — Konto-Schritt: die PIN bleibt im Speicher dieser Seite und geht nur an die Edge
-    if (window.LeVitaKonto) window.LeVitaKonto.mountStep(document.getElementById("konto-step"), { publicCode: st.code, pin: st.pin, context: "nutrition" });
+    // 0.4.0 — der Konto-Schritt steht jetzt auf der Bestätigungsseite (screenConfirmed)
   }
 
   // ── Vorauswahl "Damit möchte ich beginnen" (höchstens drei) ─────────
   function renderChoiceBar(msg = "") {
     const el = document.getElementById("choicebar");
     if (!el) return;
-    el.textContent = msg || (st.choice.length
-      ? `Deine Auswahl: ${st.choice.length} von 3 — deine Begleitperson sieht sie im ersten Gespräch.`
+    const text = msg || (st.choice.length
+      ? `Deine Auswahl: ${st.choice.length} von 3`
       : "Markiere bis zu drei Vorschläge, mit denen du beginnen möchtest.");
+    el.innerHTML = `<div>${esc(text)}</div>${st.choice.length ? '<button type="button" class="btn" id="b-confirm">Auswahl bestätigen</button>' : ""}`;
+    const b = document.getElementById("b-confirm");
+    if (b) b.onclick = () => screenConfirm(st.data);
   }
   function bindChoose() {
     document.querySelectorAll("[data-choose]").forEach((btn) => {
@@ -501,6 +536,7 @@
         btn.disabled = false;
         if (!r.success) return renderChoiceBar(errorText(r.error));
         st.choice = r.member_choice || next;
+        if (st.data) { st.data.member_choice = st.choice; st.data.confirmation = null; } // neue Auswahl → neu bestätigen
         document.querySelectorAll("[data-choose]").forEach((b) => {
           const on = st.choice.includes(b.dataset.choose);
           b.classList.toggle("on", on);
@@ -509,6 +545,137 @@
         renderChoiceBar();
       };
     });
+  }
+
+  // ── 0.4.0 Bestätigung: Auswahl + Weg zum Erstgespräch ──────────────
+  const SLOTS = ["vormittags", "nachmittags", "abends"];
+  function leverTitle(r, key) {
+    const l = [...(r.result?.shown || []), ...(r.result?.parking || [])].find((x) => x.lever_key === key);
+    return l?.variant?.title || l?.tip?.title || key;
+  }
+  function pickedList(r, keys) {
+    return `<ul class="picked">${keys.map((k, i) => `<li><span class="num">${i + 1}</span><span>${esc(leverTitle(r, k))}</span></li>`).join("")}</ul>`;
+  }
+
+  function screenConfirm(r, msg = "", form = {}) {
+    const keys = st.choice.slice(0, 3);
+    if (!keys.length) return screenResult(r);
+    const f = { way: "", first_name: r.prefill?.first_name || "", phone: "", slot: "", consent: false, training: false, ...form };
+    h(`
+      <h1>Deine Auswahl</h1>
+      <p class="lead">Mit diesen Schritten möchtest du beginnen. Im Erstgespräch machst du mit deinem Trainer oder deiner Trainerin
+        aus jedem einen konkreten Plan — ändern kannst du die Auswahl dort noch.</p>
+      <div class="card">${pickedList(r, keys)}</div>
+      ${r.clearance_text ? `<div class="card warn"><h3>${esc(r.clearance_text.title)}</h3><p class="muted">${esc(r.clearance_text.body)}</p></div>` : ""}
+      <h2>Wie kommen wir zusammen?</h2>
+      <label class="way ${f.way === "callback" ? "on" : ""}"><input type="radio" name="way" value="callback" ${f.way === "callback" ? "checked" : ""}>
+        <span><strong>Ruft mich an</strong><span class="muted">Wir melden uns zur Terminabsprache für dein Erstgespräch.</span></span></label>
+      <label class="way ${f.way === "self" ? "on" : ""}"><input type="radio" name="way" value="self" ${f.way === "self" ? "checked" : ""}>
+        <span><strong>Ich melde mich selbst</strong><span class="muted">Du bekommst unsere Telefonnummer und Öffnungszeiten.</span></span></label>
+      <div class="card ${f.way === "callback" ? "" : "hidden"}" id="cb-form" style="margin-top:8px">
+        <div class="field"><label for="cb-name">Vorname</label><input type="text" id="cb-name" maxlength="60" autocomplete="given-name" value="${esc(f.first_name)}"></div>
+        <div class="field"><label for="cb-phone">Telefon</label><input type="tel" id="cb-phone" maxlength="25" autocomplete="tel" placeholder="0170 …" value="${esc(f.phone)}"></div>
+        <div class="field"><label>Wann passt es dir am besten?</label>
+          <div class="slots">${SLOTS.map((s) => `<label class="${f.slot === s ? "on" : ""}"><input type="radio" name="slot" value="${s}" ${f.slot === s ? "checked" : ""}>${s}</label>`).join("")}</div></div>
+        <label class="consent-box"><input type="checkbox" id="cb-consent" ${f.consent ? "checked" : ""}><span>LeVITA darf mich zur Terminabsprache anrufen.</span></label>
+        <label class="consent-box"><input type="checkbox" id="cb-training" ${f.training ? "checked" : ""}><span>Ich interessiere mich auch für betreutes Training oder ein Probetraining. <span class="small">Freiwillig.</span></span></label>
+      </div>
+      <div class="error" id="err">${esc(msg)}</div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn ghost" id="b-back">Zurück</button>
+        <button class="btn" id="b-send">Auswahl bestätigen</button>
+      </div>`);
+    const read = () => ({
+      way: document.querySelector('input[name="way"]:checked')?.value || "",
+      first_name: document.getElementById("cb-name").value.trim().slice(0, 60),
+      phone: document.getElementById("cb-phone").value.trim(),
+      slot: document.querySelector('input[name="slot"]:checked')?.value || "",
+      consent: document.getElementById("cb-consent").checked,
+      training: document.getElementById("cb-training").checked,
+    });
+    document.querySelectorAll('input[name="way"]').forEach((i) => (i.onchange = () => {
+      document.querySelectorAll(".way").forEach((w) => w.classList.toggle("on", w.querySelector("input").checked));
+      document.getElementById("cb-form").classList.toggle("hidden", i.value !== "callback" || !i.checked);
+    }));
+    document.querySelectorAll('input[name="slot"]').forEach((i) => (i.onchange = () =>
+      document.querySelectorAll(".slots label").forEach((l) => l.classList.toggle("on", l.querySelector("input").checked))));
+    document.getElementById("b-back").onclick = () => screenResult(r);
+    document.getElementById("b-send").onclick = async () => {
+      const v = read();
+      const err = (code) => (document.getElementById("err").textContent = errorText(code));
+      if (!v.way) return err("CONTACT_WAY");
+      if (v.way === "callback") {
+        if (!v.first_name) return err("FIRST_NAME");
+        if (!/^[+0-9][0-9 ()\/-]{5,24}$/.test(v.phone)) return err("PHONE");
+        if (!SLOTS.includes(v.slot)) return err("SLOT");
+        if (!v.consent) return err("CONSENT_CONTACT");
+      }
+      spinner();
+      const res = await call("confirm_choice", {
+        lever_keys: keys, contact_way: v.way,
+        ...(v.way === "callback" ? { first_name: v.first_name, phone: v.phone, preferred_slot: v.slot, consent_contact: true, interest_training: v.training } : {}),
+      });
+      if (!res.success) {
+        if (["PIN_INVALID", "LOCKED", "PIN_REQUIRED", "NOT_FOUND"].includes(res.error)) return screenLogin(errorText(res.error));
+        return screenConfirm(r, errorText(res.error), v);
+      }
+      st.data = res;
+      screenConfirmed(res);
+    };
+  }
+
+  function contactHtml(c) {
+    const phone = c?.phone ? String(c.phone) : "";
+    const tel = phone.replace(/[^+0-9]/g, "");
+    const hours = Array.isArray(c?.hours) ? c.hours : [];
+    if (!phone && !hours.length) {
+      return `<p class="muted">Sprich uns beim nächsten Besuch im Studio an${c?.email ? ` oder schreib uns an <a href="mailto:${esc(c.email)}" style="color:var(--accent-green)">${esc(c.email)}</a>` : ""} — wir vereinbaren dann dein Erstgespräch.</p>`;
+    }
+    return `${phone ? `<p class="contact-line">Telefon: <a href="tel:${esc(tel)}">${esc(phone)}</a></p>` : ""}
+      ${hours.length ? `<p class="contact-line">Öffnungszeiten:</p><ul class="kv" style="margin-top:4px">${hours.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+      ${c?.email ? `<p class="contact-line">Mail: <a href="mailto:${esc(c.email)}">${esc(c.email)}</a></p>` : ""}`;
+  }
+
+  function movementHtml(m) {
+    if (!m?.intro) return "";
+    return `<div class="card">
+        <h2>${esc(m.intro.title)}</h2>
+        <p class="muted">${esc(m.intro.body)}${m.strength ? ` In deinem Vital-Check hast du beim Krafttraining „${esc(m.strength)}“ angegeben.` : ""}</p>
+        <div class="move-grid">
+          ${m.alone ? `<div><h3>${esc(m.alone.title)}</h3><p class="muted">${esc(m.alone.body)}</p></div>` : ""}
+          ${m.studio ? `<div><h3>${esc(m.studio.title)}</h3><p class="muted">${esc(m.studio.body)}</p></div>` : ""}
+        </div>
+      </div>`;
+  }
+
+  function screenConfirmed(r) {
+    const cf = r.confirmation || {};
+    const keys = cf.lever_keys || r.member_choice || [];
+    st.choice = [...keys];
+    const cb = cf.callback;
+    h(`
+      <h1>Deine Auswahl steht</h1>
+      <p class="lead">${keys.length === 1 ? "Mit diesem Schritt" : "Mit diesen Schritten"} startest du. Im Erstgespräch macht dein Trainer oder deine Trainerin
+        mit dir aus jedem einen Plan: <em>„Wenn ich …, dann …“</em> — und ihr bucht gleich alle Termine der nächsten zwölf Wochen.</p>
+      <div class="card top">${pickedList(r, keys)}</div>
+      ${r.clearance_text ? `<div class="card warn"><h3>${esc(r.clearance_text.title)}</h3><p class="muted">${esc(r.clearance_text.body)}</p></div>` : ""}
+      ${cf.contact_preference === "callback" ? `
+        <div class="card info"><h3>Wir rufen dich an</h3>
+          <p class="muted">Deine Rückrufbitte ist bei uns${cb?.preferred_slot ? ` — am liebsten ${esc(cb.preferred_slot)}` : ""}. Wir melden uns, um dein Erstgespräch zu vereinbaren.</p></div>` : `
+        <div class="card info"><h3>So erreichst du uns</h3>${contactHtml(r.studio_contact)}</div>`}
+      ${movementHtml(r.movement)}
+      <p class="muted" style="margin:4px 0 12px">Nach deinem Erstgespräch findest du deinen Plan in deinem persönlichen Bereich und kannst ihn dir dort per Mail schicken.</p>
+      <div id="konto-step"></div>
+      <div class="row">
+        <button class="btn ghost" id="b-change">Auswahl ändern</button>
+        <button class="btn ghost" id="b-all">Alle Vorschläge ansehen</button>
+      </div>
+      ${INTERNAL ? `<p class="small" style="margin-top:14px">Bestätigt ${esc(cf.confirmed_at)} · ${esc(r.edge_version)} · Status ${esc(r.status)}</p>` : ""}`);
+    const toResult = () => screenResult({ ...r, member_choice: keys });
+    document.getElementById("b-change").onclick = toResult;
+    document.getElementById("b-all").onclick = toResult;
+    // Konto-Schritt (Stufe 3): die PIN bleibt im Speicher dieser Seite und geht nur an die Edge
+    if (window.LeVitaKonto) window.LeVitaKonto.mountStep(document.getElementById("konto-step"), { publicCode: st.code, pin: st.pin, context: "nutrition" });
   }
 
   // ── Testmodus ───────────────────────────────────────────
