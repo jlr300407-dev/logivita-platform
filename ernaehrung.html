@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Ernährungs-Check mit Begleitung · LeVITA</title>
+<!--
+  Ernährungs-Check mit Begleitung — Teilnehmerseite (Beta)
+  Liegt neben index.html des Vital-Checks und nutzt dessen assets/ (Schriften, Buddy).
+  Backend: Edge-Funktion nutrition-check (Modi start, submit, load, edit).
+  Alle Inhalte (Fragen, Optionen, Texte) kommen aus der Datenbank; hier steht nur die Darstellung.
+
+  Testmodus: ?internal=1 blendet eine Testleiste ein (Zufallsantworten, Rohdaten, Versionen).
+  Aufruf mit ?code=LEV-2026-000123 füllt die Pilot-ID vor.
+
+  Versionen:
+  0.1.0 (13.10.2026) erste Beta — gehört zu Edge nutrition-edge-2026-10-13.3
+-->
+<style>
+  @font-face { font-family: 'DM Sans'; font-weight: 400; font-display: swap; src: url('assets/dm-sans-v17-latin-regular.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 500; font-display: swap; src: url('assets/dm-sans-v17-latin-500.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 600; font-display: swap; src: url('assets/dm-sans-v17-latin-600.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 700; font-display: swap; src: url('assets/dm-sans-v17-latin-700.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Serif Display'; font-weight: 400; font-display: swap; src: url('assets/dm-serif-display-v17-latin-regular.woff2') format('woff2'); }
+
+  :root {
+    --brand-dark: #0a1628; --brand-card: #132338; --brand-card2: #1a2e47;
+    --accent-green: #22c97a; --accent-green-dim: rgba(34,201,122,0.12);
+    --accent-blue: #3b9eff; --accent-blue-dim: rgba(59,158,255,0.10);
+    --accent-amber: #f5a623; --accent-red: #ff5c5c;
+    --text-primary: #f0f4f8; --text-secondary: #8da0b8; --text-muted: #4a6280;
+    --border: rgba(255,255,255,0.07); --border-hover: rgba(255,255,255,0.14);
+    --radius: 16px; --radius-sm: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--brand-dark); color: var(--text-primary); min-height: 100vh; padding: 20px 16px 60px; line-height: 1.5; }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+  .logo-name { font-family: 'DM Serif Display', serif; font-size: 24px; }
+  .logo-sub { font-size: 12px; color: var(--text-secondary); letter-spacing: .04em; text-transform: uppercase; }
+  .beta { font-size: 11px; font-weight: 700; color: var(--accent-amber); border: 1px solid rgba(245,166,35,.4); border-radius: 999px; padding: 3px 10px; }
+
+  h1 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 30px; line-height: 1.2; margin-bottom: 10px; }
+  h2 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 22px; margin-bottom: 8px; }
+  h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  p.lead { color: var(--text-secondary); font-size: 16px; margin-bottom: 22px; }
+  .muted { color: var(--text-secondary); font-size: 14px; }
+  .small { font-size: 13px; color: var(--text-muted); }
+
+  .card { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; }
+  .card.top { border-color: rgba(34,201,122,.45); background: linear-gradient(180deg, rgba(34,201,122,.10), var(--brand-card) 55%); }
+  .card.info { border-color: rgba(59,158,255,.35); background: var(--accent-blue-dim); }
+  .card.warn { border-color: rgba(245,166,35,.4); background: rgba(245,166,35,.08); }
+
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  input[type=text], input[type=password], textarea {
+    width: 100%; padding: 13px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+    background: rgba(255,255,255,.04); color: var(--text-primary); font: 500 15px 'DM Sans', sans-serif; -webkit-appearance: none; }
+  input:focus, textarea:focus { outline: none; border-color: var(--accent-green); }
+  textarea { min-height: 90px; resize: vertical; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 22px; border-radius: 999px; border: 0;
+    background: var(--accent-green); color: #062214; font: 700 15px 'DM Sans', sans-serif; cursor: pointer; transition: transform .12s, opacity .12s; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:disabled { opacity: .45; cursor: default; transform: none; }
+  .btn.ghost { background: transparent; color: var(--text-primary); border: 1px solid var(--border-hover); }
+  .btn.block { width: 100%; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row .btn { flex: 1; }
+
+  .error { color: var(--accent-red); font-size: 14px; margin-top: 10px; min-height: 1em; }
+
+  /* Fragebogen */
+  .progress { height: 6px; background: var(--brand-card2); border-radius: 999px; overflow: hidden; margin-bottom: 8px; }
+  .progress > div { height: 100%; background: var(--accent-green); transition: width .3s; }
+  .step-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 18px; }
+  .q { margin-bottom: 26px; }
+  .q.missing .q-label { color: var(--accent-amber); }
+  .q-label { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+  .q-help { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; }
+  .opts { display: grid; gap: 8px; margin-top: 10px; }
+  .opt { width: 100%; text-align: left; padding: 13px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+    background: rgba(255,255,255,.03); color: var(--text-primary); font: 500 15px 'DM Sans', sans-serif; cursor: pointer;
+    display: flex; gap: 12px; align-items: center; transition: border-color .15s, background .15s; }
+  .opt:hover { border-color: var(--border-hover); }
+  .opt .mark { flex: 0 0 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-muted); }
+  .opt.multi .mark { border-radius: 5px; }
+  .opt.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
+  .opt.on .mark { border-color: var(--accent-green); background: var(--accent-green); box-shadow: inset 0 0 0 3px var(--brand-card); }
+
+  /* Ergebnis */
+  .tier { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 3px 10px; border-radius: 999px; margin-bottom: 10px; }
+  .tier.t-top { background: var(--accent-green); color: #062214; }
+  .tier.t-strong { background: var(--accent-green-dim); color: var(--accent-green); }
+  .tier.t-also { background: rgba(255,255,255,.06); color: var(--text-secondary); }
+  .lever-body { font-size: 15px; margin-bottom: 12px; }
+  details { border-top: 1px solid var(--border); padding-top: 10px; margin-top: 6px; }
+  summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent-blue); list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  .kv { margin-top: 12px; }
+  .kv dt { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--text-secondary); margin-top: 10px; }
+  .kv dd { font-size: 14px; }
+  .kv ul { padding-left: 18px; font-size: 14px; }
+  .evidence { font-size: 12px; color: var(--text-muted); margin-top: 12px; }
+  .imag { font-size: 12px; color: var(--accent-green); margin-left: 6px; }
+  .variant { font-size: 14px; border-left: 3px solid var(--accent-blue); padding-left: 12px; margin: 10px 0; color: var(--text-secondary); }
+  .parking li { list-style: none; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px; display: flex; justify-content: space-between; gap: 10px; }
+  .parking li:last-child { border-bottom: 0; }
+  .buddy { width: 84px; height: 84px; float: right; margin: -6px -6px 6px 12px; }
+
+  .consent-box { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; color: var(--text-secondary); cursor: pointer; margin: 16px 0; }
+  .consent-box input { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--accent-green); flex: 0 0 18px; }
+
+  footer { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 40px; }
+  .hidden { display: none !important; }
+  .spinner { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--brand-card2); border-top-color: var(--accent-green); animation: spin .8s linear infinite; margin: 60px auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Testleiste (nur ?internal=1) */
+  #testbar { position: sticky; top: 0; z-index: 10; background: #2a1d05; border: 1px solid rgba(245,166,35,.5); border-radius: var(--radius-sm);
+    padding: 10px 12px; margin-bottom: 18px; font-size: 13px; }
+  #testbar .row { margin-top: 8px; }
+  #testbar button { padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(245,166,35,.5); background: transparent; color: var(--accent-amber); font: 600 12px 'DM Sans'; cursor: pointer; }
+  #testbar label { color: var(--accent-amber); display: inline-flex; gap: 6px; align-items: center; }
+  #raw { white-space: pre-wrap; font: 11px/1.4 ui-monospace, Menlo, monospace; background: #050c17; padding: 10px; border-radius: 8px; max-height: 320px; overflow: auto; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="testbar" class="hidden">
+    <strong>Testmodus</strong> · <span id="tb-version"></span>
+    <div class="row">
+      <button id="tb-fill" type="button">Zufällig ausfüllen</button>
+      <label><input type="checkbox" id="tb-excl"> Ausschlüsse zulassen</label>
+      <button id="tb-raw" type="button">Rohdaten</button>
+    </div>
+    <div id="raw" class="hidden"></div>
+  </div>
+
+  <header>
+    <div>
+      <div class="logo-name">LeVITA</div>
+      <div class="logo-sub">Ernährungs-Check mit Begleitung</div>
+    </div>
+    <span class="beta">Beta</span>
+  </header>
+
+  <main id="app"><div class="spinner"></div></main>
+
+  <footer>LeVITA · Ernährungs-Check mit Begleitung · Beta <span id="fe-version"></span></footer>
+</div>
+
+<script>
+(() => {
+  const FE_VERSION = "0.1.0";
+  const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
+  const PARTS = {
+    S: { title: "Kurz vorab", lead: "Ein paar Fragen, damit wir sicher sein können, dass dieses Programm zu dir passt." },
+    A: { title: "Dein Alltag", lead: "Damit wir nur vorschlagen, was in deinem Alltag auch umsetzbar ist." },
+    B: { title: "Deine Mahlzeiten", lead: "Wann und wie du isst und trinkst." },
+    C: { title: "Was auf den Teller kommt", lead: "Ein grober Überblick reicht — es geht nicht ums Zählen." },
+    D: { title: "Was du schon probiert hast", lead: "Was schon einmal nicht geklappt hat, schlagen wir dir nicht noch einmal vor." },
+    E: { title: "Was du dir vorstellen kannst", lead: "Entscheiden musst du dich erst im Gespräch mit deiner Begleitperson." },
+  };
+  const REQUIRED_PARTS = ["S", "A", "B", "C"];
+  const EVIDENCE = { 1: "sehr gut untersucht", 2: "gut untersucht", 3: "begrenzt untersucht", 4: "plausibel, wenig untersucht" };
+
+  const params = new URLSearchParams(location.search);
+  const INTERNAL = params.get("internal") === "1";
+  const $app = document.getElementById("app");
+  document.getElementById("fe-version").textContent = FE_VERSION;
+
+  // Zustand — die PIN bleibt nur im Speicher dieser Seite
+  const st = { code: (params.get("code") || "").trim().toUpperCase(), pin: "", data: null, answers: {}, partIdx: 0, parts: [] };
+
+  // ── Hilfen ──────────────────────────────────────────────
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const h = (html) => { $app.innerHTML = html; window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const spinner = () => h('<div class="spinner"></div>');
+
+  async function call(mode, extra = {}) {
+    const res = await fetch(FUNCTION_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+      body: JSON.stringify({ mode, public_code: st.code, pin: st.pin, ...extra }),
+    });
+    let json; try { json = await res.json(); } catch { json = { success: false, error: "Keine gültige Antwort vom Server." }; }
+    json._http = res.status;
+    showRaw(mode, json);
+    return json;
+  }
+
+  function errorText(e) {
+    return ({
+      PIN_INVALID: "Pilot-ID oder PIN stimmen nicht. Bitte prüfe die Angaben aus deiner Mail.",
+      LOCKED: "Zu viele Versuche. Bitte warte 15 Minuten und versuche es dann erneut.",
+      PIN_REQUIRED: "Bitte gib Pilot-ID und PIN ein.",
+      NOT_FOUND: "Zu dieser Pilot-ID haben wir keinen Vital-Check gefunden.",
+      NOT_EDITABLE: "Deine Begleitung läuft bereits — Änderungen besprichst du jetzt direkt mit deiner Begleitperson.",
+      AGE: "Dieses Programm richtet sich an Erwachsene ab 18 Jahren.",
+    })[e] || "Da ist etwas schiefgegangen. Bitte versuche es gleich noch einmal.";
+  }
+
+  // ── Start: Pilot-ID + PIN ───────────────────────────────
+  function screenLogin(msg = "") {
+    h(`
+      <h1>Dein Ernährungs-Check</h1>
+      <p class="lead">Ein paar Fragen zu deinem Alltag — danach siehst du, wo bei dir das meiste Potenzial liegt.
+        Gemeinsam mit deiner Begleitperson wählst du dann ein bis drei Schritte für die nächsten zwölf Wochen.</p>
+      <div class="card">
+        <div class="field"><label for="f-code">Pilot-ID aus deinem Vital-Check</label>
+          <input type="text" id="f-code" autocomplete="off" placeholder="LEV-2026-000123" value="${esc(st.code)}"></div>
+        <div class="field"><label for="f-pin">PIN aus deiner Mail</label>
+          <input type="password" id="f-pin" inputmode="numeric" autocomplete="off" placeholder="8-stellig"></div>
+        <button class="btn block" id="b-go">Weiter</button>
+        <div class="error" id="err">${esc(msg)}</div>
+      </div>
+      <p class="small">Du findest Pilot-ID und PIN in der Mail zu deinem Vital-Check. Ohne Vital-Check ist der Ernährungs-Check nicht möglich — er baut auf deinen Antworten auf.</p>`);
+    const go = async () => {
+      st.code = document.getElementById("f-code").value.trim().toUpperCase();
+      st.pin = document.getElementById("f-pin").value.trim();
+      if (!st.code || !st.pin) return (document.getElementById("err").textContent = errorText("PIN_REQUIRED"));
+      spinner();
+      const r = await call("start");
+      route(r);
+    };
+    document.getElementById("b-go").onclick = go;
+    document.getElementById("f-pin").onkeydown = (e) => { if (e.key === "Enter") go(); };
+  }
+
+  // ── Verteiler nach Status ───────────────────────────────
+  function route(r) {
+    if (!r.success) return screenLogin(errorText(r.error));
+    st.data = r;
+    if (r.status === "consent_required") return screenConsent(r.consent);
+    if (r.status === "not_eligible") return screenText(r.text, "info");
+    if (r.status === "excluded") return screenExcluded(r);
+    if (r.status === "screening" || r.editing) return startQuestionnaire(r);
+    return screenResult(r);
+  }
+
+  // ── Einwilligung ────────────────────────────────────────
+  function screenConsent(c) {
+    h(`
+      <h1>Bevor es losgeht</h1>
+      <p class="lead">Damit wir dich begleiten können, speichern wir deine Antworten und machen sie deiner Begleitperson im Studio zugänglich.</p>
+      <div class="card">
+        <label class="consent-box"><input type="checkbox" id="c-ok"><span>${esc(c?.text)}</span></label>
+        <button class="btn block" id="b-c" disabled>Einverstanden, weiter</button>
+      </div>
+      <p class="small">Version ${esc(c?.version)}</p>`);
+    const box = document.getElementById("c-ok"), btn = document.getElementById("b-c");
+    box.onchange = () => (btn.disabled = !box.checked);
+    btn.onclick = async () => {
+      spinner();
+      route(await call("start", { consent: { documentation: true, trainer_access: true } }));
+    };
+  }
+
+  // ── Texte für Nicht-Eignung und Ausschluss ──────────────
+  function screenText(t, kind = "info") {
+    h(`
+      <div class="card ${kind}">
+        <h2>${esc(t?.title || "Hier passt ein anderer Weg")}</h2>
+        <p>${esc(t?.body || "")}</p>
+      </div>
+      <a class="btn ghost block" href="./${INTERNAL ? "?internal=1" : ""}">Zurück zum Vital-Check</a>`);
+  }
+  function screenExcluded(r) {
+    if (r.text) return screenText(r.text, "info");
+    // beim erneuten Laden fehlt der Text — dann allgemein
+    screenText({ title: "Gerade passt etwas anderes besser",
+      body: "Nach deinen Angaben ist dieses Programm im Moment nicht der richtige Rahmen für dich. Sprich uns im Studio gern an — wir finden gemeinsam einen passenden Weg." });
+  }
+
+  // ── Fragebogen ──────────────────────────────────────────
+  function startQuestionnaire(r) {
+    st.answers = {};
+    for (const [k, v] of Object.entries(r.given || {})) {
+      st.answers[k] = v.text != null ? { text: v.text } : { options: [...(v.options || [])] };
+    }
+    st.parts = Object.keys(PARTS).filter((p) => r.questions.some((q) => q.part === p));
+    st.partIdx = 0;
+    renderPart();
+  }
+
+  function isAnswered(q) {
+    const a = st.answers[q.question_key];
+    if (q.type === "text") return true;
+    return !!(a && a.options && a.options.length);
+  }
+
+  function renderPart(missing = []) {
+    const part = st.parts[st.partIdx];
+    const qs = st.data.questions.filter((q) => q.part === part);
+    const pct = Math.round((st.partIdx / st.parts.length) * 100);
+    h(`
+      <div class="progress"><div style="width:${pct}%"></div></div>
+      <div class="step-label">Teil ${st.partIdx + 1} von ${st.parts.length}${st.data.editing ? " · Antworten ändern" : ""}</div>
+      <h1>${esc(PARTS[part].title)}</h1>
+      <p class="lead">${esc(PARTS[part].lead)}</p>
+      ${qs.map((q) => renderQuestion(q, missing.includes(q.question_key))).join("")}
+      <div class="error" id="err">${missing.length ? "Bitte beantworte noch die markierten Fragen." : ""}</div>
+      <div class="row">
+        ${st.partIdx > 0 ? '<button class="btn ghost" id="b-back">Zurück</button>' : ""}
+        <button class="btn" id="b-next">${st.partIdx === st.parts.length - 1 ? "Auswerten" : "Weiter"}</button>
+      </div>`);
+
+    qs.forEach((q) => {
+      if (q.type === "text") {
+        const ta = document.getElementById("t-" + q.question_key);
+        ta.oninput = () => (st.answers[q.question_key] = { text: ta.value });
+        return;
+      }
+      document.querySelectorAll(`[data-q="${q.question_key}"]`).forEach((btn) => {
+        btn.onclick = () => {
+          const key = btn.dataset.o;
+          const cur = new Set(st.answers[q.question_key]?.options || []);
+          if (q.type === "single") { cur.clear(); cur.add(key); }
+          else if (cur.has(key)) cur.delete(key);
+          else {
+            if (key === "none") cur.clear(); else cur.delete("none"); // "Nichts davon" schließt den Rest aus
+            cur.add(key);
+          }
+          st.answers[q.question_key] = { options: [...cur] };
+          document.querySelectorAll(`[data-q="${q.question_key}"]`).forEach((b) => b.classList.toggle("on", cur.has(b.dataset.o)));
+        };
+      });
+    });
+
+    const back = document.getElementById("b-back");
+    if (back) back.onclick = () => { st.partIdx--; renderPart(); };
+    document.getElementById("b-next").onclick = () => {
+      if (REQUIRED_PARTS.includes(part)) {
+        const miss = qs.filter((q) => !isAnswered(q)).map((q) => q.question_key);
+        if (miss.length) return renderPart(miss);
+      }
+      if (st.partIdx < st.parts.length - 1) { st.partIdx++; renderPart(); }
+      else submit();
+    };
+  }
+
+  function renderQuestion(q, missing) {
+    const cur = new Set(st.answers[q.question_key]?.options || []);
+    if (q.type === "text") {
+      return `<div class="q"><div class="q-label">${esc(q.label)}</div>
+        ${q.help ? `<div class="q-help">${esc(q.help)}</div>` : ""}
+        <textarea id="t-${q.question_key}" maxlength="500">${esc(st.answers[q.question_key]?.text || "")}</textarea></div>`;
+    }
+    return `<div class="q ${missing ? "missing" : ""}">
+      <div class="q-label">${esc(q.label)}</div>
+      ${q.help ? `<div class="q-help">${esc(q.help)}</div>` : ""}
+      <div class="opts">${q.options.map((o) => `
+        <button type="button" class="opt ${q.type === "multi" ? "multi" : ""} ${cur.has(o.key) ? "on" : ""}" data-q="${q.question_key}" data-o="${esc(o.key)}">
+          <span class="mark"></span><span>${esc(o.label)}</span></button>`).join("")}</div></div>`;
+  }
+
+  async function submit() {
+    spinner();
+    const answers = Object.entries(st.answers).map(([question_key, a]) =>
+      a.text != null ? { question_key, value_text: a.text } : { question_key, option_keys: a.options || [] });
+    const r = await call("submit", { answers });
+    if (!r.success && r.error === "MISSING") {
+      // zurück zum ersten Teil mit fehlender Antwort
+      const first = st.data.questions.find((q) => r.missing.includes(q.question_key));
+      st.partIdx = Math.max(0, st.parts.indexOf(first?.part));
+      return renderPart(r.missing);
+    }
+    if (!r.success) return screenLogin(errorText(r.error));
+    if (r.status === "excluded") return screenText(r.text, "info");
+    route(r);
+  }
+
+  // ── Ergebnis: Potenzialanzeige ──────────────────────────
+  function leverCard(l) {
+    const tip = l.tip || {};
+    const b = tip.benefits || {};
+    const label = l.is_top ? "Dein stärkster Hebel" : (l.tier === "also" ? "Lohnt sich auch" : "Starker Hebel");
+    const cls = l.is_top ? "t-top" : (l.tier === "also" ? "t-also" : "t-strong");
+    const title = l.variant?.title || tip.title || l.lever_key;
+    const body = l.variant?.body || tip.body || "";
+    const ex = (l.variant?.benefits?.beispiele) || b.beispiele || [];
+    return `
+      <div class="card ${l.is_top ? "top" : ""}">
+        ${l.is_top ? '<img class="buddy" src="assets/buddy-nutrition-128.webp" alt="">' : ""}
+        <span class="tier ${cls}">${label}</span>${l.imaginable ? '<span class="imag">✓ kannst du dir vorstellen</span>' : ""}
+        <h3>${esc(title)}</h3>
+        <p class="lever-body">${esc(body)}</p>
+        <details ${l.is_top ? "open" : ""}><summary>Warum, woran du es merkst, Beispiele</summary>
+          <dl class="kv">
+            ${b.warum ? `<dt>Warum</dt><dd>${esc(b.warum)}</dd>` : ""}
+            ${b.merkst ? `<dt>Woran du es merkst</dt><dd>${esc(b.merkst)}</dd>` : ""}
+            ${b.stolperstein ? `<dt>Typischer Stolperstein</dt><dd>${esc(b.stolperstein)}</dd>` : ""}
+            ${ex.length ? `<dt>Beispiele</dt><dd><ul>${ex.map((e) => `<li>${esc(e)}</li>`).join("")}</ul></dd>` : ""}
+          </dl>
+          <div class="evidence">Studienlage: ${esc(EVIDENCE[l.evidence_level] || "nicht wissenschaftlich untersucht")}</div>
+        </details>
+      </div>`;
+  }
+
+  function screenResult(r) {
+    const res = r.result;
+    const shown = res?.shown || [];
+    const parking = res?.parking || [];
+    h(`
+      <h1>Dein Ergebnis</h1>
+      <p class="lead">${shown.length
+        ? "Das sind die Hebel, die bei dir am meisten bewegen können — sortiert nach dem, was in deinem Alltag oft vorkommt und gut untersucht ist."
+        : "Nach deinen Antworten machst du schon vieles richtig. Im Gespräch schauen wir gemeinsam, wo du trotzdem ansetzen möchtest."}</p>
+
+      ${r.clearance_text ? `<div class="card warn"><h3>${esc(r.clearance_text.title)}</h3><p class="muted">${esc(r.clearance_text.body)}</p></div>` : ""}
+      ${r.bia_text ? `<div class="card info"><h3>${esc(r.bia_text.title)}</h3><p class="muted">${esc(r.bia_text.body)}</p></div>` : ""}
+
+      ${shown.map(leverCard).join("")}
+
+      ${(res?.hints || []).map((hn) => `<div class="card info"><h3>${esc(hn.title)}</h3><p class="muted">${esc(hn.body)}</p></div>`).join("")}
+
+      ${parking.length ? `
+        <div class="card">
+          <h2>Später, wenn die ersten laufen</h2>
+          <p class="muted" style="margin-bottom:8px">Diese Hebel bleiben für dich sichtbar. Ab Woche 6 kann einer davon dazukommen.</p>
+          <ul class="parking">${parking.map((l) => `<li><span>${esc(l.tip?.title || l.lever_key)}</span><span class="small">${l.tier === "also" ? "lohnt sich auch" : "starker Hebel"}</span></li>`).join("")}</ul>
+        </div>` : ""}
+
+      <div class="card">
+        <h2>So geht es weiter</h2>
+        <p class="muted">Im ersten Gespräch suchst du dir gemeinsam mit deiner Begleitperson <strong>ein bis drei</strong> dieser Schritte aus —
+          welche, entscheidest du. Aus jedem Schritt machen wir einen konkreten Plan: <em>„Wenn ich …, dann …“</em>.
+          Dabei buchen wir gleich alle sechs Termine der nächsten zwölf Wochen.</p>
+      </div>
+
+      <div class="row">
+        <button class="btn ghost" id="b-edit">Antworten ändern</button>
+      </div>
+      ${INTERNAL ? `<p class="small" style="margin-top:14px">Regelwerk ${esc(res?.rules_version)} · ${esc(r.edge_version)} · Status ${esc(r.status)} · Altersstufe ${esc(r.age_stage)}</p>` : ""}`);
+    document.getElementById("b-edit").onclick = async () => { spinner(); route(await call("edit")); };
+  }
+
+  // ── Testmodus ───────────────────────────────────────────
+  function showRaw(mode, json) {
+    if (!INTERNAL) return;
+    document.getElementById("tb-version").textContent = `Frontend ${FE_VERSION} · ${json.edge_version || "Edge ?"} · letzter Aufruf: ${mode} (HTTP ${json._http})`;
+    document.getElementById("raw").textContent = JSON.stringify(json, null, 2);
+  }
+  if (INTERNAL) {
+    document.getElementById("testbar").classList.remove("hidden");
+    document.getElementById("tb-raw").onclick = () => document.getElementById("raw").classList.toggle("hidden");
+    document.getElementById("tb-fill").onclick = () => {
+      if (!st.data?.questions) return alert("Zufallsantworten gibt es nur im Fragebogen.");
+      const allowExcl = document.getElementById("tb-excl").checked;
+      const rnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
+      for (const q of st.data.questions) {
+        const keys = q.options.map((o) => o.key);
+        if (q.type === "text") { st.answers[q.question_key] = { text: Math.random() < .5 ? "Testantwort" : "" }; continue; }
+        if (q.part === "S" && !allowExcl) {
+          // unauffällig: "Nein"/"Nichts davon"/erste Option; Medikation gelegentlich mit Freigabe-Fall
+          let pick = keys.includes("none") ? "none" : keys.includes("no") ? "no" : keys[0];
+          if (q.question_key === "s_medications" && Math.random() < .25) pick = rnd(["levothyroxin", "blutdruck", "statine"]);
+          if (q.question_key === "s_strength_intent") pick = rnd(["trains", "start"]);
+          st.answers[q.question_key] = { options: [pick] };
+          continue;
+        }
+        if (q.type === "multi") {
+          const pool = keys.filter((k) => k !== "none");
+          const n = Math.floor(Math.random() * 3);
+          const set = new Set(); while (set.size < n && set.size < pool.length) set.add(rnd(pool));
+          st.answers[q.question_key] = { options: set.size ? [...set] : (keys.includes("none") ? ["none"] : []) };
+        } else st.answers[q.question_key] = { options: [rnd(keys)] };
+      }
+      st.partIdx = st.parts.length - 1;
+      renderPart();
+    };
+  }
+
+  // ── Los ─────────────────────────────────────────────────
+  screenLogin();
+})();
+</script>
+</body>
+</html>
