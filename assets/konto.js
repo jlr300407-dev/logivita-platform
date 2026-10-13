@@ -1,6 +1,20 @@
 /* =====================================================================
    konto.js — Persönliche Konten (LeVITA Vital-Check)
-   Version 1.0.0 · Stand 13.10.2026
+   Version 1.1.0 · Stand 13.10.2026
+
+   1.1.0 (Ernährungs-Chat, abgestimmt mit Entscheidungen Jörg 13.10.2026):
+     - Pflichtmodus: mountStep(el, { …, required: true }) zeigt kein "Ohne Konto weiter"
+       (Konto ist Pflicht ab Stufe 3, z. B. nach "Auswahl bestätigen" im Ernährungs-Check).
+       Kann der Status nicht geladen werden, erscheint im Pflichtmodus ein Hinweis statt
+       Stille ("richten wir im Erstgespräch ein") — der Ablauf wird nie blockiert.
+     - Im Check per Attribut: <div data-konto-step data-required="1" …> (für die Studio-Anfrage).
+     - Rückmeldung an die Seite: opts.onState({ in_account, has_account }) nach dem Laden,
+       opts.onRequested({ email, existing }) nach verschickter Konto-Anfrage; zusätzlich
+       Event "levita:account-requested" auf document.
+     - Häkchen "Mein Plan per E-Mail" entfällt (Entscheidung Jörg 17:45: die Plan-Mail
+       löst der Nutzer selbst in "Mein Bereich" aus); plan_mail wird immer false gesendet.
+     Rückwärtskompatibel: ohne required/Callbacks verhält sich der Schritt wie 1.0.0
+     (bis auf das entfallene Plan-Mail-Häkchen).
 
    Gemeinsamer Baustein für index.html (Check), ernaehrung.html und
    konto.html ("Mein Bereich"). Spricht nur mit der Edge-Funktion
@@ -9,7 +23,7 @@
    Zwei Teile:
    1. Konto-Schritt (Stufe 3): LeVitaKonto.mountStep(element, optionen)
       Vorbelegt mit der Mailadresse aus dem Check, Pflicht-Häkchen Konto,
-      zwei freiwillige Häkchen. "Ohne Konto weiter" bleibt immer möglich.
+      freiwilliges Häkchen Erinnerungen. "Ohne Konto weiter" nur ohne required.
       Im Check (index.html) hängt er sich selbst ein: jedes Element mit
       data-konto-step wird automatisch befüllt, die PIN kommt aus
       window._accessPin und steht nie im HTML.
@@ -24,7 +38,7 @@
   "use strict";
   if (window.LeVitaKonto) return;
 
-  var VERSION = "1.0.0";
+  var VERSION = "1.1.0";
   var SUPABASE_URL = "https://koctweetotpqaazeicwj.supabase.co";
   var ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   var EDGE_URL = SUPABASE_URL + "/functions/v1/account";
@@ -180,6 +194,11 @@
     studio: "Für dein Gespräch im Studio legen wir dir ein persönliches Konto an. Dort liegen deine Vital-Checks mit Verlauf, deine Termine und später dein Plan, ohne PIN und mit einem Link per E-Mail.",
     nutrition: "Für deine Begleitung legen wir dir ein persönliches Konto an. Dort liegen dein Plan, deine Termine und deine Vital-Checks mit Verlauf, ohne PIN und mit einem Link per E-Mail.",
   };
+  var LEADS_REQUIRED = {
+    studio: "Für dein Gespräch im Studio brauchst du ein persönliches Konto. Dort liegen deine Vital-Checks mit Verlauf, deine Termine und später dein Plan, ohne PIN und mit einem Link per E-Mail.",
+    nutrition: "Für deine Begleitung brauchst du ein persönliches Konto. Dort findest du nach dem Erstgespräch deinen Plan, deine Termine und deine Vital-Checks, ohne PIN und mit einem Link per E-Mail.",
+  };
+  function notify(fn, arg) { try { if (typeof fn === "function") fn(arg); } catch (e) {} }
 
   function errText(e) {
     return ({
@@ -191,18 +210,22 @@
     })[e] || "Das hat gerade nicht geklappt. Bitte versuche es gleich noch einmal.";
   }
 
-  // opts: { publicCode, pin, context: "studio"|"nutrition", email?, firstName? }
+  // opts: { publicCode, pin, context: "studio"|"nutrition", email?, firstName?,
+  //         required?: boolean, onState?: fn({in_account, has_account}), onRequested?: fn({email, existing}) }
   async function mountStep(el, opts) {
     if (!el || el.dataset.lkMounted === "1") return;
     el.dataset.lkMounted = "1";
     injectCss();
     opts = opts || {};
     var ctx = opts.context === "nutrition" ? "nutrition" : "studio";
-    if (!opts.publicCode || !opts.pin) { el.innerHTML = ""; return; }   // ohne PIN kein Konto (Stufe 1)
+    var required = opts.required === true;
+    var fallback = '<div class="lk"><p style="margin:0">Dein persönliches Konto richten wir dir im Erstgespräch ein.</p></div>';
+    if (!opts.publicCode || !opts.pin) { el.innerHTML = required ? fallback : ""; return; }   // ohne PIN kein Konto (Stufe 1)
     el.innerHTML = '<div class="lk"><p>Einen Moment …</p></div>';
 
     var st = await edge("account_status", { public_code: opts.publicCode, pin: opts.pin });
-    if (!st.success) { el.innerHTML = ""; return; }   // still: der Konto-Schritt darf den Ablauf nie stören
+    if (!st.success) { el.innerHTML = required ? fallback : ""; return; }   // der Konto-Schritt darf den Ablauf nie stören
+    notify(opts.onState, { in_account: !!st.in_account, has_account: !!st.has_account });
 
     if (st.in_account) {
       el.innerHTML = '<div class="lk"><div class="lk-ok"><h3>Dieser Check liegt in deinem Konto</h3>' +
@@ -216,7 +239,7 @@
     var title = existing ? "Diesen Check in dein Konto übernehmen" : "Dein persönliches Konto";
     var lead = existing
       ? "Du hast bei " + esc(st.studio || "uns") + " schon ein Konto. Mit einem Klick auf den Link in der Mail kommt dieser Check in deinen Verlauf."
-      : esc(LEADS[ctx]);
+      : esc((required ? LEADS_REQUIRED : LEADS)[ctx]);
     el.innerHTML =
       '<div class="lk">' +
         '<h3>' + title + '</h3>' +
@@ -224,11 +247,10 @@
         '<label class="lk-lbl" for="lk-mail">E-Mail-Adresse</label>' +
         '<input type="email" id="lk-mail" autocomplete="email" value="' + esc(email) + '">' +
         (existing ? "" : '<label class="lk-box req"><input type="checkbox" id="lk-c-acc"><span>' + esc(c.account) + '</span></label>') +
-        '<label class="lk-box"><input type="checkbox" id="lk-c-plan"><span>' + esc(c.plan_mail) + '</span></label>' +
         '<label class="lk-box"><input type="checkbox" id="lk-c-rem"><span>' + esc(c.reminders) + '</span></label>' +
         '<div class="lk-row">' +
           '<button type="button" class="lk-go" id="lk-go"' + (existing ? "" : " disabled") + '>' + (existing ? "Link schicken" : "Konto anlegen") + '</button>' +
-          '<button type="button" class="lk-skip" id="lk-skip">Ohne Konto weiter</button>' +
+          (required ? "" : '<button type="button" class="lk-skip" id="lk-skip">Ohne Konto weiter</button>') +
         '</div>' +
         '<div class="lk-err" id="lk-err"></div>' +
         '<div class="lk-small">Version ' + esc(c.version || "") + '</div>' +
@@ -238,7 +260,7 @@
     var go = el.querySelector("#lk-go"), acc = el.querySelector("#lk-c-acc");
     if (acc) acc.onchange = function () { go.disabled = !acc.checked; };
 
-    el.querySelector("#lk-skip").onclick = function () {
+    if (!required) el.querySelector("#lk-skip").onclick = function () {
       track("account_step_skip", { context: ctx });
       el.innerHTML = '<div class="lk"><p style="margin:0">Kein Problem. Pilot-ID und PIN funktionieren weiter wie bisher. ' +
         'Ein Konto kannst du jederzeit später im Studio oder hier anlegen.</p></div>';
@@ -251,7 +273,7 @@
       go.disabled = true; go.textContent = "Wird gesendet …"; err.textContent = "";
       var consents = {
         account: existing ? false : !!(acc && acc.checked),
-        plan_mail: el.querySelector("#lk-c-plan").checked,
+        plan_mail: false,   // 1.1.0: Plan-Mail fordert der Nutzer selbst in "Mein Bereich" an
         reminders: el.querySelector("#lk-c-rem").checked,
       };
       var r = await edge("request_account", {
@@ -262,7 +284,9 @@
         go.disabled = false; go.textContent = existing ? "Link schicken" : "Konto anlegen";
         return;
       }
-      track("account_requested", { context: ctx, existing: existing, plan_mail: consents.plan_mail, reminders: consents.reminders });
+      track("account_requested", { context: ctx, existing: existing, reminders: consents.reminders, required: required });
+      notify(opts.onRequested, { email: mail, existing: existing });
+      try { document.dispatchEvent(new CustomEvent("levita:account-requested", { detail: { context: ctx, existing: existing } })); } catch (e) {}
       el.innerHTML = '<div class="lk"><div class="lk-ok"><h3>Fast geschafft</h3>' +
         '<p>Wir haben dir einen Link an <strong>' + esc(mail) + '</strong> geschickt. Ein Klick darauf, und ' +
         (existing ? "dieser Check ist in deinem Konto." : "dein Konto ist aktiv.") + '</p>' +
@@ -280,6 +304,7 @@
         pin: window._accessPin || "",
         context: n.getAttribute("data-context") || "studio",
         email: n.getAttribute("data-email") || "",
+        required: n.getAttribute("data-required") === "1",   // 1.1.0: Pflichtmodus auch per Attribut
       });
     }
   }
