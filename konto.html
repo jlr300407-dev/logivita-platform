@@ -22,6 +22,9 @@
   Testmodus: ?internal=1 zeigt die letzte Server-Antwort.
 
   Versionen:
+  1.1.0 (13.10.2026) Schalter "Mein Plan per E-Mail" entfällt (Entscheidung Jörg: die Plan-Mail fordert
+        der Nutzer selbst an, Knopf kommt mit dem Plan); lädt konto.js 1.1.0 — gehört zu Edge
+        account-edge-2026-10-13.3 (EDGE_account_1.2.0.ts)
   1.0.0 (13.10.2026) erste Fassung — gehört zu Edge account-edge-2026-10-13.2
         (EDGE_account_1.1.0.ts), konto-fundament_1.2.0.sql, assets/konto.js 1.0.0
 -->
@@ -125,10 +128,10 @@
   <footer>LeVITA Vital-Check · Mein Bereich <span id="fe-version"></span></footer>
 </div>
 
-<script src="assets/konto.js?v=1.0.0"></script>
+<script src="assets/konto.js?v=1.1.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.0.0";
+  const FE_VERSION = "1.1.0";
   const K = window.LeVitaKonto;
   const esc = K.esc;
   const params = new URLSearchParams(location.search);
@@ -253,7 +256,6 @@
     if (!acc) return screenNoAccount();
     const list = Array.isArray(checks) ? checks.slice().reverse() : [];   // neueste zuerst
     const cons = acc.consents || {};
-    const planOn = !!(cons.plan_mail && cons.plan_mail.granted);
     const remOn = !!(cons.appointment_reminder && cons.appointment_reminder.granted);
 
     const rows = list.map((c, i) => {
@@ -286,8 +288,6 @@
 
       <div class="card">
         <h2>E-Mails von uns</h2>
-        <label class="toggle"><input type="checkbox" id="t-plan" ${planOn ? "checked" : ""}>
-          <span><strong>Mein Plan per E-Mail</strong>Nach dem Erstgespräch und bei Änderungen.</span></label>
         <label class="toggle"><input type="checkbox" id="t-rem" ${remOn ? "checked" : ""}>
           <span><strong>Erinnerungen</strong>Vor vereinbarten Terminen und an deinen nächsten Vital-Check.</span></label>
         <div class="error" id="err-c"></div>
@@ -311,7 +311,6 @@
         else document.getElementById("err-c").textContent = "";
       };
     };
-    bindToggle("t-plan", "plan_mail");
     bindToggle("t-rem", "reminders");
 
     document.getElementById("b-del-open").onclick = () => {
