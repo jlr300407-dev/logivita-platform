@@ -740,6 +740,26 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.7.1 (14.10.2026): (1) Reiter "Mein Plan" in drei Zonen: "Das kannst du allein tun"
+         (Fahrplan, Hebel, Hinweise, Re-Check), "Das machen wir im Studio" (Messen, Gespräch,
+         später Ernährungs-Check), "Dein Zugang" (nur Wiederaufruf). (2) Stufe 3 nur mit Konto:
+         Rückrufbitte aus Stufe 1 übernimmt die Sitzungs-PIN der Edge (ab edge-2026-10-14.2),
+         damit der Pflicht-Konto-Schritt erscheint.
+       v2.7.0 (14.10.2026): (1) Re-Check im Wiederaufruf nach Zeitpunkt: Erst ab 8 Wochen
+       nach dem Check steht die Einladung oben ("Zeit für deinen Re-Check?"). Vorher kein
+       Balken oben, sondern im Reiter "Mein Plan" unter "Dein Zugang und dein Re-Check" das
+       konkrete Datum ("aussagekräftig ab …") und klein "Trotzdem jetzt neu testen". Ursache
+       des Balkens am Tag des Checks: load_result lieferte kein created_at, "kein Datum"
+       galt als "Re-Check fällig" — jetzt gilt es als "nicht fällig" (Edge liefert es ab
+       edge-2026-10-14.1, sonst Datum der Auswertungs-Mail). Der
+       Kalendereintrag rechnet ab dem Tag des Checks (+12 Wochen), nicht ab dem Wiederaufruf;
+       der Kasten nennt das Datum. (2) Keine "Ernährungsberatung" mehr (gibt es bei LeVITA
+       nicht, Jörg 13.10.2026): Studio-Empfehlung "Figur & Abnehmen", Leistungsliste und
+       Dienstleistungs-Karte umformuliert. (3) Vorbereitet, aber AUS
+       (NUTRITION_OFFER_ENABLED = false): Karte "Ernährungs-Check mit Begleitung" im Plan.
+       Gehört zu EDGE_submit-vital-check_edge-2026-10-14.1.ts und
+       vital-check-texte_ohne-ernaehrungsberatung.sql.
+
        v2.6.1 (13.10.2026): Konto nach der Studio-Anfrage ist Pflicht (data-required="1",
        konto.js 1.1.0): kein "Ohne Konto weiter", Linie Jörg "wer den Trainer in Anspruch
        nimmt, bekommt ein Konto". Die Anfrage selbst geht vorher und unabhängig raus.
@@ -1162,6 +1182,14 @@
     .t3-info-banner strong { color: var(--text-primary); }
     .t3-zone-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; }
     .t3-zone-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    /* v2.7.1 — Gliederung "Mein Plan": allein / im Studio / Zugang */
+    .plan-zone-head { margin: 24px 0 12px; padding: 12px 14px; border-radius: 12px; background: var(--brand-card); border: 0.5px solid var(--border); border-left: 4px solid var(--accent-green); display: flex; gap: 12px; align-items: flex-start; }
+    .plan-zone-head:first-child { margin-top: 4px; }
+    .plan-zone-head.studio { border-left-color: var(--accent-blue); }
+    .plan-zone-head.zugang { border-left-color: var(--text-muted); }
+    .plan-zone-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
+    .plan-zone-title { font-size: 16px; font-weight: 800; color: var(--text-primary); }
+    .plan-zone-sub { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-top: 2px; }
     .t3-test-card { background: var(--brand-card); border: 0.5px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
     .t3-test-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
     .t3-test-title { font-size: 14px; font-weight: 600; }
@@ -3461,7 +3489,8 @@
         btn.disabled = true; btn.innerText = "✓ Vital-Plan wurde versendet";
         showFeedbackBox();
         // v2.0.0 — Stufe 2 sofort freischalten (Konzept: Freischaltung bei email_sent)
-        unlockStage2({ email, firstName: firstName || null, pin: result.access_pin || window._accessPin || null, fahrplan: Array.isArray(result.fahrplan) ? result.fahrplan : [] });
+        unlockStage2({ email, firstName: firstName || null, pin: result.access_pin || window._accessPin || null, fahrplan: Array.isArray(result.fahrplan) ? result.fahrplan : [],
+          nutrition_offer: result.nutrition_offer || null });   // v2.7.0
       } else {
         trackEvent('mail_sent_unconfirmed', { email_sent: false });
         statusEl.innerHTML = `<div class="status-msg info-box box-warning">Deine Auswertung wurde erstellt, aber der E-Mail-Versand konnte nicht bestätigt werden. Bitte prüfe in ein paar Minuten dein Postfach (auch Spam). Falls nichts ankommt: <strong>info@le-vita.com</strong></div>`;
@@ -3709,12 +3738,18 @@
       // erneut ausfuellt, misst Antwortschwankung, keine Veraenderung — genau
       // so entstand die gefeierte Verbesserung von +16,4 Punkten in einer Woche.
       // Vor acht Wochen bleibt der Verlauf sichtbar, aber ohne Aufforderung.
-      const _checkedAt = result.submission?.created_at || result.created_at || null;
+      // v2.7.0: Fallback auf das Datum der Auswertungs-Mail (ältere Edge lieferte created_at nicht)
+      const _checkedAt = result.submission?.created_at || result.created_at || result.ai_analysis?.created_at || null;
       const _weeksSince = _checkedAt && !isNaN(new Date(_checkedAt).getTime())
         ? Math.floor((Date.now() - new Date(_checkedAt).getTime()) / (7 * 24 * 3600 * 1000))
         : null;
-      const _recheckReady = _weeksSince === null || _weeksSince >= 8;
+      // v2.7.0: Ohne Datum NICHT einladen (vorher: ohne Datum = immer einladen — so stand die
+      // Einladung am Tag des Checks ganz oben, weil load_result kein created_at lieferte)
+      const _recheckReady = _weeksSince !== null && _weeksSince >= 8;
 
+      // v2.7.0 — oben nur, wenn der Re-Check wirklich ansteht (ab 8 Wochen). Vorher steht
+      // im Plan unten das Datum, ab dem er aussagekräftig wird (S.recheckLater).
+      S.recheckLater = "";
       if (_recheckReady) {
         html += S.recheckBanner = `
           <div class="recheck-banner">
@@ -3723,13 +3758,14 @@
             <button class="recheck-btn" onclick="startRecheckFromReview()">Neuen Check starten &amp; vergleichen →</button>
           </div>`;
       } else {
-        const _wk = _weeksSince <= 0 ? "wenige Tage" : `${_weeksSince} Woche${_weeksSince > 1 ? "n" : ""}`;
-        html += S.recheckBanner = `
-          <div class="recheck-banner" style="background:rgba(255,255,255,0.03);border-color:var(--border);">
-            <div class="recheck-banner-title" style="color:var(--text-secondary);">🔄 Dein Ergebnis ist ${_wk} alt</div>
-            <div class="recheck-banner-sub">Aussagekräftig wird der Vergleich ab etwa 8 Wochen — so lange braucht es, bis sich Veränderungen im Alltag auch im Wert zeigen.</div>
-            <button class="recheck-btn" onclick="startRecheckFromReview()"
-              style="background:transparent;color:var(--text-secondary);border:1px solid var(--border);">Trotzdem neu testen →</button>
+        S.recheckBanner = "";
+        const _d8 = recheckDates().from;
+        const _soon = _weeksSince !== null && _weeksSince >= 6;
+        S.recheckLater = `
+          <div style="margin-top:12px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);">
+            <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">🔄 ${_soon ? "Bald Zeit für deinen Re-Check" : "Dein Re-Check"}</div>
+            <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;">Aussagekräftig wird der Vergleich ab dem <strong style="color:var(--text-primary);">${_d8}</strong> — so lange braucht es, bis sich Veränderungen im Alltag auch im Wert zeigen.</div>
+            <div style="margin-top:8px;font-size:12px;"><a href="#" onclick="startRecheckFromReview();return false;" style="color:var(--text-muted);">Trotzdem jetzt neu testen</a> <span style="color:var(--text-muted);">— z. B. wenn sich bei dir gerade etwas Grundlegendes geändert hat</span></div>
           </div>`;
       }
     }
@@ -4379,7 +4415,7 @@
 
     // Kategorie 2 — Mit uns im Studio (genau EINE Empfehlung, genau EIN Button)
     const studioRec = {
-      goal_weight: ["Figur & Abnehmen", "Betreutes Training kombiniert mit Ernährungsberatung — passend zu deinem Ziel und deinem Fokusbereich."],
+      goal_weight: ["Figur & Abnehmen", "Betreutes Training kombiniert mit Ernährungstipps für deinen Alltag — passend zu deinem Ziel und deinem Fokusbereich."],   // v2.7.0
       goal_fitness: ["Kraft & Ausdauer", "Professionelle Trainingsbegleitung mit Plan, Technik-Feedback und Progression."],
       goal_energy: ["Gesundheit & Fitness", "Training, das Energie gibt statt kostet — mit persönlicher Begleitung im Studio."],
       goal_longevity: ["Gesundheit & Fitness", "Langfristig vital bleiben: betreutes Training mit regelmäßiger Standortbestimmung."],
@@ -4512,8 +4548,8 @@
       <div class="t3-leistung-row">
         <div class="t3-leistung-icon">🌿</div>
         <div class="t3-leistung-body">
-          <div class="t3-leistung-title">Ernährungsberatung</div>
-          <div class="t3-leistung-desc">Erstgespräch kostenlos — individueller Ernährungsplan</div>
+          <div class="t3-leistung-title">Ernährungstipps im Training</div>
+          <div class="t3-leistung-desc">Erstgespräch kostenlos — Tipps für deinen Essalltag, passend zu deinem Training</div>
         </div>
         <a class="t3-link" href="https://le-vita.com/probetraining" target="_blank">→</a>
       </div>
@@ -4867,7 +4903,7 @@
     const SERV = {
       training: ["Betreutes Training", "Mit Plan, Technik und persönlicher Begleitung."],
       kurse: ["Kurse in der Gruppe", "Abwechslungsreich und gemeinsam – Training in der Gruppe macht mehr Spaß."],
-      ernaehrung: ["Ernährungsberatung", "Erstgespräch kostenlos – passend zu deiner Ernährung."],
+      ernaehrung: ["Ernährungstipps im Training", "Erstgespräch kostenlos – Tipps für deinen Essalltag, passend zu deinem Training."],   // v2.7.0: keine Ernährungsberatung
       velus: ["VELUS JET Wasserstrahlmassage", "Tiefe Entspannung und Regeneration – nur bei uns."],
       tanita: ["Tanita-Körperanalyse", "Muskelmasse und Körperfett – die Zahlen hinter deinem Ergebnis."]
     };
@@ -4950,14 +4986,15 @@
     const slot = r && (r.slot || r.preferred_slot);
     const nm = r && r.name ? `, ${escHtml(r.name)}` : "";
     const what = r && r.offer === "vital_analyse_plus" ? "deine Vital-Analyse Plus" : "dein Ergebnisgespräch";
+    const konto = kontoStepHtml();   // v2.7.1: Hinweis nur, wenn der Konto-Schritt auch erscheint
     return `<div class="stage-unlock" style="margin:10px 0 14px;">
         <div class="stage-step" style="margin-bottom:6px;">
           <div class="stage-step-num done">✓</div>
           <div><div class="stage-step-title">Danke${nm} – wir melden uns</div>
           <div class="stage-step-sub">Deine Anfrage für ${what} ist bei uns. Wir rufen dich an${slot ? `, am liebsten ${escHtml(slot)}` : ""}. Im Gespräch schauen wir gemeinsam auf deine Stärken, deinen wichtigsten Ansatzpunkt und zwei passende nächste Schritte.</div></div>
         </div>
-        ${window._stage === 1 ? `<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;background:rgba(0,0,0,0.18);border-radius:8px;padding:10px 12px;margin-top:8px;"><strong style="color:var(--text-primary);">Noch keinen Vital-Plan?</strong> Im Studio schalten wir ihn mit dir frei – dann bekommst du Pilot-ID und PIN für deinen Re-Check.</div>` : ""}
-      </div>${kontoStepHtml()}${referralBoxHtml('studio')}`;
+        ${window._stage === 1 && konto ? `<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;background:rgba(0,0,0,0.18);border-radius:8px;padding:10px 12px;margin-top:8px;"><strong style="color:var(--text-primary);">Noch keinen Vital-Plan?</strong> Leg jetzt dein Konto an – darin findest du dein Ergebnis wieder. Den Vital-Plan schalten wir im Studio mit dir frei.</div>` : ""}
+      </div>${konto}${referralBoxHtml('studio')}`;
   }
 
   // v2.6.0 — Konto-Schritt (Stufe 3). Nur mit PIN; konto.js befüllt den Platzhalter
@@ -4993,12 +5030,17 @@
     if (!latestResult || !latestResult.public_code) return fail("Es liegt kein Ergebnis vor. Bitte lade die Seite neu.");
     if (btn) { btn.disabled = true; btn.textContent = "Wird gesendet …"; }
     try {
-      await callFunction({
+      const res = await callFunction({
         mode: "studio_request", public_code: latestResult.public_code,
         pin: window._accessPin || null, client_token: window._clientToken || null,
         first_name: name, phone, preferred_slot: slot, offer,
         consent_contact: true, consent_trainer_access: c2
       });
+      // v2.7.1 — Stufe 3 nur mit Konto: Kam die Anfrage aus Stufe 1 (ohne Vital-Plan), gibt die
+      // Edge eine PIN für die Sitzung zurück. Sie bleibt im Speicher (nie im HTML) und schaltet
+      // den Konto-Schritt frei; das Konto selbst entsteht per Magic Link. Immer übernehmen: Die
+      // Edge schickt nur dann eine, wenn sie gerade neu gesetzt wurde (z. B. nach Doppelklick).
+      if (res && res.access_pin) window._accessPin = res.access_pin;
       window._studioRequest = { name, slot, offer };
       if (c2) window._trainerAccess = true;
       trackEvent("studio_request_sent", { from_stage: window._stage, offer, trainer_access: c2 });
@@ -5017,6 +5059,30 @@
   }
 
   // ── v2.0.0: Fahrplan auf der Seite — derselbe Text wie in der Mail ──
+  // ── v2.7.0: Empfehlung Ernährungs-Check (Regel nur in der DB, Edge liefert nutrition_offer) ──
+  const NUTRITION_OFFER_ENABLED = false;   // AUS bis zur Schulung des Teams (Jörg 13.10.2026)
+  function stageNutritionOfferHtml() {
+    if (!NUTRITION_OFFER_ENABLED) return "";
+    const offer = (window._unlockInfo && window._unlockInfo.nutrition_offer) || (latestResult && latestResult.nutrition_offer) || null;
+    if (!offer || offer.eligible !== true || !latestResult || !latestResult.public_code) return "";
+    const url = `${offer.url || "https://app.logivita.de/check/ernaehrung.html"}?code=${encodeURIComponent(latestResult.public_code)}`;
+    const reasons = Array.isArray(offer.reasons) ? offer.reasons : [];
+    const why = reasons.includes("goal:goal_weight") ? "Passend zu deinem Ziel „Abnehmen & Figur“."
+      : reasons.includes("goal:goal_supplements") ? "Passend zu deiner Frage nach Nährstoffen: zuerst der Teller."
+      : (reasons.includes("nutrition_low") || reasons.includes("nutrition_weakest")) ? "Bei dir steckt in der Ernährung das meiste Potenzial."
+      : "";
+    const started = !!offer.enrollment_status;
+    try { trackEvent("nutrition_offer_view", { started, reasons: reasons.join(",") }); } catch (e) {}
+    return `<div class="stage-fahrplan" style="border-color:rgba(34,201,122,0.35);">
+        <div class="stage-kicker">Passt zu deinem Ergebnis</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Ernährungs-Check mit Begleitung</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">${why ? escHtml(why) + " " : ""}${started
+          ? "Du hast schon begonnen – mit Pilot-ID und PIN machst du dort weiter."
+          : "Ein paar Fragen zu deinem Alltag, danach siehst du, wo beim Essen das meiste Potenzial liegt. Mit deinem Trainer oder deiner Trainerin wählst du ein bis drei Schritte für zwölf Wochen – ohne Diät, ohne Verbote. Du brauchst Pilot-ID und PIN aus deiner Mail."}</div>
+        <a class="stage-btn-blue" href="${escHtml(url)}" target="_blank" rel="noopener" onclick="try{trackEvent('nutrition_offer_click',{started:${started}})}catch(e){}" style="display:block;text-align:center;text-decoration:none;">${started ? "Zum Ernährungs-Check →" : "Ernährungs-Check starten →"}</a>
+      </div>`;
+  }
+
   function stageFahrplanHtml(S) {
     const fp = (window._unlockInfo && Array.isArray(window._unlockInfo.fahrplan) && window._unlockInfo.fahrplan.length)
       ? window._unlockInfo.fahrplan
@@ -5104,6 +5170,11 @@
     return `${S.disclaimer || ""}${S.trainerRevoke || ""}${S.actions || ""}`;
   }
 
+  // v2.7.1 — Kopf einer Zone im Reiter "Mein Plan"
+  function planZoneHeadHtml(kind, icon, title, sub) {
+    return `<div class="plan-zone-head ${kind}" data-zone="${kind}"><div class="plan-zone-icon">${icon}</div><div><div class="plan-zone-title">${title}</div><div class="plan-zone-sub">${sub}</div></div></div>`;
+  }
+
   function composeStagedResult(S) {
     const stage = window._stage === 2 ? 2 : 1;
     let html = "";
@@ -5168,6 +5239,8 @@
     html += `</div>`;
 
     html += `<div class="result-tab-content" id="rtc-plan">`;
+    // v2.7.1 — drei Zonen: allein / im Studio / Zugang (Jörg 14.10.2026)
+    html += planZoneHeadHtml("allein", "🏠", "Das kannst du allein tun", "Dein Fahrplan für die nächsten Wochen – ohne Termin, im eigenen Alltag.");
     html += S.hero || "";
     html += S.simulator || "";
     html += stageFahrplanHtml(S);
@@ -5181,11 +5254,18 @@
     }
     html += S.support || "";
     html += S.watch || "";
+    const review = !window._unlockInfo && window._isReviewMode && window._accessPin;
+    if (review) html += S.recheckLater || "";   // Re-Check machst du selbst – mit Termin im Kalender
+
+    html += planZoneHeadHtml("studio", "🤝", "Das machen wir im Studio", "Was ein Fragebogen nicht kann: messen, einordnen und dich beim Start begleiten.");
     html += stageWissenHtml(S);
-    if (!window._unlockInfo && window._isReviewMode && window._accessPin) {
-      html += `<div class="t3-zone-title">Dein Zugang und dein Re-Check</div>${S.mailBox || ""}`;
-    }
     html += stageStudioCardHtml(S);
+    html += stageNutritionOfferHtml();   // v2.7.0 – bleibt aus, bis das Team geschult ist
+
+    if (review && S.mailBox) {
+      html += planZoneHeadHtml("zugang", "🔑", "Dein Zugang", "Pilot-ID, PIN und dein Vital-Plan per Mail.");
+      html += S.mailBox;
+    }
     if (!window._studioRequest) html += referralBoxHtml('plan');
     html += S.feedback || "";
     html += `</div>`;
@@ -6147,7 +6227,7 @@
   function addRecheckToCalendar() {
     try {
       const code = latestResult?.public_code || '';
-      const start = new Date(Date.now() + 84 * 24 * 3600 * 1000); // ~12 Wochen
+      const start = recheckDates().calDate;   // v2.7.0: 12 Wochen ab dem Check-Tag (vorher ab heute)
       const end = new Date(start.getTime() + 24 * 3600 * 1000);
       const ymd = (d) => d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
       const stamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
@@ -6283,11 +6363,22 @@
     }
   }
 
+  // v2.7.0 — Zeitraum ab dem Tag des Checks (nicht ab dem Wiederaufruf): 8 bis 12 Wochen.
+  function recheckDates() {
+    const raw = latestResult && (latestResult.submission?.created_at || latestResult.created_at || latestResult.ai_analysis?.created_at);
+    const base = raw && !isNaN(new Date(raw).getTime()) ? new Date(raw) : new Date();
+    const add = (w) => new Date(base.getTime() + w * 7 * 24 * 3600 * 1000);
+    const fmt = (d) => d.toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" });
+    const cal = add(12);
+    return { from: fmt(add(8)), to: fmt(cal), calDate: cal.getTime() < Date.now() ? new Date(Date.now() + 24 * 3600 * 1000) : cal };
+  }
+
   function recheckReminderHtml() {
+    const rd = recheckDates();
     return `
       <div style="margin-top:12px;padding:12px 14px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--radius-sm);text-align:left;">
         <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:10px;">
-          <strong style="color:var(--text-primary);">Dein nächster Check lohnt sich in 8–12 Wochen.</strong>
+          <strong style="color:var(--text-primary);">Dein nächster Check lohnt sich zwischen ${rd.from} und ${rd.to}.</strong>
           So lange braucht es, bis sich Veränderungen im Alltag auch im Wert zeigen. Trag ihn dir am besten gleich in deinen Kalender ein.
         </div>
         <button onclick="addRecheckToCalendar()" style="width:100%;padding:11px;border-radius:var(--radius-sm);border:1px solid rgba(59,158,255,0.4);background:transparent;color:var(--accent-blue);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;">
@@ -6881,7 +6972,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.6.1</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.7.1</footer>
 
 
 </body>
