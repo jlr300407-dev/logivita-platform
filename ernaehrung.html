@@ -15,6 +15,9 @@
   Aufruf mit ?code=LEV-2026-000123 füllt die Pilot-ID vor.
 
   Versionen:
+  0.5.1 (13.10.2026) Demo-Profile für das Team (Pilot-ID LEV-DEMO-…, nutrition-demo-profile_v1.sql):
+        Hinweisleiste "Demo-Profil" auf jeder Seite, Konto-Schritt wird für Demo-Profile nicht
+        eingehängt (keine echten Konten für erfundene Personen) — sonst unverändert zu 0.5.0
   0.5.0 (13.10.2026) Konto ist Pflicht ab Stufe 3: Auf der Bestätigungsseite steht der Konto-Schritt
         direkt unter der Auswahl, ohne "Ohne Konto weiter" (konto.js 1.1.0, required). Liegt der Check
         schon im Konto, nur ein kurzer Hinweis. Die Rückrufbitte geht unabhängig davon sofort ans Studio
@@ -202,7 +205,7 @@
 <script src="assets/konto.js?v=1.1.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "0.5.0";
+  const FE_VERSION = "0.5.1";
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
@@ -226,7 +229,10 @@
 
   // ── Hilfen ──────────────────────────────────────────────
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const h = (html) => { $app.innerHTML = html; window.scrollTo({ top: 0, behavior: "smooth" }); };
+  // 0.5.1 — Demo-Profile (LEV-DEMO-…): Hinweisleiste, kein Konto-Schritt
+  const isDemo = () => /^LEV-DEMO-/.test(st.code || "");
+  const DEMO_BAR = '<div class="card warn" style="padding:10px 14px;font-size:13px;margin-bottom:14px"><strong>Demo-Profil</strong> · erfundene Person zum Ausprobieren. Rückrufbitten landen mit „LEV-DEMO“ im Anfragen-Reiter.</div>';
+  const h = (html) => { $app.innerHTML = (isDemo() ? DEMO_BAR : "") + html; window.scrollTo({ top: 0, behavior: "smooth" }); };
   const spinner = () => h('<div class="spinner"></div>');
 
   async function call(mode, extra = {}) {
@@ -665,7 +671,7 @@
       <p class="lead">${keys.length === 1 ? "Mit diesem Schritt" : "Mit diesen Schritten"} startest du. Im Erstgespräch macht dein Trainer oder deine Trainerin
         mit dir aus jedem einen Plan: <em>„Wenn ich …, dann …“</em> — und ihr bucht gleich alle Termine der nächsten zwölf Wochen.</p>
       <div class="card top">${pickedList(r, keys)}</div>
-      ${r.account?.in_account ? "" : `<h2 style="margin-top:6px">Letzter Schritt: dein Konto</h2>
+      ${isDemo() ? `<div class="card info"><h3>Letzter Schritt: dein Konto</h3><p class="muted">Hier legt die Person ihr persönliches Konto an (Pflicht für die Begleitung, Link per Mail). Bei Demo-Profilen wird dieser Schritt nicht angezeigt.</p></div>` : r.account?.in_account ? "" : `<h2 style="margin-top:6px">Letzter Schritt: dein Konto</h2>
         <p class="muted" id="konto-hint">Für die Begleitung im Studio brauchst du ein persönliches Konto. Wir schicken dir dafür einen Link per Mail.</p>`}
       <div id="konto-step"></div>
       ${r.movement?.low ? movementHtml(r.movement) : ""}
@@ -686,7 +692,7 @@
     document.getElementById("b-all").onclick = toResult;
     // Konto-Schritt (Stufe 3): die PIN bleibt im Speicher dieser Seite und geht nur an die Edge
     // 0.5.0: Pflicht (required) — kein "Ohne Konto weiter"; die PIN bleibt im Speicher dieser Seite
-    if (window.LeVitaKonto) window.LeVitaKonto.mountStep(document.getElementById("konto-step"), {
+    if (window.LeVitaKonto && !isDemo()) window.LeVitaKonto.mountStep(document.getElementById("konto-step"), {
       publicCode: st.code, pin: st.pin, context: "nutrition", required: true,
       onRequested: () => { const hn = document.getElementById("konto-hint"); if (hn) hn.textContent = "Bitte bestätige den Link in deiner Mail — erst dann ist dein Konto aktiv."; },
     });
