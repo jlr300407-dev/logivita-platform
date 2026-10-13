@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Mein Bereich · LeVITA</title>
+<!--
+  Mein Bereich — persönliches Konto (LeVITA Vital-Check)
+  Liegt neben index.html des Checks (app.logivita.de/check/) und nutzt dessen
+  assets/ (Schriften, konto.js). Hierher führt der Link aus der Konto-Mail.
+  Absichtlich eine eigene Seite und KEIN Teil des eingebetteten Checks: Im
+  iFrame auf le-vita.com wäre der Speicher fremder Herkunft, Safari würde die
+  Anmeldung dort verwerfen.
+
+  Ablauf:
+    Landung nach dem Mail-Link → Durchsicht ("Gehört dieser Check zu dir?")
+    → Übersicht: Checks mit Verlauf, E-Mail-Einstellungen, Abmelden, Löschen.
+    Ohne Sitzung: Anmeldelink per Mail anfordern.
+
+  Studio: ?studio=<slug>, ohne Angabe LeVITA.
+  Testmodus: ?internal=1 zeigt die letzte Server-Antwort.
+
+  Versionen:
+  1.0.0 (13.10.2026) erste Fassung — gehört zu Edge account-edge-2026-10-13.2
+        (EDGE_account_1.1.0.ts), konto-fundament_1.2.0.sql, assets/konto.js 1.0.0
+-->
+<style>
+  @font-face { font-family: 'DM Sans'; font-weight: 400; font-display: swap; src: url('assets/dm-sans-v17-latin-regular.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 500; font-display: swap; src: url('assets/dm-sans-v17-latin-500.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 600; font-display: swap; src: url('assets/dm-sans-v17-latin-600.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 700; font-display: swap; src: url('assets/dm-sans-v17-latin-700.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Serif Display'; font-weight: 400; font-display: swap; src: url('assets/dm-serif-display-v17-latin-regular.woff2') format('woff2'); }
+
+  :root {
+    --brand-dark: #0a1628; --brand-card: #132338; --brand-card2: #1a2e47;
+    --accent-green: #22c97a; --accent-green-dim: rgba(34,201,122,0.12);
+    --accent-blue: #3b9eff; --accent-blue-dim: rgba(59,158,255,0.10);
+    --accent-amber: #f5a623; --accent-red: #ff5c5c;
+    --text-primary: #f0f4f8; --text-secondary: #8da0b8; --text-muted: #4a6280;
+    --border: rgba(255,255,255,0.07); --border-hover: rgba(255,255,255,0.14);
+    --radius: 16px; --radius-sm: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--brand-dark); color: var(--text-primary); min-height: 100vh; padding: 20px 16px 60px; line-height: 1.5; }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+  .logo-name { font-family: 'DM Serif Display', serif; font-size: 24px; }
+  .logo-sub { font-size: 12px; color: var(--text-secondary); letter-spacing: .04em; text-transform: uppercase; }
+  .hdr-btn { background: transparent; border: 1px solid var(--border-hover); color: var(--text-secondary); border-radius: 999px; padding: 6px 14px; font: 600 12px 'DM Sans', sans-serif; cursor: pointer; }
+
+  h1 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 30px; line-height: 1.2; margin-bottom: 10px; }
+  h2 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 22px; margin-bottom: 8px; }
+  h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  p.lead { color: var(--text-secondary); font-size: 16px; margin-bottom: 22px; }
+  .muted { color: var(--text-secondary); font-size: 14px; }
+  .small { font-size: 13px; color: var(--text-muted); }
+
+  .card { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; }
+  .card.warn { border-color: rgba(245,166,35,.45); background: rgba(245,166,35,.08); }
+  .card.ok { border-color: rgba(34,201,122,.45); background: linear-gradient(180deg, rgba(34,201,122,.10), var(--brand-card) 55%); }
+  .card.danger { border-color: rgba(255,92,92,.35); }
+
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  input[type=email], input[type=text] {
+    width: 100%; padding: 13px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+    background: rgba(255,255,255,.04); color: var(--text-primary); font: 500 15px 'DM Sans', sans-serif; -webkit-appearance: none; }
+  input:focus { outline: none; border-color: var(--accent-green); }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 22px; border-radius: 999px; border: 0;
+    background: var(--accent-green); color: #062214; font: 700 15px 'DM Sans', sans-serif; cursor: pointer; transition: transform .12s, opacity .12s; text-decoration: none; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:disabled { opacity: .45; cursor: default; transform: none; }
+  .btn.ghost { background: transparent; color: var(--text-primary); border: 1px solid var(--border-hover); }
+  .btn.red { background: var(--accent-red); color: #2a0606; }
+  .btn.block { width: 100%; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row .btn { flex: 1; }
+  .error { color: var(--accent-red); font-size: 14px; margin-top: 10px; min-height: 1em; }
+  .note { font-size: 14px; color: var(--text-secondary); margin-top: 10px; }
+
+  /* Durchsicht */
+  .rv-meta { font-size: 14px; color: var(--text-secondary); margin-bottom: 10px; }
+  .rv-why { font-size: 13.5px; color: var(--text-secondary); margin-bottom: 14px; }
+  .rv-flag { font-size: 13.5px; background: rgba(245,166,35,.12); border-left: 3px solid var(--accent-amber); padding: 8px 12px; border-radius: 6px; margin-bottom: 14px; }
+
+  /* Übersicht */
+  .check { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .check:last-child { border-bottom: 0; }
+  .check .date { font-weight: 700; }
+  .check .label { font-size: 13px; color: var(--text-secondary); }
+  .check .score { font-family: 'DM Serif Display', serif; font-size: 28px; line-height: 1; text-align: right; }
+  .check .score small { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--text-secondary); }
+  .check .delta { font-size: 12.5px; text-align: right; }
+  .up { color: var(--accent-green); } .down { color: var(--accent-amber); } .flat { color: var(--text-secondary); }
+  .code { font-size: 12px; color: var(--text-muted); }
+
+  .toggle { display: flex; gap: 14px; align-items: flex-start; padding: 12px 0; cursor: pointer; }
+  .toggle + .toggle { border-top: 1px solid var(--border); }
+  .toggle input { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--accent-green); flex: 0 0 18px; }
+  .toggle span { font-size: 14px; color: var(--text-secondary); }
+  .toggle strong { display: block; color: var(--text-primary); font-size: 15px; margin-bottom: 2px; }
+
+  footer { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 40px; }
+  .hidden { display: none !important; }
+  .spinner { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--brand-card2); border-top-color: var(--accent-green); animation: spin .8s linear infinite; margin: 60px auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #raw { white-space: pre-wrap; font: 11px/1.4 ui-monospace, Menlo, monospace; background: #050c17; padding: 10px; border-radius: 8px; max-height: 280px; overflow: auto; margin-top: 18px; border: 1px solid rgba(245,166,35,.5); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="logo-name">LeVITA</div>
+      <div class="logo-sub">Mein Bereich</div>
+    </div>
+    <button class="hdr-btn hidden" id="b-logout" type="button">Abmelden</button>
+  </header>
+
+  <main id="app"><div class="spinner"></div></main>
+  <pre id="raw" class="hidden"></pre>
+
+  <footer>LeVITA Vital-Check · Mein Bereich <span id="fe-version"></span></footer>
+</div>
+
+<script src="assets/konto.js?v=1.0.0"></script>
+<script>
+(() => {
+  const FE_VERSION = "1.0.0";
+  const K = window.LeVitaKonto;
+  const esc = K.esc;
+  const params = new URLSearchParams(location.search);
+  const INTERNAL = params.get("internal") === "1";
+  const TENANT = (params.get("studio") || "levita").trim().toLowerCase();
+  const $app = document.getElementById("app");
+  const $logout = document.getElementById("b-logout");
+  document.getElementById("fe-version").textContent = FE_VERSION;
+
+  let sess = null;
+
+  const h = (html) => { $app.innerHTML = html; window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const spinner = () => h('<div class="spinner"></div>');
+  const raw = (label, json) => {
+    if (!INTERNAL) return;
+    const el = document.getElementById("raw");
+    el.classList.remove("hidden");
+    el.textContent = label + "\n" + JSON.stringify(json, null, 2);
+  };
+  const dateDe = (iso) => { try { return new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }); } catch { return ""; } };
+  const num = (v, d = 0) => (v == null || isNaN(Number(v))) ? "–" : Number(v).toLocaleString("de-DE", { maximumFractionDigits: d, minimumFractionDigits: d });
+
+  async function edge(mode, body) {
+    const r = await K.edge(mode, Object.assign({ tenant: TENANT }, body || {}), sess && sess.access_token);
+    raw(mode, r);
+    if (r._http === 401) { K.logout(); sess = null; screenLogin("Deine Anmeldung ist abgelaufen. Fordere einfach einen neuen Link an."); throw new Error("401"); }
+    return r;
+  }
+
+  // ── Anmelden: Link per Mail ────────────────────────────
+  function screenLogin(msg = "", expired = false) {
+    $logout.classList.add("hidden");
+    h(`
+      <h1>${expired ? "Der Link ist abgelaufen" : "Mein Bereich"}</h1>
+      <p class="lead">${expired
+        ? "Aus Sicherheitsgründen gilt ein Anmeldelink nur kurze Zeit. Gib deine E-Mail-Adresse ein, dann schicken wir dir einen neuen."
+        : "Hier liegen deine Vital-Checks mit Verlauf, deine Termine und dein Plan. Die Anmeldung läuft über einen Link per E-Mail, ein Passwort gibt es nicht."}</p>
+      <div class="card">
+        <div class="field"><label for="f-mail">E-Mail-Adresse</label>
+          <input type="email" id="f-mail" autocomplete="email" placeholder="name@beispiel.de"></div>
+        <button class="btn block" id="b-link">Anmeldelink schicken</button>
+        <div class="error" id="err">${esc(msg)}</div>
+      </div>
+      <p class="small">Noch kein Konto? Ein Konto legst du an, wenn du nach deinem Vital-Check ein Gespräch im Studio oder die Ernährungsbegleitung beginnst. Pilot-ID und PIN funktionieren weiterhin.</p>`);
+    const send = async () => {
+      const mail = document.getElementById("f-mail").value.trim();
+      const err = document.getElementById("err");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)) { err.textContent = "Bitte prüfe deine E-Mail-Adresse."; return; }
+      const b = document.getElementById("b-link"); b.disabled = true; b.textContent = "Wird gesendet …";
+      const r = await K.edge("login_link", { email: mail, tenant: TENANT, return_url: K.kontoPageUrl() });
+      raw("login_link", r);
+      if (!r.success) { b.disabled = false; b.textContent = "Anmeldelink schicken"; err.textContent = "Das hat gerade nicht geklappt. Bitte versuche es gleich noch einmal."; return; }
+      h(`<div class="card ok"><h2>Schau in dein Postfach</h2>
+          <p class="muted">Wenn zu <strong>${esc(mail)}</strong> ein Konto bei uns besteht, ist ein Anmeldelink unterwegs. Keine Mail da? Bitte auch im Spam-Ordner nachsehen.</p></div>`);
+    };
+    document.getElementById("b-link").onclick = send;
+    document.getElementById("f-mail").onkeydown = (e) => { if (e.key === "Enter") send(); };
+  }
+
+  // ── Durchsicht: Gehört dieser Check zu dir? ────────────
+  const ORIGIN_TEXT = {
+    request: "Du hast diesen Check gerade für dein Konto angemeldet.",
+    email_match: "Dieser frühere Check wurde mit deiner E-Mail-Adresse gemacht.",
+    contact_existing: "Dieser Check ist bereits mit deiner E-Mail-Adresse verbunden.",
+  };
+  const FLAG_TEXT = { gender: "Geschlecht", age: "Alter", first_name: "Vorname" };
+
+  function screenReview(review, firstLogin) {
+    $logout.classList.remove("hidden");
+    const item = review[0];
+    const who = [item.first_name, item.age ? `${item.age} Jahre` : ""].filter(Boolean).join(", ");
+    const flags = (item.mismatch || []).map((k) => FLAG_TEXT[k]).filter(Boolean);
+    h(`
+      ${firstLogin ? `<div class="card ok"><h3>Dein Konto ist aktiv</h3><p class="muted">Schön, dass du da bist. Bevor wir deinen Verlauf zeigen, schau bitte kurz auf ${review.length === 1 ? "diesen Check" : `diese ${review.length} Checks`}.</p></div>` : ""}
+      <h1>Gehört dieser Check zu dir?</h1>
+      <p class="lead">${review.length > 1 ? `Noch ${review.length} Checks zur Durchsicht.` : "Nur noch ein kurzer Blick."}</p>
+      <div class="card">
+        <h3>Vital-Check vom ${esc(dateDe(item.created_at))}</h3>
+        <div class="rv-meta">${esc(who || "ohne Namen")} · <span class="code">${esc(item.public_code)}</span></div>
+        <div class="rv-why">${esc(ORIGIN_TEXT[item.origin] || "")}</div>
+        ${flags.length ? `<div class="rv-flag"><strong>Bitte genau hinsehen:</strong> ${esc(flags.join(", "))} ${flags.length === 1 ? "weicht" : "weichen"} von deinen anderen Angaben ab. Nutzt vielleicht noch jemand diese E-Mail-Adresse?</div>` : ""}
+        <div class="row">
+          <button class="btn" id="b-yes">Ja, das bin ich</button>
+          <button class="btn ghost" id="b-no">Nein, nicht mein Check</button>
+        </div>
+        <div class="error" id="err"></div>
+      </div>
+      <p class="small">Ein Check, der nicht zu dir gehört, bleibt unverändert und ist weiter mit seiner Pilot-ID und PIN erreichbar. Für ein eigenes Konto braucht jede Person ihre eigene E-Mail-Adresse.</p>`);
+    const decide = async (accept) => {
+      document.getElementById("b-yes").disabled = true; document.getElementById("b-no").disabled = true;
+      let r; try { r = await edge("resolve", { public_code: item.public_code, accept }); } catch { return; }
+      if (!r.success && r.error !== "NOTHING_TO_RESOLVE") {
+        document.getElementById("err").textContent = "Das hat gerade nicht geklappt. Bitte versuche es noch einmal.";
+        document.getElementById("b-yes").disabled = false; document.getElementById("b-no").disabled = false;
+        return;
+      }
+      const rest = (r.review || []);
+      if (rest.length) return screenReview(rest, false);
+      screenHome();
+    };
+    document.getElementById("b-yes").onclick = () => decide(true);
+    document.getElementById("b-no").onclick = () => decide(false);
+  }
+
+  // ── Übersicht ──────────────────────────────────────────
+  async function screenHome(note = "") {
+    $logout.classList.remove("hidden");
+    spinner();
+    let acc, checks;
+    try {
+      [acc, checks] = await Promise.all([
+        K.rpc("my_account", { p_tenant_id: K.tenantId }, sess.access_token),
+        K.rpc("my_checks", { p_tenant_id: K.tenantId }, sess.access_token),
+      ]);
+    } catch (e) {
+      const again = await K.session();
+      if (!again) return screenLogin("Deine Anmeldung ist abgelaufen. Fordere einfach einen neuen Link an.");
+      sess = again;
+      return screenHome(note);
+    }
+    raw("my_account / my_checks", { acc, checks });
+    if (!acc) return screenNoAccount();
+    const list = Array.isArray(checks) ? checks.slice().reverse() : [];   // neueste zuerst
+    const cons = acc.consents || {};
+    const planOn = !!(cons.plan_mail && cons.plan_mail.granted);
+    const remOn = !!(cons.appointment_reminder && cons.appointment_reminder.granted);
+
+    const rows = list.map((c, i) => {
+      const prev = list[i + 1];
+      let delta = "";
+      if (prev && c.total_score != null && prev.total_score != null) {
+        const d = Number(c.total_score) - Number(prev.total_score);
+        delta = Math.abs(d) < 2
+          ? `<div class="delta flat">stabil gehalten</div>`
+          : `<div class="delta ${d > 0 ? "up" : "down"}">${d > 0 ? "+" : "−"}${num(Math.abs(d), 1)} seit ${esc(dateDe(prev.created_at))}</div>`;
+      }
+      return `<div class="check">
+          <div><div class="date">${esc(dateDe(c.created_at))}</div>
+            <div class="label">${esc(c.score_label || "")}${c.bio_age != null ? ` · Vitalitäts-Alter ${num(c.bio_age)}` : ""}</div>
+            <div class="code">${esc(c.public_code)}</div></div>
+          <div><div class="score">${num(c.total_score)}<small> /100</small></div>${delta}</div>
+        </div>`;
+    }).join("");
+
+    h(`
+      <h1>Hallo${acc.first_name ? " " + esc(acc.first_name) : ""}</h1>
+      <p class="lead">Dein persönlicher Bereich bei LeVITA.</p>
+      ${note ? `<div class="card ok"><p class="muted" style="margin:0">${esc(note)}</p></div>` : ""}
+
+      <div class="card">
+        <h2>Deine Vital-Checks</h2>
+        ${list.length ? rows : `<p class="muted">Noch kein Check in deinem Konto.</p>`}
+        <p class="note">Die ausführliche Ergebnisseite öffnest du wie gewohnt mit Pilot-ID und PIN. Termine und dein Plan erscheinen hier, sobald deine Begleitung startet.</p>
+      </div>
+
+      <div class="card">
+        <h2>E-Mails von uns</h2>
+        <label class="toggle"><input type="checkbox" id="t-plan" ${planOn ? "checked" : ""}>
+          <span><strong>Mein Plan per E-Mail</strong>Nach dem Erstgespräch und bei Änderungen.</span></label>
+        <label class="toggle"><input type="checkbox" id="t-rem" ${remOn ? "checked" : ""}>
+          <span><strong>Erinnerungen</strong>Vor vereinbarten Terminen und an deinen nächsten Vital-Check.</span></label>
+        <div class="error" id="err-c"></div>
+      </div>
+
+      <div class="card danger">
+        <h3>Konto löschen</h3>
+        <p class="muted">Löscht dein Konto bei LeVITA und alle zugehörigen Daten: Vital-Checks, Ernährungsbegleitung, Termine und Messwerte. Das lässt sich nicht rückgängig machen.</p>
+        <div id="del-area"><button class="btn ghost" id="b-del-open" style="margin-top:12px">Konto löschen …</button></div>
+      </div>
+
+      <p class="small">Angemeldet als ${esc(acc.email)}</p>`);
+
+    const bindToggle = (id, purpose) => {
+      const box = document.getElementById(id);
+      box.onchange = async () => {
+        box.disabled = true;
+        let r; try { r = await edge("set_consent", { purpose, granted: box.checked }); } catch { return; }
+        box.disabled = false;
+        if (!r.success) { box.checked = !box.checked; document.getElementById("err-c").textContent = "Das hat gerade nicht geklappt. Bitte versuche es noch einmal."; }
+        else document.getElementById("err-c").textContent = "";
+      };
+    };
+    bindToggle("t-plan", "plan_mail");
+    bindToggle("t-rem", "reminders");
+
+    document.getElementById("b-del-open").onclick = () => {
+      document.getElementById("del-area").innerHTML = `
+        <div class="field" style="margin-top:14px"><label for="f-del">Zur Bestätigung bitte <strong>LÖSCHEN</strong> eingeben</label>
+          <input type="text" id="f-del" autocomplete="off"></div>
+        <button class="btn red block" id="b-del" disabled>Endgültig löschen</button>
+        <div class="error" id="err-d"></div>`;
+      const f = document.getElementById("f-del"), b = document.getElementById("b-del");
+      f.oninput = () => (b.disabled = f.value.trim() !== "LÖSCHEN");
+      b.onclick = async () => {
+        b.disabled = true; b.textContent = "Wird gelöscht …";
+        let r; try { r = await edge("delete_account", { confirm: "LÖSCHEN" }); } catch { return; }
+        if (!r.success) { b.disabled = false; b.textContent = "Endgültig löschen"; document.getElementById("err-d").textContent = "Das hat gerade nicht geklappt. Bitte versuche es noch einmal oder schreib uns an info@le-vita.com."; return; }
+        K.logout(); sess = null; $logout.classList.add("hidden");
+        h(`<div class="card ok"><h2>Dein Konto ist gelöscht</h2>
+            <p class="muted">Wir haben ${r.deleted_checks === 1 ? "einen Vital-Check" : `${num(r.deleted_checks)} Vital-Checks`} und alle zugehörigen Daten gelöscht.${r.other_studios ? " Deine Konten bei anderen Studios bleiben bestehen." : ""}</p></div>`);
+      };
+    };
+  }
+
+  function screenNoAccount() {
+    $logout.classList.remove("hidden");
+    h(`<h1>Noch kein Konto bei LeVITA</h1>
+       <div class="card"><p class="muted">Zu dieser Anmeldung gibt es bei LeVITA noch kein Konto. Ein Konto entsteht, wenn du nach deinem Vital-Check ein Gespräch im Studio oder die Ernährungsbegleitung beginnst und den Link in der Mail bestätigst.</p></div>`);
+  }
+
+  // ── Los ────────────────────────────────────────────────
+  $logout.onclick = () => { K.logout(); sess = null; screenLogin("Du bist abgemeldet."); };
+
+  (async () => {
+    const landed = K.consumeRedirect();
+    if (landed && landed.error) {
+      const expired = /expired|invalid|otp/i.test(landed.error + " " + landed.description);
+      return screenLogin(expired ? "" : "Die Anmeldung hat nicht geklappt. Fordere einfach einen neuen Link an.", expired);
+    }
+    sess = await K.session();
+    if (!sess) return screenLogin();
+    let r; try { r = await edge("confirm"); } catch { return; }
+    if (!r.success) {
+      if (r.error === "TRAINER_ACCOUNT") { K.logout(); sess = null; return screenLogin("Mit einem Trainerzugang gibt es keinen persönlichen Bereich. Bitte nutze deine private E-Mail-Adresse."); }
+      return h(`<div class="card warn"><h3>Das hat gerade nicht geklappt</h3><p class="muted">Bitte lade die Seite in einem Moment neu.</p></div>`);
+    }
+    if (r.status === "no_account") return screenNoAccount();
+    if ((r.review || []).length) return screenReview(r.review, !!r.first_login);
+    screenHome();
+  })();
+})();
+</script>
+</body>
+</html>
