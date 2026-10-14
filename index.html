@@ -7,14 +7,14 @@
   <!-- v1.45.4 — Meta-Angaben für Suchmaschinen und geteilte Links.
        Kanonisch ist die Website-Seite /vital-check/start (dort steht der
        indexierbare Text); diese Datei läuft als iFrame darin. -->
-  <meta name="description" content="Was steckt in dir? Der kostenlose LeVITA Vital-Check zeigt dir in 5–7 Minuten deine Stärken in 9 Lebensbereichen, deinen größten Hebel und einen persönlichen Plan. Ergebnis sofort, ohne Anmeldung." />
+  <meta name="description" content="Was steckt in dir? Der kostenlose LeVITA Vital-Check zeigt dir in 5–7 Minuten deine Stärken in 8 Lebensbereichen, deinen größten Hebel und einen persönlichen Plan. Ergebnis sofort, ohne Anmeldung." />
   <link rel="canonical" href="https://www.le-vita.com/vital-check/start" />
   <meta name="theme-color" content="#0a1628" />
   <meta property="og:type" content="website" />
   <meta property="og:locale" content="de_DE" />
   <meta property="og:site_name" content="LeVITA" />
   <meta property="og:title" content="Was steckt in dir? – Der LeVITA Vital-Check" />
-  <meta property="og:description" content="9 Lebensbereiche, dein größter Hebel und ein persönlicher Plan – kostenlos in 5–7 Minuten, Ergebnis sofort." />
+  <meta property="og:description" content="8 Lebensbereiche, dein größter Hebel und ein persönlicher Plan – kostenlos in 5–7 Minuten, Ergebnis sofort." />
   <meta property="og:url" content="https://www.le-vita.com/vital-check/start" />
   <meta property="og:image" content="https://www.le-vita.com/app/vital-check/assets/hero-desktop.jpg" />
   <meta property="og:image:width" content="1200" />
@@ -740,6 +740,13 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.0 (14.10.2026): Score-Karte Version 3 (gehört zu vital-check-score-v3.sql + _neuberechnung.sql,
+         Edge edge-2026-10-14.4). Neue Bereiche Rauchen und Alkohol (Icons, Texte, Tipps, Spinne);
+         Stoffwechsel, Mikronährstoffe und Alkohol/Nikotin sind keine Bereiche mehr — Signale daraus
+         (Arzt zuerst, HbA1c, Nährstoff-Hinweise) kommen über themeScore() aus den Antworten;
+         Level-Grenzen 85/65/50/35 (Level-Wort, Legende, Ring-Farbe); BMI-Karte ab 65 mit
+         altersgerechter Einordnung (Winter u. a. 2014); Stimmungsfragen zählen nicht in "Mentale
+         Balance" (Hinweis im Bereich); Rauchen: Rauchstopp statt "jede Reduktion zählt".
        v2.7.2 (14.10.2026): Hebel verständlicher (gehört zu vital-check-hebel_v2.sql, läuft auch ohne):
          (1) jeder Hebel nennt sein Thema ("Krafttraining · Bewegung & Kraft") — zwei Hebel im selben
          Bereich sahen bisher gleich aus; (2) Kennzeichen "passt zu deinem Ziel" (lever.reason = goal);
@@ -1482,7 +1489,7 @@
     <h1 id="hero-title" style="margin:0 0 12px;font-size:32px;font-weight:800;color:#ffffff;line-height:1.15;letter-spacing:-0.5px;">Was steckt in dir?</h1>
     <p id="hero-subline" style="margin:0 auto 20px;font-size:16px;color:rgba(255,255,255,0.78);line-height:1.55;max-width:360px;">Finde in 5–7 Minuten heraus, wo deine Stärken liegen, wo dein größter Hebel sitzt — und was dir ein kleiner Schritt konkret bringt.</p>
     <div id="hero-features" style="margin-bottom:24px;font-size:12px;color:rgba(255,255,255,0.6);letter-spacing:0.3px;">
-      🕸️ 9 Lebensbereiche&nbsp;&nbsp;·&nbsp;&nbsp;✍️ Persönliche Auswertung&nbsp;&nbsp;·&nbsp;&nbsp;📈 Dein Verlauf
+      🕸️ 8 Lebensbereiche&nbsp;&nbsp;·&nbsp;&nbsp;✍️ Persönliche Auswertung&nbsp;&nbsp;·&nbsp;&nbsp;📈 Dein Verlauf
     </div>
     <button id="hero-cta" onclick="startDirectCheck();" style="display:block;width:100%;max-width:340px;margin:0 auto 12px;padding:16px 24px;background:#3ddc84;color:#0d1a14;font-size:17px;font-weight:800;border:none;border-radius:12px;cursor:pointer;">Jetzt kostenlos starten →</button>
     <p style="margin:0 0 12px;font-size:11.5px;color:rgba(255,255,255,0.5);">Ergebnis sofort · kostenlos · ohne Anmeldung · ohne App</p>
@@ -1576,7 +1583,7 @@
     <h2 class="lp-h2">Was dir 5–7 Minuten bringen</h2>
     <div class="lp-lead">Deine Antworten werden ausgewertet, verknüpft und in einen Plan übersetzt — so bekommst du Antworten statt Tabellen.</div>
     <div class="lp-value">
-      <div class="lp-vrow"><div class="lp-vicon">🕸️</div><div class="lp-vget">Deine Vitalitäts-Spinne mit 9 Bereichen</div><div class="lp-vuse">Du siehst auf einen Blick, wo du stark bist.</div></div>
+      <div class="lp-vrow"><div class="lp-vicon">🕸️</div><div class="lp-vget">Deine Vitalitäts-Spinne mit allen Bereichen</div><div class="lp-vuse">Du siehst auf einen Blick, wo du stark bist.</div></div>
       <div class="lp-vrow"><div class="lp-vicon">🎯</div><div class="lp-vget">Dein größter Hebel</div><div class="lp-vuse">Du weißt, wo sich der erste Schritt am meisten lohnt.</div></div>
       <div class="lp-vrow"><div class="lp-vicon">🔮</div><div class="lp-vget">Der Potenzial-Simulator</div><div class="lp-vuse">Du siehst, was eine Veränderung bringt — bevor du sie machst.</div></div>
       <div class="lp-vrow"><div class="lp-vicon">✍️</div><div class="lp-vget">Dein Vital-Plan per Mail</div><div class="lp-vuse">Persönlich auf deine Antworten geschrieben, mit einem 6-Wochen-Fahrplan.</div></div>
@@ -1597,7 +1604,7 @@
             <div class="lp-ex-who"><strong>Sandra, 46</strong><br>Ziel: mehr Energie<br><span style="font-size:12.5px;">Vitalitäts-Alter <strong style="color:var(--text-primary);">46</strong> · im Takt ihres Kalenders</span></div>
             <div class="lp-ex-score"><div class="lp-ex-num">71</div><div class="lp-ex-lbl">Vitalitäts-Index</div></div>
           </div>
-          <svg viewBox="-34 0 368 266" width="100%" style="max-width:360px;display:block;margin:0 auto;" role="img" aria-label="Beispiel einer Vitalitäts-Spinne mit neun Bereichen, heute und mit Potenzial"><polygon points="150.0,106.5 163.8,111.5 171.2,124.3 168.6,138.8 157.4,148.2 142.6,148.2 131.4,138.8 128.8,124.3 136.2,111.5" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,85.0 177.6,95.1 192.3,120.5 187.2,149.5 164.7,168.4 135.3,168.4 112.8,149.5 107.7,120.5 122.4,95.1" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,63.5 191.5,78.6 213.5,116.8 205.9,160.2 172.1,188.6 127.9,188.6 94.1,160.3 86.5,116.8 108.5,78.6" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,42.0 205.3,62.1 234.7,113.1 224.5,171.0 179.4,208.8 120.6,208.8 75.5,171.0 65.3,113.1 94.7,62.1" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><line x1="150" y1="128" x2="150.0" y2="42.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="205.3" y2="62.1" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="234.7" y2="113.1" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="224.5" y2="171.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="179.4" y2="208.8" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="120.6" y2="208.8" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="75.5" y2="171.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="65.3" y2="113.1" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="94.7" y2="62.1" stroke="rgba(255,255,255,0.08)"/><polygon points="150.0,60.9 182.1,89.8 211.0,117.2 197.7,155.5 173.5,192.7 127.6,189.4 84.5,165.8 90.7,117.5 113.5,84.5" fill="rgba(34,201,122,0.22)" stroke="#22c97a" stroke-width="2" stroke-linejoin="round"/><polygon points="150.0,60.9 196.4,72.7 211.0,117.2 197.7,155.5 173.5,192.7 127.6,189.4 84.5,165.8 90.7,117.5 110.2,80.6" fill="none" stroke="#3b9eff" stroke-width="2" stroke-dasharray="6 4" stroke-linejoin="round"/><circle cx="196.4" cy="72.7" r="3" fill="#3b9eff"/><circle cx="110.2" cy="80.6" r="3" fill="#3b9eff"/><circle cx="150.0" cy="60.9" r="2.6" fill="#22c97a"/><text x="150.0" y="26.0" text-anchor="middle" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Schlaf</text><circle cx="182.1" cy="89.8" r="4" fill="#f5a623"/><text x="218.1" y="50.8" text-anchor="start" font-size="10.5" fill="#f5a623" font-family="DM Sans, sans-serif" font-weight="700">Bewegung</text><circle cx="211.0" cy="117.2" r="2.6" fill="#22c97a"/><text x="254.4" y="113.6" text-anchor="start" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Ernährung</text><circle cx="197.7" cy="155.5" r="2.6" fill="#22c97a"/><text x="241.8" y="185.0" text-anchor="start" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Tageslicht</text><circle cx="173.5" cy="192.7" r="2.6" fill="#22c97a"/><text x="186.3" y="231.6" text-anchor="start" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">BMI</text><circle cx="127.6" cy="189.4" r="2.6" fill="#22c97a"/><text x="113.7" y="231.6" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Balance</text><circle cx="84.5" cy="165.8" r="2.6" fill="#22c97a"/><text x="58.2" y="185.0" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Lifestyle</text><circle cx="90.7" cy="117.5" r="2.6" fill="#22c97a"/><text x="45.6" y="113.6" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Nährstoffe</text><circle cx="113.5" cy="84.5" r="2.6" fill="#22c97a"/><text x="81.9" y="50.8" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Energie</text><g font-family="DM Sans, sans-serif" font-size="10.5"><line x1="62" y1="252" x2="80" y2="252" stroke="#22c97a" stroke-width="2.5"/><text x="85" y="255.5" fill="#8da0b8">heute</text><line x1="132" y1="252" x2="150" y2="252" stroke="#3b9eff" stroke-width="2" stroke-dasharray="6 4"/><text x="155" y="255.5" fill="#8da0b8">Potenzial mit dem Simulator</text></g></svg>
+          <svg viewBox="-34 0 368 266" width="100%" style="max-width:360px;display:block;margin:0 auto;" role="img" aria-label="Beispiel einer Vitalitäts-Spinne, heute und mit Potenzial"><polygon points="150.0,106.5 165.2,112.8 171.5,128.0 165.2,143.2 150.0,149.5 134.8,143.2 128.5,128.0 134.8,112.8" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,85.0 180.4,97.6 193.0,128.0 180.4,158.4 150.0,171.0 119.6,158.4 107.0,128.0 119.6,97.6" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,63.5 195.6,82.4 214.5,128.0 195.6,173.6 150.0,192.5 104.4,173.6 85.5,128.0 104.4,82.4" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,42.0 210.8,67.2 236.0,128.0 210.8,188.8 150.0,214.0 89.2,188.8 64.0,128.0 89.2,67.2" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><line x1="150" y1="128" x2="150.0" y2="42.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="210.8" y2="67.2" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="236.0" y2="128.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="210.8" y2="188.8" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="150.0" y2="214.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="89.2" y2="188.8" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="64.0" y2="128.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="89.2" y2="67.2" stroke="rgba(255,255,255,0.08)"/><polygon points="150.0,60.1 180.4,97.6 211.9,128.0 190.1,168.1 150.0,192.5 106.2,171.8 64.0,128.0 97.7,75.7" fill="rgba(34,201,122,0.22)" stroke="#22c97a" stroke-width="2" stroke-linejoin="round"/><polygon points="150.0,60.1 196.2,81.8 211.9,128.0 190.1,168.1 150.0,192.5 106.2,171.8 64.0,128.0 97.7,75.7" fill="none" stroke="#3b9eff" stroke-width="2" stroke-dasharray="6 4" stroke-linejoin="round"/><circle cx="196.2" cy="81.8" r="3" fill="#3b9eff"/><circle cx="150.0" cy="60.1" r="2.6" fill="#22c97a"/><text x="150.0" y="22.8" text-anchor="middle" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Schlaf</text><circle cx="180.4" cy="97.6" r="4" fill="#f5a623"/><text x="223.0" y="53.0" text-anchor="start" font-size="10.5" fill="#f5a623" font-family="DM Sans, sans-serif" font-weight="700">Bewegung</text><circle cx="211.9" cy="128.0" r="2.6" fill="#22c97a"/><text x="253.2" y="132.0" text-anchor="start" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Ernährung</text><circle cx="190.1" cy="168.1" r="2.6" fill="#22c97a"/><text x="223.0" y="211.0" text-anchor="start" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Tageslicht</text><circle cx="150.0" cy="192.5" r="2.6" fill="#22c97a"/><text x="150.0" y="241.2" text-anchor="middle" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">BMI</text><circle cx="106.2" cy="171.8" r="2.6" fill="#22c97a"/><text x="77.0" y="211.0" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Balance</text><circle cx="64.0" cy="128.0" r="2.6" fill="#22c97a"/><text x="46.8" y="132.0" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Rauchen</text><circle cx="97.7" cy="75.7" r="2.6" fill="#22c97a"/><text x="77.0" y="53.0" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Alkohol</text><g font-family="DM Sans, sans-serif" font-size="10.5"><line x1="62" y1="252" x2="80" y2="252" stroke="#22c97a" stroke-width="2.5"/><text x="85" y="255.5" fill="#8da0b8">heute</text><line x1="132" y1="252" x2="150" y2="252" stroke="#3b9eff" stroke-width="2" stroke-dasharray="6 4"/><text x="155" y="255.5" fill="#8da0b8">Potenzial mit dem Simulator</text></g></svg>
         </div>
         <div>
           <div class="lp-ex-facts">
@@ -1679,7 +1686,34 @@
   // Der Schriftzug ist die Negativfassung (Braun -> Creme), sonst kein Kontrast.
   const LOGO_URL = "assets/levita-mark.png";
   const LOGO_WORDMARK_URL = "assets/levita-wordmark-light.png";
-  const AREA_ICONS = { sleep:"🌙", activity:"⚡", nutrition:"🥗", vitamin_d:"☀️", bmi:"⚖️", mental:"🧘", lifestyle:"🍃", micronutrients:"💊", metabolic:"🔥" };
+  const AREA_ICONS = { sleep:"🌙", activity:"⚡", nutrition:"🥗", vitamin_d:"☀️", bmi:"⚖️", mental:"🧘", smoking:"🚭", alcohol:"🍷", lifestyle:"🍃", micronutrients:"💊", metabolic:"🔥" };
+
+  // v2.8.0 — Score-Karte Version 3: Level-Grenzen (score_settings.level_thresholds) und
+  // Themenwerte für Signale, die keine Score-Bereiche mehr sind (Stoffwechsel, Mikronährstoffe,
+  // Alkohol/Nikotin) — gleiche Rechnung wie die Bereichswerte bis Version 2.
+  const LEVEL_MIN = { vital: 85, momentum: 65, weg: 50, aufbau: 35 };
+  function levelOf(t) {
+    t = Number(t);
+    return t >= LEVEL_MIN.vital ? "Vital & Stabil" : t >= LEVEL_MIN.momentum ? "Aktiv mit Momentum"
+      : t >= LEVEL_MIN.weg ? "Auf dem Weg" : t >= LEVEL_MIN.aufbau ? "Im Aufbau" : "Neustart";
+  }
+  function indexColor(t) {
+    t = Number(t);
+    return t >= LEVEL_MIN.vital ? "#22c97a" : t >= LEVEL_MIN.momentum ? "#5edb97" : t >= LEVEL_MIN.weg ? "#f5a623" : t >= LEVEL_MIN.aufbau ? "#ff8c42" : "#ff5c5c";
+  }
+  const THEME_QMAX = { muscle_cramps: 2, social_connection: 2, alcohol_amount: 3, hormonal_transition: 2, supplement_usage: 2, supplement_types: 0 };
+  function themeScore(answers, theme) {
+    const perQ = {};
+    (answers || []).forEach(a => {
+      if (!a || a.area_key !== theme || a.question_key === "supplement_types") return;
+      perQ[a.question_key] = (perQ[a.question_key] || 0) + Number(a.risk_points || 0);
+    });
+    const keys = Object.keys(perQ);
+    if (!keys.length) return 100;
+    const risk = keys.reduce((x, k) => x + perQ[k], 0);
+    const max = Math.max(keys.reduce((x, k) => x + (THEME_QMAX[k] ?? 4), 0), risk, 1);
+    return Math.round((100 - (risk / max) * 100) * 100) / 100;
+  }
 
   // ══ Buddy / Maskottchen (v1.32.0, Stufe 1) ══════════════════════════════
   // Der Buddy erscheint NUR am Anfang eines Bereichs, nicht bei Folgefragen.
@@ -1696,6 +1730,7 @@
     sleep:"buddy-sleep", activity:"buddy-activity", nutrition:"buddy-nutrition",
     vitamin_d:"buddy-vitamin-d", bmi:"buddy-bmi", mental:"buddy-mental",
     lifestyle:"buddy-lifestyle", micronutrients:"buddy-micronutrients",
+    smoking:"buddy-lifestyle", alcohol:"buddy-lifestyle",
     metabolic:"buddy-metabolic", general:"buddy-neutral"
   };
   const BUDDY_BY_STEP = { goal:"buddy-goal", personal:"buddy-personal", consent:"buddy-consent" };
@@ -3591,11 +3626,7 @@
       personalData.weight_kg = result.submission.weight_kg || personalData.weight_kg;
       personalData.goal_key = result.submission.goal_key || personalData.goal_key;
     }
-    const correctedScoreLabel = totalScore >= 85 ? "Vital & Stabil"
-      : totalScore >= 70 ? "Aktiv mit Momentum"
-      : totalScore >= 55 ? "Auf dem Weg"
-      : totalScore >= 40 ? "Im Aufbau"
-      : "Neustart";
+    const correctedScoreLabel = levelOf(totalScore);   // v2.8.0: 85 / 65 / 50 / 35
     window._lastResultData = { areas }; // V2: Radar-Ebenen brauchen die Bereiche bei jedem Re-Render
     document.getElementById("result-content").innerHTML = buildResultHtml(result, areas, totalScore, bioAge, suppFocus, correctedScoreLabel);
     setTimeout(() => animateScoreRing(totalScore), 100);
@@ -3647,7 +3678,7 @@
     // So gibt es jeden Text und jede Regel nur einmal.
     const S = {};
 
-    const sc = getScoreColor(totalScore);
+    const sc = indexColor(totalScore);   // v2.8.0: Index-Level, nicht Bereichsskala
     // v1.32.2 — Die Kachel zeigte bisher ALLE Bereiche unter 75. Bei einem
     // niedrigen Gesamtscore standen dort schnell 8 oder 9 — das liest sich wie
     // ein Befund und ist als Handlungsliste unbrauchbar. Gezählt werden jetzt
@@ -3702,7 +3733,7 @@
     const _ap = rfRisk("appetite_change");
     const _dz = rfRisk("dizziness_pale_nails");
     const _ageSafe = Number(personalData.age || result.submission?.age || 0);
-    const _metabolic = Number(result.score?.score_payload?.metabolic?.score ?? 100);
+    const _metabolic = themeScore(result.answers, "metabolic");   // v2.8.0: kein Score-Bereich mehr
 
     // Stufe 1 — kombiniertes Sicherheitssignal (Edge: combinedRedFlag)
     const _combinedRedFlag = _wl >= 3 && (_ap >= 3 || _dz >= 3);
@@ -3913,7 +3944,7 @@
         : teaserRow("🎯", `Deine konkreten nächsten Schritte für „${goalTeaser}“`, "was du selbst tun kannst, wo wir helfen");
     }
     if (!isLinkedRecheck) {
-      teaserRows += teaserRow("📊", "Alle neun Bereichswerte als Übersicht", "deine Vergleichsbasis für den nächsten Check");
+      teaserRows += teaserRow("📊", "Alle Bereichswerte als Übersicht", "deine Vergleichsbasis für den nächsten Check");
     }
     if (AFFILIATE_ENABLED && result.score?.bloodtest_hint) { // Pilotfreigabe 5.5: Zeile verspricht Test-Spezifik, die die Mail ohne Freigabe nicht liefert
       teaserRows += teaserRow("🩸", "Welche Blutwerte für dich sinnvoll wären", "und welche du dir sparen kannst");
@@ -4375,6 +4406,8 @@
       sleep: ["Abendroutine für besseren Schlaf", "30 Minuten vor dem Schlafen: Bildschirm aus, Licht dimmen, gleiche Zubettgehzeit. Eine Woche testen — der Unterschied ist meist spürbar."],
       vitamin_d: ["Täglich Tageslicht tanken", "15–25 Minuten im Freien, ideal vormittags — auch bei bewölktem Himmel wirksam."],
       mental: ["Kleine Entlastungs-Pausen einbauen", "Zwei, drei bewusste Kurzpausen am Tag — atmen, kurz gehen, Fenster auf — senken die Grundspannung spürbar."],
+      smoking: ["Rauchfrei werden — mit Unterstützung", "Am meisten bringt der Rauchstopp. Kostenlose Begleitung: Rauchfrei-Telefon des BIÖG 0800 8 31 31 31 und rauchfrei-info.de."],
+      alcohol: ["Alkoholfreie Tage festlegen", "Lege zwei, drei feste Tage pro Woche ohne Alkohol fest — klein anfangen, dranbleiben."],
       lifestyle: ["Ein rauch- bzw. alkoholfreies Zeitfenster", "Lege ein festes Zeitfenster am Tag fest, das bewusst frei bleibt. Klein anfangen, dranbleiben — jede Reduktion zählt."],
       micronutrients: ["Bunt und einfach essen", "Täglich eine Handvoll Gemüse mehr und ein- bis zweimal pro Woche Hülsenfrüchte decken viele Vitalstoffe ab."],
       metabolic: ["Regelmäßig essen und trinken", "Feste Mahlzeiten mit einem Glas Wasser dazu stabilisieren deine Energie über den Tag."],
@@ -4405,7 +4438,7 @@
       if (cat1.length < 3 && selfTips[key] && !usedAreas.has(key)) { usedAreas.add(key); cat1.push([...selfTips[key].slice(0, 2), key]); }
     });
     if (cat1.length < 3 && riskOf('sleep_latency') >= 3 && !usedAreas.has('sleep')) { usedAreas.add('sleep'); cat1.push([...selfTips.sleep.slice(0, 2), 'sleep']); }
-    if (cat1.length < 3 && riskOf('nicotine_use') >= 3 && !usedAreas.has('lifestyle')) { usedAreas.add('lifestyle'); cat1.push([...selfTips.lifestyle.slice(0, 2), 'lifestyle']); }
+    if (cat1.length < 3 && riskOf('nicotine_use') >= 3 && !usedAreas.has('smoking')) { usedAreas.add('smoking'); cat1.push([...selfTips.smoking.slice(0, 2), 'smoking']); }
     if (cat1.length === 0) cat1.push(["Dranbleiben, was gut läuft", "Deine Basis stimmt — halte deine Routinen und beobachte, was dir Energie gibt."]);
 
     S.cat1Items = cat1;
@@ -4719,7 +4752,7 @@
     const best = stageBestScenario();
     // Bereichsnamen als Satzglied: "Alkohol / Nikotin trägt dich" liest sich falsch.
     const N = { activity: "deine Bewegung", sleep: "dein Schlaf", nutrition: "deine Ernährung", vitamin_d: "dein Tageslicht",
-      mental: "deine mentale Balance", lifestyle: "dein Umgang mit Alkohol und Nikotin", micronutrients: "deine Nährstoffversorgung", metabolic: "deine Energie" };
+      mental: "deine mentale Balance", smoking: "dein rauchfreier Alltag", alcohol: "dein Umgang mit Alkohol", lifestyle: "dein Umgang mit Alkohol und Nikotin", micronutrients: "deine Nährstoffversorgung", metabolic: "deine Energie" };
     const nm = (a, first) => { const t = N[a.key] || a.label; return `<strong>${first ? t.charAt(0).toUpperCase() + t.slice(1) : t}</strong>`; };
     let s1;
     if (strengths.length === 2) s1 = `${nm(strengths[0], true)} und ${nm(strengths[1], false)} tragen dich – darauf kannst du bauen.`;
@@ -4778,7 +4811,7 @@
     return `<div class="section-card">
         <div class="section-header">
           <div class="section-title">Deine Vitalitäts-Spinne</div>
-          <div style="font-size:11px;color:var(--text-muted);">9 Bereiche</div>
+          <div style="font-size:11px;color:var(--text-muted);">${((window._lastResultData && window._lastResultData.areas) || []).length || 8} Bereiche</div>
         </div>
         ${lead ? `<div class="stage-radar-lead">${lead}</div>` : ""}
         <canvas id="vitalChart" height="300"></canvas>
@@ -4925,7 +4958,7 @@
       velus: ["VELUS JET Wasserstrahlmassage", "Tiefe Entspannung und Regeneration – nur bei uns."],
       tanita: ["Tanita-Körperanalyse", "Muskelmasse und Körperfett – die Zahlen hinter deinem Ergebnis."]
     };
-    const map = { activity: "training", nutrition: "ernaehrung", micronutrients: "ernaehrung", sleep: "velus", mental: "velus", bmi: "tanita", metabolic: "tanita", vitamin_d: "kurse", lifestyle: "training" };
+    const map = { activity: "training", nutrition: "ernaehrung", micronutrients: "ernaehrung", sleep: "velus", mental: "velus", bmi: "tanita", metabolic: "tanita", vitamin_d: "kurse", lifestyle: "training", smoking: "training", alcohol: "training" };
     const picks = [];
     const add = k => { if (k && !picks.includes(k) && picks.length < 3) picks.push(k); };
     [...S.areas].sort((a, b) => a.score - b.score).filter(a => a.score < 70).forEach(a => {
@@ -5132,7 +5165,7 @@
     rows += S.planPromised
       ? row("🗓️", `Dein 6-Wochen-Fahrplan für „${S.goalTeaser}“`, "konkret, Schritt für Schritt – mit Ausblick bis zu deinem Re-Check")
       : row("🗓️", `Deine konkreten nächsten Schritte für „${S.goalTeaser}“`, "was du selbst tun kannst, wo wir helfen");
-    rows += row("📊", "Alle neun Bereiche", "mit Wert, Einordnung für dein Alter und konkreten Schritten");
+    rows += row("📊", "Alle Bereiche", "mit Wert, Einordnung für dein Alter und konkreten Schritten");
     rows += row("💬", "Deine persönliche Einordnung", "geschrieben auf deine Antworten, per Mail");
     rows += row("🔑", "Pilot-ID und PIN", "für deinen Vergleich in 8–12 Wochen");
     const box = S.buildAiBox(rows, {
@@ -5361,13 +5394,13 @@
   function renderVitalIndexBox(score, label) {
     const ranges = [
       { min:85, max:100, value:"85–100", lbl:"Vital & Stabil", txt:"Sehr stabile Basis. Fokus auf Erhalt und Feinschliff." },
-      { min:70, max:84.9, value:"70–84", lbl:"Aktiv mit Momentum", txt:"Gute Grundlage. Einzelne Stellschrauben können das Energielevel weiter verbessern." },
-      { min:55, max:69.9, value:"55–69", lbl:"Auf dem Weg", txt:"Erkennbare Entwicklungsbereiche. Kleine Schritte bringen sichtbare Verbesserungen." },
-      { min:40, max:54.9, value:"40–54", lbl:"Im Aufbau", txt:"Mehrere Faktoren beeinflussen das Energielevel. Starte mit 1–2 konkreten Hebeln." },
-      { min:0, max:39.9, value:"unter 40", lbl:"Neustart", txt:"Regeneration und Alltag verdienen besondere Aufmerksamkeit. Starte niedrigschwellig." }
+      { min:65, max:84.99, value:"65–84", lbl:"Aktiv mit Momentum", txt:"Gute Grundlage. Einzelne Stellschrauben können das Energielevel weiter verbessern." },
+      { min:50, max:64.99, value:"50–64", lbl:"Auf dem Weg", txt:"Erkennbare Entwicklungsbereiche. Kleine Schritte bringen sichtbare Verbesserungen." },
+      { min:35, max:49.99, value:"35–49", lbl:"Im Aufbau", txt:"Mehrere Faktoren beeinflussen das Energielevel. Starte mit 1–2 konkreten Hebeln." },
+      { min:0, max:34.99, value:"unter 35", lbl:"Neustart", txt:"Regeneration und Alltag verdienen besondere Aufmerksamkeit. Starte niedrigschwellig." }
     ];
     const mots = { 85:"Deine Basis wirkt sehr stabil. Erhalte diese Routinen und nutze Feinschliff für weiteres Wachstum.", 70:"Du bist auf einem guten Level. Einzelne Hebel können deinen Index in den nächsten Wochen weiter stabilisieren.", 55:"Schon kleine regelmäßige Veränderungen können helfen, deinen Vitalitäts-Index spürbar zu verbessern.", 40:"Starte mit 1–2 einfachen Schritten und vergleiche den Index in 4–8 Wochen erneut.", 0:"Starte besonders niedrigschwellig. Bei anhaltenden Beschwerden kann zusätzliche Orientierung sinnvoll sein." };
-    const mk = score>=85?85:score>=70?70:score>=55?55:score>=40?40:0;
+    const mk = score>=85?85:score>=65?70:score>=50?55:score>=35?40:0;   // v2.8.0: Grenzen 85/65/50/35, Texte unverändert
     const rows = ranges.map(r => {
       const active = score >= r.min && score <= r.max;
       return `<div class="vital-index-row ${active?"active-level":""}">
@@ -5436,8 +5469,8 @@
       text: "Mehr als eine Stunde zum Einschlafen ist ein relevantes Signal. Häufig stecken Stress, Bildschirmzeit oder ein unregelmäßiger Rhythmus dahinter." },
     { q: "stress_level", area: "mental", title: "Hoher Stresslevel",
       text: "Du gibst einen hohen Stresslevel an. Dauerhafter Stress wirkt sich auf Schlaf, Energie und Regeneration aus." },
-    { q: "nicotine_use", area: "lifestyle", title: "Nikotin",
-      text: "Regelmäßiger Nikotinkonsum ist einer der stärksten beeinflussbaren Faktoren. Jede Reduktion zählt — auch kleine Schritte wirken." }
+    { q: "nicotine_use", area: "smoking", title: "Rauchen",
+      text: "Regelmäßiges Rauchen ist einer der stärksten beeinflussbaren Faktoren. Am meisten bringt der Rauchstopp — kostenlose Begleitung gibt es beim Rauchfrei-Telefon des BIÖG (0800 8 31 31 31) und auf rauchfrei-info.de." }
   ];
   function areaSignalsHtml(areaKey, result) {
     const answers = result?.answers || [];
@@ -5472,6 +5505,7 @@
     dge_prot:["DGE, Referenzwerte Protein", "https://www.dge.de/presse/meldungen/2011-2018/wie-viel-protein-brauchen-wir/"],
     dge_vitd:["DGE, FAQ Vitamin D", "https://www.dge.de/gesunde-ernaehrung/faq/vitamin-d/"],
     glim:    ["GLIM-Konsens Mangelernährung 2019", "https://pubmed.ncbi.nlm.nih.gov/30175461/"],
+    winter_bmi: ["Winter u. a., BMI und Sterblichkeit im Alter, Am J Clin Nutr 2014", "https://pubmed.ncbi.nlm.nih.gov/24452240/"],
     who_soc: ["WHO, Soziale Verbundenheit (2025)", "https://www.who.int/news-room/questions-and-answers/item/social-connection"],
     dge_alk: ["DGE-Positionspapier Alkohol 2024", "https://www.dge.de/presse/meldungen/2024/dge-positionspapier-zu-alkohol/"],
     who_tob: ["WHO, Vorteile des Rauchstopps", "https://www.who.int/news-room/questions-and-answers/item/tobacco-health-benefits-of-smoking-cessation"],
@@ -5525,18 +5559,36 @@
       age: (a, w, r, t, areaScore) => {
         const parts = [];
         if (Number(areaScore) <= 55) parts.push("Auch wenn der BMI rechnerisch dein niedrigster Wert ist, bleibt er nicht dein Ansatzpunkt — er ist ein Ergebnis, keine Handlung. Bewegt wird er über Bewegung und Ernährung, und dort liegt auch dein Hebel.");
+        if (a >= 65) parts.push("Ab 65 bewertet der Index den BMI altersgerecht: Ein BMI von 23 bis unter 30 gilt als günstig — große Studien sehen bei Älteren in diesem Bereich kein erhöhtes Risiko, unter 23 dagegen schon.");
         if (a >= 70) parts.push("Ab 70 gilt in der Ernährungsmedizin ein BMI unter 22 als Anlass, genauer hinzuschauen (GLIM). In diesem Alter zählen Muskelkraft und Beweglichkeit mehr als eine niedrige Zahl auf der Waage.");
         return parts.join(" ");
       },
       // Die GLIM-Quelle gehoert zum Satz ab 70, nicht zu jedem BMI-Kaertchen.
-      srcFn: (a) => a >= 70 ? ["glim"] : [],
+      srcFn: (a) => a >= 70 ? ["winter_bmi", "glim"] : a >= 65 ? ["winter_bmi"] : [],
       src: []
     },
     mental: {
-      what: "Wie gestresst du dich fühlst, wie deine Stimmung ist und wie gut du sozial eingebunden bist.",
+      what: "Wie gestresst du dich fühlst und wie gut du sozial eingebunden bist. Deine Antworten zur Stimmung zählen bewusst nicht in die Punkte — wenn sie auffallen, stehen sie als eigener Hinweis oben.",
       why: "Dauerhafte Anspannung wirkt auf Schlaf, Energie und Erholung. Gute Kontakte schützen: Einsamkeit ist laut WHO mit einem höheren Risiko für Herzerkrankungen, Typ-2-Diabetes, Depression und Angst verbunden.",
       age: () => "",
       src: ["who_soc"]
+    },
+    smoking: {
+      what: "Ob du rauchst oder Nikotin nutzt.",
+      why: "Rauchen gehört zu den größten vermeidbaren Gesundheitsrisiken. Der Rauchstopp lohnt sich in jedem Alter — kostenlose Begleitung gibt es beim Rauchfrei-Telefon des BIÖG (0800 8 31 31 31).",
+      age: (a, w, r, t) => {
+        const n = String((t && t.nicotine_use) || "");
+        if (/früher|frueher|aufgehört|aufgehoert|nicht mehr|ehemal/.test(n)) return "Dass du aufgehört hast, wirkt weiter: Laut WHO gewinnt, wer mit 50 aufhört, rund 6 Jahre Lebenserwartung, wer mit 60 aufhört, rund 3 Jahre. Der Nutzen wächst mit jedem rauchfreien Jahr.";
+        if (Number((r && r.nicotine_use) || 0) > 0) return "Aufhören lohnt sich in jedem Alter: Laut WHO gewinnt, wer mit 50 mit dem Rauchen aufhört, rund 6 Jahre Lebenserwartung, wer mit 60 aufhört, rund 3 Jahre.";
+        return "";
+      },
+      src: ["who_tob"]
+    },
+    alcohol: {
+      what: "Wie oft und wie viel du Alkohol trinkst.",
+      why: "Die DGE sieht keine gesundheitlich unbedenkliche Alkoholmenge und empfiehlt, möglichst darauf zu verzichten. Für Erwachsene, die trinken, gelten 1–2 Getränke pro Woche als risikoarm.",
+      age: () => "",
+      src: ["dge_alk"]
     },
     lifestyle: {
       what: "Wie oft und wie viel du Alkohol trinkst und ob du Nikotin nutzt.",
@@ -5617,6 +5669,8 @@
     nutrition: "Du bist länger satt, und deine Energie verteilt sich gleichmäßiger über den Tag.",
     vitamin_d: "Dein Tag bekommt mehr Rhythmus — viele schlafen abends leichter ein.",
     mental: "Du kommst abends schneller zur Ruhe, und Kleinigkeiten bringen dich seltener aus dem Takt.",
+    smoking: "Viele merken nach einigen Wochen, dass Treppen und Wege leichter fallen.",
+    alcohol: "Du schläfst tiefer und wachst morgens klarer auf.",
     lifestyle: "Du schläfst tiefer und wachst morgens klarer auf.",
     micronutrients: "Dein Teller wird bunter — und du weißt genauer, was du wirklich brauchst.",
     metabolic: "Deine Energie verteilt sich gleichmäßiger über den Tag."
@@ -5760,6 +5814,15 @@
       if (l === "medium") { if (stress >= 3) return "Einen festen Erholungsanker pro Tag setzen — zur gleichen Zeit, ohne Ausnahme."; if (social >= 2) return "Sozialer Kontakt schützt die mentale Gesundheit — eine Nachricht oder ein Anruf reicht."; return "10 Minuten ohne Handy — spazieren oder bewusst atmen."; }
       return "Erholung aktiv schützen und nicht als Luxus betrachten.";
     }
+    if (key === "smoking") {   // v2.8.0
+      if (l === "low" || l === "medium") return "Den Rauchstopp planen: ein Datum festlegen und das Rauchfrei-Telefon (0800 8 31 31 31) anrufen — kostenlos.";
+      return "Rauchfrei bleiben — das trägt deine Gesundheit mehr als fast alles andere.";
+    }
+    if (key === "alcohol") {   // v2.8.0
+      if (l === "low") return "Alkoholfreie Tage bewusst einplanen — unterstützt Schlaf und Regeneration direkt.";
+      if (l === "medium") return "Zwei feste alkoholfreie Abende pro Woche einbauen.";
+      return "Diese Routine unterstützt Schlaf und Trainingsfortschritt aktiv.";
+    }
     if (key === "lifestyle") {
       const nicotine = getRisk("nicotine_use"); const alcohol = getRisk("alcohol_frequency");
       if (l === "low") { if (nicotine >= 3) return "Jede Reduktion zählt — auch ein Nichtrauchtag pro Woche ist ein echter Schritt."; if (alcohol >= 3) return "Alkoholfreie Tage bewusst einplanen — unterstützt Schlaf und Regeneration direkt."; return "Den Zusammenhang zwischen Konsum, Schlaf und Energie heute bewusst beobachten."; }
@@ -5828,6 +5891,15 @@
       if (l === "medium") { if (social >= 2) return "Regelmäßige soziale Kontakte einplanen — einmal pro Woche reicht als Anker."; return "Eine Sache in der Woche bewusst streichen, die dich Kraft kostet und nicht sein muss."; }
       return "Bewegung und Schlaf als aktive Schutzfaktoren für mentale Balance nutzen.";
     }
+    if (key === "smoking") {   // v2.8.0
+      if (l === "low" || l === "medium") return "Mit Begleitung klappt der Rauchstopp häufiger — das BIÖG bietet ein kostenloses Online-Programm auf rauchfrei-info.de.";
+      return "Positive Wirkung auf Atmung und Ausdauer weiter bewusst wahrnehmen.";
+    }
+    if (key === "alcohol") {   // v2.8.0
+      if (l === "low") return "Einen alkoholfreien Tag pro Woche als feste Gewohnheit einbauen.";
+      if (l === "medium") return "Einen Abend ohne Alkohol als Regenerations-Test nutzen.";
+      return "Positive Wirkung auf Energie und Erholung weiter bewusst wahrnehmen.";
+    }
     if (key === "lifestyle") {
       const nicotine = getRisk("nicotine_use"); const alcohol = getRisk("alcohol_frequency");
       if (l === "low") { if (nicotine >= 3) return "Professionelle Unterstützung beim Rauchstopp erhöht die Erfolgsquote deutlich."; if (alcohol >= 3) return "Einen alkoholfreien Tag pro Woche als feste Gewohnheit einbauen."; return "Einen alkohol- oder nikotinfreien Tag pro Woche einplanen."; }
@@ -5861,7 +5933,8 @@
   }
 
   function renderVitalitySupportBox(areas, result, suppFocus) {
-    const scoreOf = key => { const a = areas.find(x => x.key === key); return a ? Number(a.score) : 100; };
+    // v2.8.0: Mikronährstoffe und Alkohol/Nikotin sind keine Score-Bereiche mehr — Wert aus den Antworten
+    const scoreOf = key => { const a = areas.find(x => x.key === key); return a ? Number(a.score) : themeScore(result?.answers, key); };
     const bmiNum = Number(result?.bmi);
     const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
     let hints = [];   // v1.33.0: neu zuweisbar für den zentralen Bluttest-Filter
@@ -5927,8 +6000,8 @@
     const activityRiskHba = Number(activityAnswerHba?.risk_points || 0);
     const bmiNumHba = Number(result?.bmi || bmiNum || 0);
     const ageNumHba = Number(result?.submission?.age || 0);
-    const metabolicScoreHba = Number(result?.score?.score_payload?.metabolic?.score || 100);
-    const lifestyleScoreHba = Number(result?.score?.score_payload?.lifestyle?.score || 100);
+    const metabolicScoreHba = themeScore(result?.answers, "metabolic");   // v2.8.0
+    const lifestyleScoreHba = themeScore(result?.answers, "lifestyle");   // v2.8.0
     const hba1cTrigger = (bmiNumHba >= 26 && activityRiskHba >= 2) || (ageNumHba >= 45 && metabolicScoreHba < 80) || (ageNumHba >= 65 && lifestyleScoreHba < 50);
     // v1.32.2 — bei Red Flag kein Selbsttest-Hinweis (siehe _redFlagNoBloodtest)
     if (hba1cTrigger && !window._redFlagNoBloodtest && !hints.some(h => h.includes("HbA1c") || h.includes("Blutzucker"))) {
@@ -6751,6 +6824,7 @@
     const shortLabels = {
       sleep:"Schlaf", activity:"Bewegung", nutrition:"Ernährung",
       vitamin_d:"Vit. D", bmi:"BMI", mental:"Mental",
+      smoking:"Rauchen", alcohol:"Alkohol",
       lifestyle:"Lifestyle", micronutrients:"Mikro", metabolic:"Energie"
     };
     const datasets = [];
@@ -6990,7 +7064,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.7.2</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.0</footer>
 
 
 </body>
