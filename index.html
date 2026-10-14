@@ -740,6 +740,17 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.0 (14.10.2026): Ergebnis aus dem Konto öffnen, ohne PIN (Jörg: "mit bestätigtem
+       Konto sollte der Check dort abgelegt sein und nicht mehr mit ID + PIN zu öffnen sein").
+       Ist die Person auf diesem Gerät angemeldet (Mein Bereich, gleiche Domain) und gehört der
+       Check zu ihrem Konto, lädt ?code= das Ergebnis direkt per Login; ?recheck=<Pilot-ID>
+       startet den verknüpften Re-Check. Sonst wie bisher die PIN-Eingabe — die PIN funktioniert
+       weiter (Mail-Link, eingebettet auf le-vita.com, fremde Geräte). Intern steht dann der
+       Platzhalter ACCOUNT_PIN in window._accessPin; callFunction entfernt ihn vor dem Senden
+       und schickt stattdessen das Login (Edge edge-2026-10-14.3 prüft account_submission_access).
+       PIN-Kasten zeigt bei Konto-Checks "Liegt in deinem Konto". PIN-Seite mit Hinweis auf
+       "Mein Bereich". Gehört zu EDGE_submit-vital-check_edge-2026-10-14.3.ts und konto.html 1.2.0.
+
        v2.7.1 (14.10.2026): (1) Reiter "Mein Plan" in drei Zonen: "Das kannst du allein tun"
          (Fahrplan, Hebel, Hinweise, Re-Check), "Das machen wir im Studio" (Messen, Gespräch,
          später Ernährungs-Check), "Dein Zugang" (nur Wiederaufruf). (2) Stufe 3 nur mit Konto:
@@ -1765,6 +1776,11 @@
   let radarLayerPrev = false, radarLayerPot = false; // max. 2 Ebenen gleichzeitig (Design 26.08.)
   let radarPotUserOff = false;  // merkt sich ein bewusstes Abwählen der Potenzial-Ebene
   window._previousLink = null;  // { public_code, pin } — gesetzt beim Re-Check-Start aus der PIN-Ansicht
+  // v2.8.0 — Zugang über das Konto statt PIN. ACCOUNT_PIN ist ein reiner Merker im
+  // Browser und verlässt die Seite nie (callFunction entfernt ihn vor dem Senden).
+  const ACCOUNT_PIN = "__konto__";
+  window._acctToken = null;     // Login der Person, nur gesetzt nach erfolgreichem Konto-Zugriff
+  const viaAccount = () => window._accessPin === ACCOUNT_PIN;
   window._previousData = null;  // previous-Block aus der Edge-Response (Vorgänger-Check)
   window._linkStatus = null;    // "none" | "linked" | "invalid"
 
@@ -1902,6 +1918,7 @@
         <button class="next-btn" id="pinSubmitBtn" onclick="loadResultWithPin('${publicCode}')" disabled style="opacity:0.4;">
           Auswertung laden →
         </button>
+        <div class="pin-hint" style="margin-top:14px;">Du hast ein persönliches Konto? Dann öffnest du deine Checks ohne PIN in <a href="konto.html" target="_blank" rel="noopener" style="color:var(--accent-green);text-decoration:underline;">Mein Bereich</a>.</div>
         <div class="pin-new-check">
           <strong>PIN nicht zur Hand?</strong><br>
           Suche in deinem Postfach nach der Mail mit dem Betreff „dein Vital-Check ist da“ —
@@ -1998,6 +2015,16 @@
       const result = await callFunction({ mode: 'load_result', public_code: publicCode, pin });
 
       if (result && result.success) {
+        openLoadedResult(result, pin);
+      }
+    } catch (e) {
+      handlePinLoadError(e, btn, errEl);
+    }
+  }
+
+  // v2.8.0 — gemeinsamer Abschluss für PIN- und Konto-Zugriff (vorher im PIN-Laden)
+  function openLoadedResult(result, pin, opts) {
+        window._isReviewMode = true;
         window._accessPin = pin; // Für spätere Aktionen merken (z.B. Datenlöschung, v1.28.17)
         latestResult = result;
         absorbV2Result(result); // V2: Szenarien, Verlauf, gespeichertes Ziel
@@ -2010,10 +2037,12 @@
         document.getElementById('quiz-flow').innerHTML = '';
         document.getElementById('loading').classList.add('hidden');
         window._currentPublicCode = result.public_code || null;
+        if (opts && opts.render === false) return;
         showResult(result);
         setTimeout(initStickyCta, 800);
-      }
-    } catch (e) {
+  }
+
+  function handlePinLoadError(e, btn, errEl) {
       const msg = e.message || '';
       let userMsg = 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.';
       if (msg.includes('Keine Auswertung')) {
@@ -2027,6 +2056,25 @@
       }
       if (errEl) { errEl.textContent = userMsg; errEl.classList.remove('hidden'); }
       if (btn) { btn.disabled = false; btn.textContent = 'Auswertung laden →'; btn.style.opacity = '1'; }
+  }
+
+  // v2.8.0 — Ergebnis über das Konto laden. Gelingt nur, wenn die Person auf diesem
+  // Gerät angemeldet ist und der Check zu ihrem Konto gehört; sonst false (→ PIN-Seite).
+  async function tryAccountLoad(publicCode, opts) {
+    if (!publicCode || !window.LeVitaKonto) return false;
+    let s = null;
+    try { s = await window.LeVitaKonto.session(); } catch (e) { s = null; }
+    if (!s || !s.access_token) return false;
+    window._acctToken = s.access_token;
+    try {
+      const result = await callFunction({ mode: 'load_result', public_code: publicCode, pin: ACCOUNT_PIN });
+      if (!result || !result.success || result.via_account !== true) throw new Error('kein Konto-Zugriff');
+      openLoadedResult(result, ACCOUNT_PIN, opts);
+      try { trackEvent('result_open_via_account', {}); } catch (e) {}
+      return true;
+    } catch (e) {
+      window._acctToken = null;
+      return false;
     }
   }
   // ── Ende PIN-System ────────────────────────────────────
@@ -2132,7 +2180,26 @@
       return;
     }
     const codeParam = urlParams.get("code");
-    if (codeParam) {
+    // v2.8.0 — aus "Mein Bereich": Re-Check direkt verknüpft starten, ohne PIN
+    const recheckParam = urlParams.get("recheck");
+    if (recheckParam && !codeParam) {
+      if (await tryAccountLoad(recheckParam, { render: false })) {
+        try { history.replaceState({}, '', selfUrlKeepEmbed()); } catch (e) {}
+        startRecheckFromReview();
+        return;
+      }
+      // nicht angemeldet / nicht im Konto: wie ein ?code=-Aufruf mit PIN weiter
+      document.getElementById("quiz-flow").innerHTML = "";
+    }
+    const codeForPin = codeParam || recheckParam;
+    if (codeParam && await tryAccountLoad(codeParam)) {
+      document.getElementById("loading").classList.add("hidden");
+      document.getElementById("progressWrap").style.display = "none";
+      const heroElA = document.getElementById('hero-block'); if (heroElA) heroElA.style.display = 'none';
+      const heroVpA = document.getElementById('hero-value-props'); if (heroVpA) heroVpA.style.display = 'none';
+      return;
+    }
+    if (codeForPin) {
       // PIN-Eingabe-Screen anzeigen
       const heroEl = document.getElementById('hero-block');
       if (heroEl) heroEl.style.display = 'none';
@@ -2141,7 +2208,7 @@
       document.getElementById("loading").classList.add("hidden");
       document.getElementById("progressWrap").style.display = "none";
       document.getElementById("quiz-flow").classList.remove("hidden");
-      document.getElementById("quiz-flow").innerHTML = buildPinScreen(codeParam);
+      document.getElementById("quiz-flow").innerHTML = buildPinScreen(codeForPin);
       return;
     }
 
@@ -3514,7 +3581,18 @@
   }
 
   async function callFunction(payload) {
-    const response = await fetch(FUNCTION_URL, { method:"POST", headers:{"Content-Type":"application/json","apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${SUPABASE_ANON_KEY}`}, body:JSON.stringify(payload) });
+    // v2.8.0 — Konto-Zugriff: Merker-PIN entfernen, Login mitschicken (vorher verlängern)
+    let auth = SUPABASE_ANON_KEY;
+    if (window._acctToken && window.LeVitaKonto) {
+      try { const s = await window.LeVitaKonto.session(); window._acctToken = s ? s.access_token : null; } catch (e) { window._acctToken = null; }
+      if (window._acctToken) auth = window._acctToken;
+    }
+    if (payload && (payload.pin === ACCOUNT_PIN || payload.previous_pin === ACCOUNT_PIN)) {
+      payload = Object.assign({}, payload);
+      if (payload.pin === ACCOUNT_PIN) delete payload.pin;
+      if (payload.previous_pin === ACCOUNT_PIN) delete payload.previous_pin;
+    }
+    const response = await fetch(FUNCTION_URL, { method:"POST", headers:{"Content-Type":"application/json","apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${auth}`}, body:JSON.stringify(payload) });
     const result = await response.json();
     if (!response.ok || !result.success) throw new Error(result.error || "Unbekannter Fehler.");
     return result;
@@ -3988,7 +4066,7 @@
           <div style="font-size:19px;line-height:1.2;flex-shrink:0;" aria-hidden="true">✉️</div>
           <div style="flex-grow:1;min-width:0;">
             <div style="font-size:13px;font-weight:700;">${window._isReviewMode && window._accessPin ? "Dein Vital-Plan" : "Dein persönlicher Vital-Plan"}</div>
-            <div style="font-size:11.5px;color:var(--text-secondary);">${window._isReviewMode && window._accessPin ? "Status und PIN ansehen" : "Ausführliche Auswertung per Mail · kostenlos"}</div>
+            <div style="font-size:11.5px;color:var(--text-secondary);">${window._isReviewMode && window._accessPin ? (viaAccount() ? "Status ansehen" : "Status und PIN ansehen") : "Ausführliche Auswertung per Mail · kostenlos"}</div>
           </div>
           <span id="vitalplanCta" style="min-height:44px;padding:0 15px;display:flex;align-items:center;
             background:var(--accent-green);color:#0a1628;border-radius:9px;font-size:13px;font-weight:700;flex-shrink:0;">
@@ -5000,7 +5078,7 @@
   // v2.6.0 — Konto-Schritt (Stufe 3). Nur mit PIN; konto.js befüllt den Platzhalter
   // selbst und liest die PIN aus window._accessPin (steht nie im HTML).
   function kontoStepHtml() {
-    if (!window._accessPin || !latestResult || !latestResult.public_code || !window.LeVitaKonto) return "";
+    if (!window._accessPin || viaAccount() || !latestResult || !latestResult.public_code || !window.LeVitaKonto) return "";
     const mail = (window._unlockInfo && window._unlockInfo.email) || "";
     return `<div data-konto-step data-required="1" data-context="studio" data-code="${escHtml(latestResult.public_code)}" data-email="${escHtml(mail)}"></div>`;
   }
@@ -6271,6 +6349,12 @@
   // liegt vor, der Anreiz hat gewirkt.
   function accessPinBlockHtml(pin, publicCode) {
     if (!pin || !publicCode) return "";
+    // v2.8.0 — geöffnet über das Konto: kein PIN zu zeigen
+    if (pin === ACCOUNT_PIN) return `
+      <div style="background:rgba(34,201,122,0.08);border:1px solid rgba(34,201,122,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-top:12px;text-align:left;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-green);margin-bottom:6px;">🔐 Liegt in deinem Konto</div>
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;">Diesen Check (${escHtml(publicCode)}) öffnest du jederzeit ohne PIN in <a href="konto.html" style="color:var(--accent-green);text-decoration:underline;">Mein Bereich</a>. Dein nächster Check wird dort automatisch verknüpft.</div>
+      </div>`;
     return `
       <div style="background:rgba(34,201,122,0.08);border:1px solid rgba(34,201,122,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-top:12px;text-align:left;">
         <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-green);margin-bottom:8px;">🔑 Dein persönlicher PIN</div>
@@ -6972,7 +7056,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.7.1</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.0</footer>
 
 
 </body>
