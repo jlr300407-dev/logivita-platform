@@ -740,6 +740,23 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.2 (15.10.2026): Ergebnis aus dem Konto öffnen, ohne PIN — im Konto-Chat als "v2.8.0" gebaut
+         (auf Basis 2.7.1) und wegen der gleichen Versionsnummer nie live gegangen; hier auf 2.8.1
+         nachgezogen (gehört zu Edge edge-2026-10-15.2 und konto.html 1.2.0). Ist die Person auf diesem
+         Gerät angemeldet (Mein Bereich, gleiche Domain) und gehört der Check zu ihrem Konto, lädt
+         ?code= das Ergebnis direkt per Login; ?recheck=<Pilot-ID> startet den verknüpften Re-Check.
+         Sonst wie bisher die PIN-Eingabe (Mail-Link, eingebettet auf le-vita.com, fremde Geräte).
+         Intern steht der Platzhalter ACCOUNT_PIN in window._accessPin; callFunction entfernt ihn vor
+         dem Senden und schickt stattdessen das Login. PIN-Kasten zeigt bei Konto-Checks "Liegt in
+         deinem Konto", kein Konto-Schritt mehr nach der Studio-Anfrage. PIN-Seite mit Hinweis auf
+         "Mein Bereich".
+
+       v2.8.1 (15.10.2026): Studio-Anfrage (Stufe 3) mit zwei Wegen wie im Ernährungs-Check (gehört zu
+         vital-check-studio-anfrage-selbst_v1.sql + Edge edge-2026-10-15.1 + Dashboard v2.9.1):
+         "Ruft mich an" (Telefon, Zeitfenster, Anruf-Einwilligung wie bisher) oder "Ich melde mich selbst"
+         (nur Vorname; danach Telefon/Öffnungszeiten des Studios aus nutrition_settings.studio_contact).
+         Beide Wege führen zum Pflicht-Konto-Schritt; die Trainer-Einwilligung bleibt freiwillig.
+
        v2.8.0 (14.10.2026): Score-Karte Version 3 (gehört zu vital-check-score-v3.sql + _neuberechnung.sql,
          Edge edge-2026-10-14.4). Neue Bereiche Rauchen und Alkohol (Icons, Texte, Tipps, Spinne);
          Stoffwechsel, Mikronährstoffe und Alkohol/Nikotin sind keine Bereiche mehr — Signale daraus
@@ -1370,6 +1387,8 @@
     .stage-choice input { width: 18px; height: 18px; margin: 2px 0 0; flex-shrink: 0; accent-color: var(--accent-blue); }
     .stage-choice:has(input:checked) { border-color: var(--accent-blue); background: var(--accent-blue-dim); }
     .stage-choice-sub { font-size: 12px; color: var(--text-secondary); }
+    .stage-contact-line { font-size: 13px; line-height: 1.6; margin: 2px 0; }
+    .stage-contact-line a { color: var(--accent-blue); }
     .stage-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
     .stage-slot { position: relative; }
     .stage-slot input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
@@ -1807,6 +1826,11 @@
   let radarLayerPrev = false, radarLayerPot = false; // max. 2 Ebenen gleichzeitig (Design 26.08.)
   let radarPotUserOff = false;  // merkt sich ein bewusstes Abwählen der Potenzial-Ebene
   window._previousLink = null;  // { public_code, pin } — gesetzt beim Re-Check-Start aus der PIN-Ansicht
+  // v2.8.2 — Zugang über das Konto statt PIN. ACCOUNT_PIN ist ein reiner Merker im
+  // Browser und verlässt die Seite nie (callFunction entfernt ihn vor dem Senden).
+  const ACCOUNT_PIN = "__konto__";
+  window._acctToken = null;     // Login der Person, nur gesetzt nach erfolgreichem Konto-Zugriff
+  const viaAccount = () => window._accessPin === ACCOUNT_PIN;
   window._previousData = null;  // previous-Block aus der Edge-Response (Vorgänger-Check)
   window._linkStatus = null;    // "none" | "linked" | "invalid"
 
@@ -1944,6 +1968,7 @@
         <button class="next-btn" id="pinSubmitBtn" onclick="loadResultWithPin('${publicCode}')" disabled style="opacity:0.4;">
           Auswertung laden →
         </button>
+        <div class="pin-hint" style="margin-top:14px;">Du hast ein persönliches Konto? Dann öffnest du deine Checks ohne PIN in <a href="konto.html" target="_blank" rel="noopener" style="color:var(--accent-green);text-decoration:underline;">Mein Bereich</a>.</div>
         <div class="pin-new-check">
           <strong>PIN nicht zur Hand?</strong><br>
           Suche in deinem Postfach nach der Mail mit dem Betreff „dein Vital-Check ist da“ —
@@ -2040,6 +2065,16 @@
       const result = await callFunction({ mode: 'load_result', public_code: publicCode, pin });
 
       if (result && result.success) {
+        openLoadedResult(result, pin);
+      }
+    } catch (e) {
+      handlePinLoadError(e, btn, errEl);
+    }
+  }
+
+  // v2.8.2 — gemeinsamer Abschluss für PIN- und Konto-Zugriff (vorher im PIN-Laden)
+  function openLoadedResult(result, pin, opts) {
+        window._isReviewMode = true;
         window._accessPin = pin; // Für spätere Aktionen merken (z.B. Datenlöschung, v1.28.17)
         latestResult = result;
         absorbV2Result(result); // V2: Szenarien, Verlauf, gespeichertes Ziel
@@ -2052,10 +2087,12 @@
         document.getElementById('quiz-flow').innerHTML = '';
         document.getElementById('loading').classList.add('hidden');
         window._currentPublicCode = result.public_code || null;
+        if (opts && opts.render === false) return;
         showResult(result);
         setTimeout(initStickyCta, 800);
-      }
-    } catch (e) {
+  }
+
+  function handlePinLoadError(e, btn, errEl) {
       const msg = e.message || '';
       let userMsg = 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.';
       if (msg.includes('Keine Auswertung')) {
@@ -2069,6 +2106,25 @@
       }
       if (errEl) { errEl.textContent = userMsg; errEl.classList.remove('hidden'); }
       if (btn) { btn.disabled = false; btn.textContent = 'Auswertung laden →'; btn.style.opacity = '1'; }
+  }
+
+  // v2.8.2 — Ergebnis über das Konto laden. Gelingt nur, wenn die Person auf diesem
+  // Gerät angemeldet ist und der Check zu ihrem Konto gehört; sonst false (→ PIN-Seite).
+  async function tryAccountLoad(publicCode, opts) {
+    if (!publicCode || !window.LeVitaKonto) return false;
+    let s = null;
+    try { s = await window.LeVitaKonto.session(); } catch (e) { s = null; }
+    if (!s || !s.access_token) return false;
+    window._acctToken = s.access_token;
+    try {
+      const result = await callFunction({ mode: 'load_result', public_code: publicCode, pin: ACCOUNT_PIN });
+      if (!result || !result.success || result.via_account !== true) throw new Error('kein Konto-Zugriff');
+      openLoadedResult(result, ACCOUNT_PIN, opts);
+      try { trackEvent('result_open_via_account', {}); } catch (e) {}
+      return true;
+    } catch (e) {
+      window._acctToken = null;
+      return false;
     }
   }
   // ── Ende PIN-System ────────────────────────────────────
@@ -2174,7 +2230,26 @@
       return;
     }
     const codeParam = urlParams.get("code");
-    if (codeParam) {
+    // v2.8.2 — aus "Mein Bereich": Re-Check direkt verknüpft starten, ohne PIN
+    const recheckParam = urlParams.get("recheck");
+    if (recheckParam && !codeParam) {
+      if (await tryAccountLoad(recheckParam, { render: false })) {
+        try { history.replaceState({}, '', selfUrlKeepEmbed()); } catch (e) {}
+        startRecheckFromReview();
+        return;
+      }
+      // nicht angemeldet / nicht im Konto: wie ein ?code=-Aufruf mit PIN weiter
+      document.getElementById("quiz-flow").innerHTML = "";
+    }
+    const codeForPin = codeParam || recheckParam;
+    if (codeParam && await tryAccountLoad(codeParam)) {
+      document.getElementById("loading").classList.add("hidden");
+      document.getElementById("progressWrap").style.display = "none";
+      const heroElA = document.getElementById('hero-block'); if (heroElA) heroElA.style.display = 'none';
+      const heroVpA = document.getElementById('hero-value-props'); if (heroVpA) heroVpA.style.display = 'none';
+      return;
+    }
+    if (codeForPin) {
       // PIN-Eingabe-Screen anzeigen
       const heroEl = document.getElementById('hero-block');
       if (heroEl) heroEl.style.display = 'none';
@@ -2183,7 +2258,7 @@
       document.getElementById("loading").classList.add("hidden");
       document.getElementById("progressWrap").style.display = "none";
       document.getElementById("quiz-flow").classList.remove("hidden");
-      document.getElementById("quiz-flow").innerHTML = buildPinScreen(codeParam);
+      document.getElementById("quiz-flow").innerHTML = buildPinScreen(codeForPin);
       return;
     }
 
@@ -3556,7 +3631,18 @@
   }
 
   async function callFunction(payload) {
-    const response = await fetch(FUNCTION_URL, { method:"POST", headers:{"Content-Type":"application/json","apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${SUPABASE_ANON_KEY}`}, body:JSON.stringify(payload) });
+    // v2.8.2 — Konto-Zugriff: Merker-PIN entfernen, Login mitschicken (vorher verlängern)
+    let auth = SUPABASE_ANON_KEY;
+    if (window._acctToken && window.LeVitaKonto) {
+      try { const s = await window.LeVitaKonto.session(); window._acctToken = s ? s.access_token : null; } catch (e) { window._acctToken = null; }
+      if (window._acctToken) auth = window._acctToken;
+    }
+    if (payload && (payload.pin === ACCOUNT_PIN || payload.previous_pin === ACCOUNT_PIN)) {
+      payload = Object.assign({}, payload);
+      if (payload.pin === ACCOUNT_PIN) delete payload.pin;
+      if (payload.previous_pin === ACCOUNT_PIN) delete payload.previous_pin;
+    }
+    const response = await fetch(FUNCTION_URL, { method:"POST", headers:{"Content-Type":"application/json","apikey":SUPABASE_ANON_KEY,"Authorization":`Bearer ${auth}`}, body:JSON.stringify(payload) });
     const result = await response.json();
     if (!response.ok || !result.success) throw new Error(result.error || "Unbekannter Fehler.");
     return result;
@@ -4026,7 +4112,7 @@
           <div style="font-size:19px;line-height:1.2;flex-shrink:0;" aria-hidden="true">✉️</div>
           <div style="flex-grow:1;min-width:0;">
             <div style="font-size:13px;font-weight:700;">${window._isReviewMode && window._accessPin ? "Dein Vital-Plan" : "Dein persönlicher Vital-Plan"}</div>
-            <div style="font-size:11.5px;color:var(--text-secondary);">${window._isReviewMode && window._accessPin ? "Status und PIN ansehen" : "Ausführliche Auswertung per Mail · kostenlos"}</div>
+            <div style="font-size:11.5px;color:var(--text-secondary);">${window._isReviewMode && window._accessPin ? (viaAccount() ? "Status ansehen" : "Status und PIN ansehen") : "Ausführliche Auswertung per Mail · kostenlos"}</div>
           </div>
           <span id="vitalplanCta" style="min-height:44px;padding:0 15px;display:flex;align-items:center;
             background:var(--accent-green);color:#0a1628;border-radius:9px;font-size:13px;font-weight:700;flex-shrink:0;">
@@ -5012,19 +5098,24 @@
         <div class="stage-choice-minor">${radio("sr_offer", "vital_analyse_plus", "Vital-Analyse Plus · 49,00 €", "rund 45 Minuten: Tanita, Griffkraft, Aufsteh- und Gleichgewichtstest, Ziel und Re-Check. Wird bei neuen und bestehenden Mitgliedschaften vollständig angerechnet.", false)}</div>
         <label class="stage-form-label" for="sr_name">Vorname</label>
         <input type="text" id="sr_name" class="stage-input" autocomplete="given-name" maxlength="60" value="${name}">
-        <label class="stage-form-label" for="sr_phone">Telefon</label>
-        <input type="tel" id="sr_phone" class="stage-input" autocomplete="tel" maxlength="25" placeholder="0170 …">
-        <div class="stage-form-legend" style="margin-top:12px;">Wann passt es dir am besten?</div>
-        <div class="stage-slots">
-          <label class="stage-slot"><input type="radio" name="sr_slot" value="vormittags"><span>vormittags</span></label>
-          <label class="stage-slot"><input type="radio" name="sr_slot" value="nachmittags"><span>nachmittags</span></label>
-          <label class="stage-slot"><input type="radio" name="sr_slot" value="abends"><span>abends</span></label>
+        <div class="stage-form-legend" style="margin-top:12px;">Wie kommen wir zusammen?</div>
+        ${radio("sr_way", "callback", "Ruft mich an", "Wir melden uns zur Terminabsprache.", false)}
+        ${radio("sr_way", "self", "Ich melde mich selbst", "Du bekommst unsere Telefonnummer und Öffnungszeiten.", false)}
+        <div id="srCb" style="display:none;">
+          <label class="stage-form-label" for="sr_phone">Telefon</label>
+          <input type="tel" id="sr_phone" class="stage-input" autocomplete="tel" maxlength="25" placeholder="0170 …">
+          <div class="stage-form-legend" style="margin-top:12px;">Wann passt es dir am besten?</div>
+          <div class="stage-slots">
+            <label class="stage-slot"><input type="radio" name="sr_slot" value="vormittags"><span>vormittags</span></label>
+            <label class="stage-slot"><input type="radio" name="sr_slot" value="nachmittags"><span>nachmittags</span></label>
+            <label class="stage-slot"><input type="radio" name="sr_slot" value="abends"><span>abends</span></label>
+          </div>
+          <div class="checkbox-row" style="margin-top:12px;">
+            <input type="checkbox" id="sr_c1">
+            <label for="sr_c1" style="font-size:12.5px;">LeVITA darf mich zur Terminabsprache anrufen.</label>
+          </div>
         </div>
         <div class="checkbox-row" style="margin-top:12px;">
-          <input type="checkbox" id="sr_c1">
-          <label for="sr_c1" style="font-size:12.5px;">LeVITA darf mich zur Terminabsprache anrufen.</label>
-        </div>
-        <div class="checkbox-row">
           <input type="checkbox" id="sr_c2">
           <label for="sr_c2" style="font-size:12.5px;">Die Trainerinnen und Trainer von LeVITA dürfen meine Angaben und mein Ergebnis einsehen, damit sie das Gespräch vorbereiten können. <span style="color:var(--text-muted);">Freiwillig, das Gespräch geht auch ohne, und ich kann es jederzeit widerrufen.</span></label>
         </div>
@@ -5033,17 +5124,36 @@
       </div>`;
   }
 
+  // v2.8.1 — Kontaktdaten des Studios für "Ich melde mich selbst" (wie contactHtml im Ernährungs-Check)
+  function studioContactHtml(c) {
+    const phone = c && c.phone ? String(c.phone) : "";
+    const tel = phone.replace(/[^+0-9]/g, "");
+    const hours = c && Array.isArray(c.hours) ? c.hours : [];
+    const email = (c && c.email) || "info@le-vita.com";
+    if (!phone && !hours.length) {
+      return `<div class="stage-contact-line">Sprich uns beim nächsten Besuch im Studio an oder schreib uns an <a href="mailto:${escHtml(email)}">${escHtml(email)}</a> – wir vereinbaren dann deinen Termin. Nenne dabei deine Pilot-ID${latestResult && latestResult.public_code ? ` <strong style="white-space:nowrap;">${escHtml(latestResult.public_code)}</strong>` : ""}.</div>`;
+    }
+    return `${phone ? `<div class="stage-contact-line">Telefon: <a href="tel:${escHtml(tel)}"><strong>${escHtml(phone)}</strong></a></div>` : ""}
+      ${hours.length ? `<div class="stage-contact-line">Öffnungszeiten:<br>${hours.map(x => `<span style="white-space:nowrap;">${escHtml(x)}</span>`).join("<br>")}</div>` : ""}
+      <div class="stage-contact-line">Mail: <a href="mailto:${escHtml(email)}">${escHtml(email)}</a></div>
+      ${latestResult && latestResult.public_code ? `<div class="stage-contact-line" style="color:var(--text-secondary);">Nenne dabei deine Pilot-ID <strong style="white-space:nowrap;">${escHtml(latestResult.public_code)}</strong>.</div>` : ""}`;
+  }
+
   function stageStudioDoneHtml(r) {
     const slot = r && (r.slot || r.preferred_slot);
     const nm = r && r.name ? `, ${escHtml(r.name)}` : "";
     const what = r && r.offer === "vital_analyse_plus" ? "deine Vital-Analyse Plus" : "dein Ergebnisgespräch";
+    const self = !!r && (r.way === "self" || r.contact_preference === "self");   // v2.8.1
     const konto = kontoStepHtml();   // v2.7.1: Hinweis nur, wenn der Konto-Schritt auch erscheint
     return `<div class="stage-unlock" style="margin:10px 0 14px;">
         <div class="stage-step" style="margin-bottom:6px;">
           <div class="stage-step-num done">✓</div>
-          <div><div class="stage-step-title">Danke${nm} – wir melden uns</div>
-          <div class="stage-step-sub">Deine Anfrage für ${what} ist bei uns. Wir rufen dich an${slot ? `, am liebsten ${escHtml(slot)}` : ""}. Im Gespräch schauen wir gemeinsam auf deine Stärken, deinen wichtigsten Ansatzpunkt und zwei passende nächste Schritte.</div></div>
+          ${self ? `<div><div class="stage-step-title">Danke${nm} – wir freuen uns auf dich</div>
+          <div class="stage-step-sub">Deine Anfrage für ${what} ist bei uns vermerkt. Melde dich einfach, wann es dir passt. Im Gespräch schauen wir gemeinsam auf deine Stärken, deinen wichtigsten Ansatzpunkt und zwei passende nächste Schritte.</div></div>`
+          : `<div><div class="stage-step-title">Danke${nm} – wir melden uns</div>
+          <div class="stage-step-sub">Deine Anfrage für ${what} ist bei uns. Wir rufen dich an${slot ? `, am liebsten ${escHtml(slot)}` : ""}. Im Gespräch schauen wir gemeinsam auf deine Stärken, deinen wichtigsten Ansatzpunkt und zwei passende nächste Schritte.</div></div>`}
         </div>
+        ${self ? `<div style="background:rgba(0,0,0,0.18);border-radius:8px;padding:10px 12px;margin-top:8px;"><div style="font-size:12.5px;font-weight:700;margin-bottom:4px;">So erreichst du uns</div>${studioContactHtml(r.studio_contact)}</div>` : ""}
         ${window._stage === 1 && konto ? `<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;background:rgba(0,0,0,0.18);border-radius:8px;padding:10px 12px;margin-top:8px;"><strong style="color:var(--text-primary);">Noch keinen Vital-Plan?</strong> Leg jetzt dein Konto an – darin findest du dein Ergebnis wieder. Den Vital-Plan schalten wir im Studio mit dir frei.</div>` : ""}
       </div>${konto}${referralBoxHtml('studio')}`;
   }
@@ -5051,7 +5161,7 @@
   // v2.6.0 — Konto-Schritt (Stufe 3). Nur mit PIN; konto.js befüllt den Platzhalter
   // selbst und liest die PIN aus window._accessPin (steht nie im HTML).
   function kontoStepHtml() {
-    if (!window._accessPin || !latestResult || !latestResult.public_code || !window.LeVitaKonto) return "";
+    if (!window._accessPin || viaAccount() || !latestResult || !latestResult.public_code || !window.LeVitaKonto) return "";
     const mail = (window._unlockInfo && window._unlockInfo.email) || "";
     return `<div data-konto-step data-required="1" data-context="studio" data-code="${escHtml(latestResult.public_code)}" data-email="${escHtml(mail)}"></div>`;
   }
@@ -5061,6 +5171,12 @@
     if (f) f.style.display = '';
     if (o) o.style.display = 'none';
     const n = document.getElementById('sr_name'); if (n && !n.value) n.focus();
+    // v2.8.1: Telefon, Zeitfenster und Anruf-Haken nur beim Weg "Ruft mich an"
+    document.querySelectorAll('input[name="sr_way"]').forEach(i => i.addEventListener('change', () => {
+      const cb = document.getElementById('srCb');
+      if (cb) cb.style.display = document.querySelector('input[name="sr_way"]:checked')?.value === 'callback' ? '' : 'none';
+      const st = document.getElementById('sr-status'); if (st) st.innerHTML = '';
+    }));
     try { trackEvent('studio_form_open', { from_stage: window._stage }); } catch (e) {}
   }
 
@@ -5070,31 +5186,37 @@
     const name = (document.getElementById("sr_name")?.value || "").trim().slice(0, 60);
     const phone = (document.getElementById("sr_phone")?.value || "").trim();
     const c1 = document.getElementById("sr_c1")?.checked === true;
+    const way = document.querySelector('input[name="sr_way"]:checked')?.value || "";   // v2.8.1
     const c2 = document.getElementById("sr_c2")?.checked === true;
     const st = document.getElementById("sr-status");
     const btn = document.getElementById("srBtn");
     const fail = (msg) => { if (st) st.innerHTML = `<div class="status-msg info-box box-warning">${msg}</div>`; };
     if (!name) return fail("Bitte gib deinen Vornamen an.");
-    if (!/^[+0-9][0-9 ()\/-]{5,24}$/.test(phone)) return fail("Bitte gib eine gültige Telefonnummer an.");
-    if (!slot) return fail("Bitte wähle, wann es dir am besten passt.");
-    if (!c1) return fail("Bitte bestätige, dass wir dich zur Terminabsprache anrufen dürfen.");
+    if (!way) return fail("Bitte wähle, ob wir dich anrufen oder ob du dich selbst meldest.");
+    if (way === "callback") {
+      if (!/^[+0-9][0-9 ()\/-]{5,24}$/.test(phone)) return fail("Bitte gib eine gültige Telefonnummer an.");
+      if (!slot) return fail("Bitte wähle, wann es dir am besten passt.");
+      if (!c1) return fail("Bitte bestätige, dass wir dich zur Terminabsprache anrufen dürfen.");
+    }
     if (!latestResult || !latestResult.public_code) return fail("Es liegt kein Ergebnis vor. Bitte lade die Seite neu.");
     if (btn) { btn.disabled = true; btn.textContent = "Wird gesendet …"; }
     try {
       const res = await callFunction({
         mode: "studio_request", public_code: latestResult.public_code,
         pin: window._accessPin || null, client_token: window._clientToken || null,
-        first_name: name, phone, preferred_slot: slot, offer,
-        consent_contact: true, consent_trainer_access: c2
+        first_name: name, offer, contact_way: way, consent_trainer_access: c2,
+        ...(way === "callback" ? { phone, preferred_slot: slot, consent_contact: true } : {})
       });
       // v2.7.1 — Stufe 3 nur mit Konto: Kam die Anfrage aus Stufe 1 (ohne Vital-Plan), gibt die
       // Edge eine PIN für die Sitzung zurück. Sie bleibt im Speicher (nie im HTML) und schaltet
       // den Konto-Schritt frei; das Konto selbst entsteht per Magic Link. Immer übernehmen: Die
       // Edge schickt nur dann eine, wenn sie gerade neu gesetzt wurde (z. B. nach Doppelklick).
       if (res && res.access_pin) window._accessPin = res.access_pin;
-      window._studioRequest = { name, slot, offer };
+      window._studioRequest = way === "self"
+        ? { name, offer, way, studio_contact: (res && res.studio_contact) || null }
+        : { name, slot, offer, way };
       if (c2) window._trainerAccess = true;
-      trackEvent("studio_request_sent", { from_stage: window._stage, offer, trainer_access: c2 });
+      trackEvent("studio_request_sent", { from_stage: window._stage, offer, trainer_access: c2, contact_way: way });
       const box = document.getElementById("stageStudioForm");
       if (box) box.innerHTML = stageStudioDoneHtml(window._studioRequest);
       // Nie doppelt: "Bring jemanden mit" ersetzt den allgemeinen Kasten.
@@ -5105,7 +5227,7 @@
       fail(/PIN_REQUIRED|SESSION_EXPIRED/.test(m)
         ? "Die Anfrage geht nur aus deiner aktuellen Sitzung. Ruf uns gern direkt an oder komm einfach vorbei."
         : "Das hat gerade nicht geklappt. Bitte versuche es gleich noch einmal oder schreib uns an info@le-vita.com.");
-      if (btn) { btn.disabled = false; btn.textContent = "Gespräch anfragen →"; }
+      if (btn) { btn.disabled = false; btn.textContent = "Anfrage senden →"; }
     }
   }
 
@@ -6362,6 +6484,12 @@
   // liegt vor, der Anreiz hat gewirkt.
   function accessPinBlockHtml(pin, publicCode) {
     if (!pin || !publicCode) return "";
+    // v2.8.2 — geöffnet über das Konto: kein PIN zu zeigen
+    if (pin === ACCOUNT_PIN) return `
+      <div style="background:rgba(34,201,122,0.08);border:1px solid rgba(34,201,122,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-top:12px;text-align:left;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-green);margin-bottom:6px;">🔐 Liegt in deinem Konto</div>
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;">Diesen Check (${escHtml(publicCode)}) öffnest du jederzeit ohne PIN in <a href="konto.html" style="color:var(--accent-green);text-decoration:underline;">Mein Bereich</a>. Dein nächster Check wird dort automatisch verknüpft.</div>
+      </div>`;
     return `
       <div style="background:rgba(34,201,122,0.08);border:1px solid rgba(34,201,122,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-top:12px;text-align:left;">
         <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-green);margin-bottom:8px;">🔑 Dein persönlicher PIN</div>
@@ -7064,7 +7192,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.0</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.2</footer>
 
 
 </body>
