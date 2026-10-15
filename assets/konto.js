@@ -1,6 +1,21 @@
 /* =====================================================================
    konto.js — Persönliche Konten (LeVITA Vital-Check)
-   Version 1.1.0 · Stand 13.10.2026
+   Version 1.3.0 · Stand 15.10.2026
+
+   1.3.0 (15.10.2026): Hinweise zum Anmeldelink und zur Sicherheit.
+     - Neu: LeVitaKonto.showGuide({ once }) — Erklärfenster "So funktioniert dein Konto"
+       (Link gilt eine Stunde und nur einmal, danach bleibt das Gerät angemeldet, Tipps,
+       warum das sicher ist). once: true zeigt es pro Gerät nur einmal (Speicherschlüssel
+       levita_konto_guide_v1). LeVitaKonto.guideSeen() fragt das ab.
+     - Neu: LeVitaKonto.LINK_VALID ("eine Stunde"), muss zur Supabase-Einstellung
+       Auth, Email OTP Expiration passen (Standard 3600 Sekunden).
+     - Konto-Schritt: Link "Wie funktioniert die Anmeldung?" unter den Knöpfen; nach dem
+       Versand Hinweis auf Gültigkeit, Gerät und Mail-App.
+     - Bindet keine neuen Dienste ein, rückwärtskompatibel zu 1.2.0.
+
+   1.2.0 (15.10.2026, Einführungsphase Ernährungs-Check): mountStep nimmt opts.lead an — eigener
+     Einleitungssatz statt des Standardtextes (der von "Begleitung" spricht). Sonst unverändert,
+     rückwärtskompatibel; Check und Mein Bereich dürfen weiter 1.1.0 laden oder diese Datei.
 
    1.1.0 (Ernährungs-Chat, abgestimmt mit Entscheidungen Jörg 13.10.2026):
      - Pflichtmodus: mountStep(el, { …, required: true }) zeigt kein "Ohne Konto weiter"
@@ -38,7 +53,9 @@
   "use strict";
   if (window.LeVitaKonto) return;
 
-  var VERSION = "1.1.0";
+  var VERSION = "1.3.0";
+  var LINK_VALID = "eine Stunde";   // Supabase Auth, Email OTP Expiration (Standard 3600 s)
+  var GUIDE_KEY = "levita_konto_guide_v1";
   var SUPABASE_URL = "https://koctweetotpqaazeicwj.supabase.co";
   var ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   var EDGE_URL = SUPABASE_URL + "/functions/v1/account";
@@ -162,6 +179,75 @@
 
   function logout() { storeSet(null); }
 
+  // ── 1.3.0 Erklärfenster: Anmeldelink, Tipps, Sicherheit ───────────
+  function guideSeen() {
+    try { return localStorage.getItem(GUIDE_KEY) === "1"; } catch (e) { return false; }
+  }
+  function markGuideSeen() { try { localStorage.setItem(GUIDE_KEY, "1"); } catch (e) {} }
+
+  function guideHtml() {
+    return '' +
+      '<h2 id="lkg-t">So funktioniert dein Konto</h2>' +
+      '<p class="lkg-sub">Kein Passwort: Du meldest dich mit einem Link an, den wir dir per E-Mail schicken.</p>' +
+      '<div class="lkg-key">' +
+        '<div><b>Gilt ' + LINK_VALID + '</b>und nur für einen Klick</div>' +
+        '<div><b>Dann angemeldet</b>auf diesem Gerät, ohne neuen Link</div>' +
+        '<div><b>Neuer Link</b>nur auf einem anderen Gerät oder nach dem Abmelden</div>' +
+      '</div>' +
+      '<h3>Wann brauche ich einen neuen Link?</h3>' +
+      '<ul>' +
+        '<li>Auf einem <strong>anderen Gerät</strong> oder in einem <strong>anderen Browser</strong>.</li>' +
+        '<li>Nach <strong>Abmelden</strong>, im <strong>privaten Fenster</strong> oder wenn du die <strong>Browserdaten gelöscht</strong> hast.</li>' +
+        '<li>Wenn ein Link <strong>abgelaufen</strong> ist oder schon benutzt wurde. Einen neuen forderst du in „Mein Bereich“ mit deiner E-Mail-Adresse an.</li>' +
+      '</ul>' +
+      '<h3>Tipps für den Alltag</h3>' +
+      '<ul>' +
+        '<li><strong>Öffne die Mail auf dem Gerät</strong>, auf dem du dein Konto nutzen möchtest – meist dein Handy.</li>' +
+        '<li><strong>Öffnet sich der Link in deiner Mail-App</strong>, wähle „Im Browser öffnen“ (Safari oder Chrome). Sonst bist du nur in der Mail-App angemeldet.</li>' +
+        '<li><strong>Leg dir „Mein Bereich“ als Lesezeichen</strong> oder auf den Home-Bildschirm. Dann bist du mit einem Tipp in deinem Konto.</li>' +
+        '<li><strong>Mehrere Mails bekommen?</strong> Nimm immer die neueste. Ein neuer Link geht frühestens nach einer Minute raus.</li>' +
+        '<li><strong>Keine Mail da?</strong> Schau im Spam-Ordner nach und speichere unsere Adresse in deinen Kontakten.</li>' +
+      '</ul>' +
+      '<h3>Warum das sicher ist</h3>' +
+      '<ul class="lkg-safe">' +
+        '<li><strong>Kein Passwort,</strong> das erraten, abgefangen oder von einer anderen Seite wiederverwendet werden kann.</li>' +
+        '<li><strong>Nur dein Postfach:</strong> Anmelden kann sich nur, wer Zugriff auf deine E-Mail-Adresse hat.</li>' +
+        '<li><strong>Kurz und einmalig:</strong> Jeder Link gilt ' + LINK_VALID + ' und funktioniert nur ein einziges Mal.</li>' +
+        '<li><strong>Verschlüsselt:</strong> Die Verbindung ist verschlüsselt, deine Daten liegen in der EU (Frankfurt).</li>' +
+        '<li><strong>Du behältst die Kontrolle:</strong> Mit „Abmelden“ beendest du die Anmeldung auf einem Gerät, dein Konto kannst du jederzeit selbst löschen.</li>' +
+        '<li><strong>Dein Beitrag:</strong> Leite die Mail nicht weiter – wir fragen nie nach deinem Link. Schütze dein E-Mail-Postfach mit einem guten Passwort, am besten mit Zwei-Faktor-Anmeldung. Auf geteilten Geräten nach der Nutzung abmelden.</li>' +
+      '</ul>' +
+      '<button type="button" class="lkg-ok" id="lkg-ok">Verstanden</button>';
+  }
+
+  // opts: { once?: boolean, onClose?: fn }
+  function showGuide(opts) {
+    opts = opts || {};
+    if (opts.once && guideSeen()) return false;
+    if (document.getElementById("lkg-ov")) return false;
+    injectCss();
+    var ov = document.createElement("div");
+    ov.className = "lkg-ov"; ov.id = "lkg-ov";
+    ov.innerHTML = '<div class="lkg" role="dialog" aria-modal="true" aria-labelledby="lkg-t">' + guideHtml() + '</div>';
+    var prevFocus = document.activeElement;
+    function close() {
+      markGuideSeen();
+      document.removeEventListener("keydown", onKey);
+      if (ov.parentNode) ov.parentNode.removeChild(ov);
+      try { if (prevFocus && prevFocus.focus) prevFocus.focus(); } catch (e) {}
+      track("account_guide_close", { once: !!opts.once });
+      notify(opts.onClose);
+    }
+    function onKey(e) { if (e.key === "Escape") close(); }
+    ov.addEventListener("click", function (e) { if (e.target === ov) close(); });
+    document.addEventListener("keydown", onKey);
+    document.body.appendChild(ov);
+    ov.querySelector("#lkg-ok").onclick = close;
+    try { ov.querySelector("#lkg-ok").focus({ preventScroll: true }); ov.querySelector(".lkg").scrollTop = 0; } catch (e) {}
+    track("account_guide_open", { once: !!opts.once });
+    return true;
+  }
+
   // ── Konto-Schritt (Stufe 3) ────────────────────────────────────────
   var CSS = "\
 .lk{background:var(--brand-card,#132338);border:1px solid rgba(59,158,255,.35);border-radius:14px;padding:18px;margin:14px 0;color:var(--text-primary,#f0f4f8);font-family:inherit;text-align:left}\
@@ -181,7 +267,23 @@
 .lk .lk-err{color:#ff8a8a;font-size:13px;margin-top:10px;min-height:1em}\
 .lk .lk-ok{border-left:3px solid var(--accent-green,#22c97a);padding-left:12px}\
 .lk a{color:var(--accent-blue,#3b9eff)}\
-.lk .lk-small{font-size:11.5px;color:var(--text-muted,#4a6280);margin-top:10px}";
+.lk .lk-small{font-size:11.5px;color:var(--text-muted,#4a6280);margin-top:10px}\
+.lk .lk-how{background:none;border:0;padding:0;margin-top:12px;font-size:12.5px;font-weight:600;color:var(--accent-blue,#3b9eff);text-decoration:underline;text-underline-offset:2px;border-radius:0}\
+.lkg-ov{position:fixed;inset:0;z-index:9999;background:rgba(3,8,18,.72);display:flex;align-items:flex-end;justify-content:center;padding:12px;font-family:inherit}\
+@media(min-width:600px){.lkg-ov{align-items:center}}\
+.lkg{background:var(--brand-card,#132338);color:var(--text-primary,#f0f4f8);border:1px solid rgba(59,158,255,.35);border-radius:16px;max-width:520px;width:100%;max-height:88vh;overflow:auto;padding:22px 20px 18px;text-align:left;box-shadow:0 18px 50px rgba(0,0,0,.45)}\
+.lkg h2{font-size:20px;font-weight:700;margin:0 0 4px;line-height:1.25}\
+.lkg .lkg-sub{font-size:13.5px;color:var(--text-secondary,#8da0b8);margin:0 0 14px;line-height:1.55}\
+.lkg h3{font-size:14.5px;font-weight:700;margin:16px 0 6px}\
+.lkg ul{margin:0;padding:0 0 0 18px}\
+.lkg li{font-size:13.5px;line-height:1.55;color:var(--text-secondary,#8da0b8);margin:0 0 6px}\
+.lkg li strong{color:var(--text-primary,#f0f4f8);font-weight:600}\
+.lkg .lkg-key{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:4px 0 2px}\
+.lkg .lkg-key div{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:9px 10px;font-size:12px;line-height:1.4;color:var(--text-secondary,#8da0b8)}\
+.lkg .lkg-key b{display:block;font-size:13.5px;color:var(--text-primary,#f0f4f8);margin-bottom:2px}\
+@media(max-width:420px){.lkg .lkg-key{grid-template-columns:1fr}}\
+.lkg .lkg-safe{border-left:3px solid var(--accent-green,#22c97a);padding-left:12px}\
+.lkg .lkg-ok{display:block;width:100%;margin-top:18px;border:0;border-radius:999px;padding:13px 18px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;background:var(--accent-green,#22c97a);color:#062214}";
   function injectCss() {
     if (document.getElementById("lk-css")) return;
     var st = document.createElement("style");
@@ -239,7 +341,7 @@
     var title = existing ? "Diesen Check in dein Konto übernehmen" : "Dein persönliches Konto";
     var lead = existing
       ? "Du hast bei " + esc(st.studio || "uns") + " schon ein Konto. Mit einem Klick auf den Link in der Mail kommt dieser Check in deinen Verlauf."
-      : esc((required ? LEADS_REQUIRED : LEADS)[ctx]);
+      : esc(opts.lead || (required ? LEADS_REQUIRED : LEADS)[ctx]);
     el.innerHTML =
       '<div class="lk">' +
         '<h3>' + title + '</h3>' +
@@ -253,11 +355,13 @@
           (required ? "" : '<button type="button" class="lk-skip" id="lk-skip">Ohne Konto weiter</button>') +
         '</div>' +
         '<div class="lk-err" id="lk-err"></div>' +
+        '<button type="button" class="lk-how" data-lk-how>Wie funktioniert die Anmeldung per Link?</button>' +
         '<div class="lk-small">Version ' + esc(c.version || "") + '</div>' +
       '</div>';
     track("account_step_view", { context: ctx, existing: existing });
 
     var go = el.querySelector("#lk-go"), acc = el.querySelector("#lk-c-acc");
+    el.querySelector("[data-lk-how]").onclick = function () { showGuide(); };
     if (acc) acc.onchange = function () { go.disabled = !acc.checked; };
 
     if (!required) el.querySelector("#lk-skip").onclick = function () {
@@ -290,7 +394,10 @@
       el.innerHTML = '<div class="lk"><div class="lk-ok"><h3>Fast geschafft</h3>' +
         '<p>Wir haben dir einen Link an <strong>' + esc(mail) + '</strong> geschickt. Ein Klick darauf, und ' +
         (existing ? "dieser Check ist in deinem Konto." : "dein Konto ist aktiv.") + '</p>' +
-        '<p style="margin:0">Keine Mail da? Schau bitte auch im Spam-Ordner nach.</p></div></div>';
+        '<p>Der Link gilt <strong>' + LINK_VALID + '</strong> und nur für einen Klick. Öffne ihn am besten auf dem Gerät, auf dem du dein Konto nutzen möchtest – danach bleibst du dort angemeldet.</p>' +
+        '<p style="margin:0">Keine Mail da? Schau bitte auch im Spam-Ordner nach.</p>' +
+        '<button type="button" class="lk-how" data-lk-how>Tipps und warum das sicher ist</button></div></div>';
+      el.querySelector("[data-lk-how]").onclick = function () { showGuide(); };
     };
   }
 
@@ -327,6 +434,9 @@
     logout: logout,
     mountStep: mountStep,
     kontoPageUrl: kontoPageUrl,
+    showGuide: showGuide,         // 1.3.0
+    guideSeen: guideSeen,         // 1.3.0
+    LINK_VALID: LINK_VALID,       // 1.3.0
     esc: esc,
   };
 })();
