@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>Ernährungs-Check mit Begleitung · LeVITA</title>
+<title>Ernährungs-Check · LeVITA</title>
 <!--
-  Ernährungs-Check mit Begleitung — Teilnehmerseite (Beta)
+  Ernährungs-Check — Teilnehmerseite
   Liegt neben index.html des Vital-Checks und nutzt dessen assets/ (Schriften, Buddy).
   Backend: Edge-Funktion nutrition-check (Modi start, submit, load, edit, choose, confirm_choice).
   Alle Inhalte (Fragen, Optionen, Texte) kommen aus der Datenbank; hier steht nur die Darstellung.
@@ -15,6 +15,23 @@
   Aufruf mit ?code=LEV-2026-000123 füllt die Pilot-ID vor.
 
   Versionen:
+  0.6.2 (15.10.2026) Hinweise zum Anmeldelink: Startseite erklärt den Zugang über Mein Bereich (Link per
+        Mail, ohne Passwort, danach bleibt das Gerät angemeldet) mit Link auf das Erklärfenster; nach der
+        Konto-Anfrage steht die Gültigkeit des Links dabei. Lädt konto.js 1.3.0. Sonst unverändert.
+  0.6.1 (15.10.2026) Hinweise zu einem Schritt (z. B. Einnahme-Hinweis bei Schilddrüsenhormon oder
+        Osteoporose-Mittel) stehen auch auf "Deine Schritte" an der Karte des Schritts — gehört zu
+        EDGE_nutrition-check_v1-8.ts und nutrition-medikamente_v9.sql
+  0.6.0 (15.10.2026) Einführungsphase ohne Begleitung (Problemstellung v3.1, gehört zu
+        EDGE_nutrition-check_v1-7.ts = nutrition-edge-2026-10-15.1 und nutrition-einfuehrung_v8.sql):
+        kein Beta-Hinweis mehr; Einwilligung mit freiwilliger Trainer-Einsicht; nach der Auswahl
+        "Deine Schritte" mit Zuständen vorgemerkt / gestartet / im Alltag angekommen, eigener
+        Wenn-Dann-Satz, Nachlegen (höchstens 3 aktiv), Arzt-Bestätigung vor dem Start bei
+        Freigabe-Medikamenten, Kühlschrank-Zettel (Druck/PDF), Feedback, Programm-Information
+        (Double-Opt-in, Bestätigungslink ?programm=), Konto freiwillig, Studio-Hinweis klein.
+        Keine allgemeinen Risiko-Hinweise (Jörg 15.10.2026: Tipps für Gesunde, die sich bewusster
+        ernähren wollen; wer nicht passt, wird vorher über die Eingangsschwelle ausgeschlossen). Zugang auch über das Konto (ohne PIN).
+        Funnel-Ereignisse nutri_* in funnel_events. Antworten überstehen ein Neuladen (sessionStorage).
+        In der Begleitungsphase (phase begleitung) läuft alles wie in 0.5.1.
   0.5.1 (13.10.2026) Demo-Profile für das Team (Pilot-ID LEV-DEMO-…, nutrition-demo-profile_v1.sql):
         Hinweisleiste "Demo-Profil" auf jeder Seite, Konto-Schritt wird für Demo-Profile nicht
         eingehängt (keine echten Konten für erfundene Personen) — sonst unverändert zu 0.5.0
@@ -61,7 +78,37 @@
   header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
   .logo-name { font-family: 'DM Serif Display', serif; font-size: 24px; }
   .logo-sub { font-size: 12px; color: var(--text-secondary); letter-spacing: .04em; text-transform: uppercase; }
-  .beta { font-size: 11px; font-weight: 700; color: var(--accent-amber); border: 1px solid rgba(245,166,35,.4); border-radius: 999px; padding: 3px 10px; }
+  .phase-note { font-size: 12px; color: var(--accent-green); }
+  /* 0.6.0 Schritte */
+  .state { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 3px 10px; border-radius: 999px; margin-bottom: 8px; }
+  .state.s-v { background: rgba(255,255,255,.08); color: var(--text-secondary); }
+  .state.s-g { background: var(--accent-blue-dim); color: var(--accent-blue); }
+  .state.s-a { background: var(--accent-green); color: #062214; }
+  .ifthen { font-size: 16px; font-weight: 600; background: rgba(255,255,255,.04); border-radius: var(--radius-sm); padding: 12px 14px; margin: 6px 0 12px; }
+  .rate { display: flex; gap: 8px; margin: 8px 0 14px; }
+  .rate button { flex: 1; padding: 12px 0; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(255,255,255,.03); color: var(--text-primary); font: 700 16px 'DM Sans'; cursor: pointer; }
+  .rate button.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 14px; }
+  .chips button { padding: 9px 14px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); font: 500 14px 'DM Sans'; cursor: pointer; }
+  .chips button.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
+  .addlist li { list-style: none; display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
+  .addlist li:last-child { border-bottom: 0; }
+  .addlist button { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--accent-green); background: transparent; color: var(--accent-green); font: 600 13px 'DM Sans'; cursor: pointer; white-space: nowrap; }
+  #fridge { display: none; }
+  @media print {
+    body { background: #fff !important; color: #111 !important; padding: 0; }
+    .wrap > *:not(#fridge) { display: none !important; }
+    #fridge { display: block !important; font-family: 'DM Sans', Arial, sans-serif; color: #111; padding: 10mm 12mm; }
+    #fridge h1 { font-family: 'DM Serif Display', Georgia, serif; font-size: 30pt; margin: 0 0 6mm; color: #111; }
+    #fridge .f-step { border: 2px solid #111; border-radius: 4mm; padding: 5mm 6mm; margin-bottom: 6mm; page-break-inside: avoid; }
+    #fridge .f-title { font-size: 11pt; text-transform: uppercase; letter-spacing: .05em; color: #444; margin-bottom: 2mm; }
+    #fridge .f-ifthen { font-size: 19pt; font-weight: 700; line-height: 1.25; margin-bottom: 4mm; }
+    #fridge .f-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2mm; }
+    #fridge .f-days div { border: 1.5px solid #555; border-radius: 1.5mm; height: 9mm; font-size: 8pt; color: #777; padding: 1mm; }
+    #fridge .f-doc { font-size: 10pt; margin-top: 3mm; }
+    #fridge .f-foot { font-size: 9pt; color: #555; margin-top: 4mm; display: flex; justify-content: space-between; gap: 6mm; }
+    @page { size: A5 portrait; margin: 6mm; }
+  }
 
   h1 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 30px; line-height: 1.2; margin-bottom: 10px; }
   h2 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 22px; margin-bottom: 8px; }
@@ -192,29 +239,29 @@
   <header>
     <div>
       <div class="logo-name">LeVITA</div>
-      <div class="logo-sub">Ernährungs-Check mit Begleitung</div>
+      <div class="logo-sub">Ernährungs-Check</div>
     </div>
-    <span class="beta">Beta</span>
   </header>
 
   <main id="app"><div class="spinner"></div></main>
 
-  <footer><a href="konto.html" style="color:inherit">Mein Bereich</a> · LeVITA · Ernährungs-Check mit Begleitung · Beta <span id="fe-version"></span></footer>
+  <footer><a href="konto.html" style="color:inherit">Mein Bereich</a> · LeVITA · Ernährungs-Check <span id="fe-version"></span></footer>
+  <div id="fridge" aria-hidden="true"></div>
 </div>
 
-<script src="assets/konto.js?v=1.1.0"></script>
+<script src="assets/konto.js?v=1.3.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "0.5.1";
+  const FE_VERSION = "0.6.2";
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
-    S: { title: "Kurz vorab", lead: "Ein paar Fragen, damit wir sicher sein können, dass dieses Programm zu dir passt." },
+    S: { title: "Kurz vorab", lead: "Ein paar Fragen, damit wir sicher sein können, dass unsere Tipps zu dir passen." },
     A: { title: "Dein Alltag", lead: "Damit wir nur vorschlagen, was in deinem Alltag auch umsetzbar ist." },
     B: { title: "Deine Mahlzeiten", lead: "Wann und wie du isst und trinkst." },
     C: { title: "Was auf den Teller kommt", lead: "Ein grober Überblick reicht — es geht nicht ums Zählen." },
     D: { title: "Was du schon probiert hast", lead: "Was schon einmal nicht geklappt hat, schlagen wir dir nicht noch einmal vor." },
-    E: { title: "Was du dir vorstellen kannst", lead: "Entscheiden musst du dich erst im Gespräch mit deinem Trainer oder deiner Trainerin." },
+    E: { title: "Was du dir vorstellen kannst", lead: "Entscheiden musst du dich erst, wenn du deine Vorschläge siehst." },
   };
   const REQUIRED_PARTS = ["S", "A", "B", "C"];
   const EVIDENCE = { 1: "sehr gut untersucht", 2: "gut untersucht", 3: "begrenzt untersucht", 4: "plausibel, wenig untersucht" };
@@ -225,7 +272,37 @@
   document.getElementById("fe-version").textContent = FE_VERSION;
 
   // Zustand — die PIN bleibt nur im Speicher dieser Seite
-  const st = { code: (params.get("code") || "").trim().toUpperCase(), pin: "", data: null, answers: {}, partIdx: 0, parts: [], choice: [], canChoose: false };
+  const st = { code: (params.get("code") || "").trim().toUpperCase(), pin: "", acct: null, data: null, answers: {}, partIdx: 0, parts: [], choice: [], canChoose: false };
+  const isIntroPhase = (r) => (r || st.data || {}).phase === "einfuehrung";
+  const INTRO_NOTE = "Kostenlos in der aktuellen Einführungsphase.";
+
+  // 0.6.0 — Funnel (Tabelle funnel_events wie im Vital-Check): ohne Cookies, ohne Gesundheitsdaten
+  const SUPABASE_URL = "https://koctweetotpqaazeicwj.supabase.co";
+  const FUNNEL_SESSION = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const UTM = {};
+  ["utm_source", "utm_medium", "utm_campaign", "utm_content"].forEach((k) => { const v = params.get(k); if (v) UTM[k] = v.slice(0, 60); });
+  const tracked = new Set();
+  function track(event_name, meta = {}, once = false) {
+    try {
+      if (once) { if (tracked.has(event_name)) return; tracked.add(event_name); }
+      const h = location.hostname;
+      const body = { event_name, session_id: FUNNEL_SESSION, meta: {
+        ...meta, source: UTM.utm_source || (document.referrer ? "referrer" : "direct"), ...UTM,
+        age_stage: st.data?.age_stage || undefined, phase: st.data?.phase || undefined,
+        device: innerWidth < 600 ? "mobile" : "desktop",
+        env: (h.endsWith("le-vita.com") || h.endsWith("logivita.de")) ? "prod" : h.endsWith("github.io") ? "dev" : "local",
+        is_internal: INTERNAL ? true : undefined, page: "ernaehrung", fe_version: FE_VERSION } };
+      fetch(SUPABASE_URL + "/rest/v1/funnel_events", { method: "POST", keepalive: true,
+        headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, Prefer: "return=minimal" },
+        body: JSON.stringify(body) }).catch(() => {});
+    } catch (e) { /* still */ }
+  }
+
+  // 0.6.0 — begonnene Antworten überstehen ein Neuladen (nur in diesem Tab)
+  const draftKey = () => "lv_nutri_draft_" + (st.code || "");
+  function saveDraft() { try { sessionStorage.setItem(draftKey(), JSON.stringify({ answers: st.answers, partIdx: st.partIdx })); } catch (e) {} }
+  function loadDraft() { try { return JSON.parse(sessionStorage.getItem(draftKey()) || "null"); } catch (e) { return null; } }
+  function clearDraft() { try { sessionStorage.removeItem(draftKey()); } catch (e) {} }
 
   // ── Hilfen ──────────────────────────────────────────────
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -236,10 +313,16 @@
   const spinner = () => h('<div class="spinner"></div>');
 
   async function call(mode, extra = {}) {
+    // 0.6.0 — mit Konto-Login statt PIN (die Edge prüft, ob der Check zum Konto gehört)
+    let auth = SUPABASE_ANON_KEY;
+    if (st.acct && window.LeVitaKonto) {
+      try { const ss = await window.LeVitaKonto.session(); st.acct = ss ? ss.access_token : null; } catch (e) { st.acct = null; }
+      if (st.acct) auth = st.acct;
+    }
     const res = await fetch(FUNCTION_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
-      body: JSON.stringify({ mode, public_code: st.code, pin: st.pin, ...extra }),
+      headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${auth}` },
+      body: JSON.stringify({ mode, public_code: st.code, ...(st.pin ? { pin: st.pin } : {}), ...(INTERNAL ? { internal: true } : {}), ...extra }),
     });
     let json; try { json = await res.json(); } catch { json = { success: false, error: "Keine gültige Antwort vom Server." }; }
     json._http = res.status;
@@ -262,7 +345,14 @@
       SLOT: "Bitte wähle, wann es dir am besten passt.",
       CONSENT_CONTACT: "Bitte bestätige, dass wir dich zur Terminabsprache anrufen dürfen.",
       REQUEST_FAILED: "Die Rückrufbitte konnte gerade nicht gespeichert werden. Versuche es gleich noch einmal oder melde dich direkt im Studio.",
-      AGE: "Dieses Programm richtet sich an Erwachsene ab 18 Jahren.",
+      AGE: "Der Ernährungs-Check richtet sich an Erwachsene ab 18 Jahren.",
+      MAX_ACTIVE: "Höchstens drei Schritte gleichzeitig. Sobald einer im Alltag angekommen ist, kannst du nachlegen.",
+      IF_THEN: "Schreib deinen Plan als kurzen Satz: „Wenn …, dann …“.",
+      DOCTOR_CONFIRM: "Bitte bestätige zuerst, dass du die Tipps mit deiner Ärztin oder deinem Arzt besprochen hast.",
+      NO_EMAIL: "Zu deinem Check haben wir keine Mailadresse. Sprich uns gern im Studio an.",
+      FEEDBACK_EMPTY: "Gib eine Bewertung oder ein paar Worte an.",
+      STEP_UNKNOWN: "Diesen Schritt gibt es in deinem Ergebnis nicht.",
+      STEP_STATE: "Das geht bei diesem Schritt gerade nicht.",
     })[e] || "Da ist etwas schiefgegangen. Bitte versuche es gleich noch einmal.";
   }
 
@@ -270,8 +360,9 @@
   function screenLogin(msg = "") {
     h(`
       <h1>Dein Ernährungs-Check</h1>
-      <p class="lead">Ein paar Fragen zu deinem Alltag — danach siehst du, wo bei dir das meiste Potenzial liegt.
-        Gemeinsam mit deinem Trainer oder deiner Trainerin im Studio wählst du dann ein bis drei Schritte für die nächsten zwölf Wochen.</p>
+      <p class="lead">Ein paar Fragen zu deinem Alltag — danach siehst du, wo bei dir beim Essen das meiste Potenzial liegt,
+        und wählst deine ersten Schritte. Ohne Diät, ohne Verbote.</p>
+      <p class="phase-note" style="margin:-12px 0 18px">${esc(INTRO_NOTE)}</p>
       <div class="card">
         <div class="field"><label for="f-code">Pilot-ID aus deinem Vital-Check</label>
           <input type="text" id="f-code" autocomplete="off" placeholder="LEV-2026-000123" value="${esc(st.code)}"></div>
@@ -280,13 +371,18 @@
         <button class="btn block" id="b-go">Weiter</button>
         <div class="error" id="err">${esc(msg)}</div>
       </div>
-      <p class="small">Du findest Pilot-ID und PIN in der Mail zu deinem Vital-Check. Ohne Vital-Check ist der Ernährungs-Check nicht möglich — er baut auf deinen Antworten auf.</p>`);
+      <p class="small">Du findest Pilot-ID und PIN in der Mail zu deinem Vital-Check. Ohne Vital-Check ist der Ernährungs-Check nicht möglich — er baut auf deinen Antworten auf.</p>
+      <p class="small">Mit persönlichem Konto geht es ohne PIN: Melde dich in <a href="konto.html" style="color:var(--accent-green)">Mein Bereich</a> mit einem Link per E-Mail an, danach bleibt dieses Gerät angemeldet und der Ernährungs-Check öffnet sich direkt. <a href="#" id="b-kguide" style="color:var(--accent-green)">So funktioniert die Anmeldung</a></p>`);
+    const kg = document.getElementById("b-kguide");
+    if (kg) kg.onclick = (e) => { e.preventDefault(); if (window.LeVitaKonto && window.LeVitaKonto.showGuide) window.LeVitaKonto.showGuide(); };
     const go = async () => {
       st.code = document.getElementById("f-code").value.trim().toUpperCase();
       st.pin = document.getElementById("f-pin").value.trim();
       if (!st.code || !st.pin) return (document.getElementById("err").textContent = errorText("PIN_REQUIRED"));
       spinner();
+      st.acct = null;
       const r = await call("start");
+      if (r.success) track("nutri_start", {}, true);
       route(r);
     };
     document.getElementById("b-go").onclick = go;
@@ -301,12 +397,14 @@
     if (r.status === "not_eligible") return screenText(r.text, "info");
     if (r.status === "excluded") return screenExcluded(r);
     if (r.status === "screening" || r.editing) return startQuestionnaire(r);
+    if (isIntroPhase(r) && r.confirmation && r.result) return screenSteps(r);
     if (r.confirmation && r.result) return screenConfirmed(r);
     return screenResult(r);
   }
 
   // ── Einwilligung ────────────────────────────────────────
   function screenConsent(c) {
+    if (c?.trainer_optional) return screenConsentIntro(c);
     h(`
       <h1>Bevor es losgeht</h1>
       <p class="lead">Damit wir dich begleiten können, speichern wir deine Antworten und machen sie deinem Trainer oder deiner Trainerin im Studio zugänglich.</p>
@@ -320,6 +418,26 @@
     btn.onclick = async () => {
       spinner();
       route(await call("start", { consent: { documentation: true, trainer_access: true } }));
+    };
+  }
+
+  // 0.6.0 — Einführungsphase: Nutzung (Pflicht) und Trainer-Einsicht (freiwillig) getrennt
+  function screenConsentIntro(c) {
+    h(`
+      <h1>Bevor es losgeht</h1>
+      <p class="lead">Damit wir dir passende Schritte vorschlagen können, speichern wir deine Antworten.</p>
+      <div class="card">
+        <label class="consent-box"><input type="checkbox" id="c-ok"><span>${esc(c?.text)}</span></label>
+        <label class="consent-box"><input type="checkbox" id="c-tr"><span>${esc(c?.trainer_text)}</span></label>
+        <button class="btn block" id="b-c" disabled>Einverstanden, weiter</button>
+      </div>
+      <p class="small">Version ${esc(c?.version)} · ${esc(INTRO_NOTE)}</p>`);
+    const box = document.getElementById("c-ok"), btn = document.getElementById("b-c");
+    box.onchange = () => (btn.disabled = !box.checked);
+    btn.onclick = async () => {
+      const tr = document.getElementById("c-tr").checked;
+      spinner();
+      route(await call("start", { consent: { documentation: true, trainer_access: tr } }));
     };
   }
 
@@ -347,6 +465,8 @@
     }
     st.parts = Object.keys(PARTS).filter((p) => r.questions.some((q) => q.part === p));
     st.partIdx = 0;
+    const d = loadDraft();
+    if (d && d.answers && !r.editing) { Object.assign(st.answers, d.answers); st.partIdx = Math.min(d.partIdx || 0, st.parts.length - 1); }
     renderPart();
   }
 
@@ -404,6 +524,7 @@
             cur.add(key);
           }
           st.answers[q.question_key] = { options: [...cur] };
+          saveDraft();
           document.querySelectorAll(`[data-q="${q.question_key}"]`).forEach((b) => b.classList.toggle("on", cur.has(b.dataset.o)));
           updateVisibility();
         };
@@ -417,7 +538,8 @@
         const miss = qs.filter((q) => isVisible(q) && !isAnswered(q)).map((q) => q.question_key);
         if (miss.length) return renderPart(miss);
       }
-      if (st.partIdx < st.parts.length - 1) { st.partIdx++; renderPart(); }
+      track("nutri_section_done", { section: part, n: st.partIdx + 1 });
+      if (st.partIdx < st.parts.length - 1) { st.partIdx++; saveDraft(); renderPart(); }
       else submit();
     };
   }
@@ -450,7 +572,13 @@
       return renderPart(r.missing);
     }
     if (!r.success) return screenLogin(errorText(r.error));
-    if (r.status === "excluded") return screenText(r.text, "info");
+    clearDraft();
+    if (r.status === "excluded") {
+      track("nutri_screen_out", { reason: /^med_/.test(r.reason || "") ? "medication" : (r.reason === "scoff" ? "scoff" : (r.reason || "other")) });
+      return screenText(r.text, "info");
+    }
+    if (r.status === "pending_clearance") track("nutri_doctor_flag", { count: (r.result?.shown || []).length });
+    track("nutri_complete", {});
     route(r);
   }
 
@@ -488,13 +616,15 @@
     const shown = res?.shown || [];
     const parking = res?.parking || [];
     st.choice = [...(r.member_choice || [])];
-    st.canChoose = ["ready", "pending_clearance"].includes(r.status) && shown.length > 0;
+    const intro = isIntroPhase(r);
+    // 0.6.0: In der Einführungsphase nach der Bestätigung nur noch ansehen (Nachlegen auf „Deine Schritte“)
+    st.canChoose = ["ready", "pending_clearance"].includes(r.status) && shown.length > 0 && !(intro && r.confirmation);
     h(`
       <h1>${esc(r.intro?.title || "Dein Ergebnis")}</h1>
       <p class="lead">${esc(r.intro?.body || "")}${r.intro_tried ? " " + esc(r.intro_tried.body) : ""}</p>
       <p class="muted" style="margin:-8px 0 20px">${shown.length
         ? "Unsere Vorschläge kommen aus deinen Antworten: was in deinem Alltag oft vorkommt und gut untersucht ist. Welche du angehst, entscheidest du."
-        : "Nach deinen Antworten machst du schon vieles richtig. Im Gespräch schauen wir gemeinsam, wo du trotzdem ansetzen möchtest."}</p>
+        : (intro ? "Nach deinen Antworten machst du schon vieles richtig." : "Nach deinen Antworten machst du schon vieles richtig. Im Gespräch schauen wir gemeinsam, wo du trotzdem ansetzen möchtest.")}</p>
 
       ${r.clearance_text ? `<div class="card warn"><h3>${esc(r.clearance_text.title)}</h3><p class="muted">${esc(r.clearance_text.body)}</p></div>` : ""}
       ${r.bia_text ? `<div class="card info"><h3>${esc(r.bia_text.title)}</h3><p class="muted">${esc(r.bia_text.body)}</p></div>` : ""}
@@ -506,23 +636,32 @@
       ${parking.length ? `
         <div class="card">
           <h2>Später, wenn die ersten laufen</h2>
-          <p class="muted" style="margin-bottom:8px">Diese Hebel bleiben für dich sichtbar. Ab Woche 6 kann einer davon dazukommen.</p>
+          <p class="muted" style="margin-bottom:8px">${intro ? "Diese Hebel bleiben für dich sichtbar. Sobald ein Schritt im Alltag angekommen ist, kannst du einen davon dazunehmen." : "Diese Hebel bleiben für dich sichtbar. Ab Woche 6 kann einer davon dazukommen."}</p>
           <ul class="parking">${parking.map((l) => `<li><span>${esc(l.tip?.title || l.lever_key)}${l.failed_before ? `<br><span class="tag-failed">${esc(r.failed_text?.body || "Hast du schon einmal probiert.")}</span>` : ""}</span><span class="small">${l.failed_before ? "schon probiert" : (l.tier === "also" ? "ebenfalls möglich" : "passt auch zu dir")}</span></li>`).join("")}</ul>
         </div>` : ""}
       ${st.canChoose ? `<div class="choicebar" id="choicebar"></div>` : ""}
 
+      ${intro ? `
+      <div class="card">
+        <h2>So geht es weiter</h2>
+        <p class="muted"><strong>Starte mit einem Schritt.</strong> Wenn er gut in deinen Alltag passt, nimmst du weitere dazu — höchstens drei gleichzeitig.
+          Aus jedem Schritt machst du einen kurzen Plan: <em>„Wenn ich …, dann …“</em>.</p>
+        <p class="phase-note" style="margin-top:8px">${esc(INTRO_NOTE)}</p>
+      </div>` : `
       <div class="card">
         <h2>So geht es weiter</h2>
         <p class="muted">Im ersten Gespräch suchst du dir gemeinsam mit deinem Trainer oder deiner Trainerin <strong>ein bis drei</strong> dieser Schritte aus —
           welche, entscheidest du. Aus jedem Schritt machen wir einen konkreten Plan: <em>„Wenn ich …, dann …“</em>.
           Dabei buchen wir gleich alle sechs Termine der nächsten zwölf Wochen.</p>
-      </div>
+      </div>`}
 
       <div class="row">
+        ${intro && r.confirmation ? '<button class="btn" id="b-steps">Zu deinen Schritten</button>' : ""}
         <button class="btn ghost" id="b-edit">Antworten ändern</button>
       </div>
       ${INTERNAL ? `<p class="small" style="margin-top:14px">Regelwerk ${esc(res?.rules_version)} · ${esc(r.edge_version)} · Status ${esc(r.status)} · Altersstufe ${esc(r.age_stage)}</p>` : ""}`);
     document.getElementById("b-edit").onclick = async () => { spinner(); route(await call("edit")); };
+    const bs = document.getElementById("b-steps"); if (bs) bs.onclick = () => screenSteps(r);
     if (st.canChoose) { renderChoiceBar(); bindChoose(); }
     // 0.4.0 — der Konto-Schritt steht jetzt auf der Bestätigungsseite (screenConfirmed)
   }
@@ -531,12 +670,13 @@
   function renderChoiceBar(msg = "") {
     const el = document.getElementById("choicebar");
     if (!el) return;
+    const intro = isIntroPhase();
     const text = msg || (st.choice.length
-      ? `Deine Auswahl: ${st.choice.length} von 3`
-      : "Markiere bis zu drei Vorschläge, mit denen du beginnen möchtest.");
+      ? (intro && st.choice.length === 1 ? "Ein Schritt gewählt — ein guter Start." : `Deine Auswahl: ${st.choice.length} von 3`)
+      : (intro ? "Markiere den Vorschlag, mit dem du beginnen möchtest — höchstens drei." : "Markiere bis zu drei Vorschläge, mit denen du beginnen möchtest."));
     el.innerHTML = `<div>${esc(text)}</div>${st.choice.length ? '<button type="button" class="btn" id="b-confirm">Auswahl bestätigen</button>' : ""}`;
     const b = document.getElementById("b-confirm");
-    if (b) b.onclick = () => screenConfirm(st.data);
+    if (b) b.onclick = intro ? confirmIntro : () => screenConfirm(st.data);
   }
   function bindChoose() {
     document.querySelectorAll("[data-choose]").forEach((btn) => {
@@ -637,6 +777,225 @@
     };
   }
 
+  // ── 0.6.0 Einführungsphase: Bestätigen ohne Gesprächsweg ─────────
+  async function confirmIntro() {
+    const keys = st.choice.slice(0, 3);
+    if (!keys.length) return;
+    spinner();
+    const r = await call("confirm_choice", { lever_keys: keys });
+    if (!r.success) {
+      if (["PIN_INVALID", "LOCKED", "PIN_REQUIRED", "NOT_FOUND"].includes(r.error)) return screenLogin(errorText(r.error));
+      return screenResult({ ...st.data });
+    }
+    st.data = r;
+    keys.forEach((k) => track("nutri_step_state", { step_key: k, state: "vorgemerkt" }));
+    screenSteps(r);
+  }
+
+  const STATE_LABEL = { vorgemerkt: ["Vorgemerkt", "s-v"], gestartet: ["Gestartet", "s-g"], angekommen: ["Im Alltag angekommen", "s-a"] };
+  const HELP = [["gespraech", "Persönliches Gespräch"], ["rueckmeldung", "Regelmäßige Rückmeldung"], ["koerperanalyse", "Körperanalyse"],
+    ["plan", "Individueller Plan"], ["erinnerung", "Erinnerung"], ["keine", "Keine zusätzliche Unterstützung"]];
+
+  function stepCard(r, x) {
+    const [lbl, cls] = STATE_LABEL[x.state] || [x.state, "s-v"];
+    const needDoc = r.doctor_required && !r.doctor_confirmed_at;
+    const tip = [...(r.result?.shown || []), ...(r.result?.parking || [])].find((l) => l.lever_key === x.lever_key)?.tip || {};
+    const ex = (tip.benefits?.beispiele || []).slice(0, 2);
+    return `<div class="card ${x.state === "angekommen" ? "top" : ""}" data-step="${esc(x.lever_key)}">
+      <span class="state ${cls}">${lbl}</span>
+      <h3>${esc(leverTitle(r, x.lever_key))}</h3>
+      ${(r.result?.step_hints || r.result?.hints || []).filter((hn) => hn.lever_key === x.lever_key).map((hn) => `<p class="muted" style="border-left:3px solid var(--accent-blue);padding-left:10px;margin:6px 0 10px"><strong>${esc(hn.title)}</strong><br>${esc(hn.body)}</p>`).join("")}
+      ${x.state === "vorgemerkt" ? `
+        ${needDoc ? `<p class="muted" style="color:var(--accent-amber);margin-bottom:8px">Vor Umsetzung ärztlich klären.</p>` : ""}
+        <div class="field"><label for="it-${esc(x.lever_key)}">Dein Plan: „Wenn …, dann …“</label>
+          <textarea id="it-${esc(x.lever_key)}" maxlength="300" placeholder="Wenn ich …, dann …"></textarea>
+          ${ex.length ? `<div class="small" style="margin-top:6px">Zum Beispiel: ${ex.map(esc).join(" · ")}</div>` : ""}</div>
+        ${needDoc ? `<label class="consent-box"><input type="checkbox" id="dc-${esc(x.lever_key)}"><span>Ich habe die Tipps mit meiner Ärztin oder meinem Arzt besprochen. <span class="small">Das ist meine eigene Angabe, keine medizinische Freigabe.</span></span></label>` : ""}
+        <div class="row"><button class="btn" data-act="start">Schritt starten</button><button class="btn ghost" data-act="unmark">Herausnehmen</button></div>`
+      : `<div class="ifthen">${esc(x.if_then_text || "")}</div>
+        <div class="row">${x.state === "gestartet"
+          ? '<button class="btn" data-act="arrive">Klappt inzwischen meistens</button><button class="btn ghost" data-act="unmark">Herausnehmen</button>'
+          : '<button class="btn ghost" data-act="back">Klappt doch noch nicht</button>'}</div>`}
+      <div class="error" data-err></div>
+    </div>`;
+  }
+
+  function screenSteps(r, msg = "") {
+    st.data = r;
+    const steps = r.self_steps || [];
+    const active = steps.filter((x) => x.state !== "angekommen").length;
+    const max = r.max_active_steps || 3;
+    const chosen = new Set(steps.map((x) => x.lever_key));
+    const more = [...(r.result?.shown || []), ...(r.result?.parking || [])].filter((l) => !chosen.has(l.lever_key) && !l.failed_before);
+    const needDoc = r.doctor_required && !r.doctor_confirmed_at;
+    const fbDone = r.feedback_given;
+    h(`
+      <h1>Deine Schritte</h1>
+      <p class="lead">${steps.some((x) => x.state !== "vorgemerkt")
+        ? "Hake ab, was im Alltag angekommen ist — dann kannst du nachlegen."
+        : "Mach aus deinem Schritt einen kurzen Plan und starte. Ein Schritt, der hält, bringt mehr als drei, die nach zwei Wochen wegbrechen."}</p>
+      ${msg ? `<div class="card warn"><p>${esc(msg)}</p></div>` : ""}
+      ${needDoc && r.clearance_text ? `<div class="card warn"><h3>${esc(r.clearance_text.title)}</h3><p class="muted">${esc(r.clearance_text.body)}</p></div>` : ""}
+      ${steps.map((x) => stepCard(r, x)).join("") || '<div class="card"><p class="muted">Noch kein Schritt gewählt.</p></div>'}
+
+      ${steps.some((x) => x.state !== "vorgemerkt") ? `
+      <div class="card">
+        <h2>Zettel für den Kühlschrank</h2>
+        <p class="muted">Deine Pläne auf einer Seite, mit Abhakleiste für zwei Wochen. Im Druckdialog kannst du ihn auch als PDF speichern.</p>
+        <button class="btn ghost block" id="b-fridge" style="margin-top:10px">Zettel drucken</button>
+      </div>` : ""}
+
+      ${more.length ? `
+      <div class="card">
+        <h2>${active >= max ? "Später nachlegen" : "Weitere Schritte"}</h2>
+        <p class="muted" style="margin-bottom:8px">${active >= max
+          ? `Du hast ${max} Schritte gleichzeitig. Sobald einer im Alltag angekommen ist, kannst du einen dieser dazunehmen.`
+          : "Wenn dein Schritt gut läuft, nimm einen dazu — höchstens " + max + " gleichzeitig."}</p>
+        <ul class="addlist">${more.slice(0, 8).map((l) => `<li><span>${esc(l.variant?.title || l.tip?.title || l.lever_key)}</span>${active < max ? `<button data-add="${esc(l.lever_key)}">Dazunehmen</button>` : ""}</li>`).join("")}</ul>
+      </div>` : ""}
+
+      ${fbDone ? "" : `
+      <div class="card" id="fb">
+        <h2>Deine Rückmeldung</h2>
+        <p class="muted">Wie hilfreich waren die Vorschläge für dich?</p>
+        <div class="rate">${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-rate="${n}">${n}</button>`).join("")}</div>
+        <p class="muted">Was würde dir am meisten helfen, deine Ziele umzusetzen?</p>
+        <div class="chips">${HELP.map(([k, t]) => `<button type="button" data-help="${k}">${esc(t)}</button>`).join("")}</div>
+        <div class="field"><label for="fb-text">Was hat dir gefehlt?</label><textarea id="fb-text" maxlength="1000"></textarea></div>
+        <button class="btn block" id="b-fb">Rückmeldung senden</button>
+        <div class="error" id="fb-err"></div>
+      </div>`}
+
+      <div class="card" id="pi">${programHtml(r)}</div>
+
+      ${isDemo() || r.account?.in_account || st.acct ? "" : `<h2 style="margin-top:6px">Deine Schritte speichern</h2>
+        <p class="muted" id="konto-hint">Freiwillig.</p>`}
+      <div id="konto-step"></div>
+
+      <div class="card"><h3>Lieber mit Unterstützung?</h3><p class="muted" style="margin-bottom:6px">Wer möchte, kann im Studio ein Gespräch vereinbaren.</p>${contactHtml(r.studio_contact)}</div>
+      <div class="row"><button class="btn ghost" id="b-all">Alle Vorschläge ansehen</button></div>
+      <p class="phase-note" style="margin-top:14px;text-align:center">${esc(INTRO_NOTE)} Danach bieten wir den Ernährungs-Check mit persönlicher Begleitung im Studio an.</p>
+      ${INTERNAL ? `<p class="small" style="margin-top:14px">${esc(r.edge_version)} · Status ${esc(r.status)} · Arzt bestätigt ${esc(r.doctor_confirmed_at || "–")}</p>` : ""}`);
+
+    // Schritte
+    document.querySelectorAll("[data-step]").forEach((card) => {
+      const key = card.dataset.step;
+      card.querySelectorAll("[data-act]").forEach((b) => b.onclick = async () => {
+        const action = b.dataset.act;
+        const extra = { lever_key: key, action };
+        if (action === "start") {
+          extra.if_then = (document.getElementById("it-" + key)?.value || "").trim();
+          const dc = document.getElementById("dc-" + key);
+          if (dc) extra.doctor_confirmed = dc.checked;
+        }
+        b.disabled = true;
+        const res = await call("step", extra);
+        b.disabled = false;
+        if (!res.success) { card.querySelector("[data-err]").textContent = errorText(res.error); return; }
+        const newState = { start: "gestartet", arrive: "angekommen", back: "gestartet", unmark: "beendet" }[action];
+        track("nutri_step_state", { step_key: key, state: newState, doctor_confirmed: action === "start" ? !!extra.doctor_confirmed : undefined });
+        screenSteps(res);
+      });
+    });
+    document.querySelectorAll("[data-add]").forEach((b) => b.onclick = async () => {
+      b.disabled = true;
+      const res = await call("step", { lever_key: b.dataset.add, action: "add" });
+      if (!res.success) return screenSteps(r, errorText(res.error));
+      track("nutri_step_state", { step_key: b.dataset.add, state: "vorgemerkt", origin: "nachgelegt" });
+      screenSteps(res);
+    });
+    // Kühlschrank-Zettel
+    const bf = document.getElementById("b-fridge");
+    if (bf) bf.onclick = () => {
+      renderFridge(r);
+      call("fridge").catch(() => {});
+      track("nutri_fridge_note", { action: "print", steps_count: steps.filter((x) => x.state !== "vorgemerkt").length });
+      setTimeout(() => window.print(), 50);
+    };
+    // Feedback
+    if (!fbDone) {
+      let rating = null; const help = new Set();
+      document.querySelectorAll("[data-rate]").forEach((b) => b.onclick = () => {
+        rating = Number(b.dataset.rate);
+        document.querySelectorAll("[data-rate]").forEach((x) => x.classList.toggle("on", x === b));
+      });
+      document.querySelectorAll("[data-help]").forEach((b) => b.onclick = () => {
+        const k = b.dataset.help;
+        if (help.has(k)) help.delete(k); else { if (k === "keine") help.clear(); else help.delete("keine"); help.add(k); }
+        document.querySelectorAll("[data-help]").forEach((x) => x.classList.toggle("on", help.has(x.dataset.help)));
+      });
+      document.getElementById("b-fb").onclick = async () => {
+        const text = document.getElementById("fb-text").value.trim();
+        const res = await call("feedback", { rating, help_options: [...help], missing_text: text });
+        if (!res.success) return (document.getElementById("fb-err").textContent = errorText(res.error));
+        track("nutri_feedback", { rating, help_options: [...help].join(","), has_freetext: !!text });
+        document.getElementById("fb").innerHTML = '<h2>Danke für deine Rückmeldung</h2><p class="muted">Sie hilft uns, den Ernährungs-Check besser zu machen.</p>';
+        st.data.feedback_given = true;
+      };
+    }
+    bindProgram(r);
+    document.getElementById("b-all").onclick = () => screenResult(r);
+    // Konto freiwillig (konto.js 1.1.0 ohne required → mit „Ohne Konto weiter“)
+    if (window.LeVitaKonto && !isDemo() && st.pin && !r.account?.in_account) {
+      window.LeVitaKonto.mountStep(document.getElementById("konto-step"), {
+        publicCode: st.code, pin: st.pin, context: "nutrition", required: false,
+        lead: "Mit Konto bleiben deine Schritte gespeichert, und wir erinnern dich an deinen Kurzcheck. Du öffnest alles ohne PIN, mit einem Link per E-Mail.",
+        onRequested: () => { track("nutri_account", { action: "requested" }); const hn = document.getElementById("konto-hint"); if (hn) hn.textContent = "Bitte bestätige den Link in deiner Mail innerhalb einer Stunde — erst dann ist dein Konto aktiv. Danach bleibt das Gerät angemeldet, auf dem du den Link öffnest."; },
+      });
+      document.getElementById("konto-step").addEventListener("click", (ev) => { if (ev.target && ev.target.id === "lk-skip") track("nutri_account", { action: "skipped" }); });
+    }
+  }
+
+  function programHtml(r) {
+    if (r.program_interest === "confirmed") return '<h3>Du bekommst Bescheid</h3><p class="muted">Sobald das 12-Wochen-Programm mit persönlicher Begleitung startet, schreiben wir dir.</p>';
+    if (r.program_interest === "pending") return '<h3>Fast geschafft</h3><p class="muted">Bitte bestätige den Link in der Mail, die wir dir geschickt haben. Erst dann melden wir uns.</p><button class="btn ghost" id="b-pi" style="margin-top:8px">Mail noch einmal senden</button><div class="error" id="pi-err"></div>';
+    return `<h3>Lust auf mehr Unterstützung?</h3>
+      <p class="muted">Bald gibt es ein 12-Wochen-Programm mit persönlicher Begleitung im Studio. Möchtest du informiert werden, wenn es startet?</p>
+      <p class="small" style="margin:8px 0 10px">Ja, informiert mich per E-Mail, wenn das 12-Wochen-Programm mit persönlicher Begleitung im Studio startet. Diese Einwilligung kann ich jederzeit widerrufen, formlos an info@le-vita.com. Du bekommst zuerst eine Mail mit einem Bestätigungslink.</p>
+      <button class="btn ghost block" id="b-pi">Ja, informiert mich</button><div class="error" id="pi-err"></div>`;
+  }
+  function bindProgram(r) {
+    const b = document.getElementById("b-pi");
+    if (!b) return;
+    b.onclick = async () => {
+      b.disabled = true;
+      const res = await call("program_interest");
+      b.disabled = false;
+      if (!res.success) return (document.getElementById("pi-err").textContent = errorText(res.error));
+      track("nutri_program_interest", { confirmed: false });
+      st.data.program_interest = res.status;
+      document.getElementById("pi").innerHTML = programHtml(st.data);
+      bindProgram(st.data);
+    };
+  }
+
+  // Kühlschrank-Zettel: nur die eigenen Pläne, Pilot-ID und Studio-Kontakt — keine PIN, keine Gesundheitsangaben
+  function renderFridge(r) {
+    const steps = (r.self_steps || []).filter((x) => x.state !== "vorgemerkt");
+    const c = r.studio_contact || {};
+    const days = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+    const doc = r.doctor_confirmed_at || r.doctor_required;
+    document.getElementById("fridge").innerHTML = `
+      <h1>Meine Schritte</h1>
+      ${steps.map((x) => `<div class="f-step">
+        <div class="f-title">${esc(leverTitle(r, x.lever_key))}</div>
+        <div class="f-ifthen">${esc(x.if_then_text || "")}</div>
+        <div class="f-days">${[...days, ...days].map((d) => `<div>${d}</div>`).join("")}</div>
+        ${doc ? `<div class="f-doc">ärztlich besprochen am ____________</div>` : ""}
+      </div>`).join("")}
+      <div class="f-foot"><span>Pilot-ID ${esc(st.code)}</span><span>LeVITA${c.phone ? " · " + esc(c.phone) : ""}${c.email ? " · " + esc(c.email) : ""}</span></div>`;
+  }
+
+  // Bestätigungslink aus der Mail „Info zum Programm“
+  async function screenProgramConfirm(token) {
+    spinner();
+    const res = await call("program_confirm", { token });
+    if (res.success) track("nutri_program_interest", { confirmed: true });
+    h(res.success
+      ? `<div class="card top"><h2>Danke${res.first_name ? ", " + esc(res.first_name) : ""}!</h2><p>Bestätigt. Sobald das 12-Wochen-Programm mit persönlicher Begleitung startet, schreiben wir dir.</p></div>`
+      : `<div class="card warn"><h2>Das hat nicht geklappt</h2><p class="muted">${res.error === "EXPIRED" ? "Der Link ist abgelaufen. Fordere ihn im Ernährungs-Check einfach neu an." : "Der Link ist ungültig oder wurde schon verwendet."}</p></div>`);
+  }
+
   function contactHtml(c) {
     const phone = c?.phone ? String(c.phone) : "";
     const tel = phone.replace(/[^+0-9]/g, "");
@@ -694,7 +1053,7 @@
     // 0.5.0: Pflicht (required) — kein "Ohne Konto weiter"; die PIN bleibt im Speicher dieser Seite
     if (window.LeVitaKonto && !isDemo()) window.LeVitaKonto.mountStep(document.getElementById("konto-step"), {
       publicCode: st.code, pin: st.pin, context: "nutrition", required: true,
-      onRequested: () => { const hn = document.getElementById("konto-hint"); if (hn) hn.textContent = "Bitte bestätige den Link in deiner Mail — erst dann ist dein Konto aktiv."; },
+      onRequested: () => { const hn = document.getElementById("konto-hint"); if (hn) hn.textContent = "Bitte bestätige den Link in deiner Mail innerhalb einer Stunde — erst dann ist dein Konto aktiv. Danach bleibt das Gerät angemeldet, auf dem du den Link öffnest."; },
     });
   }
 
@@ -736,7 +1095,24 @@
   }
 
   // ── Los ─────────────────────────────────────────────────
-  screenLogin();
+  // 0.6.0: Bestätigungslink → eigene Seite; mit Konto-Login direkt ohne PIN; sonst Pilot-ID + PIN
+  (async () => {
+    const prog = params.get("programm");
+    if (prog) return screenProgramConfirm(prog);
+    if (st.code && window.LeVitaKonto && !isDemo()) {
+      try {
+        const ss = await window.LeVitaKonto.session();
+        if (ss && ss.access_token) {
+          st.acct = ss.access_token;
+          spinner();
+          const r = await call("start");
+          if (r.success) { track("nutri_start", { via: "account" }, true); return route(r); }
+          st.acct = null;
+        }
+      } catch (e) { st.acct = null; }
+    }
+    screenLogin();
+  })();
 })();
 </script>
 </body>
