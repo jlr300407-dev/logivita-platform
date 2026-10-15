@@ -740,6 +740,16 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.4 (15.10.2026): Hinweise zum Anmeldelink (gehört zu konto.js 1.3.0 und konto.html 1.3.0):
+         PIN-Eingabe erklärt Mein Bereich (Link per E-Mail, ohne Passwort) mit Link auf das
+         Erklärfenster; die Karte "Liegt in deinem Konto" nennt den Weg auf anderen Geräten.
+         Lädt konto.js 1.3.0. Sonst unverändert.
+
+       v2.8.3 (15.10.2026): Empfehlung Ernährungs-Check eingeschaltet (Einführungsphase, gehört zu
+         nutrition-einfuehrung_v8.sql, Edge edge-2026-10-15.3 mit Secret NUTRITION_OFFER_ENABLED=on und
+         ernaehrung.html 0.6.0): Text ohne Begleitung und ohne Trainer, "Kostenlos in der aktuellen
+         Einführungsphase", mit Konto ohne PIN-Hinweis; Link mit utm_source=vital-check.
+
        v2.8.2 (15.10.2026): Ergebnis aus dem Konto öffnen, ohne PIN — im Konto-Chat als "v2.8.0" gebaut
          (auf Basis 2.7.1) und wegen der gleichen Versionsnummer nie live gegangen; hier auf 2.8.1
          nachgezogen (gehört zu Edge edge-2026-10-15.2 und konto.html 1.2.0). Ist die Person auf diesem
@@ -902,7 +912,7 @@
        Freischaltung und beim Wiederaufruf; die Seite zeigt denselben Text
        wie die Mail. Event studio_request_sent ersetzt stage3_cta_click. -->
   <script src="assets/supabase-js@2.js"></script>
-  <script src="assets/konto.js?v=1.1.0"></script>   <!-- v2.6.0: Persönliche Konten · v2.6.1: konto.js 1.1.0 -->
+  <script src="assets/konto.js?v=1.3.0"></script>   <!-- v2.6.0: Persönliche Konten · v2.6.1: konto.js 1.1.0 -->
   <script src="assets/chart.umd.min.js"></script>
   <style>
     /* ── Lokale Fonts (v1.28.19) — ersetzt fonts.googleapis.com ── */
@@ -1968,7 +1978,7 @@
         <button class="next-btn" id="pinSubmitBtn" onclick="loadResultWithPin('${publicCode}')" disabled style="opacity:0.4;">
           Auswertung laden →
         </button>
-        <div class="pin-hint" style="margin-top:14px;">Du hast ein persönliches Konto? Dann öffnest du deine Checks ohne PIN in <a href="konto.html" target="_blank" rel="noopener" style="color:var(--accent-green);text-decoration:underline;">Mein Bereich</a>.</div>
+        <div class="pin-hint" style="margin-top:14px;">Du hast ein persönliches Konto? Dann öffnest du deine Checks ohne PIN in <a href="konto.html" target="_blank" rel="noopener" style="color:var(--accent-green);text-decoration:underline;">Mein Bereich</a> – angemeldet wirst du mit einem Link per E-Mail, ohne Passwort. <a href="#" onclick="if(window.LeVitaKonto&&LeVitaKonto.showGuide){LeVitaKonto.showGuide();}return false;" style="color:var(--accent-green);text-decoration:underline;">So funktioniert die Anmeldung</a></div>
         <div class="pin-new-check">
           <strong>PIN nicht zur Hand?</strong><br>
           Suche in deinem Postfach nach der Mail mit dem Betreff „dein Vital-Check ist da“ —
@@ -5233,12 +5243,13 @@
 
   // ── v2.0.0: Fahrplan auf der Seite — derselbe Text wie in der Mail ──
   // ── v2.7.0: Empfehlung Ernährungs-Check (Regel nur in der DB, Edge liefert nutrition_offer) ──
-  const NUTRITION_OFFER_ENABLED = false;   // AUS bis zur Schulung des Teams (Jörg 13.10.2026)
+  const NUTRITION_OFFER_ENABLED = true;    // v2.8.3: AN für die Einführungsphase (Jörg 15.10.2026); greift nur, wenn die Edge eine Empfehlung liefert
   function stageNutritionOfferHtml() {
     if (!NUTRITION_OFFER_ENABLED) return "";
     const offer = (window._unlockInfo && window._unlockInfo.nutrition_offer) || (latestResult && latestResult.nutrition_offer) || null;
     if (!offer || offer.eligible !== true || !latestResult || !latestResult.public_code) return "";
-    const url = `${offer.url || "https://app.logivita.de/check/ernaehrung.html"}?code=${encodeURIComponent(latestResult.public_code)}`;
+    const url = `${offer.url || "https://app.logivita.de/check/ernaehrung.html"}?code=${encodeURIComponent(latestResult.public_code)}&utm_source=vital-check&utm_medium=ergebnis`;
+    const intro = offer.phase === "einfuehrung";   // v2.8.3
     const reasons = Array.isArray(offer.reasons) ? offer.reasons : [];
     const why = reasons.includes("goal:goal_weight") ? "Passend zu deinem Ziel „Abnehmen & Figur“."
       : reasons.includes("goal:goal_supplements") ? "Passend zu deiner Frage nach Nährstoffen: zuerst der Teller."
@@ -5248,10 +5259,13 @@
     try { trackEvent("nutrition_offer_view", { started, reasons: reasons.join(",") }); } catch (e) {}
     return `<div class="stage-fahrplan" style="border-color:rgba(34,201,122,0.35);">
         <div class="stage-kicker">Passt zu deinem Ergebnis</div>
-        <div style="font-size:16px;font-weight:700;margin-bottom:6px;">Ernährungs-Check mit Begleitung</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:6px;">${intro ? "Ernährungs-Check" : "Ernährungs-Check mit Begleitung"}</div>
         <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">${why ? escHtml(why) + " " : ""}${started
-          ? "Du hast schon begonnen – mit Pilot-ID und PIN machst du dort weiter."
-          : "Ein paar Fragen zu deinem Alltag, danach siehst du, wo beim Essen das meiste Potenzial liegt. Mit deinem Trainer oder deiner Trainerin wählst du ein bis drei Schritte für zwölf Wochen – ohne Diät, ohne Verbote. Du brauchst Pilot-ID und PIN aus deiner Mail."}</div>
+          ? (viaAccount() ? "Du hast schon begonnen – mit deinem Konto machst du dort ohne PIN weiter." : "Du hast schon begonnen – mit Pilot-ID und PIN machst du dort weiter.")
+          : intro
+            ? `Ein paar Fragen zu deinem Alltag, danach siehst du, wo beim Essen das meiste Potenzial liegt, und wählst deine ersten Schritte – ohne Diät, ohne Verbote. ${viaAccount() ? "Mit deinem Konto geht es ohne PIN." : "Du brauchst Pilot-ID und PIN aus deiner Mail."}`
+            : "Ein paar Fragen zu deinem Alltag, danach siehst du, wo beim Essen das meiste Potenzial liegt. Mit deinem Trainer oder deiner Trainerin wählst du ein bis drei Schritte für zwölf Wochen – ohne Diät, ohne Verbote. Du brauchst Pilot-ID und PIN aus deiner Mail."}
+          ${intro ? '<div style="color:var(--accent-green);font-size:12px;margin-top:6px;">Kostenlos in der aktuellen Einführungsphase.</div>' : ""}</div>
         <a class="stage-btn-blue" href="${escHtml(url)}" target="_blank" rel="noopener" onclick="try{trackEvent('nutrition_offer_click',{started:${started}})}catch(e){}" style="display:block;text-align:center;text-decoration:none;">${started ? "Zum Ernährungs-Check →" : "Ernährungs-Check starten →"}</a>
       </div>`;
   }
@@ -6488,7 +6502,7 @@
     if (pin === ACCOUNT_PIN) return `
       <div style="background:rgba(34,201,122,0.08);border:1px solid rgba(34,201,122,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-top:12px;text-align:left;">
         <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-green);margin-bottom:6px;">🔐 Liegt in deinem Konto</div>
-        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;">Diesen Check (${escHtml(publicCode)}) öffnest du jederzeit ohne PIN in <a href="konto.html" style="color:var(--accent-green);text-decoration:underline;">Mein Bereich</a>. Dein nächster Check wird dort automatisch verknüpft.</div>
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;">Diesen Check (${escHtml(publicCode)}) öffnest du jederzeit ohne PIN in <a href="konto.html" style="color:var(--accent-green);text-decoration:underline;">Mein Bereich</a>. Dein nächster Check wird dort automatisch verknüpft. Auf einem anderen Gerät meldest du dich dort mit einem Link per E-Mail an.</div>
       </div>`;
     return `
       <div style="background:rgba(34,201,122,0.08);border:1px solid rgba(34,201,122,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-top:12px;text-align:left;">
@@ -7192,7 +7206,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.2</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.4</footer>
 
 
 </body>
