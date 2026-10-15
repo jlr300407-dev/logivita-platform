@@ -22,6 +22,11 @@
   Testmodus: ?internal=1 zeigt die letzte Server-Antwort.
 
   Versionen:
+  1.3.0 (15.10.2026) Hinweise zum Anmeldelink: Anmeldeseite mit "So funktioniert die Anmeldung",
+        nach dem Versand Gültigkeit und Gerätetipp, verständlichere Seite bei abgelaufenem Link,
+        einmaliges Erklärfenster bei der Einrichtung (erste Anmeldung auf einem Gerät), Karte
+        "Anmeldung und Sicherheit" in der Übersicht. Texte für die Einführungsphase des
+        Ernährungs-Checks (Konto freiwillig, keine Begleitung). Lädt konto.js 1.3.0.
   1.2.0 (14.10.2026) "Ergebnis ansehen" je Check und "Neuen Vital-Check starten" (als Re-Check mit dem
         letzten Check verknüpft) — beides ohne PIN über das Login; gehört zu Check v2.8.0 und Edge
         submit-vital-check edge-2026-10-14.3
@@ -111,6 +116,12 @@
   .toggle span { font-size: 14px; color: var(--text-secondary); }
   .toggle strong { display: block; color: var(--text-primary); font-size: 15px; margin-bottom: 2px; }
 
+  /* 1.3.0 Anmeldung erklärt */
+  .how { list-style: none; margin: 4px 0 0; padding: 0; }
+  .how li { position: relative; padding-left: 26px; font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.5; }
+  .how li b { color: var(--text-primary); font-weight: 600; }
+  .how li::before { content: attr(data-n); position: absolute; left: 0; top: 1px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent-green-dim); color: var(--accent-green); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .linkbtn { background: none; border: 0; padding: 0; font: 600 13.5px 'DM Sans', sans-serif; color: var(--accent-blue); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
   footer { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 40px; }
   .hidden { display: none !important; }
   .spinner { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--brand-card2); border-top-color: var(--accent-green); animation: spin .8s linear infinite; margin: 60px auto; }
@@ -134,10 +145,10 @@
   <footer>LeVITA Vital-Check · Mein Bereich <span id="fe-version"></span></footer>
 </div>
 
-<script src="assets/konto.js?v=1.1.0"></script>
+<script src="assets/konto.js?v=1.3.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.2.0";
+  const FE_VERSION = "1.3.0";
   const K = window.LeVitaKonto;
   const esc = K.esc;
   const params = new URLSearchParams(location.search);
@@ -164,7 +175,7 @@
   async function edge(mode, body) {
     const r = await K.edge(mode, Object.assign({ tenant: TENANT }, body || {}), sess && sess.access_token);
     raw(mode, r);
-    if (r._http === 401) { K.logout(); sess = null; screenLogin("Deine Anmeldung ist abgelaufen. Fordere einfach einen neuen Link an."); throw new Error("401"); }
+    if (r._http === 401) { K.logout(); sess = null; screenLogin("Deine Anmeldung auf diesem Gerät ist beendet. Fordere einfach einen neuen Link an."); throw new Error("401"); }
     return r;
   }
 
@@ -174,15 +185,25 @@
     h(`
       <h1>${expired ? "Der Link ist abgelaufen" : "Mein Bereich"}</h1>
       <p class="lead">${expired
-        ? "Aus Sicherheitsgründen gilt ein Anmeldelink nur kurze Zeit. Gib deine E-Mail-Adresse ein, dann schicken wir dir einen neuen."
-        : "Hier liegen deine Vital-Checks mit Verlauf, deine Termine und dein Plan. Die Anmeldung läuft über einen Link per E-Mail, ein Passwort gibt es nicht."}</p>
+        ? `Aus Sicherheitsgründen gilt ein Anmeldelink ${K.LINK_VALID || "eine Stunde"} und nur für einen Klick. Vielleicht wurde er schon benutzt, oder eine neuere Mail ist unterwegs. Gib deine E-Mail-Adresse ein, dann schicken wir dir einen neuen.`
+        : "Hier liegen deine Vital-Checks mit Verlauf und dein Ernährungs-Check. Die Anmeldung läuft über einen Link per E-Mail, ein Passwort gibt es nicht."}</p>
       <div class="card">
         <div class="field"><label for="f-mail">E-Mail-Adresse</label>
           <input type="email" id="f-mail" autocomplete="email" placeholder="name@beispiel.de"></div>
         <button class="btn block" id="b-link">Anmeldelink schicken</button>
         <div class="error" id="err">${esc(msg)}</div>
       </div>
-      <p class="small">Noch kein Konto? Ein Konto legst du an, wenn du nach deinem Vital-Check ein Gespräch im Studio oder die Ernährungsbegleitung beginnst. Pilot-ID und PIN funktionieren weiterhin.</p>`);
+      <div class="card">
+        <h3>So funktioniert die Anmeldung</h3>
+        <ul class="how">
+          <li data-n="1"><b>Link anfordern:</b> Wir schicken dir einen Link an deine E-Mail-Adresse.</li>
+          <li data-n="2"><b>Innerhalb einer Stunde klicken:</b> Der Link funktioniert nur einmal. Öffne ihn am besten auf diesem Gerät.</li>
+          <li data-n="3"><b>Angemeldet bleiben:</b> Danach bist du auf diesem Gerät angemeldet und brauchst keinen neuen Link – bis du dich abmeldest oder die Browserdaten löschst.</li>
+        </ul>
+        <button class="linkbtn" id="b-guide" type="button">Tipps und warum das sicher ist</button>
+      </div>
+      <p class="small">Noch kein Konto? Ein Konto legst du freiwillig nach deinem Vital-Check, im Ernährungs-Check oder für ein Gespräch im Studio an. Pilot-ID und PIN funktionieren weiterhin.</p>`);
+    document.getElementById("b-guide").onclick = () => K.showGuide && K.showGuide();
     const send = async () => {
       const mail = document.getElementById("f-mail").value.trim();
       const err = document.getElementById("err");
@@ -192,7 +213,14 @@
       raw("login_link", r);
       if (!r.success) { b.disabled = false; b.textContent = "Anmeldelink schicken"; err.textContent = "Das hat gerade nicht geklappt. Bitte versuche es gleich noch einmal."; return; }
       h(`<div class="card ok"><h2>Schau in dein Postfach</h2>
-          <p class="muted">Wenn zu <strong>${esc(mail)}</strong> ein Konto bei uns besteht, ist ein Anmeldelink unterwegs. Keine Mail da? Bitte auch im Spam-Ordner nachsehen.</p></div>`);
+          <p class="muted">Wenn zu <strong>${esc(mail)}</strong> ein Konto bei uns besteht, ist ein Anmeldelink unterwegs.</p>
+          <ul class="how" style="margin-top:12px">
+            <li data-n="1">Der Link gilt <b>${esc(K.LINK_VALID || "eine Stunde")}</b> und nur für einen Klick. Bei mehreren Mails nimm die neueste.</li>
+            <li data-n="2">Öffne ihn auf dem Gerät, auf dem du angemeldet sein möchtest. Öffnet er sich in deiner Mail-App, wähle „Im Browser öffnen“.</li>
+            <li data-n="3">Keine Mail da? Schau im Spam-Ordner nach. Einen neuen Link kannst du nach einer Minute anfordern.</li>
+          </ul></div>
+          <button class="btn ghost block" id="b-again" type="button">Andere Adresse oder neuen Link anfordern</button>`);
+      document.getElementById("b-again").onclick = () => screenLogin();
     };
     document.getElementById("b-link").onclick = send;
     document.getElementById("f-mail").onkeydown = (e) => { if (e.key === "Enter") send(); };
@@ -255,7 +283,7 @@
       ]);
     } catch (e) {
       const again = await K.session();
-      if (!again) return screenLogin("Deine Anmeldung ist abgelaufen. Fordere einfach einen neuen Link an.");
+      if (!again) return screenLogin("Deine Anmeldung auf diesem Gerät ist beendet. Fordere einfach einen neuen Link an.");
       sess = again;
       return screenHome(note);
     }
@@ -295,7 +323,6 @@
           <p class="recheck-hint">${weeksSince(list[0].created_at) < 8
             ? `Dein letzter Check ist ${weeksSince(list[0].created_at) <= 1 ? "erst wenige Tage" : `${weeksSince(list[0].created_at)} Wochen`} her. Am aussagekräftigsten ist der Vergleich nach 8 bis 12 Wochen.`
             : "Dein neues Ergebnis wird automatisch mit dem letzten verglichen."}</p>` : ""}
-        <p class="note">Termine und dein Plan erscheinen hier, sobald deine Begleitung startet.</p>
       </div>
 
       <div class="card">
@@ -305,9 +332,16 @@
         <div class="error" id="err-c"></div>
       </div>
 
+      <div class="card">
+        <h2>Anmeldung und Sicherheit</h2>
+        <p class="muted">Du bleibst auf diesem Gerät angemeldet und brauchst hier keinen neuen Link. Auf einem anderen Gerät forderst du einfach einen Anmeldelink an – er gilt ${esc(K.LINK_VALID || "eine Stunde")} und nur für einen Klick.</p>
+        <p class="note">Tipp: Leg dir diese Seite als Lesezeichen oder auf den Home-Bildschirm. Auf geteilten Geräten nach der Nutzung oben „Abmelden“.</p>
+        <button class="linkbtn" id="b-guide" type="button" style="margin-top:10px">Tipps und warum das sicher ist</button>
+      </div>
+
       <div class="card danger">
         <h3>Konto löschen</h3>
-        <p class="muted">Löscht dein Konto bei LeVITA und alle zugehörigen Daten: Vital-Checks, Ernährungsbegleitung, Termine und Messwerte. Das lässt sich nicht rückgängig machen.</p>
+        <p class="muted">Löscht dein Konto bei LeVITA und alle zugehörigen Daten: Vital-Checks, Ernährungs-Check, Termine und Messwerte. Das lässt sich nicht rückgängig machen.</p>
         <div id="del-area"><button class="btn ghost" id="b-del-open" style="margin-top:12px">Konto löschen …</button></div>
       </div>
 
@@ -324,6 +358,7 @@
       };
     };
     bindToggle("t-rem", "reminders");
+    document.getElementById("b-guide").onclick = () => K.showGuide && K.showGuide();
 
     document.getElementById("b-del-open").onclick = () => {
       document.getElementById("del-area").innerHTML = `
@@ -347,11 +382,11 @@
   function screenNoAccount() {
     $logout.classList.remove("hidden");
     h(`<h1>Noch kein Konto bei LeVITA</h1>
-       <div class="card"><p class="muted">Zu dieser Anmeldung gibt es bei LeVITA noch kein Konto. Ein Konto entsteht, wenn du nach deinem Vital-Check ein Gespräch im Studio oder die Ernährungsbegleitung beginnst und den Link in der Mail bestätigst.</p></div>`);
+       <div class="card"><p class="muted">Zu dieser Anmeldung gibt es bei LeVITA noch kein Konto. Ein Konto entsteht, wenn du es nach deinem Vital-Check, im Ernährungs-Check oder für ein Gespräch im Studio anlegst und den Link in der Mail bestätigst.</p></div>`);
   }
 
   // ── Los ────────────────────────────────────────────────
-  $logout.onclick = () => { K.logout(); sess = null; screenLogin("Du bist abgemeldet."); };
+  $logout.onclick = () => { K.logout(); sess = null; screenLogin("Du bist abgemeldet. Für die nächste Anmeldung auf diesem Gerät schicken wir dir einen neuen Link."); };
 
   (async () => {
     const landed = K.consumeRedirect();
@@ -367,8 +402,11 @@
       return h(`<div class="card warn"><h3>Das hat gerade nicht geklappt</h3><p class="muted">Bitte lade die Seite in einem Moment neu.</p></div>`);
     }
     if (r.status === "no_account") return screenNoAccount();
-    if ((r.review || []).length) return screenReview(r.review, !!r.first_login);
-    screenHome();
+    // 1.3.0: Einmaliges Erklärfenster bei der Einrichtung (erste Anmeldung oder erste Landung auf diesem Gerät)
+    const showIntro = () => { if ((r.first_login || (landed && landed.fresh)) && K.showGuide) K.showGuide({ once: true }); };
+    if ((r.review || []).length) { screenReview(r.review, !!r.first_login); return showIntro(); }
+    await screenHome();
+    showIntro();
   })();
 })();
 </script>
