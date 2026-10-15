@@ -8,15 +8,15 @@
        Kanonisch ist die Website-Seite /vital-check/start (dort steht der
        indexierbare Text); diese Datei läuft als iFrame darin. -->
   <meta name="description" content="Was steckt in dir? Der kostenlose LeVITA Vital-Check zeigt dir in 5–7 Minuten deine Stärken in 8 Lebensbereichen, deinen größten Hebel und einen persönlichen Plan. Ergebnis sofort, ohne Anmeldung." />
-  <link rel="canonical" href="https://www.le-vita.com/vital-check/start" />
+  <link rel="canonical" href="https://le-vita.com/vital-check" />
   <meta name="theme-color" content="#0a1628" />
   <meta property="og:type" content="website" />
   <meta property="og:locale" content="de_DE" />
   <meta property="og:site_name" content="LeVITA" />
   <meta property="og:title" content="Was steckt in dir? – Der LeVITA Vital-Check" />
   <meta property="og:description" content="8 Lebensbereiche, dein größter Hebel und ein persönlicher Plan – kostenlos in 5–7 Minuten, Ergebnis sofort." />
-  <meta property="og:url" content="https://www.le-vita.com/vital-check/start" />
-  <meta property="og:image" content="https://www.le-vita.com/app/vital-check/assets/hero-desktop.jpg" />
+  <meta property="og:url" content="https://le-vita.com/vital-check" />
+  <meta property="og:image" content="https://app.le-vita.com/assets/hero-desktop.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="675" />
   <meta property="og:image:alt" content="LeVITA Vital-Check" />
@@ -739,6 +739,23 @@
        sondern eine Beobachtung, und sagte "Bluttest", wo die Mail von einer
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
+
+       v2.8.5 (15.10.2026): Verknuepfungen nach dem Umzug auf app.le-vita.com.
+         Der Check laeuft nicht mehr als iFrame unter le-vita.com/app/vital-check/, sondern
+         eigenstaendig auf app.le-vita.com. Dadurch zeigten alle wurzelrelativen Links auf den
+         falschen Host. Geaendert: (1) SUPPLEMENT_PAGE_URL und BLOODTEST_PAGE_URL absolut auf
+         le-vita.com — vorher gaben /auswahl und /gesundheit/bluttest auf app.le-vita.com einen
+         403. (2) PROMO_BLOCK_ENABLED auf false, weil /auswahl noch nicht existiert und die
+         Startseite als Fallback kommt; mit der Seite wieder auf true. (3) Fallback-URL des
+         Ernaehrungs-Checks von app.logivita.de auf relativ "ernaehrung.html" — laeuft damit auf
+         app.le-vita.com, app.logivita.de/check/ und der Dev-Adresse gleich. (4) canonical und
+         og:url auf le-vita.com/vital-check (die alte /vital-check/start leitet dorthin um),
+         og:image auf app.le-vita.com. (5) Promo-Links target="_blank" statt "_top" — "_top" war
+         nur fuer den iFrame noetig, jetzt bleibt das Ergebnis im alten Tab stehen.
+         (6) sleep_latency aus dem Reha-Trigger entfernt, deckungsgleich mit der Edge seit
+         06.10.2026 — die Seite konnte Reha-Sport zeigen, wo die Mail es nicht mehr tut.
+         ACHTUNG: Die Kommentare weiter unten sprechen teils noch vom iFrame. Das ist historisch
+         und nicht mehr der Betriebszustand.
 
        v2.8.4 (15.10.2026): Hinweise zum Anmeldelink (gehört zu konto.js 1.3.0 und konto.html 1.3.0):
          PIN-Eingabe erklärt Mein Bereich (Link per E-Mail, ohne Passwort) mit Link auf das
@@ -2389,9 +2406,9 @@
   // Antworten, Scores, bloodtest_hint oder top_priorities — und steht nicht in
   // der Auswertung, sondern am Seitenende. Keine Rabatt- oder Partnercodes,
   // kein Buddy-Text, keine Personalisierung, keine Funnel-Events.
-  const SUPPLEMENT_PAGE_URL = "/auswahl";
-  const BLOODTEST_PAGE_URL  = "/gesundheit/bluttest";
-  const PROMO_BLOCK_ENABLED = true;
+  const SUPPLEMENT_PAGE_URL = "https://le-vita.com/auswahl";
+  const BLOODTEST_PAGE_URL  = "https://le-vita.com/gesundheit/bluttest";
+  const PROMO_BLOCK_ENABLED = false; // v2.8.5: AUS bis /auswahl existiert — die Seite liefert derzeit die Startseite
   // Bleibt aus, bis die Bluttest-Seite rechtlich freigegeben ist — gleiche
   // Linie wie AFFILIATE_ENABLED. Mit dem Schalter entfaellt auch der letzte
   // Satz des Textes, der auf den Bluttest verweist.
@@ -2405,7 +2422,7 @@
     // target="_top" — der Check laeuft auf le-vita.com in einem iFrame, die
     // Seiten sollen im ganzen Fenster oeffnen, nicht im Rahmen.
     const btn2 = BLOODTEST_LINK_ENABLED
-      ? `<a class="promo-btn" href="${BLOODTEST_PAGE_URL}" target="_top">Zu den Bluttests</a>`
+      ? `<a class="promo-btn" href="${BLOODTEST_PAGE_URL}" target="_blank" rel="noopener">Zu den Bluttests</a>`
       : '';
     return `
       <div class="promo-block">
@@ -2414,7 +2431,7 @@
           <div class="promo-title">Gut zu wissen: Unser Angebot rund um Versorgung</div>
           <div class="promo-text">Bewegung, Ernährung und Erholung sind die Basis – daran arbeitest du mit uns im Studio. Wer zusätzlich ergänzen möchte, findet in der LeVITA Auswahl wenige, sorgfältig ausgewählte Produkte unseres Partners BIOGENA.${satz3}</div>
           <div class="promo-actions">
-            <a class="promo-btn" href="${SUPPLEMENT_PAGE_URL}" target="_top">Zur LeVITA Auswahl</a>
+            <a class="promo-btn" href="${SUPPLEMENT_PAGE_URL}" target="_blank" rel="noopener">Zur LeVITA Auswahl</a>
             ${btn2}
           </div>
         </div>
@@ -2915,7 +2932,7 @@
         </div>
         <div class="checkbox-row">
           <input type="checkbox" id="consent_privacy" />
-          <label for="consent_privacy">Ich habe die <a href="https://www.le-vita.com/datenschutz" target="_blank" style="color:var(--accent-green);text-decoration:underline;">Datenschutzhinweise</a> gelesen und verstanden. Ich bin damit einverstanden, dass meine Angaben — einschließlich gesundheitsbezogener Informationen — gemäß Art. 9 Abs. 2 lit. a DSGVO verarbeitet werden.</label>
+          <label for="consent_privacy">Ich habe die <a href="https://le-vita.com/datenschutz" target="_blank" style="color:var(--accent-green);text-decoration:underline;">Datenschutzhinweise</a> gelesen und verstanden. Ich bin damit einverstanden, dass meine Angaben — einschließlich gesundheitsbezogener Informationen — gemäß Art. 9 Abs. 2 lit. a DSGVO verarbeitet werden.</label>
         </div>
         <div class="checkbox-row">
           <input type="checkbox" id="consent_storage" />
@@ -4581,7 +4598,9 @@
     // bekam Reha-Sport empfohlen. Jetzt dieselben Kriterien wie in der Edge;
     // ohne Anlass der Präventionskurs §20, der ohne Verordnung buchbar ist.
     const _txtT3 = answersT3.map(a => String(a.answer_text || '').toLowerCase());
-    const _rehaAnlassT3 = score.doctor_hint === true || window._safetyTier === 'combined' || riskOf('sleep_latency') >= 3
+    const _rehaAnlassT3 = score.doctor_hint === true || window._safetyTier === 'combined'
+      // v2.8.5: riskOf('sleep_latency') >= 3 entfernt — loeste Reha-Sport ohne Arzt-Anlass
+      // aus; in der Edge seit 06.10.2026 ebenfalls entfernt (Seite und Mail liefen auseinander).
       || _txtT3.some(t => t.includes('schmerz') || t.includes('gelenk') || t.includes('rücken') || t.includes('beschwerden'));
     if (ageT3 >= 60 && areaScoreT3('activity') < 45 && _rehaAnlassT3 && studioRec['signal_reha']) {
       studioKeyT3 = 'signal_reha';
@@ -5248,7 +5267,7 @@
     if (!NUTRITION_OFFER_ENABLED) return "";
     const offer = (window._unlockInfo && window._unlockInfo.nutrition_offer) || (latestResult && latestResult.nutrition_offer) || null;
     if (!offer || offer.eligible !== true || !latestResult || !latestResult.public_code) return "";
-    const url = `${offer.url || "https://app.logivita.de/check/ernaehrung.html"}?code=${encodeURIComponent(latestResult.public_code)}&utm_source=vital-check&utm_medium=ergebnis`;
+    const url = `${offer.url || "ernaehrung.html"}?code=${encodeURIComponent(latestResult.public_code)}&utm_source=vital-check&utm_medium=ergebnis`;
     const intro = offer.phase === "einfuehrung";   // v2.8.3
     const reasons = Array.isArray(offer.reasons) ? offer.reasons : [];
     const why = reasons.includes("goal:goal_weight") ? "Passend zu deinem Ziel „Abnehmen & Figur“."
@@ -7206,7 +7225,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.4</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.5</footer>
 
 
 </body>
