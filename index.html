@@ -740,6 +740,33 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.8 (16.10.2026): Der Fragen-Durchlauf. Paket A3a aus
+         Design-Umsetzung-Reihenfolge.md.
+         (1) Kopfzeile von einer zentrierten Saeule zu einer schmalen Zeile:
+         gemessen 187 px -> 50 px inklusive Abstand, auf einem 844-px-Telefon also
+         rund 16 Prozent des Sichtfensters zurueckgewonnen — bei jeder der knapp
+         dreissig Fragen. Signet 54 -> 30 px, Wortmarke 26 -> 21 px,
+         "powered by LogiVita" rechtsbuendig in dieselbe Zeile.
+         (2) LOGO_WORDMARK_URL geleert. initLogo() ersetzte den vorhandenen
+         Serif-Schriftzug durch das Rasterbild; jetzt bleibt der Text stehen, wie
+         auf konto.html und ernaehrung.html. Die if-Pruefung in initLogo macht den
+         leeren Wert gefahrlos; die PNG-Datei wird weiter vom Hero gebraucht.
+         (3) Fortschrittsbalken sichtbar: 4 -> 6 px, Spurfarbe von Deckkraft 0,06
+         auf 0,16. Der Balken war vorhanden, aber praktisch nicht wahrnehmbar.
+         (4) Restzeit-Schaetzung, neu. Erscheint auf JEDEM Schritt — auch auf Ziel,
+         Befinden, Basisdaten und Einwilligung, wo der Fragenzaehler bisher leer
+         blieb. Auf Fragen haengt sie sich an: "Frage 12 von 24 · noch ~3 Min".
+         Grundlage sind Erfahrungswerte je Schrittart (STEP_SECONDS), bewusst eher
+         grosszuegig; nachschaerfbar aus den step_answered-Ereignissen in
+         funnel_events. Ueber einen Plan mit 28 Schritten: Start 6 Min, nach 10
+         Schritten 3 Min, am Ende "gleich fertig".
+         (5) Lange Bereichsnamen koennen die Zeile nicht mehr sprengen
+         (Ellipse links, umbruchfreier Zaehler rechts).
+         NICHT enthalten: currentStep bleibt unberuehrt, es kommen keine Schritte
+         hinzu. Gespeicherte Fortschritte und die Trichterzahlen bleiben damit
+         vergleichbar. Die Buddy-Abschnittswechsel (A3b) und die Emoji in den
+         Bereichsbezeichnungen (A2b) sind eigene Pakete.
+
        v2.8.7 (16.10.2026): Strich-Icons statt Emoji auf der Startseite, Hero-Ueberschrift
          in die Serif. Paket A2 aus Design-Umsetzung-Reihenfolge.md.
          (1) Ein SVG-Sprite gleich nach <body> mit 18 Symbolen; Verwendung ueber
@@ -993,11 +1020,14 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'DM Sans', sans-serif; background: var(--brand-dark); color: var(--text-primary); min-height: 100vh; padding: 20px; }
     .container { max-width: 720px; margin: 0 auto; }
-    .logo-area { display: flex; flex-direction: column; align-items: center; margin-bottom: 32px; padding-top: 12px; }
-    .logo-img-wrap { margin-bottom: 10px; }
+    /* v2.8.8: Die Kopfzeile stand als zentrierte Saeule ueber JEDER Frage und
+       belegte rund 175 px — auf einem Telefon ein Viertel des Sichtfensters,
+       knapp dreissig Mal hintereinander. Jetzt eine schmale Zeile. */
+    .logo-area { display: flex; flex-direction: row; align-items: center; gap: 10px; margin-bottom: 16px; padding-top: 4px; }
+    .logo-img-wrap { margin-bottom: 0; line-height: 0; }
     .logo-img-wrap img { max-height: 60px; max-width: 220px; object-fit: contain; }
     /* v1.33.0: Bildmarke als gerundete Kachel, Schriftzug darunter ohne Rundung */
-    .logo-img-wrap img[width="54"] { width: 54px; height: 54px; border-radius: 15px; }
+    .logo-img-wrap img[width="54"] { width: 30px; height: 30px; border-radius: 9px; }
     .logo-placeholder { width: 54px; height: 54px; border-radius: 14px; background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-blue) 100%); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; color: #0a1628; margin-bottom: 10px; }
     /* v2.8.7: Strich-Icons statt Emoji. fill:none + stroke:currentColor — die Icons
        erben die Textfarbe und funktionieren damit spaeter in beiden Themen. */
@@ -1005,14 +1035,14 @@
     .lp-goal .ic { width: 17px; height: 17px; vertical-align: -0.28em; margin-right: 3px; color: var(--accent-green); }
     .ic { width: 1em; height: 1em; display: inline-block; vertical-align: -0.14em; fill: none;
           stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex: none; }
-    .logo-name { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--text-primary); }
+    .logo-name { font-family: 'DM Serif Display', serif; font-size: 21px; line-height: 1.1; color: var(--text-primary); }
     .logo-name span { color: var(--accent-green); }
-    .logo-sub { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+    .logo-sub { font-size: 11px; color: var(--text-muted); margin-top: 0; margin-left: auto; text-align: right; }
     .progress-wrap { margin-bottom: 28px; }
     .progress-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .progress-area-label { font-size: 11px; font-weight: 700; color: var(--accent-green); letter-spacing: 1.5px; text-transform: uppercase; }
-    .progress-count { font-size: 12px; color: var(--text-muted); font-weight: 500; }
-    .progress-track { width: 100%; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+    .progress-area-label { font-size: 11px; font-weight: 700; color: var(--accent-green); letter-spacing: 1.5px; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .progress-count { font-size: 12px; color: var(--text-muted); font-weight: 500; flex-shrink: 0; margin-left: 10px; white-space: nowrap; }
+    .progress-track { width: 100%; height: 6px; background: rgba(255,255,255,0.16); border-radius: 3px; overflow: hidden; }   /* v2.8.8: 0.06 war praktisch unsichtbar */
     #progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-green), var(--accent-blue)); border-radius: 2px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); width: 0%; }
     .progress-back-btn { background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; padding: 0 8px 0 0; line-height: 1; flex-shrink: 0; transition: color 0.2s; width: auto; margin: 0; }
     .progress-back-btn:hover { color: var(--accent-green); transform: none; box-shadow: none; }
@@ -1787,7 +1817,14 @@
   // Figur im Kreis Negativraum ist — freigestellt verschwindet sie auf #0a1628.
   // Der Schriftzug ist die Negativfassung (Braun -> Creme), sonst kein Kontrast.
   const LOGO_URL = "assets/levita-mark.png";
-  const LOGO_WORDMARK_URL = "assets/levita-wordmark-light.png";
+  // v2.8.8: Der Schriftzug "Le VITA" steht als Text im Markup und ist in DM Serif
+  // Display gesetzt. initLogo() ersetzte ihn bisher durch das Rasterbild — die
+  // schoenere Fassung war also nur der Notfall-Rueckfall. Leerer Wert = Text bleibt.
+  // konto.html und ernaehrung.html zeigen schon immer die Textfassung. Damit bleibt
+  // als einzige Seite mit Rasterlogo der Hero der Startseite (hb-word, Zeile ~1586) —
+  // dort steht es auf einem Foto und wirkt anders. Ob es auch dort weicht, ist eine
+  // eigene Entscheidung. Die PNG-Datei wird davon weiter gebraucht und bleibt.
+  const LOGO_WORDMARK_URL = "";
   const AREA_ICONS = { sleep:"🌙", activity:"⚡", nutrition:"🥗", vitamin_d:"☀️", bmi:"⚖️", mental:"🧘", smoking:"🚭", alcohol:"🍷", lifestyle:"🍃", micronutrients:"💊", metabolic:"🔥" };
 
   // v2.8.0 — Score-Karte Version 3: Level-Grenzen (score_settings.level_thresholds) und
@@ -3484,6 +3521,26 @@
     }
   }
 
+  // v2.8.8: Restzeit-Schaetzung. Die Startseite verspricht "5-7 Minuten"; wer
+  // mittendrin nicht weiss, ob noch zwei oder noch zwanzig Fragen kommen, bricht
+  // genau dort ab. Die Sekundenwerte sind Erfahrungswerte, keine Messung — sobald
+  // genug step_answered-Ereignisse in funnel_events liegen, lassen sie sich
+  // nachschaerfen. Lieber grosszuegig schaetzen als zu knapp: frueher fertig zu
+  // sein ist angenehm, laenger zu brauchen aergerlich.
+  const STEP_SECONDS = { question: 11, goal: 12, wellbeing: 12, personal: 38, consent: 22, intro: 6 };
+  function estimateRemaining(fromStep) {
+    if (!Array.isArray(groupedQuestions) || !groupedQuestions.length) return "";
+    let sec = 0;
+    for (let i = fromStep; i < groupedQuestions.length; i++) {
+      const st = groupedQuestions[i];
+      if (!st) continue;
+      sec += STEP_SECONDS[st.question_key ? "question" : (st.type || "question")] ?? 11;
+    }
+    if (sec <= 45) return "gleich fertig";
+    const min = Math.round(sec / 60);
+    return min <= 1 ? "noch etwa 1 Minute" : `noch etwa ${min} Minuten`;
+  }
+
   function updateProgress() {
     const total = groupedQuestions.length - 1;
     const pct = total > 0 ? (currentStep / total) * 100 : 0;
@@ -3525,6 +3582,15 @@
       }).length;
       document.getElementById("progressAreaLabel").textContent = `${icon} ${q.area_label || q.area_key}`;
       document.getElementById("progressCount").textContent = qPos > 0 ? `Frage ${qPos} von ${Math.max(qTotal, qPos)}` : "";
+    }
+    // v2.8.8: Die Restzeit haengt sich an das an, was oben gesetzt wurde — auf
+    // Fragen also hinter "Frage 7 von 24", auf Ziel/Befinden/Basisdaten/
+    // Einwilligung steht sie allein, wo bisher gar nichts stand.
+    const restTxt = estimateRemaining(currentStep);
+    const cEl = document.getElementById("progressCount");
+    if (cEl && restTxt) {
+      const kurz = restTxt.replace("noch etwa ", "noch ~").replace(" Minuten", " Min").replace(" Minute", " Min");
+      cEl.textContent = cEl.textContent ? `${cEl.textContent} · ${kurz}` : restTxt;
     }
   }
 
@@ -7287,7 +7353,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.7</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.8</footer>
 
 
 </body>
