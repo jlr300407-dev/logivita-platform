@@ -1,0 +1,63 @@
+# ============================================================
+# app.le-vita.com - Auslieferungsregeln
+#
+# Diese Datei gehoert zur Auslieferung. Der Git-Pull uebertraegt
+# sie nach /httpdocs. Wird sie aus dem Repo entfernt, loescht der
+# naechste Pull sie auch auf dem Server. Dann gibt es KEINE
+# Positivliste mehr und supabase/, tools/, docs/ und legal/
+# werden oeffentlich ausgeliefert - ohne dass irgendetwas
+# sichtbar kaputtgeht.
+#
+# Pruefung nach jedem Aufraeumen im Repo:
+#   https://app.le-vita.com/supabase/  muss 403 liefern.
+#
+# Jede neue Seite im Wurzelverzeichnis braucht unten eine eigene
+# RewriteCond-Zeile, sonst ist sie still gesperrt.
+#
+# Ins Repo aufgenommen am 16.10.2026.
+# ============================================================
+
+RewriteEngine On
+RewriteCond %{REQUEST_URI} !^/$
+RewriteCond %{REQUEST_URI} !^/index\.html$
+RewriteCond %{REQUEST_URI} !^/konto\.html$
+RewriteCond %{REQUEST_URI} !^/ernaehrung\.html$
+RewriteCond %{REQUEST_URI} !^/assets/
+RewriteCond %{REQUEST_URI} !^/robots\.txt$
+RewriteRule ^ - [F]
+
+# 15.10.2026: konto.html ("Mein Bereich", Ziel des Anmeldelinks aus der E-Mail)
+# und ernaehrung.html (Ernaehrungs-Check, Ziel der Empfehlung aus der Auswertungs-
+# mail) ergaenzt. Beide liegen seit dem Umzug auf app.le-vita.com und werden vom
+# Git-Pull mitgebracht; ohne diese zwei Zeilen antwortet der Server mit 403.
+# Die Positivliste bleibt im Uebrigen unveraendert — frontend/, supabase/ und
+# tools/ sind weiterhin gesperrt.
+
+DirectoryIndex index.html
+<IfModule mod_autoindex.c>
+Options -Indexes
+</IfModule>
+
+# Doppelt hält besser: Quell-/Konfigdateien nie ausliefern, auch nicht unter assets/
+<FilesMatch "\.(md|sql|json|yml|yaml|txt|sh|py|env|git.*)$">
+Require all denied
+</FilesMatch>
+<FilesMatch "^robots\.txt$">
+Require all granted
+</FilesMatch>
+
+AddType font/woff2 .woff2
+AddType image/webp .webp
+AddType application/javascript .js
+
+<IfModule mod_headers.c>
+# Updates kommen per Pull unter gleichem Dateinamen — index.html nie cachen, Assets einen Tag
+<FilesMatch "\.html$">
+Header set Cache-Control "no-cache, must-revalidate"
+</FilesMatch>
+<FilesMatch "\.(js|woff2|webp|png|jpg)$">
+Header set Cache-Control "public, max-age=86400"
+</FilesMatch>
+# Als eigenständige Seite nirgends einbettbar
+Header always set X-Frame-Options "DENY"
+</IfModule>
