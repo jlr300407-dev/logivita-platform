@@ -740,6 +740,19 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.6 (16.10.2026): Zwei Korrekturen, keine sichtbare Umgestaltung.
+         (1) --text-muted von #4a6280 auf #8396ae. Der alte Wert erreichte 2,89 / 2,53 / 2,20
+         gegen --brand-dark / --brand-card / --brand-card2 und erfuellte WCAG AA damit an
+         keiner Stelle; der neue erreicht 5,99 / 5,24 / 4,55. Betrifft 83 Verwendungen,
+         darunter die Vertrauensreihe der Startseite und die Erklaerzeilen unter dem
+         Vitalitaets-Alter. Bleibt sichtbar matter als --text-secondary (#8da0b8).
+         (2) capName aus buildResultHtml auf Modulebene gezogen. Die Funktion lag dort als
+         lokale Konstante und war aus renderResultBuddyHtml nicht erreichbar; die Begruessung
+         hatte deshalb eine eigene, schlechtere Variante (charAt(0).toUpperCase() +
+         slice(1).toLowerCase()), die aus "Test-Claude" ein "Test-claude" machte und
+         Doppelnamen wie "Anna-Lena" zu "Anna-lena" verbogen haette. Jetzt eine
+         Implementierung fuer beide Stellen, inklusive Namenszusaetzen (von, van, der).
+
        v2.8.5 (15.10.2026): Verknuepfungen nach dem Umzug auf app.le-vita.com.
          Der Check laeuft nicht mehr als iFrame unter le-vita.com/app/vital-check/, sondern
          eigenstaendig auf app.le-vita.com. Dadurch zeigten alle wurzelrelativen Links auf den
@@ -955,7 +968,7 @@
       --brand-card2: #1a2e47;
       --text-primary: #f0f4f8;
       --text-secondary: #8da0b8;
-      --text-muted: #4a6280;
+      --text-muted: #8396ae;   /* v2.8.6: 4a6280 erfuellte WCAG AA nicht (2,5:1 auf --brand-card2); 8396ae = 5,99 / 5,24 / 4,55 */
       --border: rgba(255,255,255,0.07);
       --border-hover: rgba(255,255,255,0.14);
       --radius: 16px;
@@ -3754,13 +3767,20 @@
   // v1.32.1 — Der Buddy stellt das Ergebnis vor. Beim Wiederaufruf über PIN
   // begrüßt der welcome-back-Buddy, nach einem frisch abgeschlossenen Check
   // der success-Buddy. Ton bleibt ruhig: kein Jubel über einen niedrigen Wert.
+  // v2.8.6: aus buildResultHtml hochgezogen. Lag dort als lokale Konstante und war
+  // aus renderResultBuddyHtml nicht erreichbar — deshalb verbog die Begruessung
+  // Namen zu "Test-claude". Eine Implementierung fuer alle Stellen.
+  function capName(s) {
+    return s ? s.split(/([\s-])/).map((p, i) => !p || /^[\s-]$/.test(p) ? p : (i > 0 && /^(von|van|der|den|de|zu|zum|zur|vom|und)$/i.test(p)) ? p.toLowerCase() : p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join("") : "";   // v2.4.2: Doppelnamen
+  }
+
   function renderResultBuddyHtml(totalScore, isRecheck) {
     if (!BUDDY_ENABLED) return "";
     const back = window._isReviewMode && window._accessPin;
     const img = buddyHtml(back ? "buddy-welcome-back" : "buddy-success", "lg");
     if (!img) return "";
     const first = (personalData.first_name || "").trim();
-    const hi = first ? `Schön, dass du wieder da bist, ${escHtml(first.charAt(0).toUpperCase() + first.slice(1).toLowerCase())}!` : "Schön, dass du wieder da bist!";
+    const hi = first ? `Schön, dass du wieder da bist, ${escHtml(capName(first))}!` : "Schön, dass du wieder da bist!";
     let title, sub;
     if (back) {
       title = hi;
@@ -3801,7 +3821,6 @@
     const growthCount = areas.filter(a => a.score < 75).length;
     const bioColor = bioAge && bioAge < personalData.age ? "var(--accent-green)" : "var(--accent-amber)";
 
-    const capName = (s) => s ? s.split(/([\s-])/).map((p, i) => !p || /^[\s-]$/.test(p) ? p : (i > 0 && /^(von|van|der|den|de|zu|zum|zur|vom|und)$/i.test(p)) ? p.toLowerCase() : p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join("") : "";   // v2.4.2: Doppelnamen
     const name = [capName(personalData.first_name), capName(personalData.last_name)].filter(Boolean).join(" ");
     const goalLabels = { goal_energy:"⚡ Mehr Energie", goal_weight:"⚖️ Abnehmen / Figur", goal_fitness:"💪 Fitter werden", goal_supplements:"💊 Nährstoffstatus", goal_prevention:"🛡️ Vorsorge", goal_longevity:"🌿 Longevity", goal_curious:"🔍 Neugier" };
     const goalLabel = personalData.goal_key && goalLabels[personalData.goal_key] ? goalLabels[personalData.goal_key] : "";
@@ -7225,7 +7244,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.5</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.6</footer>
 
 
 </body>
