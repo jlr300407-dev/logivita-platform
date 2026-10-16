@@ -740,6 +740,30 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.9 (16.10.2026): Icons im Fragebogen. Paket A2b, erster Teil.
+         (1) AREA_ICONS, goalIcons und goalLabels halten jetzt ICON-NAMEN statt
+         Emoji; der Helfer ICO(name) erzeugt daraus das SVG, areaIco(key) und
+         goalIco(key) kapseln den Zugriff samt Rueckfall ("dot"). Acht Aufrufstellen
+         umgestellt (Fragekarte, Hebel-Box, Hero-Kopf Tab 3, Staerken-Liste,
+         Ziel-Schaltflaechen).
+         (2) Neuer Fortschrittskopf: Icon und Text in getrennten Elementen.
+         Grund: Der Bereichsname kommt aus der Datenbank und bleibt deshalb
+         textContent — auf innerHTML umzustellen haette eine Einfallstelle fuer
+         Markup aus der Tabelle geschaffen. Das Icon steht im Code und bekommt ein
+         eigenes Element (#progressAreaIco). Helfer setAreaHead(icon, text).
+         (3) Sprite von 18 auf 27 Symbole: moon, sun, apple, lotus, nosmoke, wine,
+         flame, user, dot.
+         (4) Die vier Rahmen-Plaketten in den Fragekarten (Dein Ziel, Dein
+         Befinden, Basisdaten, Datenschutz) mitgezogen — sie stehen direkt unter
+         dem Fortschrittskopf; SVG oben und Emoji darunter waere schlechter als
+         vorher.
+         (5) Der Bereichsname darf wieder umbrechen. Der nowrap aus v2.8.8 schnitt
+         "Mentale Balance & Stress" zu "MENTALE BALANCE &…" ab. Zwei Zeilen zu
+         11 px sind verkraftbar; die Kopfzeile bleibt weit unter dem alten Wert.
+         OFFEN: In der Auswertung stehen noch rund 83 Emoji (Teaser-Zeilen,
+         KPI-Karten, Zonentitel, Leistungs-Kacheln). Dafuer braucht es etwa
+         fuenfzehn weitere Symbole — eigenes Paket.
+
        v2.8.8 (16.10.2026): Der Fragen-Durchlauf. Paket A3a aus
          Design-Umsetzung-Reihenfolge.md.
          (1) Kopfzeile von einer zentrierten Saeule zu einer schmalen Zeile:
@@ -1040,14 +1064,16 @@
     .logo-sub { font-size: 11px; color: var(--text-muted); margin-top: 0; margin-left: auto; text-align: right; }
     .progress-wrap { margin-bottom: 28px; }
     .progress-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .progress-area-label { font-size: 11px; font-weight: 700; color: var(--accent-green); letter-spacing: 1.5px; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .progress-area-ico { display: inline-flex; align-items: center; color: var(--accent-green); margin-right: 6px; flex: none; }
+    .progress-area-ico .ic { width: 15px; height: 15px; }
+    .progress-area-label { font-size: 11px; font-weight: 700; color: var(--accent-green); letter-spacing: 1.2px; text-transform: uppercase; line-height: 1.3; }   /* v2.8.9: kein nowrap mehr — "Mentale Balance & Stress" wurde sonst zu "MENTALE BALANCE &…" abgeschnitten. Zwei Zeilen zu 11 px sind verkraftbar. */
     .progress-count { font-size: 12px; color: var(--text-muted); font-weight: 500; flex-shrink: 0; margin-left: 10px; white-space: nowrap; }
     .progress-track { width: 100%; height: 6px; background: rgba(255,255,255,0.16); border-radius: 3px; overflow: hidden; }   /* v2.8.8: 0.06 war praktisch unsichtbar */
     #progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-green), var(--accent-blue)); border-radius: 2px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); width: 0%; }
     .progress-back-btn { background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; padding: 0 8px 0 0; line-height: 1; flex-shrink: 0; transition: color 0.2s; width: auto; margin: 0; }
     .progress-back-btn:hover { color: var(--accent-green); transform: none; box-shadow: none; }
     .progress-back-btn.hidden { visibility: hidden; pointer-events: none; }
-    .progress-left { display: flex; align-items: center; gap: 0; flex: 1; min-width: 0; }
+    .progress-left { display: flex; align-items: center; gap: 0; flex: 1; min-width: 0; padding-right: 8px; }
     .option-btn.selected-flash { border-color: var(--accent-green); background: var(--accent-green-dim); transform: translateX(2px); }
     .option-btn.selected-flash::before { border-color: var(--accent-green); background: var(--accent-green); }
     .question-step { display: none; }
@@ -1515,6 +1541,15 @@
 <symbol id="ic-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></symbol>
 <symbol id="ic-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m15.5 8.5-2 5.5-5.5 2 2-5.5 5.5-2Z"/></symbol>
 <symbol id="ic-spark" viewBox="0 0 24 24"><path d="M12 3.2 14 9.4 20.2 11.4 14 13.4 12 19.6 10 13.4 3.8 11.4 10 9.4Z"/><path d="M18.5 3.4 19.2 5.6 21.4 6.3 19.2 7 18.5 9.2 17.8 7 15.6 6.3 17.8 5.6Z"/></symbol>
+<symbol id="ic-moon" viewBox="0 0 24 24"><path d="M20 14.2A8.6 8.6 0 0 1 9.8 4 8.6 8.6 0 1 0 20 14.2Z"/></symbol>
+<symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.8v2.4M12 18.8v2.4M4.7 4.7l1.7 1.7M17.6 17.6l1.7 1.7M2.8 12h2.4M18.8 12h2.4M4.7 19.3l1.7-1.7M17.6 6.4l1.7-1.7"/></symbol>
+<symbol id="ic-apple" viewBox="0 0 24 24"><path d="M12 8.4c-1.3-1.2-3-1.6-4.4-.8C5.9 8.5 5 10.6 5 12.9c0 3.6 2.4 7.6 4.6 7.6.9 0 1.5-.5 2.4-.5s1.5.5 2.4.5c2.2 0 4.6-4 4.6-7.6 0-2.3-.9-4.4-2.6-5.3-1.4-.8-3.1-.4-4.4.8Z"/><path d="M12 8.4c0-2 1.2-3.5 3-4.1"/></symbol>
+<symbol id="ic-lotus" viewBox="0 0 24 24"><path d="M12 20c-2.6-1.9-4.2-4.3-4.2-6.7 0-2.1 1.5-4.1 4.2-5.8 2.7 1.7 4.2 3.7 4.2 5.8 0 2.4-1.6 4.8-4.2 6.7Z"/><path d="M12 20c-4 0-7.2-2.3-7.2-5.2 2.3 0 4.3.8 5.6 2.2M12 20c4 0 7.2-2.3 7.2-5.2-2.3 0-4.3.8-5.6 2.2"/></symbol>
+<symbol id="ic-nosmoke" viewBox="0 0 24 24"><rect x="3" y="14" width="11" height="4" rx="1"/><path d="M16.5 14v4M19.5 14v4"/><path d="M14 11.3c1.6-1 1.6-2.6 0-3.6"/><path d="M4 20.5 20 4.5"/></symbol>
+<symbol id="ic-wine" viewBox="0 0 24 24"><path d="M8.2 3.5h7.6l-.8 6a3 3 0 0 1-6 0l-.8-6Z"/><path d="M12 15v5.5M9 20.5h6"/></symbol>
+<symbol id="ic-flame" viewBox="0 0 24 24"><path d="M12 21c3.2 0 5.8-2.3 5.8-5.3 0-3.9-3.9-5.3-2.9-9.2-2.9 1-4.8 3.7-4.8 6.8 0-1-.9-1.9-1.9-2.4C7.6 12 7.2 13.4 7.2 15c0 3.7 2.6 6 4.8 6Z"/></symbol>
+<symbol id="ic-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"/></symbol>
+<symbol id="ic-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"/></symbol>
 <symbol id="ic-heart" viewBox="0 0 24 24"><path d="M12 20.5S4.5 15.7 4.5 10.4A4.4 4.4 0 0 1 12 7.2a4.4 4.4 0 0 1 7.5 3.2c0 5.3-7.5 10.1-7.5 10.1Z"/></symbol>
 </defs></svg>
 
@@ -1795,6 +1830,7 @@
     <div class="progress-meta">
       <div class="progress-left">
         <button class="progress-back-btn hidden" id="backBtn" onclick="goBack()" title="Zurück">←</button>
+        <span class="progress-area-ico" id="progressAreaIco" aria-hidden="true"></span>
         <span class="progress-area-label" id="progressAreaLabel">Vorbereitung</span>
       </div>
       <span class="progress-count" id="progressCount"></span>
@@ -1825,7 +1861,13 @@
   // dort steht es auf einem Foto und wirkt anders. Ob es auch dort weicht, ist eine
   // eigene Entscheidung. Die PNG-Datei wird davon weiter gebraucht und bleibt.
   const LOGO_WORDMARK_URL = "";
-  const AREA_ICONS = { sleep:"🌙", activity:"⚡", nutrition:"🥗", vitamin_d:"☀️", bmi:"⚖️", mental:"🧘", smoking:"🚭", alcohol:"🍷", lifestyle:"🍃", micronutrients:"💊", metabolic:"🔥" };
+  // v2.8.9: Die Zuordnungen halten jetzt ICON-NAMEN statt Emoji. Zwei Helfer machen
+  // daraus das SVG. Grund fuer die Trennung: updateProgress setzt den Bereichsnamen
+  // mit textContent, weil er aus der Datenbank kommt — dort darf kein HTML hinein.
+  // Das Icon dagegen kommt aus dem Code und bekommt ein eigenes Element.
+  const ICO = (n) => n ? `<svg class="ic" aria-hidden="true"><use href="#ic-${n}"/></svg>` : "";
+  const AREA_ICONS = { sleep:"moon", activity:"dumbbell", nutrition:"apple", vitamin_d:"sun", bmi:"scale", mental:"lotus", smoking:"nosmoke", alcohol:"wine", lifestyle:"leaf", micronutrients:"pill", metabolic:"flame" };
+  const areaIco = (k) => ICO(AREA_ICONS[k] || "dot");
 
   // v2.8.0 — Score-Karte Version 3: Level-Grenzen (score_settings.level_thresholds) und
   // Themenwerte für Signale, die keine Score-Bereiche mehr sind (Stoffwechsel, Mikronährstoffe,
@@ -2715,7 +2757,8 @@
   }
 
   function goalStepHtml(q) {
-    const goalIcons = { goal_energy:"⚡", goal_weight:"⚖️", goal_fitness:"💪", goal_supplements:"💊", goal_longevity:"🌿", goal_prevention:"🛡️", goal_curious:"✨" };
+    const goalIcons = { goal_energy:"bolt", goal_weight:"scale", goal_fitness:"dumbbell", goal_supplements:"pill", goal_longevity:"leaf", goal_prevention:"shield", goal_curious:"spark" };
+    const goalIco = (k) => goalIcons[k] ? ICO(goalIcons[k]) : "→";
     // v1.31.1 — Beim Re-Check wird das frühere Ziel aufgegriffen statt blank
     // neu gefragt. Es bleibt eine Frage, keine Setzung: alle Optionen stehen
     // weiter offen, ein Klick genügt zum Ändern.
@@ -2723,12 +2766,12 @@
     const prevOpt = prevGoal ? q.options.find(o => o.option_key === prevGoal) : null;
     const _bGoal = buddyForStep({ type:'goal' });
     let html = `<div class="card">`
-      + (_bGoal ? `<div class="buddy-row">${_bGoal}<div class="area-badge">🎯 Dein Ziel</div></div>`
-                : `<div class="area-badge">🎯 Dein Ziel</div>`);
+      + (_bGoal ? `<div class="buddy-row">${_bGoal}<div class="area-badge">${ICO("target")} Dein Ziel</div></div>`
+                : `<div class="area-badge">${ICO("target")} Dein Ziel</div>`);
     if (prevOpt) {
       html += `<div class="question-text">Ist das immer noch dein Ziel?</div>
         <div class="help-text">Beim letzten Check hast du <strong style="color:var(--text-primary);">${escHtml(prevOpt.option_text)}</strong> gewählt. Passt das noch, oder hat sich etwas verschoben?</div>
-        <button class="next-btn" style="margin-bottom:14px;" onclick="saveGoal('${prevOpt.option_id}', '${prevOpt.option_key}')">${goalIcons[prevOpt.option_key] || "→"} Ja, weiter mit diesem Ziel →</button>
+        <button class="next-btn" style="margin-bottom:14px;" onclick="saveGoal('${prevOpt.option_id}', '${prevOpt.option_key}')">${goalIco(prevOpt.option_key)} Ja, weiter mit diesem Ziel →</button>
         <div class="help-text" style="margin-bottom:10px;">Oder wähle ein anderes:</div>`;
     } else {
       html += `<div class="question-text">${q.question_text}</div>`;
@@ -2737,7 +2780,7 @@
     html += `<div class="options-grid">`;
     q.options.forEach(opt => {
       if (prevOpt && opt.option_id === prevOpt.option_id) return; // steht schon oben als Primäraktion
-      const icon = goalIcons[opt.option_key] || "→";
+      const icon = goalIco(opt.option_key);
       html += `<button class="option-btn" onclick="saveGoal('${opt.option_id}', '${opt.option_key}')">${icon} ${opt.option_text}</button>`;
     });
     html += `</div></div>`;
@@ -2778,7 +2821,7 @@
     ).join("");
     return `
       <div class="card">
-        <div class="area-badge">💚 Dein Befinden</div>
+        <div class="area-badge">${ICO("heart")} Dein Befinden</div>
         <div class="question-text">Wie vital fühlst du dich im Moment?</div>
         ${prevTxt}
         <div class="help-text">Dein Bauchgefühl genügt. Diese Angabe zählt nicht in deinen Index — sie hilft uns, deine Auswertung passend für dich zu formulieren.</div>
@@ -2817,8 +2860,8 @@
     return `
       <div class="card">
         ${(() => { const b = buddyForStep({ type:'personal' });
-            return b ? `<div class="buddy-row">${b}<div class="area-badge">👤 Basisdaten</div></div>`
-                     : `<div class="area-badge">👤 Basisdaten</div>`; })()}
+            return b ? `<div class="buddy-row">${b}<div class="area-badge">${ICO("user")} Basisdaten</div></div>`
+                     : `<div class="area-badge">${ICO("user")} Basisdaten</div>`; })()}
         <div class="question-text">Deine persönlichen Angaben</div>
         <div class="help-text">${pre
           ? 'Deine Angaben vom letzten Check sind übernommen. Bitte prüfe besonders <strong style="color:var(--text-primary);">Alter und Gewicht</strong> — die beiden ändern sich, und der Vergleich wird nur so genau wie diese Zahlen.'
@@ -2850,7 +2893,7 @@
   }
 
   function questionStepHtml(q) {
-    const icon = AREA_ICONS[q.area_key] || "●";
+    const icon = areaIco(q.area_key);
     const buddy = buddyForStep(q);
     const badge = `<div class="area-badge">${icon} ${q.area_label || q.area_key}</div>`;
     let html = `<div class="card">`
@@ -3011,8 +3054,8 @@
     return watchStepHtml() + `
       <div class="card">
         ${(() => { const b = buddyForStep({ type:'consent' });
-            return b ? `<div class="buddy-row">${b}<div class="area-badge">🔒 Datenschutz</div></div>`
-                     : `<div class="area-badge">🔒 Datenschutz</div>`; })()}
+            return b ? `<div class="buddy-row">${b}<div class="area-badge">${ICO("lock")} Datenschutz</div></div>`
+                     : `<div class="area-badge">${ICO("lock")} Datenschutz</div>`; })()}
         <div class="question-text">Datenschutz & Auswertung</div>
         <div class="info-box box-info" style="margin-bottom:14px;margin-top:8px;">
           Deine Angaben werden zur Erstellung deines LeVITA Vital-Checks verarbeitet.
@@ -3541,6 +3584,16 @@
     return min <= 1 ? "noch etwa 1 Minute" : `noch etwa ${min} Minuten`;
   }
 
+  // v2.8.9: Icon und Text getrennt setzen. Der Bereichsname kommt aus der Datenbank
+  // und bleibt deshalb textContent — waere er innerHTML, haette man sich eine
+  // Einfallstelle fuer Markup aus der Tabelle gebaut. Das Icon steht im Code.
+  function setAreaHead(iconName, text) {
+    const ico = document.getElementById("progressAreaIco");
+    const lab = document.getElementById("progressAreaLabel");
+    if (ico) ico.innerHTML = iconName ? ICO(iconName) : "";
+    if (lab) lab.textContent = text;
+  }
+
   function updateProgress() {
     const total = groupedQuestions.length - 1;
     const pct = total > 0 ? (currentStep / total) * 100 : 0;
@@ -3552,13 +3605,12 @@
       backBtn.classList.toggle("hidden", !showBack);
     }
     if (!q) return;
-    if (q.type === "intro") { document.getElementById("progressAreaLabel").textContent = "LeVITA Vital-Check"; document.getElementById("progressCount").textContent = ""; }
-    else if (q.type === "goal") { document.getElementById("progressAreaLabel").textContent = "🎯 Dein Ziel"; document.getElementById("progressCount").textContent = ""; }
-    else if (q.type === "wellbeing") { document.getElementById("progressAreaLabel").textContent = "💚 Dein Befinden"; document.getElementById("progressCount").textContent = ""; }
-    else if (q.type === "personal") { document.getElementById("progressAreaLabel").textContent = "👤 Basisdaten"; document.getElementById("progressCount").textContent = ""; }
-    else if (q.type === "consent") { document.getElementById("progressAreaLabel").textContent = "🔒 Fast fertig"; document.getElementById("progressCount").textContent = ""; }
+    if (q.type === "intro") { setAreaHead("", "LeVITA Vital-Check"); document.getElementById("progressCount").textContent = ""; }
+    else if (q.type === "goal") { setAreaHead("target", "Dein Ziel"); document.getElementById("progressCount").textContent = ""; }
+    else if (q.type === "wellbeing") { setAreaHead("heart", "Dein Befinden"); document.getElementById("progressCount").textContent = ""; }
+    else if (q.type === "personal") { setAreaHead("user", "Basisdaten"); document.getElementById("progressCount").textContent = ""; }
+    else if (q.type === "consent") { setAreaHead("lock", "Fast fertig"); document.getElementById("progressCount").textContent = ""; }
     else {
-      const icon = AREA_ICONS[q.area_key] || "●";
       // v1.28.40: "Frage X von Y" statt Prozent (V1.29-Punkt) — Y wird live aus dem
       // aktuellen Fragenplan berechnet; Zusatzfragen erhöhen X und Y gemeinsam, nie rückwärts.
       const qSteps = groupedQuestions.filter(s => s.question_key);
@@ -3580,7 +3632,7 @@
         const tIdx = qSteps.findIndex(x => x.question_key === trig || (trig === "diet_type" && x.question_key === "nutrition_type"));
         return tIdx === -1 || tIdx < curIdx;
       }).length;
-      document.getElementById("progressAreaLabel").textContent = `${icon} ${q.area_label || q.area_key}`;
+      setAreaHead(AREA_ICONS[q.area_key] || "dot", q.area_label || q.area_key);
       document.getElementById("progressCount").textContent = qPos > 0 ? `Frage ${qPos} von ${Math.max(qTotal, qPos)}` : "";
     }
     // v2.8.8: Die Restzeit haengt sich an das an, was oben gesetzt wurde — auf
@@ -3931,7 +3983,7 @@
     const bioColor = bioAge && bioAge < personalData.age ? "var(--accent-green)" : "var(--accent-amber)";
 
     const name = [capName(personalData.first_name), capName(personalData.last_name)].filter(Boolean).join(" ");
-    const goalLabels = { goal_energy:"⚡ Mehr Energie", goal_weight:"⚖️ Abnehmen / Figur", goal_fitness:"💪 Fitter werden", goal_supplements:"💊 Nährstoffstatus", goal_prevention:"🛡️ Vorsorge", goal_longevity:"🌿 Longevity", goal_curious:"🔍 Neugier" };
+    const goalLabels = { goal_energy:`${ICO("bolt")} Mehr Energie`, goal_weight:`${ICO("scale")} Abnehmen / Figur`, goal_fitness:`${ICO("dumbbell")} Fitter werden`, goal_supplements:`${ICO("pill")} Nährstoffstatus`, goal_prevention:`${ICO("shield")} Vorsorge`, goal_longevity:`${ICO("leaf")} Longevity`, goal_curious:`${ICO("spark")} Neugier` };
     const goalLabel = personalData.goal_key && goalLabels[personalData.goal_key] ? goalLabels[personalData.goal_key] : "";
 
     // Haupthebel (für Tab 1 + Tab 3 Hero-Card)
@@ -4396,7 +4448,7 @@
       if (worst && worst.score < 90) {
         html += S.hebel = `<div class="hebel-box"><div class="hebel-icon">✨</div><div>
           <div class="hebel-title">Dein einziger kleiner Feinschliff</div>
-          <div class="hebel-text"><strong>${AREA_ICONS[worst.key]||""} ${worst.label}</strong> ist der einzige Bereich mit noch etwas Luft nach oben. Alles andere läuft bereits sehr stabil.</div>
+          <div class="hebel-text"><strong>${areaIco(worst.key)} ${worst.label}</strong> ist der einzige Bereich mit noch etwas Luft nach oben. Alles andere läuft bereits sehr stabil.</div>
         </div></div>`;
       }
     } else if (worst) {
@@ -4406,7 +4458,7 @@
       // und stehen jetzt dort — verschoben, nicht doppelt.
       html += S.hebel = `<div class="hebel-box" onclick="switchResultTab('empfehlungen')" style="cursor:pointer;"><div class="hebel-icon">💡</div><div>
         <div class="hebel-title">Dein größter Ansatzpunkt</div>
-        <div class="hebel-text"><strong>${AREA_ICONS[worst.key]||""} ${worst.label}</strong></div>
+        <div class="hebel-text"><strong>${areaIco(worst.key)} ${worst.label}</strong></div>
         <div style="margin-top:8px;font-size:12.5px;color:var(--accent-green);font-weight:600;">Was das konkret heißt → Nächste Schritte</div>
       </div></div>`;
     }
@@ -4578,7 +4630,7 @@
     // Ansatzpunkt"). Zwei Richtungen in einem Block. Jetzt steht der Hebel in
     // der Ueberschrift, das Ziel in der Kicker-Zeile darueber — die Verbindung
     // aus v1.31.3 bleibt im Satz erhalten.
-    const heroHead3 = worst ? `${AREA_ICONS[worst.key]||""} ${worst.label}` : heroTitle3;
+    const heroHead3 = worst ? `${areaIco(worst.key)} ${worst.label}` : heroTitle3;
     const heroKicker3 = worst && heroTitle3 ? `✦ Dein Weg zu: ${heroTitle3}` : "✦ Dein wichtigster nächster Schritt";
     html += S.hero = `
       <div style="background:linear-gradient(135deg,rgba(34,201,122,0.12),rgba(59,158,255,0.08));
@@ -5069,7 +5121,7 @@
     return `<div class="stage-kicker">Deine Stärken</div>
       <div class="stage-strengths">${st.map(a => `
         <div class="stage-strength">
-          <div class="stage-strength-head"><span>${AREA_ICONS[a.key] || ""} ${a.label}</span><span style="color:${scoreBand(a.score).color};">${Math.round(a.score)}</span></div>
+          <div class="stage-strength-head"><span>${areaIco(a.key)} ${a.label}</span><span style="color:${scoreBand(a.score).color};">${Math.round(a.score)}</span></div>
           <div class="stage-strength-sub">${scoreBand(a.score).label}</div>
         </div>`).join("")}
       </div>`;
@@ -7353,7 +7405,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.8</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.9</footer>
 
 
 </body>
