@@ -10,6 +10,13 @@
   <meta name="description" content="Was steckt in dir? Der kostenlose LeVITA Vital-Check zeigt dir in 5–7 Minuten deine Stärken in 8 Lebensbereichen, deinen größten Hebel und einen persönlichen Plan. Ergebnis sofort, ohne Anmeldung." />
   <link rel="canonical" href="https://le-vita.com/vital-check" />
   <meta name="theme-color" content="#0a1628" />
+  <script>
+    /* v2.8.13: Gewaehltes Thema VOR dem ersten Zeichnen setzen - sonst blitzt
+       die falsche Fassung kurz auf. Ohne Wahl entscheidet die Geraeteeinstellung
+       ueber prefers-color-scheme im Stylesheet. */
+    (function () { try { var t = localStorage.getItem('levita-theme');
+      if (t === 'hell' || t === 'dunkel') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+  </script>
   <meta property="og:type" content="website" />
   <meta property="og:locale" content="de_DE" />
   <meta property="og:site_name" content="LeVITA" />
@@ -740,6 +747,51 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.13 (17.10.2026): Helles Thema, umschaltbar. Pakete B2, B3 und B4 aus
+         Design-Umsetzung-Reihenfolge.md.
+         (1) Ohne Wahl folgt der Check der Geraeteeinstellung (prefers-color-
+         scheme). Ein Umschalter im Hero und in der Kopfzeile wechselt direkt
+         zwischen Hell und Dunkel; ueber dem Fuss steht die volle Wahl Hell -
+         Dunkel - Automatisch. Gespeichert wird nur eine ausdrueckliche Wahl
+         (localStorage "levita-theme"); "Automatisch" loescht sie. Ein kleines
+         Skript im <head> setzt die Wahl vor dem ersten Zeichnen, sonst blitzt die
+         falsche Fassung auf. theme-color im <meta> folgt dem Thema.
+         (2) Helle Werte, durchgerechnet (palette.py): Papier #F7F6F2, Karte #FFF,
+         Flaeche 2 #EFEDE7, Tinte #13263B. Knopffarbe Dunkelgruen #097240 mit
+         weisser Schrift (Entscheidung 17.10.: Flaeche gegen Papier 5,6:1 statt
+         2,0:1 beim Leuchtgruen; ein Gruen fuer Text und Flaeche). Gruene Schrift
+         #076A3B, damit sie auch auf gruener Toenung 4,5:1 haelt. Jede
+         Schriftrolle >= 4,5:1 auf Papier, Karte, Flaeche 2 und eigener
+         Toenung; Linien und Flaechen >= 3:1.
+         (3) Dunkle Zonen: Hero (Foto fuer dunklen Grund komponiert) und die
+         Beispiel-Auswertung der Startseite ("Dunkel als Buehne", 16.10.). Eine
+         Regel setzt dort die dunklen Token-Werte lokal neu.
+         (4) B3: Die Spinne (Chart.js, Canvas kennt kein var()) liest ihre Farben
+         beim Zeichnen aus den Tokens (chartTheme) und zeichnet beim Umschalten
+         neu. Beschriftung "Lifestyle" -> "Lebensstil".
+         (5) B4: Alle 16 Buddy-Motive auf Papier und Weiss geprueft - kein dunkler
+         Saum, keine Aenderung noetig.
+         (6) Kontrastpruefung beider Themen ueber alle ~1.900 Textelemente der
+         18 Pruefzustaende, Verlaeufe mitgerechnet (schlechteste Stop-Farbe zaehlt).
+         Daraus drei Korrekturen, die auch auf Dunkel wirken: Fusszeile ohne
+         Deckkraft 0,5 (stand bei 2,4:1 Dunkel / 2,0:1 Hell); Einwilligungstext
+         unter dem Newsletter-Knopf und "Deine Uhr" von --text-muted auf
+         --text-secondary (auf Dunkel kaum sichtbar, #8396ae -> #8da0b8). Nur auf
+         Hell: "Deine Staerken" mit voller Deckkraft (stand bei 3,7:1).
+         Verbleibend und bewusst: zwei inaktive Schaltflaechen (PIN vor der
+         achten Ziffer, "Potenzial einblenden" ohne Szenario) - fuer inaktive
+         Bedienelemente verlangt WCAG keinen Mindestkontrast.
+         OFFEN auf Dunkel (Bestand, 4,2-4,47:1): "Auszug aus einem Vital-Plan",
+         "Dein Vitalitaets-Alter" in der Verlaufskarte, rote Punkte-Pille,
+         Bereichsnamen in den Hebel-Zeilen.
+         NACHWEIS: Dunkel gegen v2.8.12 in 18 Zustaenden: keine abweichende
+         Farbe ausser den drei Korrekturen unter (6); Pixel nur dort. Dunkle
+         Zonen in Hell: 91 Elemente, 0 abweichende Farbwerte gegenueber Dunkel.
+         Diagramm auf Dunkel pixelgleich.
+         NICHT ENTHALTEN: konto.html und ernaehrung.html bleiben dunkel; die
+         Ergebnis-Mail bleibt bei einer Fassung. Die Hero-Fotos bleiben dunkel
+         (zweite Fassungen gehoeren zum Fotoshooting, D2).
+
        v2.8.12 (17.10.2026): Farben tokenisiert. Paket B1 aus
          Design-Umsetzung-Reihenfolge.md - die unsichtbare Voraussetzung fuer den
          Hell/Dunkel-Umschalter. SICHTBAR AENDERT SICH NICHTS.
@@ -1199,6 +1251,185 @@
       --radius: 16px;
       --radius-sm: 10px;
     }
+
+    /* ── v2.8.13 (B2) — Helles Thema ───────────────────────────────────────
+       Gilt bei ausdruecklicher Wahl (data-theme="hell") ODER, ohne Wahl, wenn
+       das Geraet auf Hell steht. Die Werte sind in palette.py durchgerechnet:
+       Schrift >= 4,5:1 auf Papier, Karte, Flaeche 2 und auf den eigenen
+       Toenungen; Linien und Flaechen >= 3:1; weisse Knopfschrift >= 4,5:1.
+       Knopffarbe Dunkelgruen #097240 mit weisser Schrift (Entscheidung 17.10.). */
+    :root[data-theme="hell"] {
+      --brand-dark: #F7F6F2;
+      --brand-card: #FFFFFF;
+      --accent-green: #097240;
+      --accent-green-dim: rgba(9,114,64,0.10);
+      --accent-blue: #1B5FAD;
+      --accent-blue-dim: rgba(27,95,173,0.08);
+      --accent-amber: #B36B00;
+      --accent-red: #C53030;
+      --accent-purple: #6B4BC4;
+      --brand-card2: #EFEDE7;
+      --text-primary: #13263B;
+      --text-secondary: #4C5E72;
+      --text-muted: #58697C;
+      --border: rgba(19,38,59,0.12);
+      --border-hover: rgba(19,38,59,0.24);
+      --accent-green-text: #076A3B;
+      --accent-blue-text: #1B5FAD;
+      --accent-amber-text: #8A5300;
+      --accent-red-text: #B42318;
+      --accent-purple-text: #5A3DAA;
+      --warn-text: #8A5300;
+      --on-accent: #FFFFFF;
+      --accent-green-deep: #065C33;
+      --knob: #ffffff;
+      --score-ok: #3B8A52;
+      --score-ok-text: #246B3A;
+      --score-ok-rgb: 59,138,82;
+      --score-focus: #C9561A;
+      --score-focus-text: #A8460F;
+      --score-focus-rgb: 201,86,26;
+      --sunken: rgba(19,38,59,0.05);
+      --cta-green: #097240;
+      --on-cta: #FFFFFF;
+      --hero-bg: #0d1a14;
+      --ink-rgb: 19,38,59;
+      --shadow-rgb: 19,38,59;
+      --brand-dark-rgb: 247,246,242;
+      --accent-green-rgb: 9,114,64;
+      --accent-blue-rgb: 27,95,173;
+      --accent-amber-rgb: 179,107,0;
+      --accent-red-rgb: 197,48,48;
+      --accent-purple-rgb: 107,75,196;
+      --text-secondary-rgb: 76,94,114;
+      --slate-rgb: 76,94,114;
+      --violet-rgb: 107,75,196;
+      --lgreen-alt-rgb: 59,138,82;
+    }
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dunkel"]) {
+        --brand-dark: #F7F6F2;
+        --brand-card: #FFFFFF;
+        --accent-green: #097240;
+        --accent-green-dim: rgba(9,114,64,0.10);
+        --accent-blue: #1B5FAD;
+        --accent-blue-dim: rgba(27,95,173,0.08);
+        --accent-amber: #B36B00;
+        --accent-red: #C53030;
+        --accent-purple: #6B4BC4;
+        --brand-card2: #EFEDE7;
+        --text-primary: #13263B;
+        --text-secondary: #4C5E72;
+        --text-muted: #58697C;
+        --border: rgba(19,38,59,0.12);
+        --border-hover: rgba(19,38,59,0.24);
+        --accent-green-text: #076A3B;
+        --accent-blue-text: #1B5FAD;
+        --accent-amber-text: #8A5300;
+        --accent-red-text: #B42318;
+        --accent-purple-text: #5A3DAA;
+        --warn-text: #8A5300;
+        --on-accent: #FFFFFF;
+        --accent-green-deep: #065C33;
+        --knob: #ffffff;
+        --score-ok: #3B8A52;
+        --score-ok-text: #246B3A;
+        --score-ok-rgb: 59,138,82;
+        --score-focus: #C9561A;
+        --score-focus-text: #A8460F;
+        --score-focus-rgb: 201,86,26;
+        --sunken: rgba(19,38,59,0.05);
+        --cta-green: #097240;
+        --on-cta: #FFFFFF;
+        --hero-bg: #0d1a14;
+        --ink-rgb: 19,38,59;
+        --shadow-rgb: 19,38,59;
+        --brand-dark-rgb: 247,246,242;
+        --accent-green-rgb: 9,114,64;
+        --accent-blue-rgb: 27,95,173;
+        --accent-amber-rgb: 179,107,0;
+        --accent-red-rgb: 197,48,48;
+        --accent-purple-rgb: 107,75,196;
+        --text-secondary-rgb: 76,94,114;
+        --slate-rgb: 76,94,114;
+        --violet-rgb: 107,75,196;
+        --lgreen-alt-rgb: 59,138,82;
+      }
+    }
+    /* Dunkle Zonen: Hero (Foto ist fuer dunklen Grund komponiert) und die
+       Beispiel-Auswertung der Startseite ("Dunkel als Buehne", 16.10.).
+       Setzt die dunklen Werte lokal neu - alles darin bleibt dunkel, ohne eine
+       einzelne Stelle anzufassen. Im dunklen Thema wirkungslos (gleiche Werte).
+       color muss mit: geerbt wird der berechnete Wert, nicht das Token. */
+    #hero-block, .lp-example {
+      --brand-dark: #0a1628;
+      --brand-card: #132338;
+      --accent-green: #22c97a;
+      --accent-green-dim: rgba(34,201,122,0.12);
+      --accent-blue: #3b9eff;
+      --accent-blue-dim: rgba(59,158,255,0.10);
+      --accent-amber: #f5a623;
+      --accent-red: #ff5c5c;
+      --accent-purple: #a78bfa;
+      --brand-card2: #1a2e47;
+      --text-primary: #f0f4f8;
+      --text-secondary: #8da0b8;
+      --text-muted: #8396ae;
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(255,255,255,0.14);
+      --accent-green-text: #22c97a;
+      --accent-blue-text: #3b9eff;
+      --accent-amber-text: #f5a623;
+      --accent-red-text: #ff5c5c;
+      --accent-purple-text: #a78bfa;
+      --warn-text: #ffb347;
+      --on-accent: #0a1628;
+      --accent-green-deep: #1aaa65;
+      --knob: #ffffff;
+      --score-ok: #5edb97;
+      --score-ok-text: #5edb97;
+      --score-ok-rgb: 94,219,151;
+      --score-focus: #ff8c42;
+      --score-focus-text: #ff8c42;
+      --score-focus-rgb: 255,140,66;
+      --sunken: rgba(0,0,0,0.18);
+      --cta-green: #3ddc84;
+      --on-cta: #0d1a14;
+      --hero-bg: #0d1a14;
+      --ink-rgb: 255,255,255;
+      --shadow-rgb: 0,0,0;
+      --brand-dark-rgb: 10,22,40;
+      --accent-green-rgb: 34,201,122;
+      --accent-blue-rgb: 59,158,255;
+      --accent-amber-rgb: 245,166,35;
+      --accent-red-rgb: 255,92,92;
+      --accent-purple-rgb: 167,139,250;
+      --text-secondary-rgb: 141,160,184;
+      --slate-rgb: 122,143,168;
+      --violet-rgb: 139,92,246;
+      --lgreen-alt-rgb: 59,200,100;
+      color: var(--text-primary);
+    }
+    /* Umschalter */
+    .theme-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+      border-radius: 999px; border: 1px solid var(--border); background: rgba(var(--ink-rgb),0.04);
+      color: var(--text-secondary); cursor: pointer; font-size: 18px; flex: none; padding: 0; }
+    .theme-btn:hover { color: var(--text-primary); border-color: var(--border-hover); }
+    .logo-area .theme-btn { margin-left: 4px; }
+    #hero-block .theme-btn-hero { position: absolute; top: 14px; right: 14px; z-index: 4;
+      background: rgba(var(--brand-dark-rgb),0.55); }
+    .theme-switch { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px;
+      margin: 18px auto 0; font-size: 12px; color: var(--text-secondary); }
+    .theme-switch-opts { display: inline-flex; padding: 3px; gap: 2px; border-radius: 999px;
+      border: 1px solid var(--border); background: var(--brand-card); }
+    .theme-opt { min-height: 36px; padding: 0 14px; border: none; border-radius: 999px; background: transparent;
+      color: var(--text-secondary); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+    .theme-opt[aria-pressed="true"] { background: var(--accent-green); color: var(--on-accent); }
+    @media print { .theme-btn, .theme-switch { display: none !important; } }
+    /* Kontrastpruefung Hell (v2.8.13): "Deine Staerken" stand mit Deckkraft 0,75 bei
+       3,7:1. Auf Dunkel reicht es (Leuchtgruen), auf Hell volle Deckkraft. */
+    :root[data-theme="hell"] .bereiche-staerken-sep { opacity: 1; }
+    @media (prefers-color-scheme: light) { :root:not([data-theme="dunkel"]) .bereiche-staerken-sep { opacity: 1; } }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'DM Sans', sans-serif; background: var(--brand-dark); color: var(--text-primary); min-height: 100vh; padding: 20px; }
     .container { max-width: 720px; margin: 0 auto; }
@@ -1500,7 +1731,7 @@
     .promo-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
     .promo-btn { flex: 1 1 200px; display: block; padding: 11px 16px; border: 1px solid rgba(var(--accent-green-rgb),0.45); border-radius: 10px; background: rgba(var(--accent-green-rgb),0.08); color: var(--accent-green-text); font-size: 13.5px; font-weight: 600; text-align: center; text-decoration: none; line-height: 1.35; }
     @media (max-width: 480px) { .promo-actions { flex-direction: column; } .promo-btn { flex: 1 1 auto; } }
-    .app-footer { text-align: center; padding: 12px 0 20px; font-size: 11px; color: var(--text-muted); opacity: 0.5; letter-spacing: 0.03em; user-select: none; }
+    .app-footer { text-align: center; padding: 12px 0 20px; font-size: 11px; color: var(--text-muted); letter-spacing: 0.03em; user-select: none; }   /* v2.8.13: opacity 0.5 entfernt (WCAG) */
     .result-tabs { display: flex; gap: 0; background: var(--brand-card); border: 0.5px solid var(--border); border-radius: 14px; padding: 4px; margin: 0 0 16px; }
     .result-tab { flex: 1; padding: 10px 4px; text-align: center; font-size: 11.5px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-radius: 10px; transition: all .2s; border: none; background: none; line-height: 1.3; }
     .result-tab.active { background: var(--accent-green); color: var(--on-accent); font-weight: 700; }
@@ -1863,6 +2094,7 @@
       Über <span id="hero-count" style="font-weight:700;color:rgba(var(--ink-rgb),0.85);">100+</span> Menschen haben ihren LeVITA Vital-Check gemacht
     </div>
   </div>
+  <button type="button" class="theme-btn theme-btn-hero" onclick="toggleTheme()" aria-label="Helles Design einschalten"></button>
 </section>
 
 <section id="hero-value-props">
@@ -1907,7 +2139,7 @@
     .lp-watch-col.num { background: var(--sunken); }
     .lp-watch-col.ans { background: var(--accent-green-dim); border: 1px solid rgba(var(--accent-green-rgb),0.25); }
     .lp-watch-col b { display: block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
-    .lp-watch-col.num b { color: var(--text-muted); }
+    .lp-watch-col.num b { color: var(--text-secondary); }
     .lp-watch-col.ans b { color: var(--accent-green-text); }
     .lp-trust { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .lp-titem { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; }
@@ -2024,6 +2256,7 @@
          Der Check laeuft im iFrame, und wer mitten im Fragebogen klickt, soll
          ihn nicht verlieren. -->
     <div class="logo-sub">powered by <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:none;border-bottom:1px solid currentColor;">LogiVita</a></div>
+    <button type="button" class="theme-btn" onclick="toggleTheme()" aria-label="Helles Design einschalten"></button>
   </div>
   <div class="progress-wrap hidden" id="progressWrap">
     <div class="progress-meta">
@@ -2067,6 +2300,42 @@
   const ICO = (n) => n ? `<svg class="ic" aria-hidden="true"><use href="#ic-${n}"/></svg>` : "";
   const AREA_ICONS = { sleep:"moon", activity:"dumbbell", nutrition:"apple", vitamin_d:"sun", bmi:"scale", mental:"lotus", smoking:"nosmoke", alcohol:"wine", lifestyle:"leaf", micronutrients:"pill", metabolic:"flame" };
   const areaIco = (k) => ICO(AREA_ICONS[k] || "dot");
+
+  // v2.8.13 — Hell / Dunkel / Automatisch. Gespeichert wird nur eine
+  // ausdrueckliche Wahl; "Automatisch" loescht sie und folgt dem Geraet.
+  const THEME_KEY = 'levita-theme';
+  function themePref() {
+    try { const v = localStorage.getItem(THEME_KEY); return (v === 'hell' || v === 'dunkel') ? v : 'auto'; }
+    catch (e) { return 'auto'; }
+  }
+  function themeEffective() {
+    const p = themePref();
+    if (p !== 'auto') return p;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'hell' : 'dunkel';
+  }
+  function applyTheme() {
+    const p = themePref(), root = document.documentElement;
+    if (p === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', p);
+    const eff = themeEffective();
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', eff === 'hell' ? '#F7F6F2' : '#0a1628');
+    const lbl = eff === 'hell' ? 'Dunkles Design einschalten' : 'Helles Design einschalten';
+    document.querySelectorAll('.theme-btn').forEach(b => {
+      b.innerHTML = ICO(eff === 'hell' ? 'moon' : 'sun'); b.setAttribute('aria-label', lbl); b.title = lbl; });
+    document.querySelectorAll('.theme-opt').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.theme === p)));
+    if (typeof radarChart !== 'undefined' && radarChart && typeof rerenderRadar === 'function') rerenderRadar();
+  }
+  function setTheme(p) {
+    try { if (p === 'auto') localStorage.removeItem(THEME_KEY); else localStorage.setItem(THEME_KEY, p); } catch (e) {}
+    applyTheme();
+  }
+  function toggleTheme() { setTheme(themeEffective() === 'hell' ? 'dunkel' : 'hell'); }
+  if (window.matchMedia) {
+    const _mq = window.matchMedia('(prefers-color-scheme: light)');
+    if (_mq.addEventListener) _mq.addEventListener('change', () => { if (themePref() === 'auto') applyTheme(); });
+    else if (_mq.addListener) _mq.addListener(() => { if (themePref() === 'auto') applyTheme(); });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyTheme); else applyTheme();
   // v2.8.11 — Deutsche Bereichsnamen als Rueckfall. In der Datenbank fehlt bei
   // zwei Bereichen das Feld area_label; dann stand im Fragebogen und in der
   // Auswertung der technische Schluessel ("lifestyle", "metabolic"). Die
@@ -7017,7 +7286,7 @@
         <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">${ICO("envelope")} Bleib dran — wir erinnern dich an deinen Re-Check</div>
         <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:10px;">Höchstens einmal im Monat Tipps für deine Vitalität, Neues aus dem LeVITA Studio und rechtzeitig eine Erinnerung an deinen nächsten Check. Jederzeit abbestellbar.</div>
         <button id="mkBtn" onclick="requestMarketingOptin('${source}')" style="width:100%;padding:12px;border-radius:var(--radius-sm);border:none;background:var(--accent-green);color:var(--on-accent);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">Ja, halte mich auf dem Laufenden</button>
-        <div style="font-size:10.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">${MARKETING_CONSENT_TEXT} Du bekommst gleich eine E-Mail, in der du deine Anmeldung bestätigst.</div>
+        <div style="font-size:10.5px;color:var(--text-secondary);line-height:1.5;margin-top:8px;">${MARKETING_CONSENT_TEXT} Du bekommst gleich eine E-Mail, in der du deine Anmeldung bestätigst.</div>
         <div id="mkStatus" style="margin-top:8px;font-size:12.5px;"></div>
       </div>`;
   }
@@ -7428,40 +7697,52 @@
     return Object.keys(pm).length > 0 ? pm : null;
   }
 
+  // v2.8.13 (B3) — Canvas kennt kein var(): Farben beim Zeichnen aus den Tokens
+  // lesen. Auf Dunkel ergibt das exakt die bisherigen Werte.
+  function chartTheme() {
+    const cs = getComputedStyle(document.documentElement);
+    const v = (n) => cs.getPropertyValue(n).trim();
+    const a = (n, al) => `rgba(${v(n).replace(/\s+/g, '')},${al})`;
+    return { prev: a('--text-secondary-rgb', 0.75), ist: v('--accent-green'), istFill: a('--accent-green-rgb', 0.15),
+      pot: v('--accent-blue'), tick: a('--ink-rgb', 0.2), grid: a('--ink-rgb', 0.06), label: v('--text-secondary'),
+      tipBg: v('--brand-card'), tipBorder: a('--ink-rgb', 0.1), tipTitle: v('--text-primary'), tipBody: v('--text-secondary') };
+  }
+
   function renderRadarChart(areas) {
     const ctx = document.getElementById("vitalChart");
+    const T = chartTheme();
     if (!ctx) return;
     if (radarChart) radarChart.destroy();
     const shortLabels = {
       sleep:"Schlaf", activity:"Bewegung", nutrition:"Ernährung",
       vitamin_d:"Vit. D", bmi:"BMI", mental:"Mental",
       smoking:"Rauchen", alcohol:"Alkohol",
-      lifestyle:"Lifestyle", micronutrients:"Mikro", metabolic:"Energie"
+      lifestyle:"Lebensstil", micronutrients:"Mikro", metabolic:"Energie"
     };
     const datasets = [];
     // Ebene "Vorher" (Re-Check): neutral, dünn, ungefüllt — liegt UNTER der Ist-Ebene
     if (radarLayerPrev && window._prevAreaMap) {
       datasets.push({ label:"Vorher", data: areas.map(a => isFinite(window._prevAreaMap[a.key]) ? Math.round(window._prevAreaMap[a.key]) : null),
-        backgroundColor:"transparent", borderColor:"rgba(141,160,184,0.75)", borderWidth:1.5,
-        pointBackgroundColor:"rgba(141,160,184,0.75)", pointRadius:2.5 });
+        backgroundColor:"transparent", borderColor:T.prev, borderWidth:1.5,
+        pointBackgroundColor:T.prev, pointRadius:2.5 });
     }
     // Ebene "Ist": Markengrün, gefüllt
     datasets.push({ label:"Heute", data: areas.map(a => Math.round(a.score)),
-      backgroundColor:"rgba(34,201,122,0.15)", borderColor:"#22c97a", borderWidth:2.5,
-      pointBackgroundColor:"#22c97a", pointRadius:4 });
+      backgroundColor:T.istFill, borderColor:T.ist, borderWidth:2.5,
+      pointBackgroundColor:T.ist, pointRadius:4 });
     // Ebene "Potenzial": gestrichelt, ungefüllt — Hypothese, keine Messung
     const potMap = radarLayerPot ? getPotentialAreaMap() : null;
     if (potMap) {
       datasets.push({ label:"Potenzial (Simulation)", data: areas.map(a => isFinite(potMap[a.key]) ? Math.round(potMap[a.key]) : Math.round(a.score)),
-        backgroundColor:"transparent", borderColor:"#3b9eff", borderWidth:2, borderDash:[6,4],
-        pointBackgroundColor:"#3b9eff", pointRadius:3 });
+        backgroundColor:"transparent", borderColor:T.pot, borderWidth:2, borderDash:[6,4],
+        pointBackgroundColor:T.pot, pointRadius:3 });
     }
     radarChart = new Chart(ctx, {
       type:"radar",
       data:{ labels: areas.map(a => shortLabels[a.key] || a.label), datasets },
       options:{
-        scales:{ r:{ min:0, max:100, ticks:{ stepSize:25, color:"rgba(255,255,255,0.2)", font:{size:10}, backdropColor:"transparent" }, grid:{ color:"rgba(255,255,255,0.06)" }, angleLines:{ color:"rgba(255,255,255,0.06)" }, pointLabels:{ color:"#8da0b8", font:{size:11,weight:"600"} } } },
-        plugins:{ legend:{ display:false }, tooltip:{ backgroundColor:"#132338", borderColor:"rgba(255,255,255,0.1)", borderWidth:1, titleColor:"#f0f4f8", bodyColor:"#8da0b8" } },
+        scales:{ r:{ min:0, max:100, ticks:{ stepSize:25, color:T.tick, font:{size:10}, backdropColor:"transparent" }, grid:{ color:T.grid }, angleLines:{ color:T.grid }, pointLabels:{ color:T.label, font:{size:11,weight:"600"} } } },
+        plugins:{ legend:{ display:false }, tooltip:{ backgroundColor:T.tipBg, borderColor:T.tipBorder, borderWidth:1, titleColor:T.tipTitle, bodyColor:T.tipBody } },
         animation:{ duration:800 }
       }
     });
@@ -7675,7 +7956,8 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.12</footer>
+<div class="theme-switch" role="group" aria-label="Darstellung"><span>Darstellung</span><span class="theme-switch-opts"><button type="button" class="theme-opt" data-theme="hell" aria-pressed="false" onclick="setTheme('hell')">Hell</button><button type="button" class="theme-opt" data-theme="dunkel" aria-pressed="false" onclick="setTheme('dunkel')">Dunkel</button><button type="button" class="theme-opt" data-theme="auto" aria-pressed="false" onclick="setTheme('auto')">Automatisch</button></span></div>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.13</footer>
 
 
 </body>
