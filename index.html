@@ -747,6 +747,15 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.14 (17.10.2026): Zwei Korrekturen nach dem ersten Blick aufs Handy.
+         (1) Der Dreifach-Schalter Hell - Dunkel - Automatisch stand unter jeder
+         Frage. Er steht jetzt nur noch am Ende der Startseite (in
+         #hero-value-props, verschwindet also mit ihr). Im Fragebogen und in der
+         Auswertung bleibt das Symbol oben rechts.
+         (2) Hero randlos: Der 20-px-Innenabstand des body liess den Hero auf Hell
+         als Kasten im Papier stehen. Jetzt volle Breite, buendig oben. Auf Dunkel
+         wird das Foto dadurch links und rechts je 20 px breiter.
+
        v2.8.13 (17.10.2026): Helles Thema, umschaltbar. Pakete B2, B3 und B4 aus
          Design-Umsetzung-Reihenfolge.md.
          (1) Ohne Wahl folgt der Check der Geraeteeinstellung (prefers-color-
@@ -1416,10 +1425,14 @@
       color: var(--text-secondary); cursor: pointer; font-size: 18px; flex: none; padding: 0; }
     .theme-btn:hover { color: var(--text-primary); border-color: var(--border-hover); }
     .logo-area .theme-btn { margin-left: 4px; }
+    /* v2.8.14: Hero randlos. body hat 20 px Innenabstand; auf Dunkel war der Rand
+       unsichtbar, auf Hell stand der Hero als Kasten im Papier. Inline-Stil setzt
+       width:100%;margin:0 - daher !important. */
+    #hero-block { margin: -20px -20px 0 !important; width: calc(100% + 40px) !important; }
     #hero-block .theme-btn-hero { position: absolute; top: 14px; right: 14px; z-index: 4;
       background: rgba(var(--brand-dark-rgb),0.55); }
     .theme-switch { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px;
-      margin: 18px auto 0; font-size: 12px; color: var(--text-secondary); }
+      margin: 34px auto 4px; font-size: 12px; color: var(--text-secondary); }
     .theme-switch-opts { display: inline-flex; padding: 3px; gap: 2px; border-radius: 999px;
       border: 1px solid var(--border); background: var(--brand-card); }
     .theme-opt { min-height: 36px; padding: 0 14px; border: none; border-radius: 999px; background: transparent;
@@ -2246,6 +2259,9 @@
     <button class="lp-final-btn" onclick="startDirectCheck();">Jetzt kostenlos starten →</button>
     <div class="lp-final-note">5–7 Minuten · Ergebnis sofort · ohne Konto, ohne App · ab 18</div>
   </div>
+  <!-- v2.8.14: Die volle Wahl steht nur noch hier, am Ende der Startseite. Im
+       Fragebogen und in der Auswertung genuegt das Symbol oben rechts. -->
+  <div class="theme-switch" role="group" aria-label="Darstellung"><span>Darstellung</span><span class="theme-switch-opts"><button type="button" class="theme-opt" data-theme="hell" aria-pressed="false" onclick="setTheme('hell')">Hell</button><button type="button" class="theme-opt" data-theme="dunkel" aria-pressed="false" onclick="setTheme('dunkel')">Dunkel</button><button type="button" class="theme-opt" data-theme="auto" aria-pressed="false" onclick="setTheme('auto')">Automatisch</button></span></div>
 </section>
 
 <div class="container">
@@ -7956,8 +7972,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<div class="theme-switch" role="group" aria-label="Darstellung"><span>Darstellung</span><span class="theme-switch-opts"><button type="button" class="theme-opt" data-theme="hell" aria-pressed="false" onclick="setTheme('hell')">Hell</button><button type="button" class="theme-opt" data-theme="dunkel" aria-pressed="false" onclick="setTheme('dunkel')">Dunkel</button><button type="button" class="theme-opt" data-theme="auto" aria-pressed="false" onclick="setTheme('auto')">Automatisch</button></span></div>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.13</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.14</footer>
 
 
 </body>
