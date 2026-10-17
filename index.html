@@ -740,6 +740,51 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.11 (17.10.2026): Abschnittswechsel im Fragebogen (Paket A3b) und vier
+         Fehler aus der Icon-Umstellung.
+         (1) FEHLER, seit v2.8.9 live: AREA_ICONS haelt seitdem Icon-NAMEN statt
+         Emoji, vier Stellen lasen die Zuordnung aber weiter roh. Dort stand
+         woertlich "moon Schlaf", "leaf Lebensstil" — auf jeder der acht bis elf
+         Bereichskarten der Auswertung, im Kopf des Simulators, in jeder
+         Hebel-Zeile und im Hinweis zur guenstigsten Antwort. Alle vier gehen
+         jetzt ueber areaIco(key). Die acht in v2.8.9 umgestellten Stellen waren
+         richtig; diese vier lagen in Teilen, die ich damals nicht durchsucht
+         hatte — die Zuordnung umzustellen und die Lesestellen einzeln
+         nachzuziehen war der Fehler, nicht das Vergessen einer einzelnen Zeile.
+         (2) Deutsche Bereichsnamen als Rueckfall (AREA_LABELS_DE, Helfer
+         areaName). Bei "lifestyle" und "metabolic" fehlt in der Datenbank das
+         Feld area_label, deshalb stand der technische Schluessel im Fragebogen,
+         im Fortschrittskopf und in der Auswertung — oder gar nichts, wo der Name
+         ohne Rueckfall ausgegeben wurde. Umgestellt sind alle 15 Ausgabestellen:
+         Fragekarte, Abschnittsansicht, Fortschrittskopf, Bereichskarten,
+         Staerken-Liste, Stufen-Chips, Hero-Kopf Tab 3, beide Hebel-Texte, die
+         drei Simulator-Hinweise und die Ziel-Zeilen im Re-Check. Ein vorhandenes
+         area_label hat immer Vorrang; die eigentliche Korrektur gehoert in die
+         Bereichstabelle.
+         (3) A3b — Abschnittswechsel. Am Anfang jedes Bereichs steht jetzt eine
+         Abschnittsansicht: Buddy-Motiv in 160 px, "Abschnitt 3 von 8", der
+         Bereichsname in der Serif, die Laenge des Abschnitts ("4 Fragen · etwa
+         1 Minute"), darunter "Weiter". Aus knapp dreissig Fragen werden acht
+         kurze Etappen. Die sechzehn Motive lagen bereits im Repo und wurden
+         bisher nur als 120-px-Beigabe neben der Plakette gezeigt.
+         WICHTIG — kein zusaetzlicher Schritt: Die Ansicht liegt in DERSELBEN
+         Schritt-Kachel wie die erste Frage des Bereichs (.area-gate mit
+         .area-intro und .area-body) und tritt per CSS-Klasse zur Seite.
+         currentStep bleibt damit unberuehrt; gespeicherte Fortschritte und die
+         Trichterzahlen (step_index) bleiben mit allen bisherigen Checks
+         vergleichbar. Der Merker _areaIntroSeen sorgt dafuer, dass ein
+         Neuaufbau durch buildSteps (bedingte Fragen) und ein Schritt zurueck die
+         Ansicht nicht wiederholen; startCheck setzt ihn zurueck, damit ein
+         Re-Check im selben Tab wieder gefuehrt wird.
+         Am Bereichsanfang zeigt die Fragekarte selbst kein Buddy mehr — sonst
+         stuende dasselbe Motiv zweimal hintereinander.
+         Kein neues Trichter-Ereignis. Ob die Abschnittsansicht einen eigenen
+         Ereignistyp bekommt (Verweildauer, Absprung), bleibt eine Entscheidung
+         — fuer die Trichter-Auswertung waere es ein neuer Wert.
+         (4) Das Blitz-Icon in der Status-Zeile der Auswertung war nach der
+         Umstellung textfarben und damit blass; es traegt jetzt --accent-amber,
+         wie das Emoji vorher.
+
        v2.8.10 (16.10.2026): Icons in der Auswertung. Paket A2b, zweiter Teil —
          damit ist die Anwendung emojifrei.
          (1) Sprite von 27 auf 46 Symbole: key, refresh, chart, trash, calendar,
@@ -1111,6 +1156,28 @@
     .buddy-img { flex: 0 0 auto; width: 120px; height: 120px; display: block; }
     .buddy-img.buddy-sm { width: 80px; height: 80px; }
     .buddy-img.buddy-lg { width: 160px; height: 160px; }
+    /* v2.8.11 (A3b) — Abschnittsansicht. Liegt mit der Fragekarte in derselben
+       Schritt-Kachel; .entered schaltet um. Kein zusaetzlicher Schritt. */
+    .area-gate > .area-body { display: none; }
+    .area-gate.entered > .area-intro { display: none; }
+    .area-gate.entered > .area-body { display: block; }
+    .area-intro { background: var(--brand-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 34px 24px 28px; margin-bottom: 16px;
+      text-align: center; animation: areaIntroIn 0.4s ease both; }
+    .area-intro .buddy-img { margin: 0 auto 18px; }
+    .area-intro-kicker { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--accent-green); font-weight: 700; margin-bottom: 10px; }
+    .area-intro-title { font-family: 'DM Serif Display', serif; font-weight: 400;
+      font-size: 26px; line-height: 1.2; color: var(--text-primary); margin: 0 0 8px;
+      display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .area-intro-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; }
+    .area-intro .next-btn { display: block; max-width: 280px; margin: 0 auto; }
+    @keyframes areaIntroIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { .area-intro { animation: none; } }
+    @media (max-width: 480px) {
+      .area-intro { padding: 26px 18px 22px; }
+      .area-intro-title { font-size: 22px; }
+    }
     .buddy-wait { display: flex; align-items: center; gap: 14px; }
     .buddy-wait .buddy-img { width: 100px; height: 100px; }
     /* v1.32.1 — Buddy stellt das Ergebnis vor (Abschluss des Checks) */
@@ -1911,6 +1978,19 @@
   const ICO = (n) => n ? `<svg class="ic" aria-hidden="true"><use href="#ic-${n}"/></svg>` : "";
   const AREA_ICONS = { sleep:"moon", activity:"dumbbell", nutrition:"apple", vitamin_d:"sun", bmi:"scale", mental:"lotus", smoking:"nosmoke", alcohol:"wine", lifestyle:"leaf", micronutrients:"pill", metabolic:"flame" };
   const areaIco = (k) => ICO(AREA_ICONS[k] || "dot");
+  // v2.8.11 — Deutsche Bereichsnamen als Rueckfall. In der Datenbank fehlt bei
+  // zwei Bereichen das Feld area_label; dann stand im Fragebogen und in der
+  // Auswertung der technische Schluessel ("lifestyle", "metabolic"). Die
+  // eigentliche Korrektur gehoert in die Bereichstabelle — bis dahin faengt die
+  // Anwendung es hier ab. Ein vorhandenes area_label hat immer Vorrang.
+  const AREA_LABELS_DE = { sleep:"Schlaf", activity:"Bewegung", nutrition:"Ernährung",
+    vitamin_d:"Vitamin D", bmi:"Körpergewicht", mental:"Mentale Balance",
+    smoking:"Rauchen", alcohol:"Alkohol", lifestyle:"Lebensstil",
+    micronutrients:"Mikronährstoffe", metabolic:"Stoffwechsel" };
+  const areaName = (label, key) => label || AREA_LABELS_DE[key] || key || "";
+  // v2.8.11 (A3b) — Welche Abschnittsansichten schon weggeklickt wurden. Wird in
+  // startCheck zurueckgesetzt, damit ein Re-Check im selben Tab wieder fuehrt.
+  let _areaIntroSeen = {};
 
   // v2.8.0 — Score-Karte Version 3: Level-Grenzen (score_settings.level_thresholds) und
   // Themenwerte für Signale, die keine Score-Bereiche mehr sind (Stoffwechsel, Mikronährstoffe,
@@ -2935,10 +3015,67 @@
     return q && (q.question_type === "multi_choice" || MULTI_CHOICE_KEYS.includes(q.question_key));
   }
 
+  // v2.8.11 (A3b) — Abschnittswechsel. Am Anfang eines Bereichs liegt VOR der
+  // Fragekarte eine Abschnittsansicht: grosses Buddy-Motiv, Bereichsname, Laenge.
+  // Sie ist KEIN eigener Schritt, sondern wohnt in derselben Schritt-Kachel und
+  // tritt nach "Weiter" zur Seite. Damit bleibt currentStep unberuehrt —
+  // gespeicherte Fortschritte (progress_resumed) und die Trichterzahlen
+  // (step_answered.step_index) bleiben mit allen bisherigen Checks vergleichbar.
   function questionStepHtml(q) {
+    const gate = BUDDY_ENABLED && buddyIsAreaStart(q) && !_areaIntroSeen[q.area_key];
+    const body = questionCardHtml(q, gate);
+    return gate ? areaGateHtml(q, body) : body;
+  }
+
+  // Zaehlt die Bereiche in der Reihenfolge ihres ersten Auftretens und die Fragen
+  // des gesuchten Bereichs. Grundlage ist immer das AKTUELLE groupedQuestions,
+  // also nach dem Zu- und Abschalten der bedingten Fragen.
+  function areaMeta(key) {
+    const seq = [];
+    let count = 0;
+    groupedQuestions.forEach(s => {
+      if (!s || !s.area_key) return;
+      if (seq.indexOf(s.area_key) < 0) seq.push(s.area_key);
+      if (s.area_key === key) count++;
+    });
+    return { pos: seq.indexOf(key) + 1, total: seq.length, count: count };
+  }
+
+  function areaGateHtml(q, body) {
+    const m = areaMeta(q.area_key);
+    const min = Math.max(1, Math.round((m.count * (STEP_SECONDS.question || 11)) / 60));
+    const sub = `${m.count} ${m.count === 1 ? "Frage" : "Fragen"} · etwa ${min} ${min === 1 ? "Minute" : "Minuten"}`;
+    const buddy = buddyForStep(q, { size: "lg", force: true });
+    return `<div class="area-gate" data-area="${q.area_key}">
+        <div class="area-intro">
+          ${buddy}
+          <div class="area-intro-kicker">Abschnitt ${m.pos} von ${m.total}</div>
+          <div class="area-intro-title">${areaIco(q.area_key)} ${areaName(q.area_label, q.area_key)}</div>
+          <div class="area-intro-sub">${sub}</div>
+          <button class="next-btn" onclick="enterArea('${q.area_key}')">Weiter →</button>
+        </div>
+        <div class="area-body">${body}</div>
+      </div>`;
+  }
+
+  // Blendet die Abschnittsansicht weg und merkt den Bereich. Der Merker wirkt
+  // zweifach: beim Neuaufbau durch buildSteps (bedingte Fragen) entsteht gar kein
+  // Gate mehr, und ein Schritt zurueck zeigt die Ansicht nicht erneut.
+  function enterArea(key) {
+    if (key) _areaIntroSeen[key] = true;
+    const step = document.getElementById(`step-${currentStep}`);
+    const g = step && step.querySelector(".area-gate");
+    if (g) g.classList.add("entered");
+    document.querySelectorAll(".area-gate").forEach(el => {
+      if (el.dataset && el.dataset.area === key) el.classList.add("entered");
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function questionCardHtml(q, noBuddy) {
     const icon = areaIco(q.area_key);
-    const buddy = buddyForStep(q);
-    const badge = `<div class="area-badge">${icon} ${q.area_label || q.area_key}</div>`;
+    const buddy = noBuddy ? "" : buddyForStep(q);
+    const badge = `<div class="area-badge">${icon} ${areaName(q.area_label, q.area_key)}</div>`;
     let html = `<div class="card">`
       + (buddy ? `<div class="buddy-row">${buddy}${badge}</div>` : badge)
       + `<div class="question-text">${q.question_text}</div>`;
@@ -3576,6 +3713,7 @@
     document.getElementById('quiz-flow')?.classList.remove('hidden');
     document.getElementById('step-0')?.classList.add('active');
     // Kein Intro-Step mehr: step-0 (Ziel-Frage) ist bereits aktiv durch buildSteps(0)
+    _areaIntroSeen = {};   // v2.8.11: Abschnittsansichten fuehren wieder
     currentStep = 0;
     updateProgress();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3675,7 +3813,7 @@
         const tIdx = qSteps.findIndex(x => x.question_key === trig || (trig === "diet_type" && x.question_key === "nutrition_type"));
         return tIdx === -1 || tIdx < curIdx;
       }).length;
-      setAreaHead(AREA_ICONS[q.area_key] || "dot", q.area_label || q.area_key);
+      setAreaHead(AREA_ICONS[q.area_key] || "dot", areaName(q.area_label, q.area_key));
       document.getElementById("progressCount").textContent = qPos > 0 ? `Frage ${qPos} von ${Math.max(qTotal, qPos)}` : "";
     }
     // v2.8.8: Die Restzeit haengt sich an das an, was oben gesetzt wurde — auf
@@ -4175,7 +4313,7 @@
           <div style="font-size:16px;font-weight:700;color:${sc};">✦ ${scoreLabel}</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${name?name+' · ':''}${personalData.age?personalData.age+' J. · ':''}${goalLabel}</div>
         </div>
-        <div style="font-size:22px;">${ICO("bolt")}</div>
+        <div style="font-size:22px;color:var(--accent-amber);">${ICO("bolt")}</div>
       </div>`;
 
     // v1.53.7 — Einordnung bei sehr niedrigem Index (externe Prüfung 03.10.2026).
@@ -4491,7 +4629,7 @@
       if (worst && worst.score < 90) {
         html += S.hebel = `<div class="hebel-box"><div class="hebel-icon">${ICO("spark")}</div><div>
           <div class="hebel-title">Dein einziger kleiner Feinschliff</div>
-          <div class="hebel-text"><strong>${areaIco(worst.key)} ${worst.label}</strong> ist der einzige Bereich mit noch etwas Luft nach oben. Alles andere läuft bereits sehr stabil.</div>
+          <div class="hebel-text"><strong>${areaIco(worst.key)} ${areaName(worst.label, worst.key)}</strong> ist der einzige Bereich mit noch etwas Luft nach oben. Alles andere läuft bereits sehr stabil.</div>
         </div></div>`;
       }
     } else if (worst) {
@@ -4501,7 +4639,7 @@
       // und stehen jetzt dort — verschoben, nicht doppelt.
       html += S.hebel = `<div class="hebel-box" onclick="switchResultTab('empfehlungen')" style="cursor:pointer;"><div class="hebel-icon">${ICO("bulb")}</div><div>
         <div class="hebel-title">Dein größter Ansatzpunkt</div>
-        <div class="hebel-text"><strong>${areaIco(worst.key)} ${worst.label}</strong></div>
+        <div class="hebel-text"><strong>${areaIco(worst.key)} ${areaName(worst.label, worst.key)}</strong></div>
         <div style="margin-top:8px;font-size:12.5px;color:var(--accent-green);font-weight:600;">Was das konkret heißt → Nächste Schritte</div>
       </div></div>`;
     }
@@ -4673,7 +4811,7 @@
     // Ansatzpunkt"). Zwei Richtungen in einem Block. Jetzt steht der Hebel in
     // der Ueberschrift, das Ziel in der Kicker-Zeile darueber — die Verbindung
     // aus v1.31.3 bleibt im Satz erhalten.
-    const heroHead3 = worst ? `${areaIco(worst.key)} ${worst.label}` : heroTitle3;
+    const heroHead3 = worst ? `${areaIco(worst.key)} ${areaName(worst.label, worst.key)}` : heroTitle3;
     const heroKicker3 = worst && heroTitle3 ? `✦ Dein Weg zu: ${heroTitle3}` : "✦ Dein wichtigster nächster Schritt";
     html += S.hero = `
       <div style="background:linear-gradient(135deg,rgba(34,201,122,0.12),rgba(59,158,255,0.08));
@@ -5098,7 +5236,7 @@
     else s1 = `Dein Ergebnis zeigt mehrere Bereiche mit Luft nach oben – ein klarer Ausgangspunkt.`;
     // v2.4.1 — nur wenn der Bereich wirklich Luft hat (< 70) und nicht zugleich als Stärke genannt wurde
     const s2 = (S.worst && Number(S.worst.score) < 70 && !strengths.some(a => a.key === S.worst.key))
-      ? ` Am meisten Luft ist bei <strong>${S.worst.label}</strong>.`
+      ? ` Am meisten Luft ist bei <strong>${areaName(S.worst.label, S.worst.key)}</strong>.`
       : (S.worst && Number(S.worst.score) >= 70 ? ` Alle Bereiche stehen stabil – jetzt geht es ums Halten.` : "");
     let s3 = "";
     if (best && Number(best.gain) >= 1) {
@@ -5164,7 +5302,7 @@
     return `<div class="stage-kicker">Deine Stärken</div>
       <div class="stage-strengths">${st.map(a => `
         <div class="stage-strength">
-          <div class="stage-strength-head"><span>${areaIco(a.key)} ${a.label}</span><span style="color:${scoreBand(a.score).color};">${Math.round(a.score)}</span></div>
+          <div class="stage-strength-head"><span>${areaIco(a.key)} ${areaName(a.label, a.key)}</span><span style="color:${scoreBand(a.score).color};">${Math.round(a.score)}</span></div>
           <div class="stage-strength-sub">${scoreBand(a.score).label}</div>
         </div>`).join("")}
       </div>`;
@@ -5185,7 +5323,7 @@
     let body = "";
     if (worst && Number(worst.score) < 70) {
       body += `<div style="font-size:12px;color:var(--text-secondary);">Dein größter Ansatzpunkt</div>
-        <div style="font-size:19px;font-weight:700;margin:2px 0 12px;">${AREA_ICONS[worst.key] || ""} ${worst.label}</div>`;
+        <div style="font-size:19px;font-weight:700;margin:2px 0 12px;">${areaIco(worst.key)} ${areaName(worst.label, worst.key)}</div>`;
     }
     if (best) {
       const baseT = Number(simScenarios.base && simScenarios.base.total) || Number(S.totalScore);
@@ -5215,7 +5353,7 @@
           </div>`;
       });
       if (worst && !(simScenarios.levers || []).some(l => l.area_key === worst.key)) {
-        body += `<div class="sim-note">Bei <strong>${worst.label}</strong> hast du bereits die günstigste Antwort gegeben. Was dort weiterhilft, steht in deinem Vital-Plan.</div>`;
+        body += `<div class="sim-note">Bei <strong>${areaName(worst.label, worst.key)}</strong> hast du bereits die günstigste Antwort gegeben. Was dort weiterhilft, steht in deinem Vital-Plan.</div>`;
       }
       body += goalWeightNoteHtml(S);   // v2.7.2
       body += `<div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin:4px 0 10px;">Berechnet aus deinen Antworten, mit derselben Formel wie dein Ergebnis. Hebel addieren sich nicht einfach – die Kombination ist exakt gerechnet.</div>
@@ -5278,7 +5416,7 @@
     if (rest.length) {
       html += `<div class="stage-locked">
           <div style="display:flex;align-items:center;gap:8px;color:var(--accent-blue);">${STAGE_LOCK_ICON}<span style="font-size:14px;font-weight:700;color:var(--text-primary);">${rest.length} weitere Bereiche in deinem Vital-Plan</span></div>
-          <div class="stage-chips">${rest.map(a => `<span class="stage-chip">${a.label}</span>`).join("")}</div>
+          <div class="stage-chips">${rest.map(a => `<span class="stage-chip">${areaName(a.label, a.key)}</span>`).join("")}</div>
           <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;">Jeder Bereich mit Wert, Einordnung für dein Alter und konkreten Schritten – dazu deine Hebel und dein Fahrplan.</div>
           <button type="button" class="stage-btn-outline" onclick="scrollToAiBox()">Meinen Vital-Plan anfordern</button>
         </div>`;
@@ -5584,7 +5722,7 @@
   function stageWissenHtml(S) {
     const items = (S.cat3Items && S.cat3Items.length) ? S.cat3Items
       : [["Tanita-Körperanalyse im Studio", "Muskelmasse, Körperfett und Wasserhaushalt – die Zahlen hinter deinem Ergebnis."]];
-    const vermuten = S.worst ? `Dass sich bei dir über ${S.worst.label} am meisten bewegen lässt.` : "Dass deine Basis stabil ist und Feinschliff genügt.";
+    const vermuten = S.worst ? `Dass sich bei dir über ${areaName(S.worst.label, S.worst.key)} am meisten bewegen lässt.` : "Dass deine Basis stabil ist und Feinschliff genügt.";
     return `<div class="stage-wissen">
         <div style="font-size:15px;font-weight:700;">Was wir wissen – und was wir messen könnten</div>
         <div class="stage-wissen-grid">
@@ -6075,7 +6213,7 @@
       else if (bmi < 30) { cls = "area-medium"; statusTxt = "△ Über dem Orientierungsbereich"; }
       else { cls = "area-focus"; statusTxt = "⚠ Deutlich über dem Orientierungsbereich"; }
     }
-    const icon = AREA_ICONS[area.key] || "●";
+    const icon = areaIco(area.key);
     const bmiHtml = area.key === "bmi" ? renderBmiDetail(result) : "";
     // V2: Vorher→Heute-Delta je Bereich (nur bei verknüpftem Re-Check).
     // Rausch-Regel wie in der Mail und in der Verlaufskarte: |Delta| < 2 gilt
@@ -6112,7 +6250,7 @@
     return `
       <div class="area-card ${cls}"${_noDetail ? ` style="cursor:default;"` : ` onclick="toggleAreaDetail('detail-${area.key}')"`}>
         <div class="area-card-header">
-          <div class="area-card-name">${icon} ${area.label}</div>
+          <div class="area-card-name">${icon} ${areaName(area.label, area.key)}</div>
           <div class="area-score-pill">${Math.round(area.score)}</div>
         </div>
         <div class="area-bar-track"><div class="area-bar-fill" data-w="${Math.round(area.score)}" style="width:0%"></div></div>
@@ -6555,7 +6693,7 @@
     }
     let leversHtml = "";
     simScenarios.levers.forEach(l => {
-      const icon = AREA_ICONS[l.area_key] || "→";
+      const icon = areaIco(l.area_key);
       const short = SIM_SHORT_LABELS[l.question_key] || l.label || l.question_key;
       leversHtml += `
         <div class="sim-lever" id="simLever_${escHtml(l.question_key)}" onclick="toggleSimLever('${escHtml(l.question_key)}')">
@@ -6575,7 +6713,7 @@
     // Widerspruch zwischen den beiden Stellen.
     let ansatzNote = "";
     if (worst && worst.key && !simScenarios.levers.some(l => l.area_key === worst.key)) {
-      ansatzNote = `<div class="sim-note">Bei <strong>${AREA_ICONS[worst.key] || ""} ${escHtml(worst.label)}</strong> — deinem größten Ansatzpunkt — hast du bereits die günstigste Antwort gegeben. Was dort weiterhilft, steht in deinen nächsten Schritten.</div>`;
+      ansatzNote = `<div class="sim-note">Bei <strong>${areaIco(worst.key)} ${escHtml(areaName(worst.label, worst.key))}</strong> — deinem größten Ansatzpunkt — hast du bereits die günstigste Antwort gegeben. Was dort weiterhilft, steht in deinen nächsten Schritten.</div>`;
     }
     return `
       <div class="sim-box" id="simBox">
@@ -6677,7 +6815,7 @@
           ? `<span style="color:var(--text-muted);">unverändert</span>`
           : `<span style="color:var(--accent-amber);font-weight:700;">▼ ${r.delta}</span>`;
       return `<div style="display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--text-secondary);padding:4px 0;">
-        <span>${escHtml(r.label)}</span><span>${r.prev} → <strong style="color:var(--text-primary);">${r.cur}</strong> ${badge}</span>
+        <span>${escHtml(areaName(r.label, r.key))}</span><span>${r.prev} → <strong style="color:var(--text-primary);">${r.cur}</strong> ${badge}</span>
       </div>`;
     }).join('');
     return `
@@ -7448,7 +7586,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.10</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.11</footer>
 
 
 </body>
