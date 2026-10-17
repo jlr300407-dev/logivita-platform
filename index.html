@@ -747,6 +747,14 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.16 (17.10.2026): Auswertung klarer (Phase C). Eine Ergebnis-Karte
+       (stageHeroHtml) ersetzt Buddy-Karte, Stufen-Plakette und Ring-Karte: Index als
+       Hauptzahl, Ring in der Farbe der Stufe, ein Satz Deutung, Vitalitaets-Alter als
+       Uebersetzung darunter, Ziel. Stufe 1: Warnhinweise direkt unter dem Ergebnis,
+       danach der groesste Hebel mit gruenem Hauptknopf "Meinen Vital-Plan anfordern";
+       die doppelte "Einschaetzung" entfaellt (alle Saetze stehen in den Karten).
+       Farbregeln: Gruen = Handlung/stabil, Blau = Potenzial, Lila = Studio/Wissen,
+       Links in Textfarbe. Werte, Texte und Berechnung unveraendert.
        v2.8.15 (17.10.2026): konto.js 1.4.0 und Token --error-text.
          FEHLER im hellen Thema seit v2.8.13: Der Konto-Schritt in der Auswertung
          (konto.js) hatte feste Farben - Knopfschrift dunkel auf jetzt dunkelgruenem
@@ -1675,7 +1683,7 @@
     /* v1.46.0 — Vertiefung je Bereich */
     .area-info { font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); text-transform: none; letter-spacing: 0; font-weight: 400; }
     .area-info p { margin: 0 0 8px; }
-    .area-info .ai-age { background: rgba(var(--accent-blue-rgb),0.07); border-left: 2px solid var(--accent-blue); padding: 8px 10px; margin: 8px 0; }
+    .area-info .ai-age { background: rgba(var(--accent-purple-rgb),0.07); border-left: 2px solid var(--accent-purple); padding: 8px 10px; margin: 8px 0; }
     .area-info .ai-age b { color: var(--text-primary); }
     .area-info .ai-src { font-size: 10.5px; color: var(--text-muted); margin-top: 6px; }
     .area-info .ai-src a { color: var(--text-muted); text-decoration: underline; }
@@ -1772,7 +1780,7 @@
     /* v2.7.1 — Gliederung "Mein Plan": allein / im Studio / Zugang */
     .plan-zone-head { margin: 24px 0 12px; padding: 12px 14px; border-radius: 12px; background: var(--brand-card); border: 0.5px solid var(--border); border-left: 4px solid var(--accent-green); display: flex; gap: 12px; align-items: flex-start; }
     .plan-zone-head:first-child { margin-top: 4px; }
-    .plan-zone-head.studio { border-left-color: var(--accent-blue); }
+    .plan-zone-head.studio { border-left-color: var(--accent-purple); }
     .plan-zone-head.zugang { border-left-color: var(--text-muted); }
     .plan-zone-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
     .plan-zone-title { font-size: 16px; font-weight: 800; color: var(--text-primary); }
@@ -1905,8 +1913,33 @@
     #rtc-plan .sim-goal-btn:not(:disabled):not(.saved) { background: var(--accent-blue); color: var(--on-accent); border-color: var(--accent-blue); }
     .pulse-once { animation: pulseOnce 1.5s ease; }
     @keyframes pulseOnce { 0%,100% { box-shadow: 0 0 0 0 rgba(var(--accent-blue-rgb),0); } 40% { box-shadow: 0 0 0 6px rgba(var(--accent-blue-rgb),0.35); } }
-    .stage-btn-outline { display: block; width: 100%; padding: 13px; border-radius: var(--radius-sm); border: 1px solid rgba(var(--accent-blue-rgb),0.45); background: transparent; color: var(--accent-blue-text); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; margin-top: 4px; }
-    .stage-locked { background: var(--brand-card); border: 1px dashed rgba(var(--accent-blue-rgb),0.45); border-radius: 14px; padding: 16px; margin: 6px 0 16px; }
+    /* v2.8.16 (Phase C) — Ergebnis-Karte und gruener Hauptknopf */
+    .res-hero { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 18px 16px; margin-bottom: 14px; }
+    .res-hero-head { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--border); }
+    .res-hero-head .buddy-img { width: 64px; height: 64px; flex: none; }
+    .res-hero-title { font-size: 16px; font-weight: 700; line-height: 1.3; color: var(--text-primary); }
+    .res-hero-sub { font-size: 13px; line-height: 1.5; color: var(--text-secondary); margin-top: 3px; }
+    .res-hero-main { display: flex; align-items: center; gap: 16px; }
+    .res-hero-ring { position: relative; width: 110px; height: 110px; flex: none; }
+    .res-hero-num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-size: 11px; color: var(--text-muted); }
+    .res-hero-num #scoreDisplayNum { font-family: 'DM Serif Display', serif; font-size: 36px; line-height: 1; color: var(--text-primary); }
+    .res-hero-meaning { min-width: 0; }
+    .res-hero-meaning p { margin: 8px 0 0; font-size: 14.5px; line-height: 1.5; color: var(--text-primary); }
+    .res-level { display: inline-block; font-size: 13px; font-weight: 700; border: 1px solid var(--border); background: rgba(var(--ink-rgb),0.04); border-radius: 999px; padding: 4px 11px; }
+    .res-hero-age { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; background: var(--brand-card2); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13.5px; line-height: 1.45; color: var(--text-secondary); }
+    .res-hero-age .ic { font-size: 17px; flex: none; margin-top: 1px; color: var(--text-secondary); }
+    .res-hero-age strong { color: var(--text-primary); }
+    .res-hero-age-line { font-size: 13px; font-weight: 600; margin-top: 3px; }
+    .res-hero-age-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
+    .res-hero-goal { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; color: var(--text-secondary); }
+    .res-hero-goal strong { color: var(--text-primary); }
+    .res-pill { font-size: 13px; font-weight: 800; border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; flex: none; }
+    .stage-btn-go { display: block; width: 100%; padding: 15px; margin-top: 6px; border: none; border-radius: var(--radius-sm); background: var(--accent-green); color: var(--on-accent); font-family: 'DM Sans', sans-serif; font-size: 15.5px; font-weight: 800; cursor: pointer; }
+    .stage-btn-go:hover { filter: brightness(1.05); }
+    .res-cta-note { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+    @media (max-width: 380px) { .res-hero-main { gap: 12px; } .res-hero-ring { transform: scale(.92); transform-origin: left center; } }
+    .stage-btn-outline { display: block; width: 100%; padding: 13px; border-radius: var(--radius-sm); border: 1px solid rgba(var(--accent-green-rgb),0.5); background: transparent; color: var(--accent-green-text); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; margin-top: 4px; }
+    .stage-locked { background: var(--brand-card); border: 1px dashed rgba(var(--accent-green-rgb),0.5); border-radius: 14px; padding: 16px; margin: 6px 0 16px; }
     .stage-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
     .stage-chip { font-size: 12px; color: var(--text-secondary); background: rgba(var(--ink-rgb),0.05); border: 1px solid var(--border); border-radius: 999px; padding: 5px 11px; }
     .stage-age { background: var(--brand-card); border: 1px solid rgba(var(--accent-blue-rgb),0.3); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
@@ -1918,16 +1951,16 @@
     .stage-step { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
     .stage-step-num { width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; border: 2px solid var(--accent-green); color: var(--accent-green-text); }
     .stage-step-num.done { background: var(--accent-green); color: var(--on-accent); }
-    .stage-step-num.blue { border-color: var(--accent-blue); color: var(--accent-blue-text); }
+    .stage-step-num.blue { border-color: var(--accent-purple); color: var(--accent-purple-text); }   /* v2.8.16: Studio = lila (Klassenname bleibt) */
     .stage-step-title { font-size: 15px; font-weight: 700; }
     .stage-step-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
     .stage-done { background: var(--brand-card); border: 1px solid rgba(var(--accent-green-rgb),0.3); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
     .stage-done .stage-step { margin-bottom: 0; }
-    .stage-studio { background: var(--brand-card2); border: 1px solid rgba(var(--accent-blue-rgb),0.25); border-radius: var(--radius); padding: 18px 16px; margin-bottom: 16px; }
+    .stage-studio { background: var(--brand-card2); border: 1px solid rgba(var(--accent-purple-rgb),0.3); border-radius: var(--radius); padding: 18px 16px; margin-bottom: 16px; }
     .stage-service { background: rgba(var(--ink-rgb),0.04); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; }
     .stage-service-title { font-size: 13.5px; font-weight: 700; margin-bottom: 3px; }
     .stage-service-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
-    .stage-btn-blue { display: block; text-align: center; padding: 14px; border-radius: var(--radius-sm); background: var(--accent-blue); color: var(--on-accent); font-size: 14.5px; font-weight: 800; text-decoration: none; margin: 12px 0 10px; }
+    .stage-btn-blue { display: block; text-align: center; padding: 14px; border-radius: var(--radius-sm); background: var(--accent-green); color: var(--on-accent); font-size: 14.5px; font-weight: 800; text-decoration: none; margin: 12px 0 10px; }
     .stage-unlock { background: rgba(var(--accent-green-rgb),0.10); border: 1px solid rgba(var(--accent-green-rgb),0.4); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
     .stage-wissen { background: var(--brand-card); border: 1px solid rgba(var(--accent-purple-rgb),0.3); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
     .stage-wissen-grid { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px 12px; font-size: 12.5px; line-height: 1.55; margin-top: 10px; }
@@ -1939,19 +1972,19 @@
     .stage-form-legend { font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; }
     .stage-form-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--text-secondary); margin: 12px 0 6px; }
     .stage-input { width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(var(--ink-rgb),0.04); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; }
-    .stage-input:focus { outline: none; border-color: var(--accent-blue); }
+    .stage-input:focus { outline: none; border-color: var(--accent-green); }
     .stage-choice { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; font-size: 13.5px; line-height: 1.45; cursor: pointer; }
-    .stage-choice input { width: 18px; height: 18px; margin: 2px 0 0; flex-shrink: 0; accent-color: var(--accent-blue); }
-    .stage-choice:has(input:checked) { border-color: var(--accent-blue); background: var(--accent-blue-dim); }
+    .stage-choice input { width: 18px; height: 18px; margin: 2px 0 0; flex-shrink: 0; accent-color: var(--accent-green); }
+    .stage-choice:has(input:checked) { border-color: var(--accent-green); background: var(--accent-green-dim); }
     .stage-choice-sub { font-size: 12px; color: var(--text-secondary); }
     .stage-contact-line { font-size: 13px; line-height: 1.6; margin: 2px 0; }
-    .stage-contact-line a { color: var(--accent-blue-text); }
+    .stage-contact-line a { color: var(--text-primary); text-decoration: underline; text-underline-offset: 2px; }
     .stage-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
     .stage-slot { position: relative; }
     .stage-slot input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
     .stage-slot span { display: flex; align-items: center; justify-content: center; min-height: 44px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12.5px; color: var(--text-secondary); }
-    .stage-slot input:checked + span { border-color: var(--accent-blue); background: var(--accent-blue-dim); color: var(--text-primary); font-weight: 700; }
-    .stage-slot input:focus-visible + span { outline: 2px solid var(--accent-blue); outline-offset: 2px; }
+    .stage-slot input:checked + span { border-color: var(--accent-green); background: var(--accent-green-dim); color: var(--text-primary); font-weight: 700; }
+    .stage-slot input:focus-visible + span { outline: 2px solid var(--accent-green); outline-offset: 2px; }
     .stage-fahrplan { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
     .stage-fp-row { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 12px; position: relative; padding-bottom: 14px; }
     .stage-fp-row:not(.last)::before { content: ''; position: absolute; left: 6px; top: 16px; bottom: 0; width: 2px; background: rgba(var(--ink-rgb),0.1); }
@@ -4506,10 +4539,19 @@
   }
 
   function renderResultBuddyHtml(totalScore, isRecheck) {
-    if (!BUDDY_ENABLED) return "";
+    const g = resultGreetingParts(totalScore, isRecheck, "lg");
+    if (!g || !g.img) return "";
+    return `<div class="buddy-result">${g.img}<div class="buddy-result-text">
+        <div class="buddy-result-title">${g.title}</div>
+        <div class="buddy-result-sub">${g.sub}</div>
+      </div></div>`;
+  }
+
+  // v2.8.16 — Begruessung als Teile: die alte Buddy-Karte und die neue Ergebnis-Karte
+  // nutzen dieselben Texte.
+  function resultGreetingParts(totalScore, isRecheck, size) {
     const back = window._isReviewMode && window._accessPin;
-    const img = buddyHtml(back ? "buddy-welcome-back" : "buddy-success", "lg");
-    if (!img) return "";
+    const img = BUDDY_ENABLED ? buddyHtml(back ? "buddy-welcome-back" : "buddy-success", size || "lg") : "";
     const first = (personalData.first_name || "").trim();
     const hi = first ? `Schön, dass du wieder da bist, ${escHtml(capName(first))}!` : "Schön, dass du wieder da bist!";
     let title, sub;
@@ -4525,10 +4567,7 @@
         ? "Deine Basis steht gut da. Schau dir an, welche Bereiche dich tragen — und wo noch etwas Luft ist."
         : "Hier siehst du, wo du heute stehst. Der Wert ist keine Note, sondern ein Ausgangspunkt — die nächsten Schritte findest du gleich darunter.";
     }
-    return `<div class="buddy-result">${img}<div class="buddy-result-text">
-        <div class="buddy-result-title">${title}</div>
-        <div class="buddy-result-sub">${sub}</div>
-      </div></div>`;
+    return { img, title, sub };
   }
 
   function buildResultHtml(result, areas, totalScore, bioAge, suppFocus, correctedScoreLabel) {
@@ -4555,6 +4594,8 @@
     const name = [capName(personalData.first_name), capName(personalData.last_name)].filter(Boolean).join(" ");
     const goalLabels = { goal_energy:`${ICO("bolt")} Mehr Energie`, goal_weight:`${ICO("scale")} Abnehmen / Figur`, goal_fitness:`${ICO("dumbbell")} Fitter werden`, goal_supplements:`${ICO("pill")} Nährstoffstatus`, goal_prevention:`${ICO("shield")} Vorsorge`, goal_longevity:`${ICO("leaf")} Longevity`, goal_curious:`${ICO("spark")} Neugier` };
     const goalLabel = personalData.goal_key && goalLabels[personalData.goal_key] ? goalLabels[personalData.goal_key] : "";
+    // v2.8.16 — fuer die Ergebnis-Karte (stageHeroHtml); der Ring traegt die Farbe der Stufe
+    S.sc = sc; S.scoreLabel = scoreLabel; S.bioAge = bioAge; S.goalLabel = goalLabel; window._ringColor = sc;
 
     // Haupthebel (für Tab 1 + Tab 3 Hero-Card)
     // v1.32.2 — WICHTIG: Bis v1.32.1 rechnete das Frontend den Hebel selbst
@@ -5552,7 +5593,22 @@
   // Der Hinweis "Orientierungswert, kein Biomarker" bleibt direkt darunter.
   function stageAgeColumnHtml(bioAge, age) {
     const b = Number(bioAge), a = Number(age) || 0;
+    const { line, color } = stageAgeNote(b, a);
+    return `
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Dein Vitalitäts-Alter</div>
+            <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:2px 0 4px;">
+              <span style="font-family:'DM Serif Display',serif;font-size:34px;line-height:1;color:var(--text-primary);">${b}</span>
+              <span style="font-size:13px;color:var(--text-secondary);">Jahre</span>
+              ${a ? `<span style="font-size:12px;color:var(--text-muted);">· kalendarisch ${a}</span>` : ""}
+            </div>
+            <div class="stage-age-line" style="font-size:13px;font-weight:600;color:${color};line-height:1.45;margin-bottom:6px;">${line}</div>
+            <div style="font-size:11px;color:var(--text-muted);line-height:1.5;">Orientierungswert aus Lebensstilantworten — kein medizinischer Biomarker</div>`;
+  }
+
+  // v2.8.16 — Satz unter dem Vitalitaets-Alter; kind = "gain", wenn er vom Potenzial spricht
+  function stageAgeNote(b, a) {
     const yrs = n => `${n} ${n === 1 ? "Jahr" : "Jahre"}`;
+    let kind = "";
     let line = "", color = "var(--accent-green-text)";
     if (window._doctorFirst) {
       // v2.4.1 — bei ärztlichem Vorrang keine Feier: erst abklären, dann weiter
@@ -5572,21 +5628,50 @@
       if (gain >= 1) {
         const how = n === 1 ? "einer gezielten Veränderung" : (n === 2 ? "zwei" : n === 3 ? "drei" : String(n)) + " gezielten Veränderungen";
         line = `Mit ${how} rund ${yrs(gain)} jünger – ${window._stage === 2 ? "wie, steht in deinem Plan" : "das zeigen wir dir in deinem Vital-Plan"}.`;
-        color = "var(--accent-blue-text)";
+        color = "var(--accent-blue-text)"; kind = "gain";
       } else {
         line = "Dein Startwert – beim Re-Check siehst du, wie er sich bewegt.";
         color = "var(--text-secondary)";
       }
     }
-    return `
-            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Dein Vitalitäts-Alter</div>
-            <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:2px 0 4px;">
-              <span style="font-family:'DM Serif Display',serif;font-size:34px;line-height:1;color:var(--text-primary);">${b}</span>
-              <span style="font-size:13px;color:var(--text-secondary);">Jahre</span>
-              ${a ? `<span style="font-size:12px;color:var(--text-muted);">· kalendarisch ${a}</span>` : ""}
-            </div>
-            <div class="stage-age-line" style="font-size:13px;font-weight:600;color:${color};line-height:1.45;margin-bottom:6px;">${line}</div>
-            <div style="font-size:11px;color:var(--text-muted);line-height:1.5;">Orientierungswert aus Lebensstilantworten — kein medizinischer Biomarker</div>`;
+    return { line, color, kind };
+  }
+
+  // v2.8.16 (Phase C) — EINE Karte fuer das Ergebnis: Begruessung, Index als Hauptzahl
+  // mit Stufe und einem Satz Deutung, darunter das Vitalitaets-Alter als Uebersetzung.
+  // Ersetzt im Stufenmodell Buddy-Karte, Stufen-Plakette und Ring-Karte. Ring-IDs
+  // (scoreRingFill, scoreDisplayNum) bleiben, damit die Zaehlanimation weiterlaeuft.
+  function stageHeroHtml(S) {
+    const g = resultGreetingParts(S.totalScore, !!window._previousData, "sm");
+    const b = Number(S.bioAge), a = Number(personalData.age) || 0;
+    let ageHtml = "";
+    if (b) {
+      const note = stageAgeNote(b, a);
+      // In Stufe 1 nennt die Potenzial-Karte direkt darunter dieselbe Zahl - dort nicht doppeln.
+      const showNote = note.line && !(window._stage !== 2 && note.kind === "gain");
+      ageHtml = `<div class="res-hero-age">${ICO("dna")}<div>Vitalitäts-Alter <strong>${b} Jahre</strong>${a ? ` · kalendarisch ${a}` : ""}`
+        + (showNote ? `<div class="res-hero-age-line" style="color:${note.color};">${note.line}</div>` : "")
+        + `<div class="res-hero-age-hint">Orientierungswert aus Lebensstilantworten — kein medizinischer Biomarker</div></div></div>`;
+    }
+    return `<div class="res-hero">
+        ${g.img || g.title ? `<div class="res-hero-head">${g.img || ""}<div><div class="res-hero-title">${g.title}</div><div class="res-hero-sub">${g.sub}</div></div></div>` : ""}
+        <div class="stage-kicker">Dein Vitalitäts-Index</div>
+        <div class="res-hero-main">
+          <div class="res-hero-ring">
+            <svg style="width:110px;height:110px;transform:rotate(-90deg);" viewBox="0 0 110 110" aria-hidden="true">
+              <circle cx="55" cy="55" r="47" fill="none" stroke-width="9" style="stroke:rgba(var(--ink-rgb),0.08)"/>
+              <circle cx="55" cy="55" r="47" fill="none" id="scoreRingFill" stroke-width="9" stroke-linecap="round" stroke-dasharray="295" stroke-dashoffset="295" style="stroke:${S.sc}"/>
+            </svg>
+            <div class="res-hero-num"><div id="scoreDisplayNum">0</div><div>von 100</div></div>
+          </div>
+          <div class="res-hero-meaning">
+            <span class="res-level" style="color:${S.sc};">${S.scoreLabel}</span>
+            <p>${stageStrengthLine(S)}</p>
+          </div>
+        </div>
+        ${ageHtml}
+        ${S.goalLabel ? `<div class="res-hero-goal">${ICO("target")} Dein Ziel: <strong>${S.goalLabel}</strong></div>` : ""}
+      </div>`;
   }
 
   function stageBestScenario() {
@@ -5612,9 +5697,9 @@
     return { list: sorted.filter(a => a.score < 70).slice(0, 2), isFocus: false };
   }
 
-  function stageSummaryHtml(S) {
+  // v2.8.16 — der Satz "X und Y tragen dich ... Am meisten Luft ist bei Z" fuer die Ergebnis-Karte
+  function stageStrengthLine(S) {
     const strengths = stageStrengths(S.areas);
-    const best = stageBestScenario();
     // Bereichsnamen als Satzglied: "Alkohol / Nikotin trägt dich" liest sich falsch.
     const N = { activity: "deine Bewegung", sleep: "dein Schlaf", nutrition: "deine Ernährung", vitamin_d: "dein Tageslicht",
       mental: "deine mentale Balance", smoking: "dein rauchfreier Alltag", alcohol: "dein Umgang mit Alkohol", lifestyle: "dein Umgang mit Alkohol und Nikotin", micronutrients: "deine Nährstoffversorgung", metabolic: "deine Energie" };
@@ -5627,6 +5712,15 @@
     const s2 = (S.worst && Number(S.worst.score) < 70 && !strengths.some(a => a.key === S.worst.key))
       ? ` Am meisten Luft ist bei <strong>${areaName(S.worst.label, S.worst.key)}</strong>.`
       : (S.worst && Number(S.worst.score) >= 70 ? ` Alle Bereiche stehen stabil – jetzt geht es ums Halten.` : "");
+    return s1 + s2;
+  }
+
+  // v2.8.16 — compact: ohne die Saetze, die jetzt in der Ergebnis-Karte stehen (Zahlen,
+  // Staerken, groesster Bereich). Bleiben: Punkte-Potenzial, erster Schritt, Ziel-Knopf.
+  function stageSummaryHtml(S, opts) {
+    const compact = !!(opts && opts.compact);
+    const best = stageBestScenario();
+    const s12 = compact ? "" : stageStrengthLine(S);
     let s3 = "";
     if (best && Number(best.gain) >= 1) {
       const n = (best.question_keys || []).length || 1;
@@ -5635,7 +5729,7 @@
     // v2.4.0 — Index und Vitalitäts-Alter als ein Satz vor der Einordnung
     const tot = Math.round(Number(S.totalScore));
     const bio = Number(latestResult && latestResult.score && latestResult.score.bio_age);
-    const s0 = isFinite(tot) && tot > 0
+    const s0 = !compact && isFinite(tot) && tot > 0
       ? `Dein Vitalitäts-Index liegt bei <strong>${tot} Punkten</strong>${isFinite(bio) && bio > 0 ? `, dein rechnerisches Vitalitäts-Alter bei <strong>${bio} Jahren</strong> (Schätzung)` : ""}. `
       : "";
     // Stufe 2: erster Schritt + Hauptknopf "Mein Ziel festlegen"
@@ -5648,9 +5742,11 @@
       if (first) step = `<div class="stage-first-step"><span>Dein erster Schritt</span>${first}</div>`;
       if (simScenarios && !simGoalSaved) cta = `<button type="button" class="stage-btn-primary" onclick="goToGoal()">${ICO("target")} Mein Ziel festlegen</button>`;
     }
+    const para = (s0 + s12 + s3).trim();
+    if (!para && !step && !cta) return "";
     return `<div class="stage-summary">
         <div class="stage-kicker">${window._stage === 2 ? "Das bedeutet dein Ergebnis" : "Deine Einschätzung"}</div>
-        <p>${s0}${s1}${s2}${s3}</p>
+        ${para ? `<p>${para}</p>` : ""}
         ${step}${cta}
       </div>`;
   }
@@ -5712,15 +5808,18 @@
     let body = "";
     if (worst && Number(worst.score) < 70) {
       body += `<div style="font-size:12px;color:var(--text-secondary);">Dein größter Ansatzpunkt</div>
-        <div style="font-size:19px;font-weight:700;margin:2px 0 12px;">${areaIco(worst.key)} ${areaName(worst.label, worst.key)}</div>`;
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 12px;">
+          <div style="font-size:19px;font-weight:700;">${areaIco(worst.key)} ${areaName(worst.label, worst.key)}</div>
+          <div class="res-pill" style="color:${scoreBand(worst.score).color};">${Math.round(worst.score)}</div>
+        </div>`;
     }
     if (best) {
       const baseT = Number(simScenarios.base && simScenarios.base.total) || Number(S.totalScore);
       const newT = Number(best.new_total);
       const baseBio = simScenarios.base && Number(simScenarios.base.bio_age);
       const dy = (isFinite(baseBio) && isFinite(Number(best.new_bio_age))) ? Math.round(baseBio - Number(best.new_bio_age)) : null;
-      const bioTxt = dy === null ? "" : dy >= 2 ? ` · Vitalitäts-Alter rund <strong style="color:var(--accent-green-text);">${dy} Jahre jünger</strong>`
-        : dy === 1 ? ` · Vitalitäts-Alter rund <strong style="color:var(--accent-green-text);">1 Jahr jünger</strong>` : "";
+      const bioTxt = dy === null ? "" : dy >= 2 ? ` · Vitalitäts-Alter rund <strong style="color:var(--accent-blue-text);">${dy} Jahre jünger</strong>`
+        : dy === 1 ? ` · Vitalitäts-Alter rund <strong style="color:var(--accent-blue-text);">1 Jahr jünger</strong>` : "";
       const keys = best.question_keys && best.question_keys.length ? best.question_keys : [best.question_key];
       const n = keys.length;
       body += `<div style="font-size:11.5px;color:var(--text-secondary);margin:0 0 4px;">Dein Vitalitäts-Index</div>
@@ -5746,7 +5845,8 @@
       }
       body += goalWeightNoteHtml(S);   // v2.7.2
       body += `<div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin:4px 0 10px;">Berechnet aus deinen Antworten, mit derselben Formel wie dein Ergebnis. Hebel addieren sich nicht einfach – die Kombination ist exakt gerechnet.</div>
-        <button type="button" class="stage-btn-outline" onclick="scrollToAiBox()">Meinen Vital-Plan anfordern</button>`;
+        <button type="button" class="stage-btn-go" onclick="scrollToAiBox()">Meinen Vital-Plan anfordern →</button>
+        <div class="res-cta-note">Kostenlos &nbsp;·&nbsp; sofort hier sichtbar &nbsp;·&nbsp; die Mail kommt in wenigen Minuten</div>`;
     }
     return `<div class="stage-potential" id="stagePotential">
         <div class="stage-kicker blue">Dein Potenzial</div>
@@ -5804,7 +5904,7 @@
     const rest = S.areas.filter(a => !keys.includes(a.key));
     if (rest.length) {
       html += `<div class="stage-locked">
-          <div style="display:flex;align-items:center;gap:8px;color:var(--accent-blue-text);">${STAGE_LOCK_ICON}<span style="font-size:14px;font-weight:700;color:var(--text-primary);">${rest.length} weitere Bereiche in deinem Vital-Plan</span></div>
+          <div style="display:flex;align-items:center;gap:8px;color:var(--accent-green-text);">${STAGE_LOCK_ICON}<span style="font-size:14px;font-weight:700;color:var(--text-primary);">${rest.length} weitere Bereiche in deinem Vital-Plan</span></div>
           <div class="stage-chips">${rest.map(a => `<span class="stage-chip">${areaName(a.label, a.key)}</span>`).join("")}</div>
           <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;">Jeder Bereich mit Wert, Einordnung für dein Alter und konkreten Schritten – dazu deine Hebel und dein Fahrplan.</div>
           <button type="button" class="stage-btn-outline" onclick="scrollToAiBox()">Meinen Vital-Plan anfordern</button>
@@ -6135,15 +6235,14 @@
     const stage = window._stage === 2 ? 2 : 1;
     let html = "";
     if (stage === 1) {
+      // v2.8.16 (Phase C) — Ergebnis, Warnhinweise, groesster Hebel mit Hauptknopf;
+      // dann Spinne und Bereiche. Die fruehere "Einschaetzung" steht vollstaendig in
+      // Ergebnis-Karte (Zahlen, Staerken, groesster Bereich) und Potenzial-Karte (+Punkte).
       html += S.safetyBand || "";
-      html += S.resultBuddy || "";
-      html += S.levelBadge || "";
-      html += S.scoreRing || "";
+      html += stageHeroHtml(S);
       html += S.wellbeing || "";
-      html += S.angaben || "";
       html += S.levelInfo || "";
       html += S.lowIndex || "";
-      html += stageSummaryHtml(S);
       html += S.mental || "";
       html += S.redFlag || "";
       const doctorItem = (S.cat3Items || []).find(([t]) => t === "Ärztliche Abklärung zuerst");
@@ -6151,10 +6250,11 @@
         html += `<div class="hint-box" style="background:rgba(var(--accent-purple-rgb),0.07);border-left:3px solid var(--accent-purple);border-radius:0;padding:13px 16px;margin-bottom:16px;">
           <strong>${doctorItem[0]}</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${doctorItem[1]}</span></div>`;
       }
+      html += stagePotentialHtml(S);
+      html += S.angaben || "";
       html += stageRadarHtml();
       html += S.radarExplain || "";
       html += stageStrengthsHtml(S);
-      html += stagePotentialHtml(S);
       html += stageAreasHtml(S);
       html += stageLadderHtml(S);
       if (!window._studioRequest) html += referralBoxHtml('stufe1');  // sonst steht "Bring jemanden mit" in der Studio-Karte
@@ -6177,17 +6277,15 @@
       </div>`;
 
     html += `<div class="result-tab-content active" id="rtc-uebersicht">`;
-    html += S.resultBuddy || "";
-    html += S.levelBadge || "";
-    html += S.scoreRing || "";
+    html += stageHeroHtml(S);
     html += S.wellbeing || "";
-    html += S.verlauf || "";
-    html += S.angaben || "";
     html += S.levelInfo || "";
     html += S.lowIndex || "";
-    html += stageSummaryHtml(S);
     html += S.mental || "";
     html += S.redFlag || "";
+    html += S.verlauf || "";
+    html += stageSummaryHtml(S, { compact: true });
+    html += S.angaben || "";
     html += S.radar || "";
     html += S.radarExplain || "";
     html += S.areasAll || "";
@@ -6282,14 +6380,15 @@
     const C = 2 * Math.PI * 47;
     ring.setAttribute("stroke-dasharray", C);
     ring.setAttribute("stroke-dashoffset", C);
-    ring.setAttribute("stroke", "url(#ringGrad2)");
+    // v2.8.16: Stufenfarbe statt Gruen-Blau-Verlauf (Blau steht nur noch fuer Potenzial)
+    ring.removeAttribute("stroke"); ring.style.stroke = window._ringColor || "var(--accent-green)";
     let current = 0;
     const dur = 1400, start = performance.now();
     function step(now) {
       const prog = Math.min((now - start) / dur, 1);
       const ease = 1 - Math.pow(1 - prog, 3);
       current = Math.round(target * ease);
-      if (el) { el.textContent = current; el.style.color = getScoreColor(current); }
+      if (el) { el.textContent = current; }   // v2.8.16: Farbe tragen Ring und Plakette
       if (ring) ring.style.strokeDashoffset = C - (current / 100) * C;
       if (prog < 1) requestAnimationFrame(step);
     }
@@ -7383,7 +7482,7 @@
           <strong style="color:var(--text-primary);">Dein nächster Check lohnt sich zwischen ${rd.from} und ${rd.to}.</strong>
           So lange braucht es, bis sich Veränderungen im Alltag auch im Wert zeigen. Trag ihn dir am besten gleich in deinen Kalender ein.
         </div>
-        <button onclick="addRecheckToCalendar()" style="width:100%;padding:11px;border-radius:var(--radius-sm);border:1px solid rgba(var(--accent-blue-rgb),0.4);background:transparent;color:var(--accent-blue-text);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;">
+        <button onclick="addRecheckToCalendar()" style="width:100%;padding:11px;border-radius:var(--radius-sm);border:1px solid rgba(var(--accent-green-rgb),0.5);background:transparent;color:var(--accent-green-text);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;">
           ${ICO("calendar")} Re-Check in meinen Kalender eintragen
         </button>
       </div>`;
@@ -7987,7 +8086,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.15</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.16</footer>
 
 
 </body>
