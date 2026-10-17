@@ -29,6 +29,10 @@
   Aufruf mit ?code=LEV-2026-000123 füllt die Pilot-ID vor.
 
   Versionen:
+  0.6.4 (17.10.2026) Funnel (gehoert zu Vital-Check v2.8.18 und Funnel-Dashboard v3.0.0): Ereignisse
+        tragen die Pilot-ID (public_code), den Host und den Einstiegsweg (entry: ergebnis, mail, konto,
+        kampagne, verweis, direkt); neues Ereignis nutri_view beim Aufruf der Seite. FE_VERSION stand
+        seit 0.6.2 unveraendert und zeigt jetzt wieder die richtige Fassung.
   0.6.3 (17.10.2026) Kühlschrank-Zettel im LeVITA-Auftritt: Logo und Datum oben, Rahmen und Schrittname
         in LeVITA-Grün, die zwei Abhakreihen als "Woche 1"/"Woche 2" beschriftet, Studio-Kontakt vorn in
         der Fußzeile. Logo eingebettet (dunkle Fassung für Papier). Inhalt unverändert.
@@ -482,7 +486,7 @@
 <script src="assets/konto.js?v=1.4.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "0.6.2";
+  const FE_VERSION = "0.6.4";
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
@@ -511,6 +515,17 @@
   const FUNNEL_SESSION = Math.random().toString(36).slice(2) + Date.now().toString(36);
   const UTM = {};
   ["utm_source", "utm_medium", "utm_campaign", "utm_content"].forEach((k) => { const v = params.get(k); if (v) UTM[k] = v.slice(0, 60); });
+  // 0.6.4 — Einstiegsweg fuer den Ernaehrungs-Funnel. Die Links aus dem Vital-Check tragen
+  // utm_source=vital-check&utm_medium=ergebnis (Ergebnisseite) bzw. utm_source=mail&
+  // utm_medium=auswertung (Auswertungsmail); alles andere mit UTM ist eine Kampagne.
+  const ENTRY = (() => {
+    const s = String(UTM.utm_source || "").toLowerCase(), m = String(UTM.utm_medium || "").toLowerCase();
+    if (s === "vital-check" || m === "ergebnis") return "ergebnis";
+    if (s === "mail" || m === "auswertung") return "mail";
+    if (s === "konto" || m === "konto") return "konto";
+    if (s) return "kampagne";
+    return document.referrer ? "verweis" : "direkt";
+  })();
   const tracked = new Set();
   function track(event_name, meta = {}, once = false) {
     try {
@@ -521,7 +536,11 @@
         age_stage: st.data?.age_stage || undefined, phase: st.data?.phase || undefined,
         device: innerWidth < 600 ? "mobile" : "desktop",
         env: (h.endsWith("le-vita.com") || h.endsWith("logivita.de")) ? "prod" : h.endsWith("github.io") ? "dev" : "local",
-        is_internal: INTERNAL ? true : undefined, page: "ernaehrung", fe_version: FE_VERSION } };
+        is_internal: INTERNAL ? true : undefined, page: "ernaehrung", fe_version: FE_VERSION,
+        // 0.6.4: Pilot-ID verbindet den Ernaehrungs-Check mit dem Vital-Check derselben Person
+        // (dieselbe Angabe, die auch der Vital-Check in seine Ereignisse schreibt); host zeigt,
+        // welche Kopie schreibt; entry ist der Einstiegsweg.
+        public_code: st.code || undefined, host: h, entry: ENTRY } };
       fetch(SUPABASE_URL + "/rest/v1/funnel_events", { method: "POST", keepalive: true,
         headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, Prefer: "return=minimal" },
         body: JSON.stringify(body) }).catch(() => {});
@@ -1339,6 +1358,7 @@
   (async () => {
     const prog = params.get("programm");
     if (prog) return screenProgramConfirm(prog);
+    track("nutri_view", { has_code: !!st.code }, true);   // 0.6.4: Aufruf der Seite (vor Anmeldung)
     if (st.code && window.LeVitaKonto && !isDemo()) {
       try {
         const ss = await window.LeVitaKonto.session();

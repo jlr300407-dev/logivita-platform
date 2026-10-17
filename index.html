@@ -747,6 +747,11 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.18 (17.10.2026): Funnel-Ueberarbeitung (gehoert zu Funnel-Dashboard v3.0.0 und
+       ernaehrung.html 0.6.4). Ereignisse tragen host und page='check'; die Kurzfassung
+       meta.source unterscheidet jetzt nach Host: eigene App-Seiten 'app' (vorher als
+       Homepage gezaehlt), Suche 'seo', Maps 'gmb', fremde Seiten 'web'. Re-Check aus
+       "Mein Bereich" ohne UTM bekommt utm_source=recheck, utm_medium=konto. Sonst nichts.
        v2.8.17 (17.10.2026): Kontrast im dunklen Thema. Rote Schrift (--accent-red-text)
        #ff5c5c -> #ff7373; "Dein Vitalitaets-Alter" in der Verlaufskarte, Bereichsname
        und "Der ganze Weg bis ..." in den Simulator-Hebeln sowie die Quelle unter dem
@@ -3011,15 +3016,26 @@
         // Kanal. Vorher fielen beide in 'other' und waren im Dashboard nicht von
         // Suchmaschinen und Maps zu unterscheiden. Der Rohwert 'referrer' steht
         // weiter daneben, aeltere Daten lassen sich also nachtraeglich zuordnen.
+        // v2.8.18 — nach Host statt nach Teilwort: Seit dem Umzug auf app.le-vita.com
+        // enthielt auch jeder Seitenwechsel INNERHALB der App "le-vita" und zaehlte als
+        // Homepage. Eigene App-Hosts sind jetzt 'app', Suchmaschinen 'seo', Maps 'gmb',
+        // fremde Seiten 'web'. Das Dashboard wertet den Rohwert 'referrer' selbst aus;
+        // dieses Feld ist die lesbare Kurzfassung.
         source: (function(){
           const r = pageReferrer();
           if (!r) return 'direct';
-          if (r.includes('facebook')) return 'facebook';
-          if (r.includes('instagram')) return 'instagram';
-          if (r.includes('logivita')) return 'logivita';
-          if (r.includes('le-vita')) return 'homepage';
-          return 'other';
+          let h = ''; try { h = new URL(r).hostname.toLowerCase(); } catch (e) {}
+          if (/(^|\.)app\.le-vita\.com$|(^|\.)app\.logivita\.de$|\.github\.io$/.test(h)) return 'app';
+          if (/(^|\.)facebook\.com$|(^|\.)fb\.com$/.test(h)) return 'facebook';
+          if (/(^|\.)instagram\.com$/.test(h)) return 'instagram';
+          if (/(^|\.)logivita\.de$/.test(h)) return 'logivita';
+          if (/(^|\.)le-vita\.com$/.test(h)) return 'homepage';
+          if (/(^|\.)google\.[a-z.]+$/.test(h) && /\/maps/.test(r)) return 'gmb';
+          if (/(^|\.)(google|bing|duckduckgo|ecosia|yahoo|startpage|qwant)\.[a-z.]+$/.test(h)) return 'seo';
+          return 'web';
         })(),
+        host: pageHostname(),   // v2.8.18: welche Kopie des Checks schreibt (alte Kopien erkennbar)
+        page: 'check',          // v2.8.18: Vital-Check; der Ernaehrungs-Check schreibt 'ernaehrung'
         referrer: (function(){ const r = pageReferrer(); return r ? String(r).slice(0, 200) : undefined; })(), // v1.33.0: Rohwert — nur damit lassen sich organische Suche, Maps und Direkteinstieg trennen (undefined wird von JSON.stringify entfernt)
         device: window.innerWidth < 600 ? 'mobile' : 'desktop',
         is_internal: window._isInternal === true ? true : undefined, // Sofort-Fix 5: Testdaten markieren (undefined wird von JSON.stringify entfernt)
@@ -3053,6 +3069,9 @@
       // Parameter. Ohne dieses Feld landen bezahlte Facebook-Klicks unter "Homepage".
       const _fbc = p.get('fbclid');
       if (_fbc) utm.fbclid = String(_fbc).slice(0, 100);
+      // v2.8.18 — Re-Check aus "Mein Bereich" (?recheck=…) kam ohne UTM und zaehlte
+      // ueber den Referrer als Homepage. Ohne eigene Angabe gilt er jetzt als Re-Check.
+      if (!utm.utm_source && p.get('recheck')) { utm.utm_source = 'recheck'; utm.utm_medium = 'konto'; }
       window._utm = utm;
     } catch(e) { window._utm = {}; }
   }
@@ -8090,7 +8109,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.17</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.18</footer>
 
 
 </body>
