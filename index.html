@@ -740,6 +740,49 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.12 (17.10.2026): Farben tokenisiert. Paket B1 aus
+         Design-Umsetzung-Reihenfolge.md - die unsichtbare Voraussetzung fuer den
+         Hell/Dunkel-Umschalter. SICHTBAR AENDERT SICH NICHTS.
+         (1) 313 fest eingetragene Farbwerte ausserhalb von :root (185 im
+         Stylesheet, 78 im JavaScript, 50 im Markup) laufen jetzt ueber Tokens.
+         Uebrig sind 21 bewusste Ausnahmen: theme-color im <meta> (B2 setzt ihn
+         per JS), vier Masken (Alphawerte, keine sichtbare Farbe), der
+         Druckstil (immer hell) und 15 Angaben in der Chart.js-Konfiguration
+         (Canvas kennt kein var() - Paket B3).
+         (2) Rollen statt Werte. #0a1628 ist auf Schaltflaechen SCHRIFT auf
+         Gruen (--on-accent) und bleibt in beiden Themen dunkel; als Hintergrund
+         ist es --brand-dark. Wer nach Wert statt nach Rolle ersetzt, bekommt im
+         hellen Thema helle Schrift auf gruenen Knoepfen.
+         (3) Akzentfarben getrennt nach Schrift und Flaeche: --accent-green-text
+         usw. (103 Stellen). Auf Dunkel identisch; auf Hell erreicht #22c97a als
+         Schrift nur 2,0:1 und braucht einen dunkleren Ton, als Flaeche nicht.
+         Ohne diese Trennung muesste B2 dieselben Stellen ein zweites Mal
+         anfassen.
+         (4) RGB-Tripel fuer Toenungen: rgba(var(--ink-rgb),0.04). --ink-rgb ist
+         die "Tinte" der hellen Schleier und Konturen; auf Hell wird sie Navy,
+         damit drehen sich alle Ueberlagerungen auf einmal um.
+         (5) SVG-Attribute (fill="#8da0b8") nehmen var() nicht in jedem Browser
+         an. 39 Angaben stehen deshalb jetzt als style-Eigenschaft; geprueft, dass
+         keine Stylesheet-Regel diese Elemente faerbt (Inline-Stil haette sonst
+         Vorrang bekommen).
+         (6) SCORE_SCALE haengte an die Bandfarbe "1a" als Deckkraft an
+         (${b.color}1a) - mit einem Token unmoeglich. Neues Feld tint mit
+         gleichem Wert (26/255 = 0,102).
+         NACHWEIS: Jede der 403 Ersetzungen wurde beim Erzeugen rechnerisch
+         geprueft (aufgeloester Ausdruck = alter Wert, 8-Bit-Deckkraft wie im
+         Browser). Ganzdatei-Vergleich nach Aufloesen aller Tokens: identisch bis
+         auf die vier beabsichtigten Stellen. Im Browser 18 Zustaende (Startseite,
+         PIN, sieben Fragebogen-Schritte, Auswertung echt und schwach, Stufe 2,
+         Plan, aufgeklappt; Handy und Desktop) mit ~18.000 Elementen samt
+         ::before/::after: 0 abweichende berechnete Farben, 0 abweichende Pixel.
+         Beim Bauen gefunden: Das Umbauprogramm schrieb den JS-Ausdruck in einer
+         Deckkraft klein (weakCount -> weakcount); die Auswertung brach ab. Der
+         Pruefstand fing es, seither vergleicht eine eigene Pruefung alle
+         ${...}-Ausdruecke vor und nach.
+         OFFEN: drei Einzelgaenger-Toene (--slate-rgb, --violet-rgb,
+         --lgreen-alt-rgb) zusammenlegen - das waere eine sichtbare Aenderung und
+         gehoert nicht in B1.
+
        v2.8.11 (17.10.2026): Abschnittswechsel im Fragebogen (Paket A3b) und vier
          Fehler aus der Icon-Umstellung.
          (1) FEHLER, seit v2.8.9 live: AREA_ICONS haelt seitdem Icon-NAMEN statt
@@ -1107,6 +1150,52 @@
       --text-muted: #8396ae;   /* v2.8.6: 4a6280 erfuellte WCAG AA nicht (2,5:1 auf --brand-card2); 8396ae = 5,99 / 5,24 / 4,55 */
       --border: rgba(255,255,255,0.07);
       --border-hover: rgba(255,255,255,0.14);
+      /* ── v2.8.12 (B1) ── */
+      /* Schriftrollen der Akzentfarben. Auf Dunkel identisch mit der Flaeche; auf Hell braucht
+         Schrift ein dunkleres Gruen/Blau/Amber/Rot (#22c97a erreicht dort nur 2,0:1). */
+      --accent-green-text: #22c97a;
+      --accent-blue-text: #3b9eff;
+      --accent-amber-text: #f5a623;
+      --accent-red-text: #ff5c5c;
+      --accent-purple-text: #a78bfa;
+      /* Warnueberschriften in Amber-Kaesten (heller als --accent-amber, fuer Lesbarkeit auf Dunkel) */
+      --warn-text: #ffb347;
+      /* Schrift AUF einer Akzentflaeche (gruene/blaue Schaltflaechen). Bleibt in beiden Themen dunkel. */
+      --on-accent: #0a1628;
+      /* Zweiter Gruenton am Ende des Schaltflaechen-Verlaufs */
+      --accent-green-deep: #1aaa65;
+      /* Schalterknopf im Simulator: immer weiss */
+      --knob: #ffffff;
+      /* Bewertungsstufen ohne eigenen Akzent (gut/mittel/niedrig nutzen Gruen/Amber/Rot) */
+      --score-ok: #5edb97;
+      --score-ok-text: #5edb97;
+      --score-ok-rgb: 94,219,151;
+      --score-focus: #ff8c42;
+      --score-focus-text: #ff8c42;
+      --score-focus-rgb: 255,140,66;
+      /* Abgesenkte Flaeche innerhalb einer Karte */
+      --sunken: rgba(0,0,0,0.18);
+      /* Startseite: Haupt-Schaltflaeche und Hero-Grund */
+      --cta-green: #3ddc84;
+      --on-cta: #0d1a14;
+      --hero-bg: #0d1a14;
+      /* RGB-Tripel fuer Toenungen mit wechselnder Deckkraft: rgba(var(--x-rgb), 0.08).
+         --ink-rgb ist die "Tinte" fuer Ueberlagerungen und Konturen: auf Dunkel Weiss,
+         auf Hell wird daraus Navy - damit drehen sich alle hellen Schleier auf einmal um. */
+      --ink-rgb: 255,255,255;
+      --shadow-rgb: 0,0,0;
+      --brand-dark-rgb: 10,22,40;
+      --accent-green-rgb: 34,201,122;
+      --accent-blue-rgb: 59,158,255;
+      --accent-amber-rgb: 245,166,35;
+      --accent-red-rgb: 255,92,92;
+      --accent-purple-rgb: 167,139,250;
+      --text-secondary-rgb: 141,160,184;
+      /* Drei Einzelgaenger, je ein- bis viermal benutzt. Zusammenlegen waere eine sichtbare
+         Aenderung und gehoert nicht in B1 - in der Liste fuer die Vereinheitlichung. */
+      --slate-rgb: 122,143,168;
+      --violet-rgb: 139,92,246;
+      --lgreen-alt-rgb: 59,200,100;
       --radius: 16px;
       --radius-sm: 10px;
     }
@@ -1121,26 +1210,26 @@
     .logo-img-wrap img { max-height: 60px; max-width: 220px; object-fit: contain; }
     /* v1.33.0: Bildmarke als gerundete Kachel, Schriftzug darunter ohne Rundung */
     .logo-img-wrap img[width="54"] { width: 30px; height: 30px; border-radius: 9px; }
-    .logo-placeholder { width: 54px; height: 54px; border-radius: 14px; background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-blue) 100%); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; color: #0a1628; margin-bottom: 10px; }
+    .logo-placeholder { width: 54px; height: 54px; border-radius: 14px; background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-blue) 100%); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; color: var(--on-accent); margin-bottom: 10px; }
     /* v2.8.7: Strich-Icons statt Emoji. fill:none + stroke:currentColor — die Icons
        erben die Textfarbe und funktionieren damit spaeter in beiden Themen. */
     #hero-features .ic { width: 15px; height: 15px; vertical-align: -0.22em; }
-    .lp-goal .ic { width: 17px; height: 17px; vertical-align: -0.28em; margin-right: 3px; color: var(--accent-green); }
+    .lp-goal .ic { width: 17px; height: 17px; vertical-align: -0.28em; margin-right: 3px; color: var(--accent-green-text); }
     .ic { width: 1em; height: 1em; display: inline-block; vertical-align: -0.14em; fill: none;
           stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex: none; }
     .logo-name { font-family: 'DM Serif Display', serif; font-size: 21px; line-height: 1.1; color: var(--text-primary); }
-    .logo-name span { color: var(--accent-green); }
+    .logo-name span { color: var(--accent-green-text); }
     .logo-sub { font-size: 11px; color: var(--text-muted); margin-top: 0; margin-left: auto; text-align: right; }
     .progress-wrap { margin-bottom: 28px; }
     .progress-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .progress-area-ico { display: inline-flex; align-items: center; color: var(--accent-green); margin-right: 6px; flex: none; }
+    .progress-area-ico { display: inline-flex; align-items: center; color: var(--accent-green-text); margin-right: 6px; flex: none; }
     .progress-area-ico .ic { width: 15px; height: 15px; }
-    .progress-area-label { font-size: 11px; font-weight: 700; color: var(--accent-green); letter-spacing: 1.2px; text-transform: uppercase; line-height: 1.3; }   /* v2.8.9: kein nowrap mehr — "Mentale Balance & Stress" wurde sonst zu "MENTALE BALANCE &…" abgeschnitten. Zwei Zeilen zu 11 px sind verkraftbar. */
+    .progress-area-label { font-size: 11px; font-weight: 700; color: var(--accent-green-text); letter-spacing: 1.2px; text-transform: uppercase; line-height: 1.3; }   /* v2.8.9: kein nowrap mehr — "Mentale Balance & Stress" wurde sonst zu "MENTALE BALANCE &…" abgeschnitten. Zwei Zeilen zu 11 px sind verkraftbar. */
     .progress-count { font-size: 12px; color: var(--text-muted); font-weight: 500; flex-shrink: 0; margin-left: 10px; white-space: nowrap; }
-    .progress-track { width: 100%; height: 6px; background: rgba(255,255,255,0.16); border-radius: 3px; overflow: hidden; }   /* v2.8.8: 0.06 war praktisch unsichtbar */
+    .progress-track { width: 100%; height: 6px; background: rgba(var(--ink-rgb),0.16); border-radius: 3px; overflow: hidden; }   /* v2.8.8: 0.06 war praktisch unsichtbar */
     #progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-green), var(--accent-blue)); border-radius: 2px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); width: 0%; }
     .progress-back-btn { background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; padding: 0 8px 0 0; line-height: 1; flex-shrink: 0; transition: color 0.2s; width: auto; margin: 0; }
-    .progress-back-btn:hover { color: var(--accent-green); transform: none; box-shadow: none; }
+    .progress-back-btn:hover { color: var(--accent-green-text); transform: none; box-shadow: none; }
     .progress-back-btn.hidden { visibility: hidden; pointer-events: none; }
     .progress-left { display: flex; align-items: center; gap: 0; flex: 1; min-width: 0; padding-right: 8px; }
     .option-btn.selected-flash { border-color: var(--accent-green); background: var(--accent-green-dim); transform: translateX(2px); }
@@ -1148,7 +1237,7 @@
     .question-step { display: none; }
     .question-step.active { display: block; }
     .card { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 24px; margin-bottom: 16px; }
-    .area-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; background: var(--accent-blue-dim); border: 1px solid rgba(59,158,255,0.18); color: var(--accent-blue); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 16px; }
+    .area-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; background: var(--accent-blue-dim); border: 1px solid rgba(var(--accent-blue-rgb),0.18); color: var(--accent-blue-text); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 16px; }
     /* v1.32.0 — Buddy (Maskottchen). Nur am Bereichsanfang, nie bei Folgefragen.
        Bildgrössen sind fix gesetzt, damit beim Nachladen nichts springt. */
     .buddy-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
@@ -1166,7 +1255,7 @@
       text-align: center; animation: areaIntroIn 0.4s ease both; }
     .area-intro .buddy-img { margin: 0 auto 18px; }
     .area-intro-kicker { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
-      color: var(--accent-green); font-weight: 700; margin-bottom: 10px; }
+      color: var(--accent-green-text); font-weight: 700; margin-bottom: 10px; }
     .area-intro-title { font-family: 'DM Serif Display', serif; font-weight: 400;
       font-size: 26px; line-height: 1.2; color: var(--text-primary); margin: 0 0 8px;
       display: flex; align-items: center; justify-content: center; gap: 10px; }
@@ -1182,7 +1271,7 @@
     .buddy-wait .buddy-img { width: 100px; height: 100px; }
     /* v1.32.1 — Buddy stellt das Ergebnis vor (Abschluss des Checks) */
     .buddy-result { display: flex; align-items: center; gap: 16px; background: var(--brand-card);
-      border: 1px solid rgba(34,201,122,0.22); border-radius: var(--radius);
+      border: 1px solid rgba(var(--accent-green-rgb),0.22); border-radius: var(--radius);
       padding: 16px 18px; margin-bottom: 14px; }
     .buddy-result .buddy-img { width: 150px; height: 150px; }
     .buddy-result-text { flex: 1; min-width: 0; }
@@ -1205,8 +1294,8 @@
     .question-text { font-size: 19px; font-weight: 600; line-height: 1.4; color: var(--text-primary); margin-bottom: 6px; }
     .help-text { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 22px; }
     .options-grid { display: flex; flex-direction: column; gap: 9px; }
-    .option-btn { width: 100%; padding: 15px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; text-align: left; cursor: pointer; transition: all 0.18s; display: flex; align-items: center; gap: 12px; }
-    .option-btn::before { content: ''; width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.15); flex-shrink: 0; transition: all 0.18s; }
+    .option-btn { width: 100%; padding: 15px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(var(--ink-rgb),0.03); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; text-align: left; cursor: pointer; transition: all 0.18s; display: flex; align-items: center; gap: 12px; }
+    .option-btn::before { content: ''; width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(var(--ink-rgb),0.15); flex-shrink: 0; transition: all 0.18s; }
     .option-btn:hover { border-color: var(--accent-green); background: var(--accent-green-dim); transform: translateX(2px); }
     .option-btn:hover::before { border-color: var(--accent-green); background: var(--accent-green); }
     /* Benchmark-Sofort-Feedback (v1.28.23: inline unter den Antworten statt Overlay — überdeckt nichts) */
@@ -1220,19 +1309,19 @@
     .option-btn.multi-option::before { border-radius: 5px; }
     .option-btn.multi-option:hover::before { background: transparent; }
     .option-btn.multi-option.checked { border-color: var(--accent-green); background: var(--accent-green-dim); }
-    .option-btn.multi-option.checked::before { border-color: var(--accent-green); background: var(--accent-green); content: '✓'; color: #0a1628; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .option-btn.multi-option.checked::before { border-color: var(--accent-green); background: var(--accent-green); content: '✓'; color: var(--on-accent); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
     .form-field { display: flex; flex-direction: column; gap: 5px; }
     .form-field label { font-size: 11px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.8px; text-transform: uppercase; }
-    .form-field input, .form-field select { padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; transition: border-color 0.18s; width: 100%; -webkit-appearance: none; }
+    .form-field input, .form-field select { padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(var(--ink-rgb),0.04); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; transition: border-color 0.18s; width: 100%; -webkit-appearance: none; }
     .form-field input:focus, .form-field select:focus { outline: none; border-color: var(--accent-green); background: var(--accent-green-dim); }
-    .form-field select option { background: #132338; color: var(--text-primary); }
-    .next-btn { width: 100%; padding: 16px; border-radius: var(--radius-sm); border: none; background: linear-gradient(135deg, var(--accent-green) 0%, #1aaa65 100%); color: #0a1628; font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 800; cursor: pointer; transition: all 0.2s; margin-top: 6px; }
-    .next-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(34,201,122,0.25); }
+    .form-field select option { background: var(--brand-card); color: var(--text-primary); }
+    .next-btn { width: 100%; padding: 16px; border-radius: var(--radius-sm); border: none; background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-green-deep) 100%); color: var(--on-accent); font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 800; cursor: pointer; transition: all 0.2s; margin-top: 6px; }
+    .next-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(var(--accent-green-rgb),0.25); }
     .next-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     .secondary-btn { width: 100%; padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
     .secondary-btn:hover { border-color: var(--border-hover); color: var(--text-primary); }
-    .danger-btn { width: 100%; padding: 14px; border-radius: var(--radius-sm); border: 1px solid rgba(255,92,92,0.3); background: rgba(255,92,92,0.08); color: var(--accent-red); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+    .danger-btn { width: 100%; padding: 14px; border-radius: var(--radius-sm); border: 1px solid rgba(var(--accent-red-rgb),0.3); background: rgba(var(--accent-red-rgb),0.08); color: var(--accent-red-text); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
     .checkbox-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
     .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; margin-top: 3px; flex-shrink: 0; accent-color: var(--accent-green); }
     .checkbox-row label { font-size: 14px; color: var(--text-secondary); line-height: 1.5; cursor: pointer; }
@@ -1241,8 +1330,8 @@
     .info-box { padding: 16px 18px; border-radius: var(--radius-sm); margin-top: 16px; line-height: 1.6; font-size: 14px; }
     .box-info { background: var(--accent-blue-dim); border-left: 4px solid var(--accent-blue); color: var(--text-secondary); }
     .box-success { background: var(--accent-green-dim); border-left: 4px solid var(--accent-green); color: var(--text-secondary); }
-    .box-warning { background: rgba(245,166,35,0.08); border-left: 4px solid var(--accent-amber); color: var(--text-secondary); }
-    .box-danger { background: rgba(255,92,92,0.08); border-left: 4px solid var(--accent-red); color: var(--text-secondary); }
+    .box-warning { background: rgba(var(--accent-amber-rgb),0.08); border-left: 4px solid var(--accent-amber); color: var(--text-secondary); }
+    .box-danger { background: rgba(var(--accent-red-rgb),0.08); border-left: 4px solid var(--accent-red); color: var(--text-secondary); }
     .hidden { display: none !important; }
     .loading { text-align: center; padding: 40px; font-size: 16px; color: var(--text-secondary); font-weight: 500; }
     .result-area { display: none; }
@@ -1251,14 +1340,14 @@
     /* Legacy score-ring styles (kept for print) */
     .score-ring-wrap { position: relative; width: 190px; height: 190px; margin-bottom: 16px; }
     .score-ring-svg { width: 190px; height: 190px; transform: rotate(-90deg); }
-    .score-ring-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 13; }
+    .score-ring-bg { fill: none; stroke: rgba(var(--ink-rgb),0.06); stroke-width: 13; }
     .score-ring-fill { fill: none; stroke-width: 13; stroke-linecap: round; stroke-dasharray: 515; stroke-dashoffset: 515; transition: stroke-dashoffset 1.4s cubic-bezier(0.4,0,0.2,1), stroke 0.5s; }
     .score-ring-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     .score-number { font-family: 'DM Serif Display', serif; font-size: 54px; line-height: 1; margin-bottom: 2px; transition: color 0.5s; }
     .score-of { font-size: 12px; color: var(--text-muted); font-weight: 500; }
     .score-level-badge { display: inline-flex; align-items: center; gap: 6px; padding: 7px 18px; border-radius: 30px; font-size: 13px; font-weight: 700; margin-bottom: 10px; }
     .score-bio-age { font-size: 14px; color: var(--text-secondary); font-weight: 500; text-align: center; }
-    .score-bio-age strong { color: var(--accent-green); font-weight: 700; }
+    .score-bio-age strong { color: var(--accent-green-text); font-weight: 700; }
     .score-bio-age-disclaimer { font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 3px; }
     .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
     .kpi-card { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px 12px; text-align: center; }
@@ -1266,94 +1355,94 @@
     .kpi-val { font-size: 22px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
     .kpi-label { font-size: 10px; color: var(--text-muted); font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; }
     .basisdaten-box { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px 18px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 8px; }
-    .pill { display: inline-block; padding: 5px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 20px; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+    .pill { display: inline-block; padding: 5px 12px; background: rgba(var(--ink-rgb),0.05); border: 1px solid var(--border); border-radius: 20px; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
     .section-card { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 20px; margin-bottom: 16px; }
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .section-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
     .toggle-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-    .toggle-btn.on { background: var(--accent-green-dim); border-color: var(--accent-green); color: var(--accent-green); }
+    .toggle-btn.on { background: var(--accent-green-dim); border-color: var(--accent-green); color: var(--accent-green-text); }
     .toggle-btn.dim { opacity: 0.55; }
     /* Potenzial ist die Hypothesen-Ebene — sie trägt durchgehend Blau, nie Markengrün */
-    .toggle-btn.on-blue { background: var(--accent-blue-dim); border-color: var(--accent-blue); color: var(--accent-blue); }
+    .toggle-btn.on-blue { background: var(--accent-blue-dim); border-color: var(--accent-blue); color: var(--accent-blue-text); }
     .vital-index-box { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 20px; margin-bottom: 16px; }
     .vital-index-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 10px 12px; border-radius: var(--radius-sm); margin-bottom: 6px; font-size: 13px; border: 1px solid transparent; }
-    .vital-index-row.active-level { background: var(--accent-green-dim); border-color: rgba(34,201,122,0.2); }
+    .vital-index-row.active-level { background: var(--accent-green-dim); border-color: rgba(var(--accent-green-rgb),0.2); }
     .vital-index-value { font-weight: 800; white-space: nowrap; color: var(--text-primary); min-width: 52px; }
     .vital-index-label { flex: 1; color: var(--text-secondary); line-height: 1.5; }
     .vital-index-note { margin-top: 14px; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
     .radar-explain-box { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 20px; margin-bottom: 16px; }
     .radar-explain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
-    .radar-explain-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    .radar-explain-card { background: rgba(var(--ink-rgb),0.03); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
     .radar-explain-card strong { display: block; color: var(--text-primary); font-size: 14px; margin-bottom: 8px; }
     .score-scale-item { display: flex; gap: 10px; align-items: center; padding: 7px 10px; border-radius: 8px; font-size: 12px; margin-bottom: 4px; }
     .score-scale-item span { font-weight: 800; white-space: nowrap; min-width: 48px; }
-    .ssi-green { background: rgba(34,201,122,0.1); color: var(--accent-green); }
-    .ssi-lgreen { background: rgba(59,200,100,0.08); color: #5edb97; }
-    .ssi-amber { background: rgba(245,166,35,0.1); color: var(--accent-amber); }
-    .ssi-red { background: rgba(255,92,92,0.1); color: var(--accent-red); }
+    .ssi-green { background: rgba(var(--accent-green-rgb),0.1); color: var(--accent-green-text); }
+    .ssi-lgreen { background: rgba(var(--lgreen-alt-rgb),0.08); color: var(--score-ok-text); }
+    .ssi-amber { background: rgba(var(--accent-amber-rgb),0.1); color: var(--accent-amber-text); }
+    .ssi-red { background: rgba(var(--accent-red-rgb),0.1); color: var(--accent-red-text); }
     .areas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
     .area-card { background: var(--brand-card); border: 1px solid var(--border); border-left: 3px solid transparent; border-radius: var(--radius-sm); padding: 14px; cursor: pointer; transition: all 0.2s; }
     .area-card:hover { transform: translateY(-1px); border-color: var(--border-hover); }
     .area-card.area-good { border-left-color: var(--accent-green); }
-    .area-card.area-ok { border-left-color: #5edb97; }
+    .area-card.area-ok { border-left-color: var(--score-ok); }
     .area-card.area-medium { border-left-color: var(--accent-amber); }
-    .area-card.area-focus { border-left-color: #ff8c42; }
+    .area-card.area-focus { border-left-color: var(--score-focus); }
     .area-card.area-low { border-left-color: var(--accent-red); }
     .area-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .area-card-name { font-size: 13px; font-weight: 700; color: var(--text-primary); }
     .area-score-pill { font-size: 12px; font-weight: 800; padding: 2px 9px; border-radius: 10px; }
-    .area-good .area-score-pill { background: rgba(34,201,122,0.15); color: var(--accent-green); }
-    .area-ok .area-score-pill { background: rgba(94,219,151,0.15); color: #5edb97; }
-    .area-medium .area-score-pill { background: rgba(245,166,35,0.15); color: var(--accent-amber); }
-    .area-focus .area-score-pill { background: rgba(255,140,66,0.15); color: #ff8c42; }
-    .area-low .area-score-pill { background: rgba(255,92,92,0.15); color: var(--accent-red); }
-    .area-bar-track { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+    .area-good .area-score-pill { background: rgba(var(--accent-green-rgb),0.15); color: var(--accent-green-text); }
+    .area-ok .area-score-pill { background: rgba(var(--score-ok-rgb),0.15); color: var(--score-ok-text); }
+    .area-medium .area-score-pill { background: rgba(var(--accent-amber-rgb),0.15); color: var(--accent-amber-text); }
+    .area-focus .area-score-pill { background: rgba(var(--score-focus-rgb),0.15); color: var(--score-focus-text); }
+    .area-low .area-score-pill { background: rgba(var(--accent-red-rgb),0.15); color: var(--accent-red-text); }
+    .area-bar-track { height: 3px; background: rgba(var(--ink-rgb),0.06); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
     .area-bar-fill { height: 100%; border-radius: 2px; transition: width 1s cubic-bezier(0.4,0,0.2,1); }
     .area-good .area-bar-fill { background: var(--accent-green); }
-    .area-ok .area-bar-fill { background: #5edb97; }
+    .area-ok .area-bar-fill { background: var(--score-ok); }
     .area-medium .area-bar-fill { background: var(--accent-amber); }
-    .area-focus .area-bar-fill { background: #ff8c42; }
+    .area-focus .area-bar-fill { background: var(--score-focus); }
     .area-low .area-bar-fill { background: var(--accent-red); }
     .area-status { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
-    .area-good .area-status { color: var(--accent-green); }
-    .area-ok .area-status { color: #5edb97; }
-    .area-medium .area-status { color: var(--accent-amber); }
-    .area-focus .area-status { color: #ff8c42; }
-    .area-low .area-status { color: var(--accent-red); }
+    .area-good .area-status { color: var(--accent-green-text); }
+    .area-ok .area-status { color: var(--score-ok-text); }
+    .area-medium .area-status { color: var(--accent-amber-text); }
+    .area-focus .area-status { color: var(--score-focus-text); }
+    .area-low .area-status { color: var(--accent-red-text); }
     .area-detail { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
     .area-detail.open { display: block; }
     .insight-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; margin-top: 8px; }
-    .insight-text { font-size: 12px; color: var(--text-secondary); line-height: 1.5; padding: 8px 10px; border-radius: 6px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); }
+    .insight-text { font-size: 12px; color: var(--text-secondary); line-height: 1.5; padding: 8px 10px; border-radius: 6px; background: rgba(var(--ink-rgb),0.03); border: 1px solid var(--border); }
     /* v1.46.0 — Vertiefung je Bereich */
     .area-info { font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); text-transform: none; letter-spacing: 0; font-weight: 400; }
     .area-info p { margin: 0 0 8px; }
-    .area-info .ai-age { background: rgba(59,158,255,0.07); border-left: 2px solid var(--accent-blue); padding: 8px 10px; margin: 8px 0; }
+    .area-info .ai-age { background: rgba(var(--accent-blue-rgb),0.07); border-left: 2px solid var(--accent-blue); padding: 8px 10px; margin: 8px 0; }
     .area-info .ai-age b { color: var(--text-primary); }
     .area-info .ai-src { font-size: 10.5px; color: var(--text-muted); margin-top: 6px; }
     .area-info .ai-src a { color: var(--text-muted); text-decoration: underline; }
     .tap-hint { font-size: 10px; color: var(--text-muted); margin-top: 5px; text-align: right; }
-    .bmi-detail { margin-top: 8px; padding: 8px 10px; background: rgba(255,255,255,0.03); border-radius: 6px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
-    .hebel-box { background: var(--brand-card); border: 1px solid rgba(59,158,255,0.18); border-left: 4px solid var(--accent-blue); border-radius: var(--radius-sm); padding: 16px 18px; margin-bottom: 16px; display: flex; gap: 12px; align-items: flex-start; }
+    .bmi-detail { margin-top: 8px; padding: 8px 10px; background: rgba(var(--ink-rgb),0.03); border-radius: 6px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+    .hebel-box { background: var(--brand-card); border: 1px solid rgba(var(--accent-blue-rgb),0.18); border-left: 4px solid var(--accent-blue); border-radius: var(--radius-sm); padding: 16px 18px; margin-bottom: 16px; display: flex; gap: 12px; align-items: flex-start; }
     .hebel-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
-    .hebel-title { font-size: 11px; font-weight: 700; color: var(--accent-blue); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; }
+    .hebel-title { font-size: 11px; font-weight: 700; color: var(--accent-blue-text); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; }
     .hebel-text { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
     .hebel-text strong { color: var(--text-primary); }
-    .support-box { background: var(--accent-green-dim); border: 1px solid rgba(34,201,122,0.2); border-radius: var(--radius); padding: 22px 20px; margin-bottom: 16px; }
+    .support-box { background: var(--accent-green-dim); border: 1px solid rgba(var(--accent-green-rgb),0.2); border-radius: var(--radius); padding: 22px 20px; margin-bottom: 16px; }
     .support-box h3 { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 14px; }
     .support-hints { list-style: none; padding: 0; margin: 0 0 12px; }
-    .support-hints li { padding: 10px 12px; margin-bottom: 6px; background: rgba(255,255,255,0.04); border: 1px solid rgba(34,201,122,0.12); border-radius: 8px; font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
-    .redflag-box { background: rgba(255,92,92,0.08); border: 1px solid rgba(255,92,92,0.25); border-left: 4px solid var(--accent-red); border-radius: var(--radius-sm); padding: 18px 20px; margin-bottom: 16px; font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+    .support-hints li { padding: 10px 12px; margin-bottom: 6px; background: rgba(var(--ink-rgb),0.04); border: 1px solid rgba(var(--accent-green-rgb),0.12); border-radius: 8px; font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+    .redflag-box { background: rgba(var(--accent-red-rgb),0.08); border: 1px solid rgba(var(--accent-red-rgb),0.25); border-left: 4px solid var(--accent-red); border-radius: var(--radius-sm); padding: 18px 20px; margin-bottom: 16px; font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
     .hint-box { border-radius: var(--radius-sm); padding: 16px 18px; margin-bottom: 12px; font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
-    .ai-box { background: linear-gradient(135deg, rgba(34,201,122,0.10) 0%, rgba(59,158,255,0.07) 100%); border-radius: var(--radius); padding: 26px 22px; margin-bottom: 16px; text-align: center; position: relative; box-shadow: 0 0 0 2px rgba(34,201,122,0.5), 0 0 28px rgba(34,201,122,0.18), 0 4px 24px rgba(0,0,0,0.18); }
-    .ai-box::before { content: ''; position: absolute; inset: 0; border-radius: var(--radius); padding: 2.5px; background: linear-gradient(135deg, #22c97a 0%, #3b9eff 50%, #f5a623 100%); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
-    .ai-box::after { content: ''; position: absolute; inset: -1px; border-radius: calc(var(--radius) + 1px); background: linear-gradient(135deg, #22c97a 0%, #3b9eff 50%, #f5a623 100%); opacity: 0.20; filter: blur(10px); z-index: -1; pointer-events: none; }
-    .ai-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 14px; border-radius: 20px; background: var(--accent-green-dim); border: 1px solid rgba(34,201,122,0.25); color: var(--accent-green); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+    .ai-box { background: linear-gradient(135deg, rgba(var(--accent-green-rgb),0.10) 0%, rgba(var(--accent-blue-rgb),0.07) 100%); border-radius: var(--radius); padding: 26px 22px; margin-bottom: 16px; text-align: center; position: relative; box-shadow: 0 0 0 2px rgba(var(--accent-green-rgb),0.5), 0 0 28px rgba(var(--accent-green-rgb),0.18), 0 4px 24px rgba(var(--shadow-rgb),0.18); }
+    .ai-box::before { content: ''; position: absolute; inset: 0; border-radius: var(--radius); padding: 2.5px; background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-blue) 50%, var(--accent-amber) 100%); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+    .ai-box::after { content: ''; position: absolute; inset: -1px; border-radius: calc(var(--radius) + 1px); background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-blue) 50%, var(--accent-amber) 100%); opacity: 0.20; filter: blur(10px); z-index: -1; pointer-events: none; }
+    .ai-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 14px; border-radius: 20px; background: var(--accent-green-dim); border: 1px solid rgba(var(--accent-green-rgb),0.25); color: var(--accent-green-text); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
     .ai-title { font-size: 19px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
     .ai-sub { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 18px; }
-    .ai-box input[type="email"], .ai-box input[type="text"] { width: 100%; padding: 13px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; margin-bottom: 12px; text-align: center; }
+    .ai-box input[type="email"], .ai-box input[type="text"] { width: 100%; padding: 13px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(var(--ink-rgb),0.04); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; margin-bottom: 12px; text-align: center; }
     .ai-box input[type="email"]:focus, .ai-box input[type="text"]:focus { outline: none; border-color: var(--accent-green); }
     /* Aufmerksamkeit beim ersten Sichtkontakt (v1.28.31): einmaliger Puls + gestaffelte Teaser-Zeilen */
-    @keyframes aiPulse { 0%,100% { box-shadow: 0 0 0 2px rgba(34,201,122,0.5), 0 0 28px rgba(34,201,122,0.18), 0 4px 24px rgba(0,0,0,0.18); } 45% { box-shadow: 0 0 0 3px rgba(34,201,122,0.95), 0 0 52px rgba(34,201,122,0.45), 0 4px 24px rgba(0,0,0,0.18); } }
+    @keyframes aiPulse { 0%,100% { box-shadow: 0 0 0 2px rgba(var(--accent-green-rgb),0.5), 0 0 28px rgba(var(--accent-green-rgb),0.18), 0 4px 24px rgba(var(--shadow-rgb),0.18); } 45% { box-shadow: 0 0 0 3px rgba(var(--accent-green-rgb),0.95), 0 0 52px rgba(var(--accent-green-rgb),0.45), 0 4px 24px rgba(var(--shadow-rgb),0.18); } }
     .ai-box.ai-box-live { animation: aiPulse 1.5s ease 1; }
     @keyframes aiRowIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
     .ai-box-live .ai-teaser-row { animation: aiRowIn .5s ease both; }
@@ -1361,8 +1450,8 @@
     .ai-box-live .ai-teaser-row:nth-child(3) { animation-delay: .36s; }
     .ai-box-live .ai-teaser-row:nth-child(4) { animation-delay: .54s; }
     .ai-consent { text-align: left; margin-bottom: 14px; }
-    .ai-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 28px; border-radius: var(--radius-sm); border: none; background: var(--accent-green); color: #0a1628; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 800; cursor: pointer; transition: all 0.2s; width: 100%; }
-    .ai-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(34,201,122,0.25); }
+    .ai-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 28px; border-radius: var(--radius-sm); border: none; background: var(--accent-green); color: var(--on-accent); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 800; cursor: pointer; transition: all 0.2s; width: 100%; }
+    .ai-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(var(--accent-green-rgb),0.25); }
     .ai-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     .feedback-box { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 20px; margin-bottom: 16px; text-align: center; }
     .feedback-box h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
@@ -1375,13 +1464,13 @@
     .pin-sub { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 28px; }
     .pin-code-display { font-size: 13px; color: var(--text-muted); background: var(--brand-card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; display: inline-block; margin-bottom: 24px; letter-spacing: 0.5px; }
     .pin-input-wrap { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
-    .pin-digit { width: 40px; height: 52px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-primary); font-family: monospace; font-size: 22px; font-weight: 800; text-align: center; transition: border-color 0.18s; -webkit-appearance: none; text-transform: uppercase; }
+    .pin-digit { width: 40px; height: 52px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: rgba(var(--ink-rgb),0.04); color: var(--text-primary); font-family: monospace; font-size: 22px; font-weight: 800; text-align: center; transition: border-color 0.18s; -webkit-appearance: none; text-transform: uppercase; }
     .pin-digit:focus { outline: none; border-color: var(--accent-green); background: var(--accent-green-dim); }
-    .pin-digit.filled { border-color: rgba(34,201,122,0.4); }
+    .pin-digit.filled { border-color: rgba(var(--accent-green-rgb),0.4); }
     .pin-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
-    .pin-error { background: rgba(255,92,92,0.08); border: 1px solid rgba(255,92,92,0.25); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px; color: var(--accent-red); margin-bottom: 16px; line-height: 1.5; }
+    .pin-error { background: rgba(var(--accent-red-rgb),0.08); border: 1px solid rgba(var(--accent-red-rgb),0.25); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px; color: var(--accent-red-text); margin-bottom: 16px; line-height: 1.5; }
     .pin-new-check { margin-top: 20px; font-size: 13px; color: var(--text-muted); }
-    .pin-new-check a { color: var(--accent-green); font-weight: 600; text-decoration: none; cursor: pointer; }
+    .pin-new-check a { color: var(--accent-green-text); font-weight: 600; text-decoration: none; cursor: pointer; }
     .status-msg { padding: 12px 14px; border-radius: var(--radius-sm); font-size: 13px; margin-top: 10px; line-height: 1.5; }
     @media print {
       body { background: white !important; color: #1a1a2e !important; padding: 0; }
@@ -1409,15 +1498,15 @@
     .promo-title { font-size: 15.5px; font-weight: 700; color: var(--text-primary); line-height: 1.35; margin-bottom: 9px; }
     .promo-text { font-size: 13px; color: var(--text-secondary); line-height: 1.65; }
     .promo-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
-    .promo-btn { flex: 1 1 200px; display: block; padding: 11px 16px; border: 1px solid rgba(34,201,122,0.45); border-radius: 10px; background: rgba(34,201,122,0.08); color: var(--accent-green); font-size: 13.5px; font-weight: 600; text-align: center; text-decoration: none; line-height: 1.35; }
+    .promo-btn { flex: 1 1 200px; display: block; padding: 11px 16px; border: 1px solid rgba(var(--accent-green-rgb),0.45); border-radius: 10px; background: rgba(var(--accent-green-rgb),0.08); color: var(--accent-green-text); font-size: 13.5px; font-weight: 600; text-align: center; text-decoration: none; line-height: 1.35; }
     @media (max-width: 480px) { .promo-actions { flex-direction: column; } .promo-btn { flex: 1 1 auto; } }
     .app-footer { text-align: center; padding: 12px 0 20px; font-size: 11px; color: var(--text-muted); opacity: 0.5; letter-spacing: 0.03em; user-select: none; }
     .result-tabs { display: flex; gap: 0; background: var(--brand-card); border: 0.5px solid var(--border); border-radius: 14px; padding: 4px; margin: 0 0 16px; }
     .result-tab { flex: 1; padding: 10px 4px; text-align: center; font-size: 11.5px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-radius: 10px; transition: all .2s; border: none; background: none; line-height: 1.3; }
-    .result-tab.active { background: var(--accent-green); color: #0a1628; font-weight: 700; }
+    .result-tab.active { background: var(--accent-green); color: var(--on-accent); font-weight: 700; }
     .result-tab-content { display: none; }
     .result-tab-content.active { display: block; }
-    .t3-info-banner { background: rgba(122,143,168,0.08); border: 1px solid rgba(122,143,168,0.2); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+    .t3-info-banner { background: rgba(var(--slate-rgb),0.08); border: 1px solid rgba(var(--slate-rgb),0.2); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
     .t3-info-banner strong { color: var(--text-primary); }
     .t3-zone-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; }
     .t3-zone-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
@@ -1433,50 +1522,50 @@
     .t3-test-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
     .t3-test-title { font-size: 14px; font-weight: 600; }
     .t3-test-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px; }
-    .t3-test-btn { display: inline-block; background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.3); color: var(--accent-amber); border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: none; }
-    .t3-coming-soon { display: inline-block; font-size: 10px; background: rgba(122,143,168,0.15); border: 1px solid rgba(122,143,168,0.25); color: var(--text-muted); padding: 2px 8px; border-radius: 10px; font-weight: 600; margin-left: 6px; vertical-align: middle; }
+    .t3-test-btn { display: inline-block; background: rgba(var(--accent-amber-rgb),0.1); border: 1px solid rgba(var(--accent-amber-rgb),0.3); color: var(--accent-amber-text); border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: none; }
+    .t3-coming-soon { display: inline-block; font-size: 10px; background: rgba(var(--slate-rgb),0.15); border: 1px solid rgba(var(--slate-rgb),0.25); color: var(--text-muted); padding: 2px 8px; border-radius: 10px; font-weight: 600; margin-left: 6px; vertical-align: middle; }
     .t3-leistung-row { display: flex; align-items: center; gap: 12px; background: var(--brand-card); border: 0.5px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; }
     .t3-leistung-icon { font-size: 22px; flex-shrink: 0; }
     .t3-leistung-body { flex: 1; }
     .t3-leistung-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
     .t3-leistung-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
-    .t3-usp-badge { font-size: 10px; background: var(--accent-green-dim); border: 1px solid rgba(34,201,122,0.25); color: var(--accent-green); padding: 2px 7px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
-    .t3-kk-badge { font-size: 10px; background: rgba(59,158,255,0.1); border: 1px solid rgba(59,158,255,0.2); color: #3b9eff; padding: 2px 7px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
-    .t3-link { font-size: 12px; color: var(--accent-green); font-weight: 600; text-decoration: none; flex-shrink: 0; }
+    .t3-usp-badge { font-size: 10px; background: var(--accent-green-dim); border: 1px solid rgba(var(--accent-green-rgb),0.25); color: var(--accent-green-text); padding: 2px 7px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
+    .t3-kk-badge { font-size: 10px; background: rgba(var(--accent-blue-rgb),0.1); border: 1px solid rgba(var(--accent-blue-rgb),0.2); color: var(--accent-blue-text); padding: 2px 7px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
+    .t3-link { font-size: 12px; color: var(--accent-green-text); font-weight: 600; text-decoration: none; flex-shrink: 0; }
     .bereiche-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
     .bereiche-header-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--text-muted); }
-    .bereiche-wachstum-badge { font-size: 11px; color: var(--accent-amber); font-weight: 600; background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.25); padding: 2px 9px; border-radius: 10px; }
+    .bereiche-wachstum-badge { font-size: 11px; color: var(--accent-amber-text); font-weight: 600; background: rgba(var(--accent-amber-rgb),0.1); border: 1px solid rgba(var(--accent-amber-rgb),0.25); padding: 2px 9px; border-radius: 10px; }
     /* ── PATCH 4: Stärken-Separator stärker differenziert ── */
-    .bereiche-staerken-sep { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--accent-green); margin: 18px 0 10px; display: flex; align-items: center; gap: 8px; opacity: 0.75; }
-    .bereiche-staerken-sep::after { content: ''; flex: 1; height: 1px; background: rgba(34,201,122,0.2); }
+    .bereiche-staerken-sep { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--accent-green-text); margin: 18px 0 10px; display: flex; align-items: center; gap: 8px; opacity: 0.75; }
+    .bereiche-staerken-sep::after { content: ''; flex: 1; height: 1px; background: rgba(var(--accent-green-rgb),0.2); }
     /* ══ V2-Einstieg (v1.31.0): Potenzial-Simulator, Verlauf, Re-Check ══ */
-    .sim-box { background: var(--brand-card); border: 1px solid rgba(59,158,255,0.22); border-radius: var(--radius); padding: 20px 18px; margin-bottom: 16px; }
-    .sim-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; background: var(--accent-blue-dim); border: 1px solid rgba(59,158,255,0.25); color: var(--accent-blue); font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 10px; }
+    .sim-box { background: var(--brand-card); border: 1px solid rgba(var(--accent-blue-rgb),0.22); border-radius: var(--radius); padding: 20px 18px; margin-bottom: 16px; }
+    .sim-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; background: var(--accent-blue-dim); border: 1px solid rgba(var(--accent-blue-rgb),0.25); color: var(--accent-blue-text); font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 10px; }
     .sim-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
     .sim-sub { font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; margin-bottom: 14px; }
-    .sim-lever { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; cursor: pointer; transition: all 0.18s; user-select: none; }
+    .sim-lever { display: flex; align-items: center; gap: 12px; background: rgba(var(--ink-rgb),0.03); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; cursor: pointer; transition: all 0.18s; user-select: none; }
     .sim-lever:hover { border-color: var(--border-hover); }
-    .sim-lever.on { border-color: rgba(59,158,255,0.45); background: var(--accent-blue-dim); }
+    .sim-lever.on { border-color: rgba(var(--accent-blue-rgb),0.45); background: var(--accent-blue-dim); }
     .sim-lever-body { flex: 1; min-width: 0; }
     .sim-lever-title { font-size: 13px; font-weight: 700; color: var(--text-primary); line-height: 1.35; }
     .sim-lever-change { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-top: 2px; }
-    .sim-lever-gain { font-size: 11px; font-weight: 700; color: var(--accent-blue); margin-top: 3px; }
+    .sim-lever-gain { font-size: 11px; font-weight: 700; color: var(--accent-blue-text); margin-top: 3px; }
     /* v1.50.0 — freiwillige Werte aus Uhr oder Tracker */
-    .btn-ghost { width: 100%; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-secondary); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-ghost { width: 100%; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(var(--ink-rgb),0.04); color: var(--text-secondary); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
     .btn-ghost:hover { border-color: var(--accent-green); color: var(--text-primary); }
     .watch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     @media (max-width: 460px) { .watch-grid { grid-template-columns: 1fr; } }
     .watch-field { display: block; }
     .watch-field > span { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; }
     .watch-field > span em { font-style: normal; font-weight: 400; color: var(--text-muted); }
-    .watch-field input, .watch-field select { width: 100%; padding: 11px 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; }
+    .watch-field input, .watch-field select { width: 100%; padding: 11px 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(var(--ink-rgb),0.04); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; }
     .watch-field input:focus, .watch-field select:focus { outline: none; border-color: var(--accent-green); }
     /* v1.51.0 — Zeitraum der Durchschnittswerte */
-    .watch-period { margin-bottom: 12px; padding: 11px 12px; border-radius: 8px; background: rgba(34,201,122,0.06); border: 1px solid rgba(34,201,122,0.22); }
+    .watch-period { margin-bottom: 12px; padding: 11px 12px; border-radius: 8px; background: rgba(var(--accent-green-rgb),0.06); border: 1px solid rgba(var(--accent-green-rgb),0.22); }
     .watch-period > label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
-    .watch-period > select { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; }
+    .watch-period > select { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(var(--ink-rgb),0.04); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; }
     .watch-period-note { font-size: 11.5px; color: var(--text-muted); line-height: 1.5; margin-top: 7px; }
-    .watch-box { margin: 14px 0 0; padding: 12px 14px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.04); border: 1px solid var(--border); }
+    .watch-box { margin: 14px 0 0; padding: 12px 14px; border-radius: var(--radius-sm); background: rgba(var(--ink-rgb),0.04); border: 1px solid var(--border); }
     .watch-box-title { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
     .watch-row { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; padding: 5px 0; border-top: 1px solid var(--border); }
     .watch-row:first-of-type { border-top: none; }
@@ -1484,120 +1573,120 @@
     /* v1.49.0 — voller Weg bis zur günstigsten Antwort, ruhig gesetzt */
     .sim-lever-max { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
     /* v1.48.0 — Hinweis, wenn im größten Ansatzpunkt keine bessere Antwort bleibt */
-    .sim-note { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 10px 0 4px; padding: 9px 11px; border-radius: 8px; background: rgba(255,255,255,0.04); }
-    .sim-switch { position: relative; width: 40px; height: 22px; border-radius: 12px; background: rgba(255,255,255,0.12); flex-shrink: 0; transition: background 0.2s; }
+    .sim-note { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 10px 0 4px; padding: 9px 11px; border-radius: 8px; background: rgba(var(--ink-rgb),0.04); }
+    .sim-switch { position: relative; width: 40px; height: 22px; border-radius: 12px; background: rgba(var(--ink-rgb),0.12); flex-shrink: 0; transition: background 0.2s; }
     .sim-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--text-secondary); transition: all 0.2s; }
     .sim-lever.on .sim-switch { background: var(--accent-blue); }
-    .sim-lever.on .sim-switch::after { left: 20px; background: #fff; }
-    .sim-projection { display: flex; align-items: center; gap: 14px; background: rgba(59,158,255,0.06); border: 1px dashed rgba(59,158,255,0.4); border-radius: var(--radius-sm); padding: 14px 16px; margin: 12px 0 10px; }
-    .sim-proj-num { font-family: 'DM Serif Display', serif; font-size: 30px; line-height: 1; color: var(--accent-blue); white-space: nowrap; }
+    .sim-lever.on .sim-switch::after { left: 20px; background: var(--knob); }
+    .sim-projection { display: flex; align-items: center; gap: 14px; background: rgba(var(--accent-blue-rgb),0.06); border: 1px dashed rgba(var(--accent-blue-rgb),0.4); border-radius: var(--radius-sm); padding: 14px 16px; margin: 12px 0 10px; }
+    .sim-proj-num { font-family: 'DM Serif Display', serif; font-size: 30px; line-height: 1; color: var(--accent-blue-text); white-space: nowrap; }
     .sim-proj-meta { flex: 1; font-size: 12px; color: var(--text-secondary); line-height: 1.55; }
     .sim-proj-meta strong { color: var(--text-primary); }
-    .sim-goal-btn { width: 100%; padding: 13px; border-radius: var(--radius-sm); border: 1px solid rgba(59,158,255,0.4); background: transparent; color: var(--accent-blue); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .sim-goal-btn { width: 100%; padding: 13px; border-radius: var(--radius-sm); border: 1px solid rgba(var(--accent-blue-rgb),0.4); background: transparent; color: var(--accent-blue-text); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
     .sim-goal-btn:hover:not(:disabled) { background: var(--accent-blue-dim); }
     .sim-goal-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .sim-goal-btn.saved { border-color: var(--accent-green); color: var(--accent-green); background: var(--accent-green-dim); }
+    .sim-goal-btn.saved { border-color: var(--accent-green); color: var(--accent-green-text); background: var(--accent-green-dim); }
     .sim-note { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-top: 8px; }
-    .sim-goal-card { background: var(--accent-green-dim); border: 1px solid rgba(34,201,122,0.25); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 10px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; }
-    .sim-goal-card strong { color: var(--accent-green); }
-    .verlauf-card { background: var(--brand-card); border: 1px solid rgba(34,201,122,0.25); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 12px; }
+    .sim-goal-card { background: var(--accent-green-dim); border: 1px solid rgba(var(--accent-green-rgb),0.25); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 10px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; }
+    .sim-goal-card strong { color: var(--accent-green-text); }
+    .verlauf-card { background: var(--brand-card); border: 1px solid rgba(var(--accent-green-rgb),0.25); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 12px; }
     .verlauf-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .verlauf-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
     .verlauf-date { font-size: 11px; color: var(--text-muted); }
     .verlauf-row { display: flex; align-items: baseline; gap: 10px; font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
-    .verlauf-delta-up { color: var(--accent-green); font-weight: 800; }
-    .verlauf-delta-down { color: var(--accent-amber); font-weight: 800; }
+    .verlauf-delta-up { color: var(--accent-green-text); font-weight: 800; }
+    .verlauf-delta-down { color: var(--accent-amber-text); font-weight: 800; }
     .verlauf-delta-stable { color: var(--text-secondary); font-weight: 700; }
     /* v1.42.0 — Einzelsignal in der Bereichskarte, immer sichtbar */
-    .area-signal { margin-top: 8px; padding: 8px 10px; border-left: 2px solid var(--accent-amber); background: rgba(245,166,35,0.07); font-size: 11.5px; line-height: 1.5; color: var(--text-secondary); text-transform: none; letter-spacing: 0; font-weight: 400; }
-    .area-signal strong { color: #ffb347; font-weight: 700; }
+    .area-signal { margin-top: 8px; padding: 8px 10px; border-left: 2px solid var(--accent-amber); background: rgba(var(--accent-amber-rgb),0.07); font-size: 11.5px; line-height: 1.5; color: var(--text-secondary); text-transform: none; letter-spacing: 0; font-weight: 400; }
+    .area-signal strong { color: var(--warn-text); font-weight: 700; }
     .area-prev-delta { font-size: 10.5px; font-weight: 600; color: var(--text-muted); margin-top: 3px; }
-    .area-prev-delta .up { color: var(--accent-green); }
-    .area-prev-delta .down { color: var(--accent-amber); }
-    .recheck-banner { background: linear-gradient(135deg, rgba(34,201,122,0.10), rgba(59,158,255,0.08)); border: 1px solid rgba(34,201,122,0.3); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 14px; }
+    .area-prev-delta .up { color: var(--accent-green-text); }
+    .area-prev-delta .down { color: var(--accent-amber-text); }
+    .recheck-banner { background: linear-gradient(135deg, rgba(var(--accent-green-rgb),0.10), rgba(var(--accent-blue-rgb),0.08)); border: 1px solid rgba(var(--accent-green-rgb),0.3); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 14px; }
     .recheck-banner-title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
     .recheck-banner-sub { font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; margin-bottom: 12px; }
-    .recheck-btn { width: 100%; padding: 12px; border-radius: var(--radius-sm); border: none; background: var(--accent-green); color: #0a1628; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.2s; }
-    .recheck-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(34,201,122,0.25); }
-    .recheck-note-quiz { background: var(--accent-blue-dim); border: 1px solid rgba(59,158,255,0.25); border-radius: var(--radius-sm); padding: 9px 14px; margin-bottom: 14px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+    .recheck-btn { width: 100%; padding: 12px; border-radius: var(--radius-sm); border: none; background: var(--accent-green); color: var(--on-accent); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.2s; }
+    .recheck-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(var(--accent-green-rgb),0.25); }
+    .recheck-note-quiz { background: var(--accent-blue-dim); border: 1px solid rgba(var(--accent-blue-rgb),0.25); border-radius: var(--radius-sm); padding: 9px 14px; margin-bottom: 14px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
     .radar-legend { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 10px; font-size: 11px; color: var(--text-secondary); }
     .radar-legend span { display: inline-flex; align-items: center; gap: 5px; }
     .radar-legend i { display: inline-block; width: 16px; height: 0; border-top: 2.5px solid; border-radius: 2px; }
-    .radar-legend .leg-ist i { border-color: #22c97a; }
-    .radar-legend .leg-prev i { border-color: rgba(141,160,184,0.8); border-top-width: 1.5px; }
-    .radar-legend .leg-pot i { border-color: #3b9eff; border-top-style: dashed; }
+    .radar-legend .leg-ist i { border-color: var(--accent-green); }
+    .radar-legend .leg-prev i { border-color: rgba(var(--text-secondary-rgb),0.8); border-top-width: 1.5px; }
+    .radar-legend .leg-pot i { border-color: var(--accent-blue); border-top-style: dashed; }
     .radar-toggles { display: flex; gap: 6px; }
     /* ══ v2.0.0 — Stufenmodell der Ergebnisseite ══ */
-    .stage-kicker { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--accent-green); margin-bottom: 8px; }
-    .stage-kicker.blue { color: var(--accent-blue); }
+    .stage-kicker { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--accent-green-text); margin-bottom: 8px; }
+    .stage-kicker.blue { color: var(--accent-blue-text); }
     .stage-kicker.muted { color: var(--text-muted); }
-    .stage-summary { background: linear-gradient(135deg, rgba(34,201,122,0.10), rgba(59,158,255,0.07)); border: 1px solid rgba(34,201,122,0.28); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
+    .stage-summary { background: linear-gradient(135deg, rgba(var(--accent-green-rgb),0.10), rgba(var(--accent-blue-rgb),0.07)); border: 1px solid rgba(var(--accent-green-rgb),0.28); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
     .stage-summary p { font-size: 14.5px; line-height: 1.65; color: var(--text-primary); }
     .stage-caption { font-size: 12px; color: var(--text-secondary); line-height: 1.55; text-align: center; margin-top: 8px; }
     .stage-strengths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
-    .stage-strength { background: var(--brand-card); border: 1px solid rgba(34,201,122,0.25); border-radius: var(--radius-sm); padding: 14px; }
+    .stage-strength { background: var(--brand-card); border: 1px solid rgba(var(--accent-green-rgb),0.25); border-radius: var(--radius-sm); padding: 14px; }
     .stage-strength-head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
     .stage-strength-sub { font-size: 11px; color: var(--text-secondary); }
-    .stage-potential { background: var(--brand-card); border: 1px solid rgba(59,158,255,0.3); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
+    .stage-potential { background: var(--brand-card); border: 1px solid rgba(var(--accent-blue-rgb),0.3); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
     .stage-lever { display: flex; align-items: center; gap: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; }
     .stage-lever-body { flex: 1; min-width: 0; }
     .stage-lever-title { font-size: 13px; font-weight: 700; line-height: 1.35; }
-    .pill-goal { display: inline-block; font-size: 10.5px; font-weight: 700; color: var(--accent-green); background: var(--accent-green-dim); border: 1px solid rgba(34,201,122,0.25); border-radius: 20px; padding: 1px 8px; margin-left: 4px; vertical-align: middle; white-space: nowrap; }
-    .stage-lever-gain { font-size: 14px; font-weight: 800; color: var(--accent-blue); white-space: nowrap; }
+    .pill-goal { display: inline-block; font-size: 10.5px; font-weight: 700; color: var(--accent-green-text); background: var(--accent-green-dim); border: 1px solid rgba(var(--accent-green-rgb),0.25); border-radius: 20px; padding: 1px 8px; margin-left: 4px; vertical-align: middle; white-space: nowrap; }
+    .stage-lever-gain { font-size: 14px; font-weight: 800; color: var(--accent-blue-text); white-space: nowrap; }
     .stage-lock-line { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-top: 4px; }
     .stage-lock-line svg { flex-shrink: 0; }
-    .area-detail .stage-lock-line { border: 1px dashed rgba(255,255,255,0.15); border-radius: 8px; padding: 9px 10px; margin-top: 10px; }
-    .stage-btn-primary { display: block; width: 100%; padding: 14px; margin-top: 12px; border: none; border-radius: var(--radius-sm); background: var(--accent-blue); color: #0a1628; font-family: 'DM Sans', sans-serif; font-size: 14.5px; font-weight: 800; cursor: pointer; }
-    .stage-first-step { margin-top: 12px; background: rgba(0,0,0,0.18); border-radius: 8px; padding: 11px 13px; font-size: 13px; line-height: 1.55; color: var(--text-primary); }
-    .stage-first-step span { display: block; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--accent-green); margin-bottom: 3px; }
+    .area-detail .stage-lock-line { border: 1px dashed rgba(var(--ink-rgb),0.15); border-radius: 8px; padding: 9px 10px; margin-top: 10px; }
+    .stage-btn-primary { display: block; width: 100%; padding: 14px; margin-top: 12px; border: none; border-radius: var(--radius-sm); background: var(--accent-blue); color: var(--on-accent); font-family: 'DM Sans', sans-serif; font-size: 14.5px; font-weight: 800; cursor: pointer; }
+    .stage-first-step { margin-top: 12px; background: var(--sunken); border-radius: 8px; padding: 11px 13px; font-size: 13px; line-height: 1.55; color: var(--text-primary); }
+    .stage-first-step span { display: block; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--accent-green-text); margin-bottom: 3px; }
     .stage-radar-lead { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); margin: -4px 0 10px; }
     .stage-form-or { font-size: 12px; color: var(--text-muted); margin: 10px 0 4px; }
     .stage-choice-minor .stage-choice { opacity: .85; }
     .stage-choice-minor .stage-choice strong { font-size: 13px; }
-    #rtc-plan .sim-goal-btn:not(:disabled):not(.saved) { background: var(--accent-blue); color: #0a1628; border-color: var(--accent-blue); }
+    #rtc-plan .sim-goal-btn:not(:disabled):not(.saved) { background: var(--accent-blue); color: var(--on-accent); border-color: var(--accent-blue); }
     .pulse-once { animation: pulseOnce 1.5s ease; }
-    @keyframes pulseOnce { 0%,100% { box-shadow: 0 0 0 0 rgba(59,158,255,0); } 40% { box-shadow: 0 0 0 6px rgba(59,158,255,0.35); } }
-    .stage-btn-outline { display: block; width: 100%; padding: 13px; border-radius: var(--radius-sm); border: 1px solid rgba(59,158,255,0.45); background: transparent; color: var(--accent-blue); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; margin-top: 4px; }
-    .stage-locked { background: var(--brand-card); border: 1px dashed rgba(59,158,255,0.45); border-radius: 14px; padding: 16px; margin: 6px 0 16px; }
+    @keyframes pulseOnce { 0%,100% { box-shadow: 0 0 0 0 rgba(var(--accent-blue-rgb),0); } 40% { box-shadow: 0 0 0 6px rgba(var(--accent-blue-rgb),0.35); } }
+    .stage-btn-outline { display: block; width: 100%; padding: 13px; border-radius: var(--radius-sm); border: 1px solid rgba(var(--accent-blue-rgb),0.45); background: transparent; color: var(--accent-blue-text); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; margin-top: 4px; }
+    .stage-locked { background: var(--brand-card); border: 1px dashed rgba(var(--accent-blue-rgb),0.45); border-radius: 14px; padding: 16px; margin: 6px 0 16px; }
     .stage-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
-    .stage-chip { font-size: 12px; color: var(--text-secondary); background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 999px; padding: 5px 11px; }
-    .stage-age { background: var(--brand-card); border: 1px solid rgba(59,158,255,0.3); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
-    .stage-age .ai-age { font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); background: rgba(59,158,255,0.07); border-left: 2px solid var(--accent-blue); padding: 8px 10px; margin-top: 8px; }
+    .stage-chip { font-size: 12px; color: var(--text-secondary); background: rgba(var(--ink-rgb),0.05); border: 1px solid var(--border); border-radius: 999px; padding: 5px 11px; }
+    .stage-age { background: var(--brand-card); border: 1px solid rgba(var(--accent-blue-rgb),0.3); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+    .stage-age .ai-age { font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); background: rgba(var(--accent-blue-rgb),0.07); border-left: 2px solid var(--accent-blue); padding: 8px 10px; margin-top: 8px; }
     .stage-age .ai-age b { color: var(--text-primary); }
     .stage-signals { margin-bottom: 16px; }
     .stage-signals .area-signal { font-size: 12.5px; border-radius: 6px; margin-top: 8px; }
     .stage-ladder-title { font-family: 'DM Serif Display', serif; font-size: 24px; line-height: 1.2; margin: 18px 0 4px; }
     .stage-step { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-    .stage-step-num { width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; border: 2px solid var(--accent-green); color: var(--accent-green); }
-    .stage-step-num.done { background: var(--accent-green); color: #0a1628; }
-    .stage-step-num.blue { border-color: var(--accent-blue); color: var(--accent-blue); }
+    .stage-step-num { width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; border: 2px solid var(--accent-green); color: var(--accent-green-text); }
+    .stage-step-num.done { background: var(--accent-green); color: var(--on-accent); }
+    .stage-step-num.blue { border-color: var(--accent-blue); color: var(--accent-blue-text); }
     .stage-step-title { font-size: 15px; font-weight: 700; }
     .stage-step-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-    .stage-done { background: var(--brand-card); border: 1px solid rgba(34,201,122,0.3); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+    .stage-done { background: var(--brand-card); border: 1px solid rgba(var(--accent-green-rgb),0.3); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
     .stage-done .stage-step { margin-bottom: 0; }
-    .stage-studio { background: var(--brand-card2); border: 1px solid rgba(59,158,255,0.25); border-radius: var(--radius); padding: 18px 16px; margin-bottom: 16px; }
-    .stage-service { background: rgba(255,255,255,0.04); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; }
+    .stage-studio { background: var(--brand-card2); border: 1px solid rgba(var(--accent-blue-rgb),0.25); border-radius: var(--radius); padding: 18px 16px; margin-bottom: 16px; }
+    .stage-service { background: rgba(var(--ink-rgb),0.04); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; }
     .stage-service-title { font-size: 13.5px; font-weight: 700; margin-bottom: 3px; }
     .stage-service-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
-    .stage-btn-blue { display: block; text-align: center; padding: 14px; border-radius: var(--radius-sm); background: var(--accent-blue); color: #0a1628; font-size: 14.5px; font-weight: 800; text-decoration: none; margin: 12px 0 10px; }
-    .stage-unlock { background: rgba(34,201,122,0.10); border: 1px solid rgba(34,201,122,0.4); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
-    .stage-wissen { background: var(--brand-card); border: 1px solid rgba(167,139,250,0.3); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
+    .stage-btn-blue { display: block; text-align: center; padding: 14px; border-radius: var(--radius-sm); background: var(--accent-blue); color: var(--on-accent); font-size: 14.5px; font-weight: 800; text-decoration: none; margin: 12px 0 10px; }
+    .stage-unlock { background: rgba(var(--accent-green-rgb),0.10); border: 1px solid rgba(var(--accent-green-rgb),0.4); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+    .stage-wissen { background: var(--brand-card); border: 1px solid rgba(var(--accent-purple-rgb),0.3); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
     .stage-wissen-grid { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px 12px; font-size: 12.5px; line-height: 1.55; margin-top: 10px; }
     .stage-wissen-grid .k { font-weight: 700; }
     .stage-wissen-grid .v { color: var(--text-secondary); }
-    .stage-plan-note { background: rgba(245,166,35,0.07); border: 1px solid rgba(245,166,35,0.25); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    .stage-plan-note { background: rgba(var(--accent-amber-rgb),0.07); border: 1px solid rgba(var(--accent-amber-rgb),0.25); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
     .stage-plan-note strong { color: var(--text-primary); }
     .stage-form { margin: 6px 0 12px; }
     .stage-form-legend { font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; }
     .stage-form-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--text-secondary); margin: 12px 0 6px; }
-    .stage-input { width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; }
+    .stage-input { width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(var(--ink-rgb),0.04); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; }
     .stage-input:focus { outline: none; border-color: var(--accent-blue); }
     .stage-choice { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; font-size: 13.5px; line-height: 1.45; cursor: pointer; }
     .stage-choice input { width: 18px; height: 18px; margin: 2px 0 0; flex-shrink: 0; accent-color: var(--accent-blue); }
     .stage-choice:has(input:checked) { border-color: var(--accent-blue); background: var(--accent-blue-dim); }
     .stage-choice-sub { font-size: 12px; color: var(--text-secondary); }
     .stage-contact-line { font-size: 13px; line-height: 1.6; margin: 2px 0; }
-    .stage-contact-line a { color: var(--accent-blue); }
+    .stage-contact-line a { color: var(--accent-blue-text); }
     .stage-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
     .stage-slot { position: relative; }
     .stage-slot input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
@@ -1606,10 +1695,10 @@
     .stage-slot input:focus-visible + span { outline: 2px solid var(--accent-blue); outline-offset: 2px; }
     .stage-fahrplan { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
     .stage-fp-row { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 12px; position: relative; padding-bottom: 14px; }
-    .stage-fp-row:not(.last)::before { content: ''; position: absolute; left: 6px; top: 16px; bottom: 0; width: 2px; background: rgba(255,255,255,0.1); }
+    .stage-fp-row:not(.last)::before { content: ''; position: absolute; left: 6px; top: 16px; bottom: 0; width: 2px; background: rgba(var(--ink-rgb),0.1); }
     .stage-fp-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--accent-green); margin-top: 4px; box-sizing: border-box; }
     .stage-fp-dot.first { background: var(--accent-green); }
-    .stage-fp-label { font-size: 12px; font-weight: 700; color: var(--accent-green); margin-bottom: 2px; }
+    .stage-fp-label { font-size: 12px; font-weight: 700; color: var(--accent-green-text); margin-bottom: 2px; }
     .stage-fp-text { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
   </style>
 </head>
@@ -1663,7 +1752,7 @@
 <symbol id="ic-heart" viewBox="0 0 24 24"><path d="M12 20.5S4.5 15.7 4.5 10.4A4.4 4.4 0 0 1 12 7.2a4.4 4.4 0 0 1 7.5 3.2c0 5.3-7.5 10.1-7.5 10.1Z"/></symbol>
 </defs></svg>
 
-<section id="hero-block" style="width:100%;margin:0;padding:0;position:relative;overflow:hidden;min-height:520px;display:flex;flex-direction:column;justify-content:flex-end;background:#0d1a14;">
+<section id="hero-block" style="width:100%;margin:0;padding:0;position:relative;overflow:hidden;min-height:520px;display:flex;flex-direction:column;justify-content:flex-end;background:var(--hero-bg);">
   <style>
     #hero-img-mobile { display:block; }
     #hero-brand { position:absolute; top:0; left:0; right:0; z-index:3; }
@@ -1672,7 +1761,7 @@
        der Text auf ruhigem Grund. Vorher lag der Text auf dem unruhigen Motiv
        mit Symbolen und war schwer lesbar; das Bildzeichen fehlte ganz. */
     @media (max-width: 639px) {
-      #hero-block { min-height: 0 !important; justify-content: flex-start !important; background: #0a1628 !important; }
+      #hero-block { min-height: 0 !important; justify-content: flex-start !important; background: var(--brand-dark) !important; }
       #hero-brand { position: relative; order: 0; }
       #hero-brand .hb-inner { padding: 16px 22px 14px; }
       #hero-img-mobile { position: relative !important; inset: auto !important; order: 1; width: 100% !important; height: 290px !important;
@@ -1685,16 +1774,16 @@
     #hero-brand .hb-inner { max-width:1120px; margin:0 auto; padding:16px 22px 26px; display:flex; align-items:center; justify-content:center; gap:10px; }
     #hero-brand .hb-mark { width:40px; height:40px; border-radius:11px; display:block; }
     #hero-brand .hb-word { height:30px; width:auto; max-width:160px; display:block; }
-    #hero-brand .hb-fallback { font-family:'DM Serif Display',serif; font-size:24px; color:#fff; }
-    #hero-brand .hb-fallback b { color:#22c97a; font-weight:400; }
+    #hero-brand .hb-fallback { font-family:'DM Serif Display',serif; font-size:24px; color:rgb(var(--ink-rgb)); }
+    #hero-brand .hb-fallback b { color:var(--accent-green-text); font-weight:400; }
     /* v1.45.7 — Produktname + Claim über der Überschrift */
-    #hero-eyebrow { font-size: 10.5px; font-weight: 700; letter-spacing: 0.9px; text-transform: uppercase; color: #3ddc84; margin: 0 0 10px; text-shadow: 0 1px 6px rgba(0,0,0,0.6); }
-    @media (max-width: 639px) { #hero-eyebrow .he-sep { display: none; } #hero-eyebrow .he-name, #hero-eyebrow .he-claim { display: block; } #hero-eyebrow .he-name { font-size: 12px; letter-spacing: 2px; margin-bottom: 2px; } #hero-eyebrow .he-claim { color: rgba(255,255,255,0.7); } }
+    #hero-eyebrow { font-size: 10.5px; font-weight: 700; letter-spacing: 0.9px; text-transform: uppercase; color: var(--cta-green); margin: 0 0 10px; text-shadow: 0 1px 6px rgba(var(--shadow-rgb),0.6); }
+    @media (max-width: 639px) { #hero-eyebrow .he-sep { display: none; } #hero-eyebrow .he-name, #hero-eyebrow .he-claim { display: block; } #hero-eyebrow .he-name { font-size: 12px; letter-spacing: 2px; margin-bottom: 2px; } #hero-eyebrow .he-claim { color: rgba(var(--ink-rgb),0.7); } }
     @media (min-width: 640px) { #hero-eyebrow { font-size: 12.5px; letter-spacing: 1.6px; margin-bottom: 12px; } }
     #hero-img-desktop { display:none; }
     /* Lesbarkeit auf Bild-Hintergrund: Text-Shadow für alle Hero-Textblöcke */
     #hero-title, #hero-subline, #hero-features {
-      text-shadow: 0 2px 12px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.55);
+      text-shadow: 0 2px 12px rgba(var(--shadow-rgb),0.7), 0 1px 3px rgba(var(--shadow-rgb),0.55);
     }
     @media(min-width:640px) {
       #hero-img-mobile { display:none; }
@@ -1702,7 +1791,7 @@
       #hero-block { min-height: 580px !important; }
       #hero-title { font-size: 46px !important; letter-spacing: -1px !important; }
       #hero-subline { max-width: 480px !important; font-size: 18px !important; }
-      #hero-features { color: rgba(255,255,255,0.85) !important; font-size: 13px !important; }
+      #hero-features { color: rgba(var(--ink-rgb),0.85) !important; font-size: 13px !important; }
       #hero-cta { max-width: 480px !important; }
     }
     /* v1.41.1 — Flache Bildschirme (13-Zoll-Notebooks, Laptops mit 16:10).
@@ -1714,15 +1803,15 @@
        Ueberschrift lag direkt darauf. Jetzt: Text links auf dunklem Grund,
        Bild rechts (das Paar), Logo und Symbole laufen im Verlauf ins Dunkle. */
     @media (min-width: 640px) {
-      #hero-block { background: #0a1628 !important; justify-content: center !important; }
+      #hero-block { background: var(--brand-dark) !important; justify-content: center !important; }
       #hero-brand .hb-inner { justify-content: flex-start; padding: 26px 40px 0; }
       #hero-brand .hb-mark { width:46px; height:46px; border-radius:13px; }
       #hero-brand .hb-word { height:34px; max-width:180px; }
       #hero-content { padding-top: 96px !important; }
       #hero-img-desktop { left: auto !important; right: 0 !important; top: -10% !important; width: 56% !important; height: 120% !important; object-position: 100% 22% !important; }
       #hero-overlay { background:
-          linear-gradient(to right, #0a1628 0%, #0a1628 46%, rgba(10,22,40,0.85) 54%, rgba(10,22,40,0.3) 68%, rgba(10,22,40,0) 82%),
-          linear-gradient(to bottom, rgba(10,22,40,0) 75%, #0a1628 100%) !important; }
+          linear-gradient(to right, var(--brand-dark) 0%, var(--brand-dark) 46%, rgba(var(--brand-dark-rgb),0.85) 54%, rgba(var(--brand-dark-rgb),0.3) 68%, rgba(var(--brand-dark-rgb),0) 82%),
+          linear-gradient(to bottom, rgba(var(--brand-dark-rgb),0) 75%, var(--brand-dark) 100%) !important; }
       #hero-content { width: 100%; max-width: 1120px; margin: 0 auto; padding: 48px 40px !important; text-align: left !important; }
       #hero-content > * { max-width: 500px; }
       #hero-title { font-size: 44px !important; }
@@ -1732,8 +1821,8 @@
     @media (min-width: 640px) and (max-width: 900px) {
       #hero-img-desktop { width: 62% !important; }
       #hero-overlay { background:
-          linear-gradient(to right, #0a1628 0%, #0a1628 52%, rgba(10,22,40,0.8) 62%, rgba(10,22,40,0.25) 80%, rgba(10,22,40,0) 92%),
-          linear-gradient(to bottom, rgba(10,22,40,0) 75%, #0a1628 100%) !important; }
+          linear-gradient(to right, var(--brand-dark) 0%, var(--brand-dark) 52%, rgba(var(--brand-dark-rgb),0.8) 62%, rgba(var(--brand-dark-rgb),0.25) 80%, rgba(var(--brand-dark-rgb),0) 92%),
+          linear-gradient(to bottom, rgba(var(--brand-dark-rgb),0) 75%, var(--brand-dark) 100%) !important; }
       #hero-content > * { max-width: 400px; }
       #hero-title { font-size: 36px !important; }
     }
@@ -1759,19 +1848,19 @@
     </div>
   </div>
   <!-- Overlay -->
-  <div id="hero-overlay" style="position:absolute;inset:0;background:linear-gradient(to bottom, rgba(10,22,40,0.0) 0%, rgba(10,22,40,0.0) 30%, rgba(10,22,40,0.78) 65%, rgba(10,22,40,1.0) 100%);"></div>
+  <div id="hero-overlay" style="position:absolute;inset:0;background:linear-gradient(to bottom, rgba(var(--brand-dark-rgb),0.0) 0%, rgba(var(--brand-dark-rgb),0.0) 30%, rgba(var(--brand-dark-rgb),0.78) 65%, rgba(var(--brand-dark-rgb),1.0) 100%);"></div>
   <!-- Content -->
   <div id="hero-content" style="position:relative;z-index:2;padding:16px 22px 36px;text-align:center;">
     <div id="hero-eyebrow"><span class="he-name">LeVITA Vital-Check</span><span class="he-sep"> · </span><span class="he-claim">Dein Kompass für mehr Vitalität</span></div>
-    <h1 id="hero-title" style="margin:0 0 12px;font-family:'DM Serif Display',Georgia,serif;font-size:36px;font-weight:400;color:#ffffff;line-height:1.1;letter-spacing:0;">Was steckt in dir?</h1>
-    <p id="hero-subline" style="margin:0 auto 20px;font-size:16px;color:rgba(255,255,255,0.78);line-height:1.55;max-width:360px;">Finde in 5–7 Minuten heraus, wo deine Stärken liegen, wo dein größter Hebel sitzt — und was dir ein kleiner Schritt konkret bringt.</p>
-    <div id="hero-features" style="margin-bottom:24px;font-size:12px;color:rgba(255,255,255,0.6);letter-spacing:0.3px;">
+    <h1 id="hero-title" style="margin:0 0 12px;font-family:'DM Serif Display',Georgia,serif;font-size:36px;font-weight:400;color:rgb(var(--ink-rgb));line-height:1.1;letter-spacing:0;">Was steckt in dir?</h1>
+    <p id="hero-subline" style="margin:0 auto 20px;font-size:16px;color:rgba(var(--ink-rgb),0.78);line-height:1.55;max-width:360px;">Finde in 5–7 Minuten heraus, wo deine Stärken liegen, wo dein größter Hebel sitzt — und was dir ein kleiner Schritt konkret bringt.</p>
+    <div id="hero-features" style="margin-bottom:24px;font-size:12px;color:rgba(var(--ink-rgb),0.6);letter-spacing:0.3px;">
       <svg class="ic" aria-hidden="true"><use href="#ic-radar"/></svg> 8 Lebensbereiche&nbsp;&nbsp;·&nbsp;&nbsp;<svg class="ic" aria-hidden="true"><use href="#ic-report"/></svg> Persönliche Auswertung&nbsp;&nbsp;·&nbsp;&nbsp;<svg class="ic" aria-hidden="true"><use href="#ic-trending"/></svg> Dein Verlauf
     </div>
-    <button id="hero-cta" onclick="startDirectCheck();" style="display:block;width:100%;max-width:340px;margin:0 auto 12px;padding:16px 24px;background:#3ddc84;color:#0d1a14;font-size:17px;font-weight:800;border:none;border-radius:12px;cursor:pointer;">Jetzt kostenlos starten →</button>
-    <p style="margin:0 0 12px;font-size:11.5px;color:rgba(255,255,255,0.5);">Ergebnis sofort · kostenlos · ohne Anmeldung · ohne App</p>
-    <div id="hero-social-proof" style="font-size:12px;color:rgba(255,255,255,0.55);">
-      Über <span id="hero-count" style="font-weight:700;color:rgba(255,255,255,0.85);">100+</span> Menschen haben ihren LeVITA Vital-Check gemacht
+    <button id="hero-cta" onclick="startDirectCheck();" style="display:block;width:100%;max-width:340px;margin:0 auto 12px;padding:16px 24px;background:var(--cta-green);color:var(--on-cta);font-size:17px;font-weight:800;border:none;border-radius:12px;cursor:pointer;">Jetzt kostenlos starten →</button>
+    <p style="margin:0 0 12px;font-size:11.5px;color:rgba(var(--ink-rgb),0.5);">Ergebnis sofort · kostenlos · ohne Anmeldung · ohne App</p>
+    <div id="hero-social-proof" style="font-size:12px;color:rgba(var(--ink-rgb),0.55);">
+      Über <span id="hero-count" style="font-weight:700;color:rgba(var(--ink-rgb),0.85);">100+</span> Menschen haben ihren LeVITA Vital-Check gemacht
     </div>
   </div>
 </section>
@@ -1784,7 +1873,7 @@
   <style>
     #hero-value-props { max-width: 720px; margin: 0 auto; padding: 34px 18px 28px; }
     .lp-block { margin-bottom: 44px; }
-    .lp-eyebrow { text-align: center; margin-bottom: 10px; font-size: 11px; font-weight: 700; color: var(--accent-green); letter-spacing: 1.8px; text-transform: uppercase; }
+    .lp-eyebrow { text-align: center; margin-bottom: 10px; font-size: 11px; font-weight: 700; color: var(--accent-green-text); letter-spacing: 1.8px; text-transform: uppercase; }
     .lp-h2 { text-align: center; font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 26px; line-height: 1.2; color: var(--text-primary); margin-bottom: 8px; }
     .lp-lead { text-align: center; font-size: 14px; color: var(--text-secondary); line-height: 1.6; max-width: 520px; margin: 0 auto 20px; }
     .lp-goals { display: flex; flex-wrap: wrap; gap: 9px; justify-content: center; }
@@ -1793,40 +1882,40 @@
     .lp-goal-hint { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 12px; }
     .lp-value { display: grid; grid-template-columns: 1fr; gap: 10px; }
     .lp-vrow { display: grid; grid-template-columns: 34px 1fr; gap: 4px 12px; background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; }
-    .lp-vicon { grid-row: span 2; font-size: 24px; line-height: 1; color: var(--accent-green); }
+    .lp-vicon { grid-row: span 2; font-size: 24px; line-height: 1; color: var(--accent-green-text); }
     .lp-vget { font-size: 14px; font-weight: 700; color: var(--text-primary); line-height: 1.35; }
     .lp-vuse { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
-    .lp-vuse::before { content: '→ '; color: var(--accent-green); font-weight: 700; }
-    .lp-example { background: var(--brand-card); border: 1px solid rgba(34,201,122,0.25); border-radius: var(--radius); padding: 18px 16px 20px; }
+    .lp-vuse::before { content: '→ '; color: var(--accent-green-text); font-weight: 700; }
+    .lp-example { background: var(--brand-card); border: 1px solid rgba(var(--accent-green-rgb),0.25); border-radius: var(--radius); padding: 18px 16px 20px; }
     .lp-ex-tag { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); border: 1px solid var(--border-hover); border-radius: 999px; padding: 3px 10px; margin-bottom: 12px; }
     .lp-ex-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
     .lp-ex-who { font-size: 14px; color: var(--text-secondary); line-height: 1.45; }
     .lp-ex-who strong { color: var(--text-primary); }
     .lp-ex-score { text-align: right; flex-shrink: 0; }
-    .lp-ex-num { font-family: 'DM Serif Display', serif; font-size: 36px; line-height: 1; color: var(--accent-green); }
+    .lp-ex-num { font-family: 'DM Serif Display', serif; font-size: 36px; line-height: 1; color: var(--accent-green-text); }
     .lp-ex-lbl { font-size: 10.5px; color: var(--text-muted); }
     .lp-ex-facts { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
-    .lp-ex-fact { font-size: 13px; color: var(--text-secondary); line-height: 1.5; padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,0.03); }
+    .lp-ex-fact { font-size: 13px; color: var(--text-secondary); line-height: 1.5; padding: 10px 12px; border-radius: 8px; background: rgba(var(--ink-rgb),0.03); }
     .lp-ex-fact b { color: var(--text-primary); }
-    .lp-ex-fact.hebel b { color: var(--accent-amber); }
-    .lp-ex-fact.sim b { color: var(--accent-blue); }
+    .lp-ex-fact.hebel b { color: var(--accent-amber-text); }
+    .lp-ex-fact.sim b { color: var(--accent-blue-text); }
     .lp-ex-mail { margin-top: 12px; border-left: 3px solid var(--accent-green); padding: 10px 14px; background: var(--accent-green-dim); font-size: 13px; line-height: 1.6; color: var(--text-secondary); font-style: italic; }
     .lp-ex-mail span { display: block; font-style: normal; font-size: 11px; color: var(--text-muted); margin-top: 6px; }
-    .lp-watch { background: linear-gradient(135deg, rgba(59,158,255,0.10), rgba(34,201,122,0.07)); border: 1px solid rgba(59,158,255,0.25); border-radius: var(--radius); padding: 22px 18px; }
+    .lp-watch { background: linear-gradient(135deg, rgba(var(--accent-blue-rgb),0.10), rgba(var(--accent-green-rgb),0.07)); border: 1px solid rgba(var(--accent-blue-rgb),0.25); border-radius: var(--radius); padding: 22px 18px; }
     .lp-watch-pair { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 14px; }
     .lp-watch-col { border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13px; line-height: 1.55; color: var(--text-secondary); }
-    .lp-watch-col.num { background: rgba(0,0,0,0.18); }
-    .lp-watch-col.ans { background: var(--accent-green-dim); border: 1px solid rgba(34,201,122,0.25); }
+    .lp-watch-col.num { background: var(--sunken); }
+    .lp-watch-col.ans { background: var(--accent-green-dim); border: 1px solid rgba(var(--accent-green-rgb),0.25); }
     .lp-watch-col b { display: block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
     .lp-watch-col.num b { color: var(--text-muted); }
-    .lp-watch-col.ans b { color: var(--accent-green); }
+    .lp-watch-col.ans b { color: var(--accent-green-text); }
     .lp-trust { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .lp-titem { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; }
-    .lp-titem-i { font-size: 22px; line-height: 1; margin-bottom: 10px; color: var(--accent-green); }
+    .lp-titem-i { font-size: 22px; line-height: 1; margin-bottom: 10px; color: var(--accent-green-text); }
     .lp-titem-t { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 3px; }
     .lp-titem-d { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
     .lp-final { text-align: center; }
-    .lp-final-btn { display: block; width: 100%; max-width: 360px; margin: 16px auto 10px; padding: 16px 24px; background: #3ddc84; color: #0d1a14; font-family: 'DM Sans', sans-serif; font-size: 17px; font-weight: 800; border: none; border-radius: 12px; cursor: pointer; }
+    .lp-final-btn { display: block; width: 100%; max-width: 360px; margin: 16px auto 10px; padding: 16px 24px; background: var(--cta-green); color: var(--on-cta); font-family: 'DM Sans', sans-serif; font-size: 17px; font-weight: 800; border: none; border-radius: 12px; cursor: pointer; }
     .lp-final-note { font-size: 11.5px; color: var(--text-muted); }
     @media (min-width: 720px) {
       #hero-value-props { padding: 48px 24px 36px; }
@@ -1881,7 +1970,7 @@
             <div class="lp-ex-who"><strong>Sandra, 46</strong><br>Ziel: mehr Energie<br><span style="font-size:12.5px;">Vitalitäts-Alter <strong style="color:var(--text-primary);">46</strong> · im Takt ihres Kalenders</span></div>
             <div class="lp-ex-score"><div class="lp-ex-num">71</div><div class="lp-ex-lbl">Vitalitäts-Index</div></div>
           </div>
-          <svg viewBox="-34 0 368 266" width="100%" style="max-width:360px;display:block;margin:0 auto;" role="img" aria-label="Beispiel einer Vitalitäts-Spinne, heute und mit Potenzial"><polygon points="150.0,106.5 165.2,112.8 171.5,128.0 165.2,143.2 150.0,149.5 134.8,143.2 128.5,128.0 134.8,112.8" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,85.0 180.4,97.6 193.0,128.0 180.4,158.4 150.0,171.0 119.6,158.4 107.0,128.0 119.6,97.6" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,63.5 195.6,82.4 214.5,128.0 195.6,173.6 150.0,192.5 104.4,173.6 85.5,128.0 104.4,82.4" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><polygon points="150.0,42.0 210.8,67.2 236.0,128.0 210.8,188.8 150.0,214.0 89.2,188.8 64.0,128.0 89.2,67.2" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><line x1="150" y1="128" x2="150.0" y2="42.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="210.8" y2="67.2" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="236.0" y2="128.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="210.8" y2="188.8" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="150.0" y2="214.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="89.2" y2="188.8" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="64.0" y2="128.0" stroke="rgba(255,255,255,0.08)"/><line x1="150" y1="128" x2="89.2" y2="67.2" stroke="rgba(255,255,255,0.08)"/><polygon points="150.0,60.1 180.4,97.6 211.9,128.0 190.1,168.1 150.0,192.5 106.2,171.8 64.0,128.0 97.7,75.7" fill="rgba(34,201,122,0.22)" stroke="#22c97a" stroke-width="2" stroke-linejoin="round"/><polygon points="150.0,60.1 196.2,81.8 211.9,128.0 190.1,168.1 150.0,192.5 106.2,171.8 64.0,128.0 97.7,75.7" fill="none" stroke="#3b9eff" stroke-width="2" stroke-dasharray="6 4" stroke-linejoin="round"/><circle cx="196.2" cy="81.8" r="3" fill="#3b9eff"/><circle cx="150.0" cy="60.1" r="2.6" fill="#22c97a"/><text x="150.0" y="22.8" text-anchor="middle" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Schlaf</text><circle cx="180.4" cy="97.6" r="4" fill="#f5a623"/><text x="223.0" y="53.0" text-anchor="start" font-size="10.5" fill="#f5a623" font-family="DM Sans, sans-serif" font-weight="700">Bewegung</text><circle cx="211.9" cy="128.0" r="2.6" fill="#22c97a"/><text x="253.2" y="132.0" text-anchor="start" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Ernährung</text><circle cx="190.1" cy="168.1" r="2.6" fill="#22c97a"/><text x="223.0" y="211.0" text-anchor="start" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Tageslicht</text><circle cx="150.0" cy="192.5" r="2.6" fill="#22c97a"/><text x="150.0" y="241.2" text-anchor="middle" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">BMI</text><circle cx="106.2" cy="171.8" r="2.6" fill="#22c97a"/><text x="77.0" y="211.0" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Balance</text><circle cx="64.0" cy="128.0" r="2.6" fill="#22c97a"/><text x="46.8" y="132.0" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Rauchen</text><circle cx="97.7" cy="75.7" r="2.6" fill="#22c97a"/><text x="77.0" y="53.0" text-anchor="end" font-size="10.5" fill="#8da0b8" font-family="DM Sans, sans-serif">Alkohol</text><g font-family="DM Sans, sans-serif" font-size="10.5"><line x1="62" y1="252" x2="80" y2="252" stroke="#22c97a" stroke-width="2.5"/><text x="85" y="255.5" fill="#8da0b8">heute</text><line x1="132" y1="252" x2="150" y2="252" stroke="#3b9eff" stroke-width="2" stroke-dasharray="6 4"/><text x="155" y="255.5" fill="#8da0b8">Potenzial mit dem Simulator</text></g></svg>
+          <svg viewBox="-34 0 368 266" width="100%" style="max-width:360px;display:block;margin:0 auto;" role="img" aria-label="Beispiel einer Vitalitäts-Spinne, heute und mit Potenzial"><polygon points="150.0,106.5 165.2,112.8 171.5,128.0 165.2,143.2 150.0,149.5 134.8,143.2 128.5,128.0 134.8,112.8" fill="none" stroke-width="1" style="stroke:rgba(var(--ink-rgb),0.08)"/><polygon points="150.0,85.0 180.4,97.6 193.0,128.0 180.4,158.4 150.0,171.0 119.6,158.4 107.0,128.0 119.6,97.6" fill="none" stroke-width="1" style="stroke:rgba(var(--ink-rgb),0.08)"/><polygon points="150.0,63.5 195.6,82.4 214.5,128.0 195.6,173.6 150.0,192.5 104.4,173.6 85.5,128.0 104.4,82.4" fill="none" stroke-width="1" style="stroke:rgba(var(--ink-rgb),0.08)"/><polygon points="150.0,42.0 210.8,67.2 236.0,128.0 210.8,188.8 150.0,214.0 89.2,188.8 64.0,128.0 89.2,67.2" fill="none" stroke-width="1" style="stroke:rgba(var(--ink-rgb),0.08)"/><line x1="150" y1="128" x2="150.0" y2="42.0" style="stroke:rgba(var(--ink-rgb),0.08)"/><line x1="150" y1="128" x2="210.8" y2="67.2" style="stroke:rgba(var(--ink-rgb),0.08)"/><line x1="150" y1="128" x2="236.0" y2="128.0" style="stroke:rgba(var(--ink-rgb),0.08)"/><line x1="150" y1="128" x2="210.8" y2="188.8" style="stroke:rgba(var(--ink-rgb),0.08)"/><line x1="150" y1="128" x2="150.0" y2="214.0" style="stroke:rgba(var(--ink-rgb),0.08)"/><line x1="150" y1="128" x2="89.2" y2="188.8" style="stroke:rgba(var(--ink-rgb),0.08)"/><line x1="150" y1="128" x2="64.0" y2="128.0" style="stroke:rgba(var(--ink-rgb),0.08)"/><line x1="150" y1="128" x2="89.2" y2="67.2" style="stroke:rgba(var(--ink-rgb),0.08)"/><polygon points="150.0,60.1 180.4,97.6 211.9,128.0 190.1,168.1 150.0,192.5 106.2,171.8 64.0,128.0 97.7,75.7" stroke-width="2" stroke-linejoin="round" style="fill:rgba(var(--accent-green-rgb),0.22);stroke:var(--accent-green)"/><polygon points="150.0,60.1 196.2,81.8 211.9,128.0 190.1,168.1 150.0,192.5 106.2,171.8 64.0,128.0 97.7,75.7" fill="none" stroke-width="2" stroke-dasharray="6 4" stroke-linejoin="round" style="stroke:var(--accent-blue)"/><circle cx="196.2" cy="81.8" r="3" style="fill:var(--accent-blue)"/><circle cx="150.0" cy="60.1" r="2.6" style="fill:var(--accent-green)"/><text x="150.0" y="22.8" text-anchor="middle" font-size="10.5" font-family="DM Sans, sans-serif" style="fill:var(--text-secondary)">Schlaf</text><circle cx="180.4" cy="97.6" r="4" style="fill:var(--accent-amber)"/><text x="223.0" y="53.0" text-anchor="start" font-size="10.5" font-family="DM Sans, sans-serif" font-weight="700" style="fill:var(--accent-amber-text)">Bewegung</text><circle cx="211.9" cy="128.0" r="2.6" style="fill:var(--accent-green)"/><text x="253.2" y="132.0" text-anchor="start" font-size="10.5" font-family="DM Sans, sans-serif" style="fill:var(--text-secondary)">Ernährung</text><circle cx="190.1" cy="168.1" r="2.6" style="fill:var(--accent-green)"/><text x="223.0" y="211.0" text-anchor="start" font-size="10.5" font-family="DM Sans, sans-serif" style="fill:var(--text-secondary)">Tageslicht</text><circle cx="150.0" cy="192.5" r="2.6" style="fill:var(--accent-green)"/><text x="150.0" y="241.2" text-anchor="middle" font-size="10.5" font-family="DM Sans, sans-serif" style="fill:var(--text-secondary)">BMI</text><circle cx="106.2" cy="171.8" r="2.6" style="fill:var(--accent-green)"/><text x="77.0" y="211.0" text-anchor="end" font-size="10.5" font-family="DM Sans, sans-serif" style="fill:var(--text-secondary)">Balance</text><circle cx="64.0" cy="128.0" r="2.6" style="fill:var(--accent-green)"/><text x="46.8" y="132.0" text-anchor="end" font-size="10.5" font-family="DM Sans, sans-serif" style="fill:var(--text-secondary)">Rauchen</text><circle cx="97.7" cy="75.7" r="2.6" style="fill:var(--accent-green)"/><text x="77.0" y="53.0" text-anchor="end" font-size="10.5" font-family="DM Sans, sans-serif" style="fill:var(--text-secondary)">Alkohol</text><g font-family="DM Sans, sans-serif" font-size="10.5"><line x1="62" y1="252" x2="80" y2="252" stroke-width="2.5" style="stroke:var(--accent-green)"/><text x="85" y="255.5" style="fill:var(--text-secondary)">heute</text><line x1="132" y1="252" x2="150" y2="252" stroke-width="2" stroke-dasharray="6 4" style="stroke:var(--accent-blue)"/><text x="155" y="255.5" style="fill:var(--text-secondary)">Potenzial mit dem Simulator</text></g></svg>
         </div>
         <div>
           <div class="lp-ex-facts">
@@ -2003,7 +2092,7 @@
   }
   function indexColor(t) {
     t = Number(t);
-    return t >= LEVEL_MIN.vital ? "#22c97a" : t >= LEVEL_MIN.momentum ? "#5edb97" : t >= LEVEL_MIN.weg ? "#f5a623" : t >= LEVEL_MIN.aufbau ? "#ff8c42" : "#ff5c5c";
+    return t >= LEVEL_MIN.vital ? "var(--accent-green-text)" : t >= LEVEL_MIN.momentum ? "var(--score-ok-text)" : t >= LEVEL_MIN.weg ? "var(--accent-amber-text)" : t >= LEVEL_MIN.aufbau ? "var(--score-focus-text)" : "var(--accent-red-text)";
   }
   const THEME_QMAX = { muscle_cramps: 2, social_connection: 2, alcohol_amount: 3, hormonal_transition: 2, supplement_usage: 2, supplement_types: 0 };
   function themeScore(answers, theme) {
@@ -2253,7 +2342,7 @@
         <button class="next-btn" id="pinSubmitBtn" onclick="loadResultWithPin('${publicCode}')" disabled style="opacity:0.4;">
           Auswertung laden →
         </button>
-        <div class="pin-hint" style="margin-top:14px;">Du hast ein persönliches Konto? Dann öffnest du deine Checks ohne PIN in <a href="konto.html" target="_blank" rel="noopener" style="color:var(--accent-green);text-decoration:underline;">Mein Bereich</a> – angemeldet wirst du mit einem Link per E-Mail, ohne Passwort. <a href="#" onclick="if(window.LeVitaKonto&&LeVitaKonto.showGuide){LeVitaKonto.showGuide();}return false;" style="color:var(--accent-green);text-decoration:underline;">So funktioniert die Anmeldung</a></div>
+        <div class="pin-hint" style="margin-top:14px;">Du hast ein persönliches Konto? Dann öffnest du deine Checks ohne PIN in <a href="konto.html" target="_blank" rel="noopener" style="color:var(--accent-green-text);text-decoration:underline;">Mein Bereich</a> – angemeldet wirst du mit einem Link per E-Mail, ohne Passwort. <a href="#" onclick="if(window.LeVitaKonto&&LeVitaKonto.showGuide){LeVitaKonto.showGuide();}return false;" style="color:var(--accent-green-text);text-decoration:underline;">So funktioniert die Anmeldung</a></div>
         <div class="pin-new-check">
           <strong>PIN nicht zur Hand?</strong><br>
           Suche in deinem Postfach nach der Mail mit dem Betreff „dein Vital-Check ist da“ —
@@ -3241,14 +3330,14 @@
           Deine Angaben werden zur Erstellung deines LeVITA Vital-Checks verarbeitet.
           Die Auswertung erfolgt direkt auf dieser Seite. Eine individuelle Auswertung per E-Mail kannst du danach freiwillig anfordern.
         </div>
-        <div style="font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;border:1px solid var(--border);">
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:14px;padding:10px 12px;background:rgba(var(--ink-rgb),0.04);border-radius:8px;border:1px solid var(--border);">
           &#x2139;&#xfe0f; Deine Angaben zu Lebensstil, Schlaf, Ernährung und Wohlbefinden können Gesundheitsdaten im Sinne von Art. 9 DSGVO darstellen.
           Die Verarbeitung erfolgt ausschließlich auf Basis deiner ausdrücklichen Einwilligung.
           Deine Daten werden auf Servern in der EU (Frankfurt) gespeichert und nicht für Werbezwecke genutzt.
         </div>
         <div class="checkbox-row">
           <input type="checkbox" id="consent_privacy" />
-          <label for="consent_privacy">Ich habe die <a href="https://le-vita.com/datenschutz" target="_blank" style="color:var(--accent-green);text-decoration:underline;">Datenschutzhinweise</a> gelesen und verstanden. Ich bin damit einverstanden, dass meine Angaben — einschließlich gesundheitsbezogener Informationen — gemäß Art. 9 Abs. 2 lit. a DSGVO verarbeitet werden.</label>
+          <label for="consent_privacy">Ich habe die <a href="https://le-vita.com/datenschutz" target="_blank" style="color:var(--accent-green-text);text-decoration:underline;">Datenschutzhinweise</a> gelesen und verstanden. Ich bin damit einverstanden, dass meine Angaben — einschließlich gesundheitsbezogener Informationen — gemäß Art. 9 Abs. 2 lit. a DSGVO verarbeitet werden.</label>
         </div>
         <div class="checkbox-row">
           <input type="checkbox" id="consent_storage" />
@@ -3436,14 +3525,14 @@
     const host = document.getElementById('quiz-flow') || document.body;
     const div = document.createElement('div');
     div.id = 'resumeBanner';
-    div.style.cssText = 'background:rgba(59,158,255,0.08);border:1px solid rgba(59,158,255,0.3);border-radius:14px;padding:16px;margin:0 0 16px;';
+    div.style.cssText = 'background:rgba(var(--accent-blue-rgb),0.08);border:1px solid rgba(var(--accent-blue-rgb),0.3);border-radius:14px;padding:16px;margin:0 0 16px;';
     div.innerHTML = `
       <div style="font-size:14px;font-weight:700;margin-bottom:5px;">Du hast schon begonnen</div>
       <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">
         ${p.selectedAnswers.length} Fragen sind beantwortet, gespeichert ${progressAgeText(p.ts)} auf diesem Gerät.
       </div>
       <div style="display:flex;gap:9px;flex-wrap:wrap;">
-        <button onclick="resumeProgress()" style="flex-grow:1;min-height:46px;background:var(--accent-green);color:#0a1628;border:none;border-radius:10px;font-size:13.5px;font-weight:700;cursor:pointer;">Dort weitermachen</button>
+        <button onclick="resumeProgress()" style="flex-grow:1;min-height:46px;background:var(--accent-green);color:var(--on-accent);border:none;border-radius:10px;font-size:13.5px;font-weight:700;cursor:pointer;">Dort weitermachen</button>
         <button onclick="discardProgress()" style="flex-grow:1;min-height:46px;background:transparent;color:var(--text-secondary);border:1px solid var(--border);border-radius:10px;font-size:13.5px;cursor:pointer;">Neu beginnen</button>
       </div>`;
     host.parentNode.insertBefore(div, host);
@@ -4161,7 +4250,7 @@
     // in Tab 2, es wird also nichts verschwiegen.
     const weakCount = areas.filter(a => a.score < 55).length;
     const growthCount = areas.filter(a => a.score < 75).length;
-    const bioColor = bioAge && bioAge < personalData.age ? "var(--accent-green)" : "var(--accent-amber)";
+    const bioColor = bioAge && bioAge < personalData.age ? "var(--accent-green-text)" : "var(--accent-amber-text)";
 
     const name = [capName(personalData.first_name), capName(personalData.last_name)].filter(Boolean).join(" ");
     const goalLabels = { goal_energy:`${ICO("bolt")} Mehr Energie`, goal_weight:`${ICO("scale")} Abnehmen / Figur`, goal_fitness:`${ICO("dumbbell")} Fitter werden`, goal_supplements:`${ICO("pill")} Nährstoffstatus`, goal_prevention:`${ICO("shield")} Vorsorge`, goal_longevity:`${ICO("leaf")} Longevity`, goal_curious:`${ICO("spark")} Neugier` };
@@ -4274,7 +4363,7 @@
         const _d8 = recheckDates().from;
         const _soon = _weeksSince !== null && _weeksSince >= 6;
         S.recheckLater = `
-          <div style="margin-top:12px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);">
+          <div style="margin-top:12px;padding:12px 14px;background:rgba(var(--ink-rgb),0.03);border:1px solid var(--border);border-radius:var(--radius-sm);">
             <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">${ICO("refresh")} ${_soon ? "Bald Zeit für deinen Re-Check" : "Dein Re-Check"}</div>
             <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;">Aussagekräftig wird der Vergleich ab dem <strong style="color:var(--text-primary);">${_d8}</strong> — so lange braucht es, bis sich Veränderungen im Alltag auch im Wert zeigen.</div>
             <div style="margin-top:8px;font-size:12px;"><a href="#" onclick="startRecheckFromReview();return false;" style="color:var(--text-muted);">Trotzdem jetzt neu testen</a> <span style="color:var(--text-muted);">— z. B. wenn sich bei dir gerade etwas Grundlegendes geändert hat</span></div>
@@ -4296,10 +4385,10 @@
       <div class="kpi-row" style="margin-bottom:10px;">
         <div class="kpi-card"><span class="kpi-icon">${ICO("bolt")}</span><div class="kpi-val" style="color:${sc}">${Math.round(totalScore)}</div><div class="kpi-label">Vitalitäts-Index</div></div>
         <div class="kpi-card"><span class="kpi-icon">${ICO("dna")}</span><div class="kpi-val" style="color:${bioColor}">${bioAge||"–"}</div><div class="kpi-label">Vitalitäts-Alter</div></div>
-        <div class="kpi-card" onclick="switchResultTab('bereiche')" style="cursor:pointer;border-color:rgba(245,166,35,${weakCount>0?'0.3':'0.1'});">
+        <div class="kpi-card" onclick="switchResultTab('bereiche')" style="cursor:pointer;border-color:rgba(var(--accent-amber-rgb),${weakCount>0?'0.3':'0.1'});">
           <span class="kpi-icon">${ICO("chart")}</span>
-          <div class="kpi-val" style="color:var(--accent-amber)">${weakCount > 0 ? weakCount : growthCount}</div>
-          <div class="kpi-label" style="color:${weakCount>0?'var(--accent-amber)':'var(--text-muted)'}">
+          <div class="kpi-val" style="color:var(--accent-amber-text)">${weakCount > 0 ? weakCount : growthCount}</div>
+          <div class="kpi-label" style="color:${weakCount>0?'var(--accent-amber-text)':'var(--text-muted)'}">
             ${weakCount>0?'Fokusbereiche →':'Bereiche'}
           </div>
         </div>
@@ -4313,7 +4402,7 @@
           <div style="font-size:16px;font-weight:700;color:${sc};">✦ ${scoreLabel}</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${name?name+' · ':''}${personalData.age?personalData.age+' J. · ':''}${goalLabel}</div>
         </div>
-        <div style="font-size:22px;color:var(--accent-amber);">${ICO("bolt")}</div>
+        <div style="font-size:22px;color:var(--accent-amber-text);">${ICO("bolt")}</div>
       </div>`;
 
     // v1.53.7 — Einordnung bei sehr niedrigem Index (externe Prüfung 03.10.2026).
@@ -4352,11 +4441,11 @@
       const _bandTitle = (window._safetyTier === "combined" || window._safetyTier === "senior")
         ? "Bitte ärztlich abklären lassen" : "Zuerst das Wichtigste";
       html += S.safetyBand = `
-        <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);
+        <div style="background:rgba(var(--accent-amber-rgb),0.08);border:1px solid rgba(var(--accent-amber-rgb),0.25);
              border-radius:14px;padding:14px 16px;margin-bottom:12px;display:flex;gap:11px;align-items:flex-start;">
           <div style="font-size:17px;line-height:1.2;flex-shrink:0;" aria-hidden="true">${ICO("alert")}</div>
           <div>
-            <div style="font-size:13.5px;font-weight:700;color:#ffb347;margin-bottom:3px;">${_bandTitle}</div>
+            <div style="font-size:13.5px;font-weight:700;color:var(--warn-text);margin-bottom:3px;">${_bandTitle}</div>
             <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${_bandText}</div>
           </div>
         </div>`;
@@ -4471,7 +4560,7 @@
         </div>
         <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">${o.btn || 'Meinen kostenlosen Vital-Plan anfordern →'}</button>
         <div id="ai-status"></div>
-        <div style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center;"><span style="color:var(--accent-green);">✓</span> Keine Werbung, keine Weitergabe an Dritte, jederzeit löschbar</div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center;"><span style="color:var(--accent-green-text);">✓</span> Keine Werbung, keine Weitergabe an Dritte, jederzeit löschbar</div>
       </div>`;
     let mailBoxHtml = (window._isReviewMode && window._accessPin) ? renderMailAlreadySentHtml(result) : buildAiBox(teaserRows);
     S.buildAiBox = buildAiBox;
@@ -4489,10 +4578,10 @@
     const _mailLinkHtml = (window._isReviewMode && window._accessPin) ? "" : `
       <div onclick="scrollToAiBox();"
         style="text-align:center;padding:14px;margin-top:4px;cursor:pointer;">
-        <span style="font-size:12px;font-weight:600;color:var(--accent-green);">✦ Meinen persönlichen Vital-Plan per Mail sichern →</span>
+        <span style="font-size:12px;font-weight:600;color:var(--accent-green-text);">✦ Meinen persönlichen Vital-Plan per Mail sichern →</span>
       </div>`;
     html += S.vitalPlanBar = `
-      <div style="background:rgba(34,201,122,0.07);border:1px solid rgba(34,201,122,0.25);
+      <div style="background:rgba(var(--accent-green-rgb),0.07);border:1px solid rgba(var(--accent-green-rgb),0.25);
            border-radius:14px;margin-bottom:14px;overflow:hidden;">
         <button id="vitalplanToggle" onclick="toggleVitalPlan()" aria-expanded="false" aria-controls="vitalplanBody"
           style="width:100%;background:none;border:none;color:inherit;font-family:inherit;text-align:left;
@@ -4503,7 +4592,7 @@
             <div style="font-size:11.5px;color:var(--text-secondary);">${window._isReviewMode && window._accessPin ? (viaAccount() ? "Status ansehen" : "Status und PIN ansehen") : "Ausführliche Auswertung per Mail · kostenlos"}</div>
           </div>
           <span id="vitalplanCta" style="min-height:44px;padding:0 15px;display:flex;align-items:center;
-            background:var(--accent-green);color:#0a1628;border-radius:9px;font-size:13px;font-weight:700;flex-shrink:0;">
+            background:var(--accent-green);color:var(--on-accent);border-radius:9px;font-size:13px;font-weight:700;flex-shrink:0;">
             ${window._isReviewMode && window._accessPin ? "Ansehen" : "Anfordern"}
           </span>
         </button>
@@ -4533,12 +4622,12 @@
            border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:12px;">
         <div style="position:relative;width:110px;height:110px;flex-shrink:0;">
           <svg style="width:110px;height:110px;transform:rotate(-90deg);" viewBox="0 0 110 110">
-            <circle cx="55" cy="55" r="47" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="9"/>
+            <circle cx="55" cy="55" r="47" fill="none" stroke-width="9" style="stroke:rgba(var(--ink-rgb),0.06)"/>
             <circle cx="55" cy="55" r="47" fill="none" id="scoreRingFill"
               stroke-width="9" stroke-linecap="round"
               stroke-dasharray="295" stroke-dashoffset="295"/>
             <defs><linearGradient id="ringGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#22c97a"/><stop offset="100%" stop-color="#3b9eff"/>
+              <stop offset="0%" style="stop-color:var(--accent-green)"/><stop offset="100%" style="stop-color:var(--accent-blue)"/>
             </linearGradient></defs>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;
@@ -4558,7 +4647,7 @@
               Orientierungswert aus Lebensstilantworten — kein medizinischer Biomarker
             </div>
             <div onclick="switchResultTab('bereiche')" style="cursor:pointer;font-size:12px;
-                 color:var(--accent-green);font-weight:600;">
+                 color:var(--accent-green-text);font-weight:600;">
               Was bedeutet das für dich? → Meine Bereiche ansehen
             </div>
           ` : ""}
@@ -4604,7 +4693,7 @@
           <span class="pill">Gewicht: ${personalData.weight_kg} kg</span>
           <span class="pill">BMI: ${isFinite(Number(result.bmi)) ? Number(result.bmi).toFixed(1).replace(".", ",") : result.bmi}</span>
           ${bioAge ? `<span class="pill">Vitalitäts-Alter: ${bioAge} J.</span>` : ""}
-          ${goalLabel ? `<span class="pill" style="background:var(--accent-green-dim);border-color:rgba(34,201,122,0.3);">${goalLabel}</span>` : ""}
+          ${goalLabel ? `<span class="pill" style="background:var(--accent-green-dim);border-color:rgba(var(--accent-green-rgb),0.3);">${goalLabel}</span>` : ""}
         </div>
       </div>`;
 
@@ -4640,7 +4729,7 @@
       html += S.hebel = `<div class="hebel-box" onclick="switchResultTab('empfehlungen')" style="cursor:pointer;"><div class="hebel-icon">${ICO("bulb")}</div><div>
         <div class="hebel-title">Dein größter Ansatzpunkt</div>
         <div class="hebel-text"><strong>${areaIco(worst.key)} ${areaName(worst.label, worst.key)}</strong></div>
-        <div style="margin-top:8px;font-size:12.5px;color:var(--accent-green);font-weight:600;">Was das konkret heißt → Nächste Schritte</div>
+        <div style="margin-top:8px;font-size:12.5px;color:var(--accent-green-text);font-weight:600;">Was das konkret heißt → Nächste Schritte</div>
       </div></div>`;
     }
 
@@ -4757,7 +4846,7 @@
       answersData.forEach(a => { const area = a.area_key || "general"; if (!grouped[area]) grouped[area] = []; grouped[area].push(a); });
       const answersHtml = Object.entries(grouped).map(([area, ans]) => `
         <div style="margin-bottom:14px;">
-          <div style="font-size:11px;font-weight:700;color:var(--accent-green);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">${areaLabels[area]||area}</div>
+          <div style="font-size:11px;font-weight:700;color:var(--accent-green-text);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">${areaLabels[area]||area}</div>
           ${ans.map(a => `
             <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:0.5px solid var(--border);">
               <div style="font-size:12px;color:var(--text-secondary);flex:1;">${questionTextFor(a.question_key)}</div>
@@ -4814,16 +4903,16 @@
     const heroHead3 = worst ? `${areaIco(worst.key)} ${areaName(worst.label, worst.key)}` : heroTitle3;
     const heroKicker3 = worst && heroTitle3 ? `✦ Dein Weg zu: ${heroTitle3}` : "✦ Dein wichtigster nächster Schritt";
     html += S.hero = `
-      <div style="background:linear-gradient(135deg,rgba(34,201,122,0.12),rgba(59,158,255,0.08));
-           border:1px solid rgba(34,201,122,0.3);border-radius:var(--radius);padding:18px;margin-bottom:16px;">
+      <div style="background:linear-gradient(135deg,rgba(var(--accent-green-rgb),0.12),rgba(var(--accent-blue-rgb),0.08));
+           border:1px solid rgba(var(--accent-green-rgb),0.3);border-radius:var(--radius);padding:18px;margin-bottom:16px;">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
-             color:var(--accent-green);margin-bottom:8px;">${heroKicker3}</div>
+             color:var(--accent-green-text);margin-bottom:8px;">${heroKicker3}</div>
         <div style="font-size:17px;font-weight:700;margin-bottom:8px;line-height:1.3;">${heroHead3}</div>
         <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${heroDesc3}</div>
-        ${worst ? `<div style="margin-top:14px;background:rgba(0,0,0,0.18);border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.6;">
-            ${ICO("bolt")} <strong style="color:var(--accent-green)">Sofort:</strong> ${getInsightNow(worst.key, worst.score, result.bmi, result)}<br><br>
-            ${ICO("calendar")} <strong style="color:var(--accent-amber)">Diese Woche:</strong> ${getInsightSoon(worst.key, worst.score, result.bmi, result)}
-            ${HEBEL_SIGNS[worst.key] ? `<br><br>${ICO("search")} <strong style="color:var(--accent-blue)">Woran du es merkst:</strong> ${HEBEL_SIGNS[worst.key]}` : ``}
+        ${worst ? `<div style="margin-top:14px;background:var(--sunken);border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.6;">
+            ${ICO("bolt")} <strong style="color:var(--accent-green-text)">Sofort:</strong> ${getInsightNow(worst.key, worst.score, result.bmi, result)}<br><br>
+            ${ICO("calendar")} <strong style="color:var(--accent-amber-text)">Diese Woche:</strong> ${getInsightSoon(worst.key, worst.score, result.bmi, result)}
+            ${HEBEL_SIGNS[worst.key] ? `<br><br>${ICO("search")} <strong style="color:var(--accent-blue-text)">Woran du es merkst:</strong> ${HEBEL_SIGNS[worst.key]}` : ``}
           </div>` : ``}
       </div>`;
     if (window._shown) window._shown.focus = true;   // v1.34.2: der eine Ort für die Kernbotschaft
@@ -4857,8 +4946,8 @@
           : (_sn.weight_appetite_single?.body || "Du hast Veränderungen bei Gewicht oder Appetit angegeben. Behalte das im Blick und sprich es bei Gelegenheit hausärztlich an.");
       const _safetyTitle = (window._safetyTier === "combined" || window._safetyTier === "senior")
         ? "Bitte ärztlich abklären lassen" : "Zuerst das Wichtigste";
-      html += S.safetyFallback = `<div class="hint-box" style="background:rgba(245,166,35,0.08);border-left:3px solid var(--accent-amber);border-radius:0;padding:14px 16px;margin-bottom:16px;">
-        <strong style="color:#ffb347;">${_safetyTitle}</strong><br>
+      html += S.safetyFallback = `<div class="hint-box" style="background:rgba(var(--accent-amber-rgb),0.08);border-left:3px solid var(--accent-amber);border-radius:0;padding:14px 16px;margin-bottom:16px;">
+        <strong style="color:var(--warn-text);">${_safetyTitle}</strong><br>
         <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${_safetyText}</span>
       </div>`;
     }
@@ -4867,8 +4956,8 @@
     // durchs Top-Prioritäten-Raster fallen — eigenständige ruhige Box, nie als "Tipp" verpackt
     const mentalRisk = Math.max(riskOf('low_interest'), riskOf('low_mood'));
     if (mentalRisk >= 2) {
-      html += S.mental = `<div class="hint-box" style="background:rgba(139,92,246,0.08);border-left:3px solid var(--accent-purple);border-radius:0;padding:14px 16px;margin-bottom:16px;">
-        <strong style="color:#a78bfa;">${ICO("sprout")} Mentales Wohlbefinden</strong><br>
+      html += S.mental = `<div class="hint-box" style="background:rgba(var(--violet-rgb),0.08);border-left:3px solid var(--accent-purple);border-radius:0;padding:14px 16px;margin-bottom:16px;">
+        <strong style="color:var(--accent-purple-text);">${ICO("sprout")} Mentales Wohlbefinden</strong><br>
         <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${(window._snips.notice.mental?.body) || "Deine Angaben zeigen, dass du an manchen Tagen weniger Freude oder Energie empfindest, als du dir wünschen würdest. Das ist ein Signal, das es wert ist, aufmerksam zu bleiben."}${mentalRisk >= 3 ? " Wenn sich das über längere Zeit so anfühlt, kann ein Gespräch mit deiner Hausärztin oder deinem Hausarzt gut tun." : ""}</span>
       </div>`;
     }
@@ -4977,17 +5066,17 @@
     }
     const rec2 = studioRec[studioKeyT3] || studioRec[goalKeyT3] || studioRec['default'] || ["Persönliche Begleitung", "Gemeinsam deine Auswertung einordnen und den passenden Einstieg finden."];
     const rec2Benefits = (rec2[2] || []).slice(0, 3).map(b =>
-      `<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-top:6px;"><span style="color:var(--accent-green);">✓</span> ${b}</div>`
+      `<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-top:6px;"><span style="color:var(--accent-green-text);">✓</span> ${b}</div>`
     ).join('');
     S.rec2 = rec2;
     S.rec2Benefits = rec2Benefits;
     html += `<div class="t3-zone-title" style="margin-top:16px;">${ICO("dumbbell")} 2 · Mit uns im Studio — professionelle Begleitung</div>`;
-    html += `<div style="background:var(--brand-card2);border:1px solid rgba(59,158,255,0.25);border-radius:var(--radius-sm);padding:15px 16px;margin-bottom:8px;">
+    html += `<div style="background:var(--brand-card2);border:1px solid rgba(var(--accent-blue-rgb),0.25);border-radius:var(--radius-sm);padding:15px 16px;margin-bottom:8px;">
       <strong>${rec2[0]}</strong><br>
       <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${rec2[1]}</span>
       ${rec2Benefits}
       <a href="https://le-vita.com/probetraining" target="_blank"
-         style="display:block;background:var(--accent-green);color:#0a1628;border-radius:10px;margin-top:12px;padding:12px;font-size:14px;font-weight:700;text-align:center;text-decoration:none;">Kostenloses Vitalitätsgespräch vereinbaren →</a>
+         style="display:block;background:var(--accent-green);color:var(--on-accent);border-radius:10px;margin-top:12px;padding:12px;font-size:14px;font-weight:700;text-align:center;text-decoration:none;">Kostenloses Vitalitätsgespräch vereinbaren →</a>
     </div>`;
     if (window._shown) window._shown.studioCta = true;   // v1.34.0: der eine Ort für das Angebot
 
@@ -5011,7 +5100,7 @@
     if (cat3.length > 0) {
       html += `<div class="t3-zone-title" style="margin-top:16px;">${ICO("microscope")} 3 · Genauer hinschauen — vertiefende Messungen</div>`;
       cat3.forEach(([t, d]) => {
-        html += `<div class="hint-box" style="background:rgba(167,139,250,0.07);border-left:3px solid var(--accent-purple);border-radius:0;padding:13px 16px;margin-bottom:8px;">
+        html += `<div class="hint-box" style="background:rgba(var(--accent-purple-rgb),0.07);border-left:3px solid var(--accent-purple);border-radius:0;padding:13px 16px;margin-bottom:8px;">
           <strong>${t}</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${d}</span>
         </div>`;
       });
@@ -5023,7 +5112,7 @@
     html += `
       <div style="margin-bottom:12px;">
         <button onclick="const p=document.getElementById('${studioId}');const b=this;p.style.display=p.style.display==='none'?'block':'none';b.textContent=p.style.display==='none'?'Leistungen im LeVITA Studio ansehen ↓':'Leistungen ausblenden ↑';"
-          style="width:100%;padding:12px 16px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-secondary);font-size:13px;font-weight:600;cursor:pointer;text-align:left;">
+          style="width:100%;padding:12px 16px;background:rgba(var(--ink-rgb),0.04);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-secondary);font-size:13px;font-weight:600;cursor:pointer;text-align:left;">
           Leistungen im LeVITA Studio ansehen ↓
         </button>
         <div id="${studioId}" style="display:none;">
@@ -5116,7 +5205,7 @@
     const _taNow = (result.submission && result.submission.trainer_access === true) || window._trainerAccess === true;
     if (_taNow) {
       html += S.trainerRevoke = `
-      <div style="margin-top:14px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);">
+      <div style="margin-top:14px;padding:12px 14px;background:rgba(var(--ink-rgb),0.03);border:1px solid var(--border);border-radius:var(--radius-sm);">
         <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin-bottom:10px;">
           Du hast zugestimmt, dass die Trainerinnen und Trainer von LeVITA deine Angaben einsehen dürfen. Das kannst du jederzeit zurücknehmen.
         </div>
@@ -5164,7 +5253,7 @@
   function stageAgeColumnHtml(bioAge, age) {
     const b = Number(bioAge), a = Number(age) || 0;
     const yrs = n => `${n} ${n === 1 ? "Jahr" : "Jahre"}`;
-    let line = "", color = "var(--accent-green)";
+    let line = "", color = "var(--accent-green-text)";
     if (window._doctorFirst) {
       // v2.4.1 — bei ärztlichem Vorrang keine Feier: erst abklären, dann weiter
       line = "Ein Orientierungswert – wichtiger ist jetzt der Hinweis zur ärztlichen Abklärung.";
@@ -5183,7 +5272,7 @@
       if (gain >= 1) {
         const how = n === 1 ? "einer gezielten Veränderung" : (n === 2 ? "zwei" : n === 3 ? "drei" : String(n)) + " gezielten Veränderungen";
         line = `Mit ${how} rund ${yrs(gain)} jünger – ${window._stage === 2 ? "wie, steht in deinem Plan" : "das zeigen wir dir in deinem Vital-Plan"}.`;
-        color = "var(--accent-blue)";
+        color = "var(--accent-blue-text)";
       } else {
         line = "Dein Startwert – beim Re-Check siehst du, wie er sich bewegt.";
         color = "var(--text-secondary)";
@@ -5241,7 +5330,7 @@
     let s3 = "";
     if (best && Number(best.gain) >= 1) {
       const n = (best.question_keys || []).length || 1;
-      s3 = ` Mit ${STAGE_NUM_WORDS[n] || n} gezielten Veränderung${n > 1 ? "en" : ""} sind bei dir rund <strong style="color:var(--accent-blue);">${Math.round(Number(best.gain))} Punkte mehr</strong> realistisch.`;
+      s3 = ` Mit ${STAGE_NUM_WORDS[n] || n} gezielten Veränderung${n > 1 ? "en" : ""} sind bei dir rund <strong style="color:var(--accent-blue-text);">${Math.round(Number(best.gain))} Punkte mehr</strong> realistisch.`;
     }
     // v2.4.0 — Index und Vitalitäts-Alter als ein Satz vor der Einordnung
     const tot = Math.round(Number(S.totalScore));
@@ -5281,7 +5370,7 @@
     const n = best ? ((best.question_keys || []).length || 1) : 0;
     // v2.4.0 — Die Aussage steht ÜBER der Spinne; die Spinne illustriert sie nur.
     const lead = best && best.score_payload && Number(best.gain) >= 1
-      ? `Mit ${STAGE_NUM_WORDS[n] || n} realistischen Veränderung${n > 1 ? "en" : ""} kommst du rechnerisch auf rund <strong style="color:var(--accent-blue);">+${Math.round(Number(best.gain))} Punkte</strong> – die gestrichelte Linie zeigt, wo.`
+      ? `Mit ${STAGE_NUM_WORDS[n] || n} realistischen Veränderung${n > 1 ? "en" : ""} kommst du rechnerisch auf rund <strong style="color:var(--accent-blue-text);">+${Math.round(Number(best.gain))} Punkte</strong> – die gestrichelte Linie zeigt, wo.`
       : "";
     const caption = lead ? `Welche Veränderungen das sind, steht in deinem Vital-Plan.` : `Je weiter außen ein Punkt liegt, desto stabiler wirkt dieser Bereich.`;
     return `<div class="section-card">
@@ -5330,8 +5419,8 @@
       const newT = Number(best.new_total);
       const baseBio = simScenarios.base && Number(simScenarios.base.bio_age);
       const dy = (isFinite(baseBio) && isFinite(Number(best.new_bio_age))) ? Math.round(baseBio - Number(best.new_bio_age)) : null;
-      const bioTxt = dy === null ? "" : dy >= 2 ? ` · Vitalitäts-Alter rund <strong style="color:var(--accent-green);">${dy} Jahre jünger</strong>`
-        : dy === 1 ? ` · Vitalitäts-Alter rund <strong style="color:var(--accent-green);">1 Jahr jünger</strong>` : "";
+      const bioTxt = dy === null ? "" : dy >= 2 ? ` · Vitalitäts-Alter rund <strong style="color:var(--accent-green-text);">${dy} Jahre jünger</strong>`
+        : dy === 1 ? ` · Vitalitäts-Alter rund <strong style="color:var(--accent-green-text);">1 Jahr jünger</strong>` : "";
       const keys = best.question_keys && best.question_keys.length ? best.question_keys : [best.question_key];
       const n = keys.length;
       body += `<div style="font-size:11.5px;color:var(--text-secondary);margin:0 0 4px;">Dein Vitalitäts-Index</div>
@@ -5415,7 +5504,7 @@
     const rest = S.areas.filter(a => !keys.includes(a.key));
     if (rest.length) {
       html += `<div class="stage-locked">
-          <div style="display:flex;align-items:center;gap:8px;color:var(--accent-blue);">${STAGE_LOCK_ICON}<span style="font-size:14px;font-weight:700;color:var(--text-primary);">${rest.length} weitere Bereiche in deinem Vital-Plan</span></div>
+          <div style="display:flex;align-items:center;gap:8px;color:var(--accent-blue-text);">${STAGE_LOCK_ICON}<span style="font-size:14px;font-weight:700;color:var(--text-primary);">${rest.length} weitere Bereiche in deinem Vital-Plan</span></div>
           <div class="stage-chips">${rest.map(a => `<span class="stage-chip">${areaName(a.label, a.key)}</span>`).join("")}</div>
           <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;">Jeder Bereich mit Wert, Einordnung für dein Alter und konkreten Schritten – dazu deine Hebel und dein Fahrplan.</div>
           <button type="button" class="stage-btn-outline" onclick="scrollToAiBox()">Meinen Vital-Plan anfordern</button>
@@ -5543,8 +5632,8 @@
           : `<div><div class="stage-step-title">Danke${nm} – wir melden uns</div>
           <div class="stage-step-sub">Deine Anfrage für ${what} ist bei uns. Wir rufen dich an${slot ? `, am liebsten ${escHtml(slot)}` : ""}. Im Gespräch schauen wir gemeinsam auf deine Stärken, deinen wichtigsten Ansatzpunkt und zwei passende nächste Schritte.</div></div>`}
         </div>
-        ${self ? `<div style="background:rgba(0,0,0,0.18);border-radius:8px;padding:10px 12px;margin-top:8px;"><div style="font-size:12.5px;font-weight:700;margin-bottom:4px;">So erreichst du uns</div>${studioContactHtml(r.studio_contact)}</div>` : ""}
-        ${window._stage === 1 && konto ? `<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;background:rgba(0,0,0,0.18);border-radius:8px;padding:10px 12px;margin-top:8px;"><strong style="color:var(--text-primary);">Noch keinen Vital-Plan?</strong> Leg jetzt dein Konto an – darin findest du dein Ergebnis wieder. Den Vital-Plan schalten wir im Studio mit dir frei.</div>` : ""}
+        ${self ? `<div style="background:var(--sunken);border-radius:8px;padding:10px 12px;margin-top:8px;"><div style="font-size:12.5px;font-weight:700;margin-bottom:4px;">So erreichst du uns</div>${studioContactHtml(r.studio_contact)}</div>` : ""}
+        ${window._stage === 1 && konto ? `<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;background:var(--sunken);border-radius:8px;padding:10px 12px;margin-top:8px;"><strong style="color:var(--text-primary);">Noch keinen Vital-Plan?</strong> Leg jetzt dein Konto an – darin findest du dein Ergebnis wieder. Den Vital-Plan schalten wir im Studio mit dir frei.</div>` : ""}
       </div>${konto}${referralBoxHtml('studio')}`;
   }
 
@@ -5637,7 +5726,7 @@
       : "";
     const started = !!offer.enrollment_status;
     try { trackEvent("nutrition_offer_view", { started, reasons: reasons.join(",") }); } catch (e) {}
-    return `<div class="stage-fahrplan" style="border-color:rgba(34,201,122,0.35);">
+    return `<div class="stage-fahrplan" style="border-color:rgba(var(--accent-green-rgb),0.35);">
         <div class="stage-kicker">Passt zu deinem Ergebnis</div>
         <div style="font-size:16px;font-weight:700;margin-bottom:6px;">${intro ? "Ernährungs-Check" : "Ernährungs-Check mit Begleitung"}</div>
         <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">${why ? escHtml(why) + " " : ""}${started
@@ -5645,7 +5734,7 @@
           : intro
             ? `Ein paar Fragen zu deinem Alltag, danach siehst du, wo beim Essen das meiste Potenzial liegt, und wählst deine ersten Schritte – ohne Diät, ohne Verbote. ${viaAccount() ? "Mit deinem Konto geht es ohne PIN." : "Du brauchst Pilot-ID und PIN aus deiner Mail."}`
             : "Ein paar Fragen zu deinem Alltag, danach siehst du, wo beim Essen das meiste Potenzial liegt. Mit deinem Trainer oder deiner Trainerin wählst du ein bis drei Schritte für zwölf Wochen – ohne Diät, ohne Verbote. Du brauchst Pilot-ID und PIN aus deiner Mail."}
-          ${intro ? '<div style="color:var(--accent-green);font-size:12px;margin-top:6px;">Kostenlos in der aktuellen Einführungsphase.</div>' : ""}</div>
+          ${intro ? '<div style="color:var(--accent-green-text);font-size:12px;margin-top:6px;">Kostenlos in der aktuellen Einführungsphase.</div>' : ""}</div>
         <a class="stage-btn-blue" href="${escHtml(url)}" target="_blank" rel="noopener" onclick="try{trackEvent('nutrition_offer_click',{started:${started}})}catch(e){}" style="display:block;text-align:center;text-decoration:none;">${started ? "Zum Ernährungs-Check →" : "Ernährungs-Check starten →"}</a>
       </div>`;
   }
@@ -5656,7 +5745,7 @@
       : (Array.isArray(S.result.fahrplan) ? S.result.fahrplan : []);
     if (fp.length) {
       return `<div class="stage-fahrplan">
-          <div class="stage-kicker" style="color:var(--accent-amber);">Dein Fahrplan</div>
+          <div class="stage-kicker" style="color:var(--accent-amber-text);">Dein Fahrplan</div>
           <div style="font-size:16px;font-weight:700;margin-bottom:12px;">${S.goalTeaser ? `Für „${S.goalTeaser}“` : "Woche für Woche"}</div>
           ${fp.map((f, i) => `
             <div class="stage-fp-row${i === fp.length - 1 ? " last" : ""}">
@@ -5726,9 +5815,9 @@
     return `<div class="stage-wissen">
         <div style="font-size:15px;font-weight:700;">Was wir wissen – und was wir messen könnten</div>
         <div class="stage-wissen-grid">
-          <div class="k" style="color:var(--accent-green);">Wir wissen</div><div class="v">Wie du dich bewegst, schläfst, isst und erholst – aus deinen Antworten.</div>
-          <div class="k" style="color:var(--accent-amber);">Wir vermuten</div><div class="v">${vermuten}</div>
-          <div class="k" style="color:#a78bfa;">Wir könnten messen</div><div class="v">${items.map(([t, d]) => `<strong style="color:var(--text-primary);">${t}:</strong> ${d}`).join("<br><br>")}</div>
+          <div class="k" style="color:var(--accent-green-text);">Wir wissen</div><div class="v">Wie du dich bewegst, schläfst, isst und erholst – aus deinen Antworten.</div>
+          <div class="k" style="color:var(--accent-amber-text);">Wir vermuten</div><div class="v">${vermuten}</div>
+          <div class="k" style="color:var(--accent-purple-text);">Wir könnten messen</div><div class="v">${items.map(([t, d]) => `<strong style="color:var(--text-primary);">${t}:</strong> ${d}`).join("<br><br>")}</div>
         </div>
       </div>`;
   }
@@ -5759,7 +5848,7 @@
       html += S.redFlag || "";
       const doctorItem = (S.cat3Items || []).find(([t]) => t === "Ärztliche Abklärung zuerst");
       if (doctorItem) {
-        html += `<div class="hint-box" style="background:rgba(167,139,250,0.07);border-left:3px solid var(--accent-purple);border-radius:0;padding:13px 16px;margin-bottom:16px;">
+        html += `<div class="hint-box" style="background:rgba(var(--accent-purple-rgb),0.07);border-left:3px solid var(--accent-purple);border-radius:0;padding:13px 16px;margin-bottom:16px;">
           <strong>${doctorItem[0]}</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${doctorItem[1]}</span></div>`;
       }
       html += stageRadarHtml();
@@ -5873,11 +5962,11 @@
   // in der Mail "Besonderer Fokusbereich". Maßgeblich sind ab jetzt die
   // Wörter der Mail (getScoreLevel in der Edge) — Entscheidung Jörg 30.08.
   const SCORE_SCALE = [
-    { min: 85, label: "Sehr stabile Grundlage",  short: "Sehr stabil",      color: "#22c97a", cls: "area-good",   badge: "✓" },
-    { min: 70, label: "Gute Basis mit Potenzial", short: "Gute Basis",      color: "#5edb97", cls: "area-ok",     badge: "✓" },
-    { min: 55, label: "Optimierungspotenzial",    short: "Optimierbar",     color: "#f5a623", cls: "area-medium", badge: "△" },
-    { min: 40, label: "Fokusbereich",             short: "Fokusbereich",    color: "#ff8c42", cls: "area-focus",  badge: "⚠" },
-    { min: 0,  label: "Besonderer Fokusbereich",  short: "Besonderer Fokus", color: "#ff5c5c", cls: "area-low",   badge: "⚠" }
+    { min: 85, label: "Sehr stabile Grundlage",  short: "Sehr stabil",      color: "var(--accent-green-text)", tint: "rgba(var(--accent-green-rgb),0.102)", cls: "area-good",   badge: "✓" },
+    { min: 70, label: "Gute Basis mit Potenzial", short: "Gute Basis",      color: "var(--score-ok-text)", tint: "rgba(var(--score-ok-rgb),0.102)", cls: "area-ok",     badge: "✓" },
+    { min: 55, label: "Optimierungspotenzial",    short: "Optimierbar",     color: "var(--accent-amber-text)", tint: "rgba(var(--accent-amber-rgb),0.102)", cls: "area-medium", badge: "△" },
+    { min: 40, label: "Fokusbereich",             short: "Fokusbereich",    color: "var(--score-focus-text)", tint: "rgba(var(--score-focus-rgb),0.102)", cls: "area-focus",  badge: "⚠" },
+    { min: 0,  label: "Besonderer Fokusbereich",  short: "Besonderer Fokus", color: "var(--accent-red-text)", tint: "rgba(var(--accent-red-rgb),0.102)", cls: "area-low",   badge: "⚠" }
   ];
   function scoreBand(s) {
     const n = Number(s);
@@ -5958,7 +6047,7 @@
               <div class="radar-explain-card"><strong>Einordnung der Werte</strong>
                 ${SCORE_SCALE.map((b, i) => {
                   const upper = i === 0 ? 100 : SCORE_SCALE[i-1].min - 1;
-                  return `<div class="score-scale-item" style="color:${b.color};background:${b.color}1a;"><span>${b.min}–${upper}</span>${b.label}</div>`;
+                  return `<div class="score-scale-item" style="color:${b.color};background:${b.tint};"><span>${b.min}–${upper}</span>${b.label}</div>`;
                 }).join("")}
               </div>
             </div>
@@ -6594,9 +6683,9 @@
       // dann ist eine geänderte Antwort wahrscheinlicher als eine echte Veränderung.
       if (bd < 0 && days >= 28) {
         const n = -bd;
-        youngerHtml = `<div class="verlauf-younger" style="background:var(--accent-green-dim);border:1px solid rgba(34,201,122,0.35);border-radius:10px;padding:12px 14px;margin:4px 0 10px;">
+        youngerHtml = `<div class="verlauf-younger" style="background:var(--accent-green-dim);border:1px solid rgba(var(--accent-green-rgb),0.35);border-radius:10px;padding:12px 14px;margin:4px 0 10px;">
           <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Dein Vitalitäts-Alter</div>
-          <div style="font-size:18px;font-weight:700;color:var(--accent-green);line-height:1.35;margin-top:2px;">${n} ${n === 1 ? "Jahr" : "Jahre"} jünger als bei deinem letzten Check</div>
+          <div style="font-size:18px;font-weight:700;color:var(--accent-green-text);line-height:1.35;margin-top:2px;">${n} ${n === 1 ? "Jahr" : "Jahre"} jünger als bei deinem letzten Check</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${prev.bio_age} → ${bioAge} Jahre in rund ${weeks} Wochen – das hast du selbst bewegt.</div>
         </div>`;
       }
@@ -6620,7 +6709,7 @@
         <div class="verlauf-row" style="font-size:15px;">Vitalitäts-Index: ${prevTotal} → <strong style="color:var(--text-primary);font-size:17px;">${curTotal}</strong> ${deltaHtml}</div>
         ${bioHtml}
         ${wbHtml}
-        ${window._weightCarried ? `<div style="font-size:11.5px;color:var(--accent-amber);line-height:1.5;margin-top:8px;">Dein Gewicht ist unverändert vom letzten Check übernommen. Der BMI-Vergleich sagt deshalb nichts über eine echte Veränderung — trag beim nächsten Check dein aktuelles Gewicht ein.</div>` : ''}
+        ${window._weightCarried ? `<div style="font-size:11.5px;color:var(--accent-amber-text);line-height:1.5;margin-top:8px;">Dein Gewicht ist unverändert vom letzten Check übernommen. Der BMI-Vergleich sagt deshalb nichts über eine echte Veränderung — trag beim nächsten Check dein aktuelles Gewicht ein.</div>` : ''}
         <div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">${RESULT_STAGES_ENABLED ? 'Die Bereichs-Entwicklung siehst du in der Spinne – dort kannst du die Vorher-Ebene einblenden.' : 'Die Bereichs-Entwicklung siehst du unter „Meine Bereiche“ — dort kannst du in der Spinne die Vorher-Ebene einblenden.'}</div>
       </div>`;
   }
@@ -6731,7 +6820,7 @@
           <div class="sim-proj-meta" id="simProjMeta">Schalte oben einen Hebel ein, um dein Potenzial zu sehen.</div>
         </div>
         <div id="simRadarLink" style="display:none;text-align:center;margin:0 0 10px;">
-          <span onclick="goToRadar()" style="font-size:12.5px;font-weight:600;color:var(--accent-blue);cursor:pointer;">In der Vitalitäts-Spinne ansehen →</span>
+          <span onclick="goToRadar()" style="font-size:12.5px;font-weight:600;color:var(--accent-blue-text);cursor:pointer;">In der Vitalitäts-Spinne ansehen →</span>
         </div>
         <button class="sim-goal-btn" id="simGoalBtn" onclick="setSimulatorGoal()" disabled>${ICO("target")} Mein Ziel festlegen</button>
         <div id="referralHost"></div>
@@ -6763,7 +6852,7 @@
         </div>
         ${accessPinBlockHtml(window._accessPin, result?.public_code)}
         ${(result?.marketing_status === 'confirmed' || result?.marketing_status === 'pending') ? '' : marketingOptinHtml('review')}
-        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;background:rgba(255,255,255,0.04);border-radius:var(--radius-sm);padding:12px 14px;text-align:left;">
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;background:rgba(var(--ink-rgb),0.04);border-radius:var(--radius-sm);padding:12px 14px;text-align:left;">
           Diese Seite zeigt dir dieselbe Auswertung jederzeit interaktiv — mit Spinne, Bereichen und Simulator.
           Einen neuen Vital-Plan per Mail gibt es mit deinem nächsten Check.
         </div>
@@ -6801,19 +6890,19 @@
     const movedCount = rows.filter(r => r.moved).length;
     const state = movedCount === rows.length ? 'erreicht' : movedCount > 0 ? 'teilweise' : 'offen';
     const head = state === 'erreicht'
-      ? { icon: `${ICO("trophy")}`, title: 'Dein Ziel: erreicht', color: 'var(--accent-green)', border: 'rgba(34,201,122,0.35)', bg: 'var(--accent-green-dim)',
+      ? { icon: `${ICO("trophy")}`, title: 'Dein Ziel: erreicht', color: 'var(--accent-green-text)', border: 'rgba(var(--accent-green-rgb),0.35)', bg: 'var(--accent-green-dim)',
           text: 'Du hattest dir das beim letzten Check vorgenommen — und genau dort hat sich etwas bewegt. Das ist der Teil, den die meisten nie zu sehen bekommen.' }
       : state === 'teilweise'
-      ? { icon: `${ICO("trending")}`, title: 'Dein Ziel: teilweise erreicht', color: 'var(--accent-green)', border: 'rgba(34,201,122,0.28)', bg: 'var(--accent-green-dim)',
+      ? { icon: `${ICO("trending")}`, title: 'Dein Ziel: teilweise erreicht', color: 'var(--accent-green-text)', border: 'rgba(var(--accent-green-rgb),0.28)', bg: 'var(--accent-green-dim)',
           text: 'Ein Teil deines Ziels ist aufgegangen. Das zählt — der Rest bleibt als nächster Schritt stehen.' }
-      : { icon: `${ICO("target")}`, title: 'Dein Ziel: noch offen', color: 'var(--accent-amber)', border: 'rgba(245,166,35,0.3)', bg: 'rgba(245,166,35,0.08)',
+      : { icon: `${ICO("target")}`, title: 'Dein Ziel: noch offen', color: 'var(--accent-amber-text)', border: 'rgba(var(--accent-amber-rgb),0.3)', bg: 'rgba(var(--accent-amber-rgb),0.08)',
           text: 'In diesen Bereichen hat sich noch nichts Messbares getan. Kein Grund zur Sorge — oft ist das Ziel einfach eine Nummer zu gross gewesen.' };
     const rowsHtml = rows.map(r => {
       const badge = r.moved
-        ? `<span style="color:var(--accent-green);font-weight:800;">▲ +${r.delta}</span>`
+        ? `<span style="color:var(--accent-green-text);font-weight:800;">▲ +${r.delta}</span>`
         : Math.abs(r.delta) <= 2
           ? `<span style="color:var(--text-muted);">unverändert</span>`
-          : `<span style="color:var(--accent-amber);font-weight:700;">▼ ${r.delta}</span>`;
+          : `<span style="color:var(--accent-amber-text);font-weight:700;">▼ ${r.delta}</span>`;
       return `<div style="display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--text-secondary);padding:4px 0;">
         <span>${escHtml(areaName(r.label, r.key))}</span><span>${r.prev} → <strong style="color:var(--text-primary);">${r.cur}</strong> ${badge}</span>
       </div>`;
@@ -6880,16 +6969,16 @@
     if (!pin || !publicCode) return "";
     // v2.8.2 — geöffnet über das Konto: kein PIN zu zeigen
     if (pin === ACCOUNT_PIN) return `
-      <div style="background:rgba(34,201,122,0.08);border:1px solid rgba(34,201,122,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-top:12px;text-align:left;">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-green);margin-bottom:6px;">${ICO("lock")} Liegt in deinem Konto</div>
-        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;">Diesen Check (${escHtml(publicCode)}) öffnest du jederzeit ohne PIN in <a href="konto.html" style="color:var(--accent-green);text-decoration:underline;">Mein Bereich</a>. Dein nächster Check wird dort automatisch verknüpft. Auf einem anderen Gerät meldest du dich dort mit einem Link per E-Mail an.</div>
+      <div style="background:rgba(var(--accent-green-rgb),0.08);border:1px solid rgba(var(--accent-green-rgb),0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-top:12px;text-align:left;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-green-text);margin-bottom:6px;">${ICO("lock")} Liegt in deinem Konto</div>
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;">Diesen Check (${escHtml(publicCode)}) öffnest du jederzeit ohne PIN in <a href="konto.html" style="color:var(--accent-green-text);text-decoration:underline;">Mein Bereich</a>. Dein nächster Check wird dort automatisch verknüpft. Auf einem anderen Gerät meldest du dich dort mit einem Link per E-Mail an.</div>
       </div>`;
     return `
-      <div style="background:rgba(34,201,122,0.08);border:1px solid rgba(34,201,122,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-top:12px;text-align:left;">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-green);margin-bottom:8px;">${ICO("key")} Dein persönlicher PIN</div>
+      <div style="background:rgba(var(--accent-green-rgb),0.08);border:1px solid rgba(var(--accent-green-rgb),0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-top:12px;text-align:left;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-green-text);margin-bottom:8px;">${ICO("key")} Dein persönlicher PIN</div>
         <div style="display:flex;align-items:center;gap:10px;">
           <div style="font-family:'DM Serif Display',serif;font-size:23px;letter-spacing:.16em;flex-grow:1;word-break:break-all;">${pin}</div>
-          <button onclick="copyAccessPin(this)" style="min-height:44px;padding:0 14px;background:rgba(255,255,255,0.06);color:var(--text-primary);border:1px solid var(--border);border-radius:9px;font-size:12.5px;cursor:pointer;flex-shrink:0;">Kopieren</button>
+          <button onclick="copyAccessPin(this)" style="min-height:44px;padding:0 14px;background:rgba(var(--ink-rgb),0.06);color:var(--text-primary);border:1px solid var(--border);border-radius:9px;font-size:12.5px;cursor:pointer;flex-shrink:0;">Kopieren</button>
         </div>
         <div style="font-size:11.5px;color:var(--text-secondary);line-height:1.6;margin-top:10px;">
           Sichere ihn dir jetzt. Mit deinem Code <strong style="color:var(--text-primary);">${publicCode}</strong> und diesem PIN rufst du dein Ergebnis jederzeit wieder auf — und verknüpfst deinen nächsten Check damit. Er steht auch in deiner Mail.
@@ -6924,10 +7013,10 @@
   const MARKETING_CONSENT_TEXT = "Ich möchte von LeVITA per E-Mail Tipps rund um Gesundheit, Vitalität und Fitness, Hinweise auf Angebote und Kurse im LeVITA Studio sowie eine Erinnerung an meinen Re-Check erhalten. Diese Einwilligung ist freiwillig und unabhängig von meiner Auswertung. Ich kann sie jederzeit widerrufen, zum Beispiel über den Abmeldelink in jeder E-Mail oder an datenschutz@le-vita.com.";
   function marketingOptinHtml(source) {
     return `
-      <div id="mkOptin" style="margin-top:12px;padding:14px 16px;background:var(--accent-green-dim);border:1px solid rgba(34,201,122,0.3);border-radius:var(--radius-sm);text-align:left;">
+      <div id="mkOptin" style="margin-top:12px;padding:14px 16px;background:var(--accent-green-dim);border:1px solid rgba(var(--accent-green-rgb),0.3);border-radius:var(--radius-sm);text-align:left;">
         <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">${ICO("envelope")} Bleib dran — wir erinnern dich an deinen Re-Check</div>
         <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:10px;">Höchstens einmal im Monat Tipps für deine Vitalität, Neues aus dem LeVITA Studio und rechtzeitig eine Erinnerung an deinen nächsten Check. Jederzeit abbestellbar.</div>
-        <button id="mkBtn" onclick="requestMarketingOptin('${source}')" style="width:100%;padding:12px;border-radius:var(--radius-sm);border:none;background:var(--accent-green);color:#0a1628;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">Ja, halte mich auf dem Laufenden</button>
+        <button id="mkBtn" onclick="requestMarketingOptin('${source}')" style="width:100%;padding:12px;border-radius:var(--radius-sm);border:none;background:var(--accent-green);color:var(--on-accent);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">Ja, halte mich auf dem Laufenden</button>
         <div style="font-size:10.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">${MARKETING_CONSENT_TEXT} Du bekommst gleich eine E-Mail, in der du deine Anmeldung bestätigst.</div>
         <div id="mkStatus" style="margin-top:8px;font-size:12.5px;"></div>
       </div>`;
@@ -6957,7 +7046,7 @@
     const pw = document.getElementById("progressWrap"); if (pw) pw.style.display = "none";
     const la = document.getElementById('logoArea'); if (la) la.style.display = '';
     const qf = document.getElementById("quiz-flow"); qf.classList.remove("hidden");
-    const card = (title, text) => `<div class="card" style="text-align:center;"><div class="question-text">${title}</div><div class="help-text" style="margin-bottom:18px;">${text}</div><a href="${selfUrlKeepEmbed()}" style="color:var(--accent-green);font-weight:700;">Zum LeVITA Vital-Check →</a></div>`;
+    const card = (title, text) => `<div class="card" style="text-align:center;"><div class="question-text">${title}</div><div class="help-text" style="margin-bottom:18px;">${text}</div><a href="${selfUrlKeepEmbed()}" style="color:var(--accent-green-text);font-weight:700;">Zum LeVITA Vital-Check →</a></div>`;
     qf.innerHTML = card('Einen Moment…', '');
     try {
       const r = await callFunction({ mode, token });
@@ -6989,12 +7078,12 @@
   function recheckReminderHtml() {
     const rd = recheckDates();
     return `
-      <div style="margin-top:12px;padding:12px 14px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--radius-sm);text-align:left;">
+      <div style="margin-top:12px;padding:12px 14px;background:rgba(var(--ink-rgb),0.04);border:1px solid var(--border);border-radius:var(--radius-sm);text-align:left;">
         <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:10px;">
           <strong style="color:var(--text-primary);">Dein nächster Check lohnt sich zwischen ${rd.from} und ${rd.to}.</strong>
           So lange braucht es, bis sich Veränderungen im Alltag auch im Wert zeigen. Trag ihn dir am besten gleich in deinen Kalender ein.
         </div>
-        <button onclick="addRecheckToCalendar()" style="width:100%;padding:11px;border-radius:var(--radius-sm);border:1px solid rgba(59,158,255,0.4);background:transparent;color:var(--accent-blue);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;">
+        <button onclick="addRecheckToCalendar()" style="width:100%;padding:11px;border-radius:var(--radius-sm);border:1px solid rgba(var(--accent-blue-rgb),0.4);background:transparent;color:var(--accent-blue-text);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;">
           ${ICO("calendar")} Re-Check in meinen Kalender eintragen
         </button>
       </div>`;
@@ -7044,7 +7133,7 @@
       if (num) { num.textContent = Math.round(proj.total); num.style.color = 'var(--text-muted)'; }
       if (meta) meta.innerHTML = 'Schalte oben einen Hebel ein, um dein Potenzial zu sehen.';
     } else if (proj) {
-      if (num) { num.textContent = Math.round(proj.total); num.style.color = 'var(--accent-blue)'; }
+      if (num) { num.textContent = Math.round(proj.total); num.style.color = 'var(--accent-blue-text)'; }
       if (meta) {
         // v1.48.0 — Nicht nur der Zielwert, sondern die Veränderung: sonst
         // bleibt unklar, ob sich das Vitalitäts-Alter überhaupt bewegt.
@@ -7054,8 +7143,8 @@
         if (proj.bio_age) {
           const dy = (baseBio && isFinite(baseBio)) ? Math.round(baseBio - proj.bio_age) : null;
           const dTxt = dy === null ? ''
-            : dy >= 2 ? ` <span style="color:var(--accent-green);font-weight:600;">(${dy} Jahre jünger)</span>`
-            : dy === 1 ? ' <span style="color:var(--accent-green);font-weight:600;">(1 Jahr jünger)</span>'
+            : dy >= 2 ? ` <span style="color:var(--accent-green-text);font-weight:600;">(${dy} Jahre jünger)</span>`
+            : dy === 1 ? ' <span style="color:var(--accent-green-text);font-weight:600;">(1 Jahr jünger)</span>'
             : ' <span style="color:var(--text-muted);">(rechnerisch unter einem Jahr)</span>';
           bioTxt = ` · Vitalitäts-Alter ~<strong>${proj.bio_age} J.</strong>${dTxt}`;
         }
@@ -7133,13 +7222,13 @@
   function referralBoxHtml(place) {
     const c = REFERRAL_COPY[place] || REFERRAL_COPY.stufe1;
     return `
-      <div class="referral-box" data-place="${place}" style="background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.25);
+      <div class="referral-box" data-place="${place}" style="background:rgba(var(--accent-amber-rgb),0.07);border:1px solid rgba(var(--accent-amber-rgb),0.25);
            border-radius:var(--radius);padding:16px;margin:14px 0;">
         <div style="font-size:14px;font-weight:700;margin-bottom:5px;">${c[0]}</div>
         <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">${c[1]}</div>
         <button onclick="shareReferral(this,'${place}')"
-          style="width:100%;min-height:44px;background:transparent;color:#ffb347;
-                 border:1px solid rgba(245,166,35,0.35);border-radius:10px;font-family:inherit;
+          style="width:100%;min-height:44px;background:transparent;color:var(--warn-text);
+                 border:1px solid rgba(var(--accent-amber-rgb),0.35);border-radius:10px;font-family:inherit;
                  font-size:13.5px;font-weight:700;cursor:pointer;">Check weiterempfehlen</button>
       </div>`;
   }
@@ -7431,7 +7520,7 @@
       const note = document.createElement("div");
       note.id = "potNote";
       note.style.cssText = "font-size:12px;color:var(--text-muted);text-align:center;margin-top:8px;line-height:1.5;";
-      note.innerHTML = `Wähle zuerst im Potenzial-Simulator einen Hebel — <a onclick="(document.getElementById('rtab-ergebnis')||document.getElementById('rtab-plan'))?.click();setTimeout(()=>document.getElementById('simBox')?.scrollIntoView({behavior:'smooth',block:'center'}),120);" style="color:var(--accent-blue);cursor:pointer;text-decoration:underline;">dorthin wechseln →</a>`;
+      note.innerHTML = `Wähle zuerst im Potenzial-Simulator einen Hebel — <a onclick="(document.getElementById('rtab-ergebnis')||document.getElementById('rtab-plan'))?.click();setTimeout(()=>document.getElementById('simBox')?.scrollIntoView({behavior:'smooth',block:'center'}),120);" style="color:var(--accent-blue-text);cursor:pointer;text-decoration:underline;">dorthin wechseln →</a>`;
       const host = document.getElementById("radarLegend");
       if (host && host.parentNode) host.parentNode.appendChild(note);
       return;
@@ -7586,7 +7675,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.11</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.12</footer>
 
 
 </body>
