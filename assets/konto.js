@@ -1,6 +1,16 @@
 /* =====================================================================
    konto.js — Persönliche Konten (LeVITA Vital-Check)
-   Version 1.3.0 · Stand 15.10.2026
+   Version 1.4.0 · Stand 17.10.2026
+
+   1.4.0 (17.10.2026): Hell/Dunkel. Das Stylesheet des Konto-Schritts nutzt jetzt die
+     Rollen-Tokens des Vital-Checks (v2.8.12/v2.8.13); die Werte nach dem Komma bleiben
+     die dunklen Rueckfaelle, auf einer Seite ohne Tokens sieht alles aus wie bisher.
+     Behoben im hellen Thema: Knopfschrift #062214 fest dunkel auf dunkelgruenem Knopf
+     (jetzt --on-accent), Rahmen von E-Mail-Feld und "Ohne Konto weiter" fest weiss und
+     auf weisser Karte unsichtbar (jetzt --ink-rgb), Fehlermeldung #ff8a8a zu blass
+     (jetzt --error-text). Links als Schrift: --accent-blue-text. --text-muted-Rueckfall
+     #4a6280 -> #8396ae (WCAG, wie v2.8.6). Der dunkle Schleier hinter dem Erklaerfenster
+     bleibt in beiden Themen dunkel. Sonst unveraendert, rueckwaertskompatibel.
 
    1.3.0 (15.10.2026): Hinweise zum Anmeldelink und zur Sicherheit.
      - Neu: LeVitaKonto.showGuide({ once }) — Erklärfenster "So funktioniert dein Konto"
@@ -53,7 +63,7 @@
   "use strict";
   if (window.LeVitaKonto) return;
 
-  var VERSION = "1.3.0";
+  var VERSION = "1.4.0";
   var LINK_VALID = "eine Stunde";   // Supabase Auth, Email OTP Expiration (Standard 3600 s)
   var GUIDE_KEY = "levita_konto_guide_v1";
   var SUPABASE_URL = "https://koctweetotpqaazeicwj.supabase.co";
@@ -250,28 +260,28 @@
 
   // ── Konto-Schritt (Stufe 3) ────────────────────────────────────────
   var CSS = "\
-.lk{background:var(--brand-card,#132338);border:1px solid rgba(59,158,255,.35);border-radius:14px;padding:18px;margin:14px 0;color:var(--text-primary,#f0f4f8);font-family:inherit;text-align:left}\
+.lk{background:var(--brand-card,#132338);border:1px solid rgba(var(--accent-blue-rgb,59,158,255),.35);border-radius:14px;padding:18px;margin:14px 0;color:var(--text-primary,#f0f4f8);font-family:inherit;text-align:left}\
 .lk h3{font-size:16px;font-weight:700;margin:0 0 6px}\
 .lk p{font-size:13.5px;line-height:1.6;color:var(--text-secondary,#8da0b8);margin:0 0 12px}\
 .lk label.lk-lbl{display:block;font-size:12px;font-weight:600;color:var(--text-secondary,#8da0b8);margin:4px 0 6px}\
-.lk input[type=email]{width:100%;box-sizing:border-box;padding:12px 13px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:var(--text-primary,#f0f4f8);font-size:15px;font-weight:500;font-family:inherit}\
+.lk input[type=email]{width:100%;box-sizing:border-box;padding:12px 13px;border-radius:10px;border:1px solid rgba(var(--ink-rgb,255,255,255),.12);background:rgba(var(--ink-rgb,255,255,255),.04);color:var(--text-primary,#f0f4f8);font-size:15px;font-weight:500;font-family:inherit}\
 .lk input[type=email]:focus{outline:none;border-color:var(--accent-green,#22c97a)}\
 .lk .lk-box{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;line-height:1.55;color:var(--text-secondary,#8da0b8);margin:12px 0;cursor:pointer}\
 .lk .lk-box input{margin-top:3px;width:17px;height:17px;flex:0 0 17px;accent-color:var(--accent-green,#22c97a)}\
 .lk .lk-box.req span{color:var(--text-primary,#f0f4f8)}\
 .lk .lk-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}\
 .lk button{font-family:inherit;cursor:pointer;border-radius:999px;padding:12px 18px;font-size:14px;font-weight:700}\
-.lk .lk-go{flex:1;border:0;background:var(--accent-green,#22c97a);color:#062214}\
+.lk .lk-go{flex:1;border:0;background:var(--accent-green,#22c97a);color:var(--on-accent,#062214)}\
 .lk .lk-go:disabled{opacity:.45;cursor:default}\
-.lk .lk-skip{border:1px solid rgba(255,255,255,.18);background:transparent;color:var(--text-secondary,#8da0b8);font-weight:600}\
-.lk .lk-err{color:#ff8a8a;font-size:13px;margin-top:10px;min-height:1em}\
+.lk .lk-skip{border:1px solid rgba(var(--ink-rgb,255,255,255),.18);background:transparent;color:var(--text-secondary,#8da0b8);font-weight:600}\
+.lk .lk-err{color:var(--error-text,#ff8a8a);font-size:13px;margin-top:10px;min-height:1em}\
 .lk .lk-ok{border-left:3px solid var(--accent-green,#22c97a);padding-left:12px}\
-.lk a{color:var(--accent-blue,#3b9eff)}\
-.lk .lk-small{font-size:11.5px;color:var(--text-muted,#4a6280);margin-top:10px}\
-.lk .lk-how{background:none;border:0;padding:0;margin-top:12px;font-size:12.5px;font-weight:600;color:var(--accent-blue,#3b9eff);text-decoration:underline;text-underline-offset:2px;border-radius:0}\
+.lk a{color:var(--accent-blue-text,#3b9eff)}\
+.lk .lk-small{font-size:11.5px;color:var(--text-muted,#8396ae);margin-top:10px}\
+.lk .lk-how{background:none;border:0;padding:0;margin-top:12px;font-size:12.5px;font-weight:600;color:var(--accent-blue-text,#3b9eff);text-decoration:underline;text-underline-offset:2px;border-radius:0}\
 .lkg-ov{position:fixed;inset:0;z-index:9999;background:rgba(3,8,18,.72);display:flex;align-items:flex-end;justify-content:center;padding:12px;font-family:inherit}\
 @media(min-width:600px){.lkg-ov{align-items:center}}\
-.lkg{background:var(--brand-card,#132338);color:var(--text-primary,#f0f4f8);border:1px solid rgba(59,158,255,.35);border-radius:16px;max-width:520px;width:100%;max-height:88vh;overflow:auto;padding:22px 20px 18px;text-align:left;box-shadow:0 18px 50px rgba(0,0,0,.45)}\
+.lkg{background:var(--brand-card,#132338);color:var(--text-primary,#f0f4f8);border:1px solid rgba(var(--accent-blue-rgb,59,158,255),.35);border-radius:16px;max-width:520px;width:100%;max-height:88vh;overflow:auto;padding:22px 20px 18px;text-align:left;box-shadow:0 18px 50px rgba(var(--shadow-rgb,0,0,0),.45)}\
 .lkg h2{font-size:20px;font-weight:700;margin:0 0 4px;line-height:1.25}\
 .lkg .lkg-sub{font-size:13.5px;color:var(--text-secondary,#8da0b8);margin:0 0 14px;line-height:1.55}\
 .lkg h3{font-size:14.5px;font-weight:700;margin:16px 0 6px}\
@@ -279,11 +289,11 @@
 .lkg li{font-size:13.5px;line-height:1.55;color:var(--text-secondary,#8da0b8);margin:0 0 6px}\
 .lkg li strong{color:var(--text-primary,#f0f4f8);font-weight:600}\
 .lkg .lkg-key{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:4px 0 2px}\
-.lkg .lkg-key div{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:9px 10px;font-size:12px;line-height:1.4;color:var(--text-secondary,#8da0b8)}\
+.lkg .lkg-key div{background:rgba(var(--ink-rgb,255,255,255),.04);border:1px solid rgba(var(--ink-rgb,255,255,255),.08);border-radius:10px;padding:9px 10px;font-size:12px;line-height:1.4;color:var(--text-secondary,#8da0b8)}\
 .lkg .lkg-key b{display:block;font-size:13.5px;color:var(--text-primary,#f0f4f8);margin-bottom:2px}\
 @media(max-width:420px){.lkg .lkg-key{grid-template-columns:1fr}}\
 .lkg .lkg-safe{border-left:3px solid var(--accent-green,#22c97a);padding-left:12px}\
-.lkg .lkg-ok{display:block;width:100%;margin-top:18px;border:0;border-radius:999px;padding:13px 18px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;background:var(--accent-green,#22c97a);color:#062214}";
+.lkg .lkg-ok{display:block;width:100%;margin-top:18px;border:0;border-radius:999px;padding:13px 18px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;background:var(--accent-green,#22c97a);color:var(--on-accent,#062214)}";
   function injectCss() {
     if (document.getElementById("lk-css")) return;
     var st = document.createElement("style");
