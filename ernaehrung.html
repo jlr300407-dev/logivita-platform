@@ -3,10 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a1628">
+<script>
+  /* Hell/Dunkel wie im Vital-Check: gewaehltes Thema VOR dem ersten Zeichnen setzen.
+     Gemeinsamer Schluessel "levita-theme" (gleiche Herkunft app.le-vita.com). */
+  (function () { try { var t = localStorage.getItem('levita-theme');
+    if (t === 'hell' || t === 'dunkel') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+</script>
 <meta name="robots" content="noindex, nofollow">
 <title>Ernährungs-Check · LeVITA</title>
 <!--
   Ernährungs-Check — Teilnehmerseite
+
+  17.10.2026 (zu Vital-Check v2.8.15, konto.js 1.4.0): Hell/Dunkel. Vollstaendiger
+  Token-Satz und helle Bloecke woertlich aus dem Vital-Check; Umschalter (Sonne/Mond)
+  in der Kopfzeile, gemeinsamer Speicherschluessel levita-theme. Akzentfarben als
+  Schrift ueber --accent-*-text. Sichtbar auf Dunkel: --text-muted #4a6280 -> #8396ae
+  (stand bei 2,9:1, wie im Vital-Check seit v2.8.6) und Knopfschrift #062214/#2a0606
+  -> --on-accent (#0a1628). Druckstil und Entwickleransichten bleiben unveraendert.
   Liegt neben index.html des Vital-Checks und nutzt dessen assets/ (Schriften, Buddy).
   Backend: Edge-Funktion nutrition-check (Modi start, submit, load, edit, choose, confirm_choice).
   Alle Inhalte (Fragen, Optionen, Texte) kommen aus der Datenbank; hier steht nur die Darstellung.
@@ -64,36 +78,209 @@
   @font-face { font-family: 'DM Serif Display'; font-weight: 400; font-display: swap; src: url('assets/dm-serif-display-v17-latin-regular.woff2') format('woff2'); }
 
   :root {
-    --brand-dark: #0a1628; --brand-card: #132338; --brand-card2: #1a2e47;
-    --accent-green: #22c97a; --accent-green-dim: rgba(34,201,122,0.12);
-    --accent-blue: #3b9eff; --accent-blue-dim: rgba(59,158,255,0.10);
-    --accent-amber: #f5a623; --accent-red: #ff5c5c;
-    --text-primary: #f0f4f8; --text-secondary: #8da0b8; --text-muted: #4a6280;
-    --border: rgba(255,255,255,0.07); --border-hover: rgba(255,255,255,0.14);
-    --radius: 16px; --radius-sm: 10px;
-  }
+      --brand-dark: #0a1628;
+      --brand-card: #132338;
+      --accent-green: #22c97a;
+      --accent-green-dim: rgba(34,201,122,0.12);
+      --accent-blue: #3b9eff;
+      --accent-blue-dim: rgba(59,158,255,0.10);
+      --accent-amber: #f5a623;
+      --accent-red: #ff5c5c;
+      /* v1.41.4: beide wurden verwendet, waren aber nie definiert */
+      --accent-purple: #a78bfa;
+      --brand-card2: #1a2e47;
+      --text-primary: #f0f4f8;
+      --text-secondary: #8da0b8;
+      --text-muted: #8396ae;   /* v2.8.6: 4a6280 erfuellte WCAG AA nicht (2,5:1 auf --brand-card2); 8396ae = 5,99 / 5,24 / 4,55 */
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(255,255,255,0.14);
+      /* ── v2.8.12 (B1) ── */
+      /* Schriftrollen der Akzentfarben. Auf Dunkel identisch mit der Flaeche; auf Hell braucht
+         Schrift ein dunkleres Gruen/Blau/Amber/Rot (#22c97a erreicht dort nur 2,0:1). */
+      --accent-green-text: #22c97a;
+      --accent-blue-text: #3b9eff;
+      --accent-amber-text: #f5a623;
+      --accent-red-text: #ff5c5c;
+      --accent-purple-text: #a78bfa;
+      /* Warnueberschriften in Amber-Kaesten (heller als --accent-amber, fuer Lesbarkeit auf Dunkel) */
+      --warn-text: #ffb347;
+      --error-text: #ff8a8a;
+      /* Schrift AUF einer Akzentflaeche (gruene/blaue Schaltflaechen). Bleibt in beiden Themen dunkel. */
+      --on-accent: #0a1628;
+      /* Zweiter Gruenton am Ende des Schaltflaechen-Verlaufs */
+      --accent-green-deep: #1aaa65;
+      /* Schalterknopf im Simulator: immer weiss */
+      --knob: #ffffff;
+      /* Bewertungsstufen ohne eigenen Akzent (gut/mittel/niedrig nutzen Gruen/Amber/Rot) */
+      --score-ok: #5edb97;
+      --score-ok-text: #5edb97;
+      --score-ok-rgb: 94,219,151;
+      --score-focus: #ff8c42;
+      --score-focus-text: #ff8c42;
+      --score-focus-rgb: 255,140,66;
+      /* Abgesenkte Flaeche innerhalb einer Karte */
+      --sunken: rgba(0,0,0,0.18);
+      /* Startseite: Haupt-Schaltflaeche und Hero-Grund */
+      --cta-green: #3ddc84;
+      --on-cta: #0d1a14;
+      --hero-bg: #0d1a14;
+      /* RGB-Tripel fuer Toenungen mit wechselnder Deckkraft: rgba(var(--x-rgb), 0.08).
+         --ink-rgb ist die "Tinte" fuer Ueberlagerungen und Konturen: auf Dunkel Weiss,
+         auf Hell wird daraus Navy - damit drehen sich alle hellen Schleier auf einmal um. */
+      --ink-rgb: 255,255,255;
+      --shadow-rgb: 0,0,0;
+      --brand-dark-rgb: 10,22,40;
+      --accent-green-rgb: 34,201,122;
+      --accent-blue-rgb: 59,158,255;
+      --accent-amber-rgb: 245,166,35;
+      --accent-red-rgb: 255,92,92;
+      --accent-purple-rgb: 167,139,250;
+      --text-secondary-rgb: 141,160,184;
+      /* Drei Einzelgaenger, je ein- bis viermal benutzt. Zusammenlegen waere eine sichtbare
+         Aenderung und gehoert nicht in B1 - in der Liste fuer die Vereinheitlichung. */
+      --slate-rgb: 122,143,168;
+      --violet-rgb: 139,92,246;
+      --lgreen-alt-rgb: 59,200,100;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+    /* ── v2.8.13 (B2) — Helles Thema ───────────────────────────────────────
+       Gilt bei ausdruecklicher Wahl (data-theme="hell") ODER, ohne Wahl, wenn
+       das Geraet auf Hell steht. Die Werte sind in palette.py durchgerechnet:
+       Schrift >= 4,5:1 auf Papier, Karte, Flaeche 2 und auf den eigenen
+       Toenungen; Linien und Flaechen >= 3:1; weisse Knopfschrift >= 4,5:1.
+       Knopffarbe Dunkelgruen #097240 mit weisser Schrift (Entscheidung 17.10.). */
+    :root[data-theme="hell"] {
+      --brand-dark: #F7F6F2;
+      --brand-card: #FFFFFF;
+      --accent-green: #097240;
+      --accent-green-dim: rgba(9,114,64,0.10);
+      --accent-blue: #1B5FAD;
+      --accent-blue-dim: rgba(27,95,173,0.08);
+      --accent-amber: #B36B00;
+      --accent-red: #C53030;
+      --accent-purple: #6B4BC4;
+      --brand-card2: #EFEDE7;
+      --text-primary: #13263B;
+      --text-secondary: #4C5E72;
+      --text-muted: #58697C;
+      --border: rgba(19,38,59,0.12);
+      --border-hover: rgba(19,38,59,0.24);
+      --accent-green-text: #076A3B;
+      --accent-blue-text: #1B5FAD;
+      --accent-amber-text: #8A5300;
+      --accent-red-text: #B42318;
+      --accent-purple-text: #5A3DAA;
+      --warn-text: #8A5300;
+      --error-text: #B42318;
+      --on-accent: #FFFFFF;
+      --accent-green-deep: #065C33;
+      --knob: #ffffff;
+      --score-ok: #3B8A52;
+      --score-ok-text: #246B3A;
+      --score-ok-rgb: 59,138,82;
+      --score-focus: #C9561A;
+      --score-focus-text: #A8460F;
+      --score-focus-rgb: 201,86,26;
+      --sunken: rgba(19,38,59,0.05);
+      --cta-green: #097240;
+      --on-cta: #FFFFFF;
+      --hero-bg: #0d1a14;
+      --ink-rgb: 19,38,59;
+      --shadow-rgb: 19,38,59;
+      --brand-dark-rgb: 247,246,242;
+      --accent-green-rgb: 9,114,64;
+      --accent-blue-rgb: 27,95,173;
+      --accent-amber-rgb: 179,107,0;
+      --accent-red-rgb: 197,48,48;
+      --accent-purple-rgb: 107,75,196;
+      --text-secondary-rgb: 76,94,114;
+      --slate-rgb: 76,94,114;
+      --violet-rgb: 107,75,196;
+      --lgreen-alt-rgb: 59,138,82;
+    }
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dunkel"]) {
+        --brand-dark: #F7F6F2;
+        --brand-card: #FFFFFF;
+        --accent-green: #097240;
+        --accent-green-dim: rgba(9,114,64,0.10);
+        --accent-blue: #1B5FAD;
+        --accent-blue-dim: rgba(27,95,173,0.08);
+        --accent-amber: #B36B00;
+        --accent-red: #C53030;
+        --accent-purple: #6B4BC4;
+        --brand-card2: #EFEDE7;
+        --text-primary: #13263B;
+        --text-secondary: #4C5E72;
+        --text-muted: #58697C;
+        --border: rgba(19,38,59,0.12);
+        --border-hover: rgba(19,38,59,0.24);
+        --accent-green-text: #076A3B;
+        --accent-blue-text: #1B5FAD;
+        --accent-amber-text: #8A5300;
+        --accent-red-text: #B42318;
+        --accent-purple-text: #5A3DAA;
+        --warn-text: #8A5300;
+        --error-text: #B42318;
+        --on-accent: #FFFFFF;
+        --accent-green-deep: #065C33;
+        --knob: #ffffff;
+        --score-ok: #3B8A52;
+        --score-ok-text: #246B3A;
+        --score-ok-rgb: 59,138,82;
+        --score-focus: #C9561A;
+        --score-focus-text: #A8460F;
+        --score-focus-rgb: 201,86,26;
+        --sunken: rgba(19,38,59,0.05);
+        --cta-green: #097240;
+        --on-cta: #FFFFFF;
+        --hero-bg: #0d1a14;
+        --ink-rgb: 19,38,59;
+        --shadow-rgb: 19,38,59;
+        --brand-dark-rgb: 247,246,242;
+        --accent-green-rgb: 9,114,64;
+        --accent-blue-rgb: 27,95,173;
+        --accent-amber-rgb: 179,107,0;
+        --accent-red-rgb: 197,48,48;
+        --accent-purple-rgb: 107,75,196;
+        --text-secondary-rgb: 76,94,114;
+        --slate-rgb: 76,94,114;
+        --violet-rgb: 107,75,196;
+        --lgreen-alt-rgb: 59,138,82;
+      }
+    }
+
+  /* Umschalter (wie im Vital-Check) */
+  .hdr-right { display: flex; align-items: center; gap: 10px; }
+  .theme-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+    border-radius: 999px; border: 1px solid var(--border); background: rgba(var(--ink-rgb),0.04);
+    color: var(--text-secondary); cursor: pointer; padding: 0; flex: none; }
+  .theme-btn:hover { color: var(--text-primary); border-color: var(--border-hover); }
+  .theme-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  @media print { .theme-btn { display: none !important; } }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'DM Sans', sans-serif; background: var(--brand-dark); color: var(--text-primary); min-height: 100vh; padding: 20px 16px 60px; line-height: 1.5; }
   .wrap { max-width: 640px; margin: 0 auto; }
   header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
   .logo-name { font-family: 'DM Serif Display', serif; font-size: 24px; }
   .logo-sub { font-size: 12px; color: var(--text-secondary); letter-spacing: .04em; text-transform: uppercase; }
-  .phase-note { font-size: 12px; color: var(--accent-green); }
+  .phase-note { font-size: 12px; color: var(--accent-green-text); }
   /* 0.6.0 Schritte */
   .state { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 3px 10px; border-radius: 999px; margin-bottom: 8px; }
-  .state.s-v { background: rgba(255,255,255,.08); color: var(--text-secondary); }
-  .state.s-g { background: var(--accent-blue-dim); color: var(--accent-blue); }
-  .state.s-a { background: var(--accent-green); color: #062214; }
-  .ifthen { font-size: 16px; font-weight: 600; background: rgba(255,255,255,.04); border-radius: var(--radius-sm); padding: 12px 14px; margin: 6px 0 12px; }
+  .state.s-v { background: rgba(var(--ink-rgb),.08); color: var(--text-secondary); }
+  .state.s-g { background: var(--accent-blue-dim); color: var(--accent-blue-text); }
+  .state.s-a { background: var(--accent-green); color: var(--on-accent); }
+  .ifthen { font-size: 16px; font-weight: 600; background: rgba(var(--ink-rgb),.04); border-radius: var(--radius-sm); padding: 12px 14px; margin: 6px 0 12px; }
   .rate { display: flex; gap: 8px; margin: 8px 0 14px; }
-  .rate button { flex: 1; padding: 12px 0; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(255,255,255,.03); color: var(--text-primary); font: 700 16px 'DM Sans'; cursor: pointer; }
+  .rate button { flex: 1; padding: 12px 0; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(var(--ink-rgb),.03); color: var(--text-primary); font: 700 16px 'DM Sans'; cursor: pointer; }
   .rate button.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 14px; }
   .chips button { padding: 9px 14px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); font: 500 14px 'DM Sans'; cursor: pointer; }
   .chips button.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
   .addlist li { list-style: none; display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
   .addlist li:last-child { border-bottom: 0; }
-  .addlist button { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--accent-green); background: transparent; color: var(--accent-green); font: 600 13px 'DM Sans'; cursor: pointer; white-space: nowrap; }
+  .addlist button { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--accent-green); background: transparent; color: var(--accent-green-text); font: 600 13px 'DM Sans'; cursor: pointer; white-space: nowrap; }
   #fridge { display: none; }
   @media print {
     body { background: #fff !important; color: #111 !important; padding: 0; }
@@ -118,20 +305,20 @@
   .small { font-size: 13px; color: var(--text-muted); }
 
   .card { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; }
-  .card.top { border-color: rgba(34,201,122,.45); background: linear-gradient(180deg, rgba(34,201,122,.10), var(--brand-card) 55%); }
-  .card.info { border-color: rgba(59,158,255,.35); background: var(--accent-blue-dim); }
-  .card.warn { border-color: rgba(245,166,35,.4); background: rgba(245,166,35,.08); }
+  .card.top { border-color: rgba(var(--accent-green-rgb),.45); background: linear-gradient(180deg, rgba(var(--accent-green-rgb),.10), var(--brand-card) 55%); }
+  .card.info { border-color: rgba(var(--accent-blue-rgb),.35); background: var(--accent-blue-dim); }
+  .card.warn { border-color: rgba(var(--accent-amber-rgb),.4); background: rgba(var(--accent-amber-rgb),.08); }
 
   .field { margin-bottom: 16px; }
   .field label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
   input[type=text], input[type=password], input[type=tel], textarea {
     width: 100%; padding: 13px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border);
-    background: rgba(255,255,255,.04); color: var(--text-primary); font: 500 15px 'DM Sans', sans-serif; -webkit-appearance: none; }
+    background: rgba(var(--ink-rgb),.04); color: var(--text-primary); font: 500 15px 'DM Sans', sans-serif; -webkit-appearance: none; }
   input:focus, textarea:focus { outline: none; border-color: var(--accent-green); }
   textarea { min-height: 90px; resize: vertical; }
 
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 22px; border-radius: 999px; border: 0;
-    background: var(--accent-green); color: #062214; font: 700 15px 'DM Sans', sans-serif; cursor: pointer; transition: transform .12s, opacity .12s; }
+    background: var(--accent-green); color: var(--on-accent); font: 700 15px 'DM Sans', sans-serif; cursor: pointer; transition: transform .12s, opacity .12s; }
   .btn:hover { transform: translateY(-1px); }
   .btn:disabled { opacity: .45; cursor: default; transform: none; }
   .btn.ghost { background: transparent; color: var(--text-primary); border: 1px solid var(--border-hover); }
@@ -139,19 +326,19 @@
   .row { display: flex; gap: 10px; flex-wrap: wrap; }
   .row .btn { flex: 1; }
 
-  .error { color: var(--accent-red); font-size: 14px; margin-top: 10px; min-height: 1em; }
+  .error { color: var(--accent-red-text); font-size: 14px; margin-top: 10px; min-height: 1em; }
 
   /* Fragebogen */
   .progress { height: 6px; background: var(--brand-card2); border-radius: 999px; overflow: hidden; margin-bottom: 8px; }
   .progress > div { height: 100%; background: var(--accent-green); transition: width .3s; }
   .step-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 18px; }
   .q { margin-bottom: 26px; }
-  .q.missing .q-label { color: var(--accent-amber); }
+  .q.missing .q-label { color: var(--accent-amber-text); }
   .q-label { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
   .q-help { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; }
   .opts { display: grid; gap: 8px; margin-top: 10px; }
   .opt { width: 100%; text-align: left; padding: 13px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border);
-    background: rgba(255,255,255,.03); color: var(--text-primary); font: 500 15px 'DM Sans', sans-serif; cursor: pointer;
+    background: rgba(var(--ink-rgb),.03); color: var(--text-primary); font: 500 15px 'DM Sans', sans-serif; cursor: pointer;
     display: flex; gap: 12px; align-items: center; transition: border-color .15s, background .15s; }
   .opt:hover { border-color: var(--border-hover); }
   .opt .mark { flex: 0 0 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-muted); }
@@ -161,27 +348,27 @@
 
   /* Ergebnis */
   .tier { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 3px 10px; border-radius: 999px; margin-bottom: 10px; }
-  .tier.t-top { background: var(--accent-green); color: #062214; }
-  .tier.t-strong { background: var(--accent-green-dim); color: var(--accent-green); }
-  .tier.t-also { background: rgba(255,255,255,.06); color: var(--text-secondary); }
+  .tier.t-top { background: var(--accent-green); color: var(--on-accent); }
+  .tier.t-strong { background: var(--accent-green-dim); color: var(--accent-green-text); }
+  .tier.t-also { background: rgba(var(--ink-rgb),.06); color: var(--text-secondary); }
   .lever-body { font-size: 15px; margin-bottom: 12px; }
   details { border-top: 1px solid var(--border); padding-top: 10px; margin-top: 6px; }
-  summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent-blue); list-style: none; }
+  summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent-blue-text); list-style: none; }
   summary::-webkit-details-marker { display: none; }
   .kv { margin-top: 12px; }
   .kv dt { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--text-secondary); margin-top: 10px; }
   .kv dd { font-size: 14px; }
   .kv ul { padding-left: 18px; font-size: 14px; }
   .evidence { font-size: 12px; color: var(--text-muted); margin-top: 12px; }
-  .imag { font-size: 12px; color: var(--accent-green); margin-left: 6px; }
-  .why { font-size: 14px; background: rgba(255,255,255,.04); border-radius: var(--radius-sm); padding: 10px 12px; margin: 4px 0 12px; }
+  .imag { font-size: 12px; color: var(--accent-green-text); margin-left: 6px; }
+  .why { font-size: 14px; background: rgba(var(--ink-rgb),.04); border-radius: var(--radius-sm); padding: 10px 12px; margin: 4px 0 12px; }
   .why strong { color: var(--text-secondary); font-weight: 600; }
   .choose { margin-top: 12px; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--accent-green); background: transparent;
-    color: var(--accent-green); font: 600 14px 'DM Sans', sans-serif; cursor: pointer; }
-  .choose.on { background: var(--accent-green); color: #062214; }
+    color: var(--accent-green-text); font: 600 14px 'DM Sans', sans-serif; cursor: pointer; }
+  .choose.on { background: var(--accent-green); color: var(--on-accent); }
   .choicebar { position: sticky; bottom: 12px; z-index: 5; background: var(--brand-card2); border: 1px solid var(--border-hover); border-radius: 999px;
     padding: 10px 18px; font-size: 14px; text-align: center; margin: 16px 0; }
-  .tag-failed { font-size: 12px; color: var(--accent-amber); }
+  .tag-failed { font-size: 12px; color: var(--accent-amber-text); }
   .variant { font-size: 14px; border-left: 3px solid var(--accent-blue); padding-left: 12px; margin: 10px 0; color: var(--text-secondary); }
   .parking li { list-style: none; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px; display: flex; justify-content: space-between; gap: 10px; }
   .parking li:last-child { border-bottom: 0; }
@@ -194,8 +381,8 @@
   .picked { list-style: none; margin: 4px 0 0; }
   .picked li { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px; display: flex; gap: 10px; align-items: baseline; }
   .picked li:last-child { border-bottom: 0; }
-  .picked .num { flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--accent-green); color: #062214; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
-  .way { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(255,255,255,.03); cursor: pointer; margin-bottom: 8px; }
+  .picked .num { flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--accent-green); color: var(--on-accent); font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
+  .way { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(var(--ink-rgb),.03); cursor: pointer; margin-bottom: 8px; }
   .way.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
   .way input { margin-top: 4px; accent-color: var(--accent-green); }
   .way strong { display: block; font-size: 15px; }
@@ -205,10 +392,10 @@
   .slots label.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
   .move-grid { display: grid; gap: 10px; margin-top: 12px; }
   @media (min-width: 560px) { .move-grid { grid-template-columns: 1fr 1fr; } }
-  .move-grid > div { background: rgba(255,255,255,.04); border-radius: var(--radius-sm); padding: 14px; }
+  .move-grid > div { background: rgba(var(--ink-rgb),.04); border-radius: var(--radius-sm); padding: 14px; }
   .choicebar .btn { margin-top: 8px; padding: 10px 18px; font-size: 14px; }
   .contact-line { font-size: 15px; margin: 4px 0; }
-  .contact-line a { color: var(--accent-green); }
+  .contact-line a { color: var(--accent-green-text); }
 
   footer { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 40px; }
   .hidden { display: none !important; }
@@ -219,9 +406,11 @@
   #testbar { position: sticky; top: 0; z-index: 10; background: #2a1d05; border: 1px solid rgba(245,166,35,.5); border-radius: var(--radius-sm);
     padding: 10px 12px; margin-bottom: 18px; font-size: 13px; }
   #testbar .row { margin-top: 8px; }
-  #testbar button { padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(245,166,35,.5); background: transparent; color: var(--accent-amber); font: 600 12px 'DM Sans'; cursor: pointer; }
-  #testbar label { color: var(--accent-amber); display: inline-flex; gap: 6px; align-items: center; }
+  #testbar button { padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(245,166,35,.5); background: transparent; color: var(--accent-amber-text); font: 600 12px 'DM Sans'; cursor: pointer; }
+  #testbar label { color: var(--accent-amber-text); display: inline-flex; gap: 6px; align-items: center; }
   #raw { white-space: pre-wrap; font: 11px/1.4 ui-monospace, Menlo, monospace; background: #050c17; padding: 10px; border-radius: 8px; max-height: 320px; overflow: auto; margin-top: 8px; }
+  /* Entwickleransichten (Testleiste, Rohdaten): fester dunkler Grund, daher feste helle Schrift. */
+  #raw, #testbar { color: #f0f4f8; --accent-amber-text: #f5a623; }
 </style>
 </head>
 <body>
@@ -241,6 +430,7 @@
       <div class="logo-name">LeVITA</div>
       <div class="logo-sub">Ernährungs-Check</div>
     </div>
+    <button type="button" class="theme-btn" onclick="toggleTheme()" aria-label="Helles Design einschalten"></button>
   </header>
 
   <main id="app"><div class="spinner"></div></main>
@@ -249,7 +439,36 @@
   <div id="fridge" aria-hidden="true"></div>
 </div>
 
-<script src="assets/konto.js?v=1.3.0"></script>
+<script>
+  /* Hell/Dunkel - dieselbe Logik wie im Vital-Check (index.html, v2.8.13). */
+  (function () {
+    var KEY = 'levita-theme';
+    var SUN = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+    var MOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
+    function pref() { try { var v = localStorage.getItem(KEY); return (v === 'hell' || v === 'dunkel') ? v : 'auto'; } catch (e) { return 'auto'; } }
+    function eff() { var p = pref(); if (p !== 'auto') return p;
+      return (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'hell' : 'dunkel'; }
+    function apply() {
+      var p = pref(), r = document.documentElement;
+      if (p === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', p);
+      var e = eff(), m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.setAttribute('content', e === 'hell' ? '#F7F6F2' : '#0a1628');
+      var lbl = e === 'hell' ? 'Dunkles Design einschalten' : 'Helles Design einschalten';
+      var bs = document.querySelectorAll('.theme-btn');
+      for (var i = 0; i < bs.length; i++) { bs[i].innerHTML = e === 'hell' ? MOON : SUN; bs[i].setAttribute('aria-label', lbl); bs[i].title = lbl; }
+    }
+    window.toggleTheme = function () {
+      var next = eff() === 'hell' ? 'dunkel' : 'hell';
+      try { localStorage.setItem(KEY, next); } catch (e) {}
+      apply();
+    };
+    if (window.matchMedia) { var mq = window.matchMedia('(prefers-color-scheme: light)');
+      var h = function () { if (pref() === 'auto') apply(); };
+      if (mq.addEventListener) mq.addEventListener('change', h); else if (mq.addListener) mq.addListener(h); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply); else apply();
+  })();
+</script>
+<script src="assets/konto.js?v=1.4.0"></script>
 <script>
 (() => {
   const FE_VERSION = "0.6.2";
@@ -372,7 +591,7 @@
         <div class="error" id="err">${esc(msg)}</div>
       </div>
       <p class="small">Du findest Pilot-ID und PIN in der Mail zu deinem Vital-Check. Ohne Vital-Check ist der Ernährungs-Check nicht möglich — er baut auf deinen Antworten auf.</p>
-      <p class="small">Mit persönlichem Konto geht es ohne PIN: Melde dich in <a href="konto.html" style="color:var(--accent-green)">Mein Bereich</a> mit einem Link per E-Mail an, danach bleibt dieses Gerät angemeldet und der Ernährungs-Check öffnet sich direkt. <a href="#" id="b-kguide" style="color:var(--accent-green)">So funktioniert die Anmeldung</a></p>`);
+      <p class="small">Mit persönlichem Konto geht es ohne PIN: Melde dich in <a href="konto.html" style="color:var(--accent-green-text)">Mein Bereich</a> mit einem Link per E-Mail an, danach bleibt dieses Gerät angemeldet und der Ernährungs-Check öffnet sich direkt. <a href="#" id="b-kguide" style="color:var(--accent-green-text)">So funktioniert die Anmeldung</a></p>`);
     const kg = document.getElementById("b-kguide");
     if (kg) kg.onclick = (e) => { e.preventDefault(); if (window.LeVitaKonto && window.LeVitaKonto.showGuide) window.LeVitaKonto.showGuide(); };
     const go = async () => {
@@ -806,7 +1025,7 @@
       <h3>${esc(leverTitle(r, x.lever_key))}</h3>
       ${(r.result?.step_hints || r.result?.hints || []).filter((hn) => hn.lever_key === x.lever_key).map((hn) => `<p class="muted" style="border-left:3px solid var(--accent-blue);padding-left:10px;margin:6px 0 10px"><strong>${esc(hn.title)}</strong><br>${esc(hn.body)}</p>`).join("")}
       ${x.state === "vorgemerkt" ? `
-        ${needDoc ? `<p class="muted" style="color:var(--accent-amber);margin-bottom:8px">Vor Umsetzung ärztlich klären.</p>` : ""}
+        ${needDoc ? `<p class="muted" style="color:var(--accent-amber-text);margin-bottom:8px">Vor Umsetzung ärztlich klären.</p>` : ""}
         <div class="field"><label for="it-${esc(x.lever_key)}">Dein Plan: „Wenn …, dann …“</label>
           <textarea id="it-${esc(x.lever_key)}" maxlength="300" placeholder="Wenn ich …, dann …"></textarea>
           ${ex.length ? `<div class="small" style="margin-top:6px">Zum Beispiel: ${ex.map(esc).join(" · ")}</div>` : ""}</div>
@@ -1001,7 +1220,7 @@
     const tel = phone.replace(/[^+0-9]/g, "");
     const hours = Array.isArray(c?.hours) ? c.hours : [];
     if (!phone && !hours.length) {
-      return `<p class="muted">Sprich uns beim nächsten Besuch im Studio an${c?.email ? ` oder schreib uns an <a href="mailto:${esc(c.email)}" style="color:var(--accent-green)">${esc(c.email)}</a>` : ""} — wir vereinbaren dann dein Erstgespräch.</p>`;
+      return `<p class="muted">Sprich uns beim nächsten Besuch im Studio an${c?.email ? ` oder schreib uns an <a href="mailto:${esc(c.email)}" style="color:var(--accent-green-text)">${esc(c.email)}</a>` : ""} — wir vereinbaren dann dein Erstgespräch.</p>`;
     }
     return `${phone ? `<p class="contact-line">Telefon: <a href="tel:${esc(tel)}">${esc(phone)}</a></p>` : ""}
       ${hours.length ? `<p class="contact-line">Öffnungszeiten:</p><ul class="kv" style="margin-top:4px">${hours.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}

@@ -747,6 +747,17 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.15 (17.10.2026): konto.js 1.4.0 und Token --error-text.
+         FEHLER im hellen Thema seit v2.8.13: Der Konto-Schritt in der Auswertung
+         (konto.js) hatte feste Farben - Knopfschrift dunkel auf jetzt dunkelgruenem
+         Knopf, unsichtbare Rahmen um E-Mail-Feld und "Ohne Konto weiter", blasse
+         Fehlermeldung. Im Pruefstand nicht aufgefallen, weil der Konto-Schritt nur
+         bei Antwort der Account-Edge erscheint. Jetzt ueber Tokens; Cache-Kennung
+         ?v=1.4.0, sonst bekaemen Besucher bis zu 24 Stunden die alte Datei.
+         Neues Token --error-text (Dunkel #ff8a8a, Hell #B42318) in allen Bloecken.
+         Gleichzeitig: konto.html und ernaehrung.html folgen dem Thema (eigene
+         Fassungen, gleicher Speicherschluessel levita-theme).
+
        v2.8.14 (17.10.2026): Zwei Korrekturen nach dem ersten Blick aufs Handy.
          (1) Der Dreifach-Schalter Hell - Dunkel - Automatisch stand unter jeder
          Frage. Er steht jetzt nur noch am Ende der Startseite (in
@@ -1182,7 +1193,7 @@
        Freischaltung und beim Wiederaufruf; die Seite zeigt denselben Text
        wie die Mail. Event studio_request_sent ersetzt stage3_cta_click. -->
   <script src="assets/supabase-js@2.js"></script>
-  <script src="assets/konto.js?v=1.3.0"></script>   <!-- v2.6.0: Persönliche Konten · v2.6.1: konto.js 1.1.0 -->
+  <script src="assets/konto.js?v=1.4.0"></script>   <!-- v2.6.0: Persönliche Konten · v2.6.1: konto.js 1.1.0 -->
   <script src="assets/chart.umd.min.js"></script>
   <style>
     /* ── Lokale Fonts (v1.28.19) — ersetzt fonts.googleapis.com ── */
@@ -1221,6 +1232,7 @@
       --accent-purple-text: #a78bfa;
       /* Warnueberschriften in Amber-Kaesten (heller als --accent-amber, fuer Lesbarkeit auf Dunkel) */
       --warn-text: #ffb347;
+      --error-text: #ff8a8a;
       /* Schrift AUF einer Akzentflaeche (gruene/blaue Schaltflaechen). Bleibt in beiden Themen dunkel. */
       --on-accent: #0a1628;
       /* Zweiter Gruenton am Ende des Schaltflaechen-Verlaufs */
@@ -1289,6 +1301,7 @@
       --accent-red-text: #B42318;
       --accent-purple-text: #5A3DAA;
       --warn-text: #8A5300;
+      --error-text: #B42318;
       --on-accent: #FFFFFF;
       --accent-green-deep: #065C33;
       --knob: #ffffff;
@@ -1338,6 +1351,7 @@
         --accent-red-text: #B42318;
         --accent-purple-text: #5A3DAA;
         --warn-text: #8A5300;
+        --error-text: #B42318;
         --on-accent: #FFFFFF;
         --accent-green-deep: #065C33;
         --knob: #ffffff;
@@ -1392,6 +1406,7 @@
       --accent-red-text: #ff5c5c;
       --accent-purple-text: #a78bfa;
       --warn-text: #ffb347;
+      --error-text: #ff8a8a;
       --on-accent: #0a1628;
       --accent-green-deep: #1aaa65;
       --knob: #ffffff;
@@ -7972,7 +7987,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.14</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.15</footer>
 
 
 </body>
