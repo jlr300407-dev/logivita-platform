@@ -747,6 +747,10 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.17 (17.10.2026): Kontrast im dunklen Thema. Rote Schrift (--accent-red-text)
+       #ff5c5c -> #ff7373; "Dein Vitalitaets-Alter" in der Verlaufskarte, Bereichsname
+       und "Der ganze Weg bis ..." in den Simulator-Hebeln sowie die Quelle unter dem
+       Plan-Auszug der Startseite von --text-muted auf --text-secondary. Nur Farbe.
        v2.8.16 (17.10.2026): Auswertung klarer (Phase C). Eine Ergebnis-Karte
        (stageHeroHtml) ersetzt Buddy-Karte, Stufen-Plakette und Ring-Karte: Index als
        Hauptzahl, Ring in der Farbe der Stufe, ein Satz Deutung, Vitalitaets-Alter als
@@ -1236,7 +1240,7 @@
       --accent-green-text: #22c97a;
       --accent-blue-text: #3b9eff;
       --accent-amber-text: #f5a623;
-      --accent-red-text: #ff5c5c;
+      --accent-red-text: #ff7373;   /* v2.8.17: 5,0 : 1 auch auf roter Pille */
       --accent-purple-text: #a78bfa;
       /* Warnueberschriften in Amber-Kaesten (heller als --accent-amber, fuer Lesbarkeit auf Dunkel) */
       --warn-text: #ffb347;
@@ -1411,7 +1415,7 @@
       --accent-green-text: #22c97a;
       --accent-blue-text: #3b9eff;
       --accent-amber-text: #f5a623;
-      --accent-red-text: #ff5c5c;
+      --accent-red-text: #ff7373;   /* v2.8.17: 5,0 : 1 auch auf roter Pille */
       --accent-purple-text: #a78bfa;
       --warn-text: #ffb347;
       --error-text: #ff8a8a;
@@ -1838,7 +1842,7 @@
     .watch-row:first-of-type { border-top: none; }
     .watch-row b { color: var(--text-primary); white-space: nowrap; }
     /* v1.49.0 — voller Weg bis zur günstigsten Antwort, ruhig gesetzt */
-    .sim-lever-max { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+    .sim-lever-max { font-size: 11px; color: var(--text-secondary); margin-top: 2px; line-height: 1.4; }
     /* v1.48.0 — Hinweis, wenn im größten Ansatzpunkt keine bessere Antwort bleibt */
     .sim-note { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 10px 0 4px; padding: 9px 11px; border-radius: 8px; background: rgba(var(--ink-rgb),0.04); }
     .sim-switch { position: relative; width: 40px; height: 22px; border-radius: 12px; background: rgba(var(--ink-rgb),0.12); flex-shrink: 0; transition: background 0.2s; }
@@ -2193,7 +2197,7 @@
     .lp-ex-fact.hebel b { color: var(--accent-amber-text); }
     .lp-ex-fact.sim b { color: var(--accent-blue-text); }
     .lp-ex-mail { margin-top: 12px; border-left: 3px solid var(--accent-green); padding: 10px 14px; background: var(--accent-green-dim); font-size: 13px; line-height: 1.6; color: var(--text-secondary); font-style: italic; }
-    .lp-ex-mail span { display: block; font-style: normal; font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+    .lp-ex-mail span { display: block; font-style: normal; font-size: 11px; color: var(--text-secondary); margin-top: 6px; }
     .lp-watch { background: linear-gradient(135deg, rgba(var(--accent-blue-rgb),0.10), rgba(var(--accent-green-rgb),0.07)); border: 1px solid rgba(var(--accent-blue-rgb),0.25); border-radius: var(--radius); padding: 22px 18px; }
     .lp-watch-pair { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 14px; }
     .lp-watch-col { border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13px; line-height: 1.55; color: var(--text-secondary); }
@@ -7083,7 +7087,7 @@
       if (bd < 0 && days >= 28) {
         const n = -bd;
         youngerHtml = `<div class="verlauf-younger" style="background:var(--accent-green-dim);border:1px solid rgba(var(--accent-green-rgb),0.35);border-radius:10px;padding:12px 14px;margin:4px 0 10px;">
-          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Dein Vitalitäts-Alter</div>
+          <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Dein Vitalitäts-Alter</div>
           <div style="font-size:18px;font-weight:700;color:var(--accent-green-text);line-height:1.35;margin-top:2px;">${n} ${n === 1 ? "Jahr" : "Jahre"} jünger als bei deinem letzten Check</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${prev.bio_age} → ${bioAge} Jahre in rund ${weeks} Wochen – das hast du selbst bewegt.</div>
         </div>`;
@@ -7186,7 +7190,7 @@
       leversHtml += `
         <div class="sim-lever" id="simLever_${escHtml(l.question_key)}" onclick="toggleSimLever('${escHtml(l.question_key)}')">
           <div class="sim-lever-body">
-            <div class="sim-lever-title">${icon} ${escHtml(short)}${l.area_label ? ` <span style="font-weight:500;color:var(--text-muted);">· ${escHtml(l.area_label)}</span>` : ''}${l.reason === 'goal' ? ` <span class="pill-goal">passt zu deinem Ziel</span>` : ''}</div>
+            <div class="sim-lever-title">${icon} ${escHtml(short)}${l.area_label ? ` <span style="font-weight:500;color:var(--text-secondary);">· ${escHtml(l.area_label)}</span>` : ''}${l.reason === 'goal' ? ` <span class="pill-goal">passt zu deinem Ziel</span>` : ''}</div>
             <div class="sim-lever-change">${escHtml(l.from_text)} → <strong style="color:var(--text-primary);">${escHtml(l.to_text)}</strong></div>
             <div class="sim-lever-gain">+${fmtGain(l.gain)} Punkte</div>
             ${(typeof l.max_gain === 'number' && l.max_gain > l.gain + 0.05 && l.max_to_text)
@@ -8086,7 +8090,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.16</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.17</footer>
 
 
 </body>
