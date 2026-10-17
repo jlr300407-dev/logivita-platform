@@ -740,6 +740,30 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.10 (16.10.2026): Icons in der Auswertung. Paket A2b, zweiter Teil —
+         damit ist die Anwendung emojifrei.
+         (1) Sprite von 27 auf 46 Symbole: key, refresh, chart, trash, calendar,
+         chat, clipboard, home, dna, drop, bulb, rocket, search, sprout,
+         microscope, bubbles, run, trophy, alert.
+         (2) 83 Emoji ersetzt — Teaser- und Planzeilen, Zonentitel, KPI-Karten,
+         Leistungs-Kacheln, Einordnungs-Labels, Verlauf, Simulator, Teilen-Kasten,
+         PIN- und Zugangsbloecke, Schaltflaechen.
+         (3) Fuenf textContent-Zuweisungen auf innerHTML umgestellt (Ziel- und
+         Loeschen-Schaltflaechen). Zulaessig, weil die Zeichenketten aus dem Code
+         stammen; beim Bereichsnamen aus der Datenbank wurde in v2.8.9 bewusst
+         anders entschieden.
+         NICHT angetastet: die einfarbigen Schriftzeichen. SCORE_SCALE traegt
+         weiterhin ✓ ✓ △ ⚠ und die BMI-Einordnung △ ✓ ⚠. Das sind typografische
+         Zeichen, die auf jedem Geraet gleich aussehen, und sie bilden einen in
+         sich stimmigen Satz — sie waren nie das Problem. Ebenso ▲ ▼ ✦ ★ und
+         die Pfeile.
+         Beim Bauen zweimal danebengegriffen, beide Male vor dem Ausliefern
+         gefunden: 18 Platzhalter standen in Argumentpositionen statt in
+         Vorlagen-Zeichenketten (teaserRow, row, planZoneHeadHtml) — das war ein
+         echter Syntaxfehler. Danach mit einem JS-Parser geprueft, dass kein
+         Platzhalter in einer normalen Zeichenkette steht, wo er woertlich
+         erschienen waere.
+
        v2.8.9 (16.10.2026): Icons im Fragebogen. Paket A2b, erster Teil.
          (1) AREA_ICONS, goalIcons und goalLabels halten jetzt ICON-NAMEN statt
          Emoji; der Helfer ICO(name) erzeugt daraus das SVG, areaIco(key) und
@@ -1550,6 +1574,25 @@
 <symbol id="ic-flame" viewBox="0 0 24 24"><path d="M12 21c3.2 0 5.8-2.3 5.8-5.3 0-3.9-3.9-5.3-2.9-9.2-2.9 1-4.8 3.7-4.8 6.8 0-1-.9-1.9-1.9-2.4C7.6 12 7.2 13.4 7.2 15c0 3.7 2.6 6 4.8 6Z"/></symbol>
 <symbol id="ic-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"/></symbol>
 <symbol id="ic-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="currentColor" stroke="none"/></symbol>
+<symbol id="ic-key" viewBox="0 0 24 24"><circle cx="8.5" cy="8.5" r="4.2"/><path d="m11.5 11.5 8.5 8.5M16.8 16.8l2-2M20 20l1.2-1.2"/></symbol>
+<symbol id="ic-refresh" viewBox="0 0 24 24"><path d="M3.8 12A8.2 8.2 0 0 1 18 6.3"/><path d="M18.4 3.2v3.6h-3.6"/><path d="M20.2 12A8.2 8.2 0 0 1 6 17.7"/><path d="M5.6 20.8v-3.6h3.6"/></symbol>
+<symbol id="ic-chart" viewBox="0 0 24 24"><path d="M3.5 20.5h17"/><path d="M6.8 20.5V12M12 20.5V5.5M17.2 20.5V14"/></symbol>
+<symbol id="ic-trash" viewBox="0 0 24 24"><path d="M4 7h16M9.5 7V4.5h5V7M6.6 7l1 13h8.8l1-13"/><path d="M10.4 11v5.5M13.6 11v5.5"/></symbol>
+<symbol id="ic-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="2"/><path d="M3.5 10.2h17M8 3.4V7M16 3.4V7"/></symbol>
+<symbol id="ic-chat" viewBox="0 0 24 24"><path d="M20.5 12.3c0 3.8-3.8 6.9-8.5 6.9-1 0-2-.1-2.9-.4L4 21l1.4-3.5c-1.2-1.3-1.9-2.9-1.9-4.7 0-3.8 3.8-6.9 8.5-6.9s8.5 3.1 8.5 6.9Z"/></symbol>
+<symbol id="ic-clipboard" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="15.5" rx="2"/><rect x="9" y="3" width="6" height="3.6" rx="1.1"/><path d="M8.6 11.5h6.8M8.6 15.5h4.4"/></symbol>
+<symbol id="ic-home" viewBox="0 0 24 24"><path d="M3.8 10.6 12 4l8.2 6.6"/><path d="M6.2 9.6V20.4h11.6V9.6"/><path d="M9.8 20.4v-5.6h4.4v5.6"/></symbol>
+<symbol id="ic-dna" viewBox="0 0 24 24"><path d="M7 3c0 5 10 5 10 10s-10 3-10 8"/><path d="M17 3c0 5-10 5-10 10s10 3 10 8"/><path d="M8.6 7h6.8M8.6 17.5h6.8"/></symbol>
+<symbol id="ic-drop" viewBox="0 0 24 24"><path d="M12 3.4s6.1 6.9 6.1 10.4a6.1 6.1 0 0 1-12.2 0C5.9 10.3 12 3.4 12 3.4Z"/></symbol>
+<symbol id="ic-bulb" viewBox="0 0 24 24"><path d="M9.6 18h4.8M10.4 21h3.2"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1.1 2h4.8c.1-.8.5-1.5 1.1-2A6 6 0 0 0 12 3Z"/></symbol>
+<symbol id="ic-rocket" viewBox="0 0 24 24"><path d="M12 3c3 2.6 4.6 6.1 4.6 9.6L12 17.2l-4.6-4.6C7.4 9.1 9 5.6 12 3Z"/><circle cx="12" cy="10" r="1.7"/><path d="M8.6 15.6 6 21l4.3-2M15.4 15.6 18 21l-4.3-2"/></symbol>
+<symbol id="ic-search" viewBox="0 0 24 24"><circle cx="10.6" cy="10.6" r="6.1"/><path d="m15.2 15.2 5 5"/></symbol>
+<symbol id="ic-sprout" viewBox="0 0 24 24"><path d="M12 20.5V13M8.2 20.5h7.6"/><path d="M12 13C12 9.7 9.3 7 6 7c0 3.3 2.7 6 6 6Z"/><path d="M12 13c0-2.8 2.2-5 5-5 0 2.8-2.2 5-5 5Z"/></symbol>
+<symbol id="ic-microscope" viewBox="0 0 24 24"><path d="M5.5 20.5h13"/><path d="M9 20.5a5.2 5.2 0 0 0 8.2-4.2"/><path d="M11 4.5h3.2l1 6.2h-5.4l1.2-6.2Z"/><path d="M12.6 10.7v4.1M9.6 14.8h6"/></symbol>
+<symbol id="ic-bubbles" viewBox="0 0 24 24"><circle cx="9" cy="13.2" r="4.6"/><circle cx="16.6" cy="8.4" r="3"/><circle cx="17.2" cy="16.8" r="2"/></symbol>
+<symbol id="ic-run" viewBox="0 0 24 24"><circle cx="15" cy="4.6" r="2.1"/><path d="M7.5 20.6 10.3 16l2.1-3.6-.9-4-3.1 2.6L7 14"/><path d="m12.4 12.4 3.6 2.6.9 5.6"/></symbol>
+<symbol id="ic-trophy" viewBox="0 0 24 24"><path d="M7.6 4.5h8.8V9a4.4 4.4 0 0 1-8.8 0V4.5Z"/><path d="M7.6 6.2H5.2a2.6 2.6 0 0 0 2.6 4.4M16.4 6.2h2.4a2.6 2.6 0 0 1-2.6 4.4"/><path d="M12 13.4v3.4M9.2 20.5h5.6M10.2 16.8h3.6v3.7h-3.6Z"/></symbol>
+<symbol id="ic-alert" viewBox="0 0 24 24"><path d="M12 4.4 21 19.6H3L12 4.4Z"/><path d="M12 10v4.2M12 17.2h.01"/></symbol>
 <symbol id="ic-heart" viewBox="0 0 24 24"><path d="M12 20.5S4.5 15.7 4.5 10.4A4.4 4.4 0 0 1 12 7.2a4.4 4.4 0 0 1 7.5 3.2c0 5.3-7.5 10.1-7.5 10.1Z"/></symbol>
 </defs></svg>
 
@@ -2111,7 +2154,7 @@
   function buildPinScreen(publicCode) {
     return `
       <div class="card pin-screen">
-        <div class="pin-icon">🔐</div>
+        <div class="pin-icon">${ICO("lock")}</div>
         <div class="pin-title">Deine Auswertung aufrufen</div>
         <div class="pin-sub">Gib deinen 8-stelligen PIN ein.<br>Du hast ihn zusammen mit deiner KI-Auswertung per E-Mail erhalten.</div>
         <div class="pin-code-display">Pilot-ID: ${publicCode}</div>
@@ -4084,7 +4127,7 @@
       if (_recheckReady) {
         html += S.recheckBanner = `
           <div class="recheck-banner">
-            <div class="recheck-banner-title">🔄 Zeit für deinen Re-Check?</div>
+            <div class="recheck-banner-title">${ICO("refresh")} Zeit für deinen Re-Check?</div>
             <div class="recheck-banner-sub">${_weeksSince !== null ? `Dein letzter Check ist ${_weeksSince} Wochen her — jetzt wird der Vergleich aussagekräftig. ` : ``}Der neue Check wird mit diesem Ergebnis (${result.public_code}) verknüpft, du siehst danach direkt, was sich verändert hat.</div>
             <button class="recheck-btn" onclick="startRecheckFromReview()">Neuen Check starten &amp; vergleichen →</button>
           </div>`;
@@ -4094,7 +4137,7 @@
         const _soon = _weeksSince !== null && _weeksSince >= 6;
         S.recheckLater = `
           <div style="margin-top:12px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);">
-            <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">🔄 ${_soon ? "Bald Zeit für deinen Re-Check" : "Dein Re-Check"}</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">${ICO("refresh")} ${_soon ? "Bald Zeit für deinen Re-Check" : "Dein Re-Check"}</div>
             <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;">Aussagekräftig wird der Vergleich ab dem <strong style="color:var(--text-primary);">${_d8}</strong> — so lange braucht es, bis sich Veränderungen im Alltag auch im Wert zeigen.</div>
             <div style="margin-top:8px;font-size:12px;"><a href="#" onclick="startRecheckFromReview();return false;" style="color:var(--text-muted);">Trotzdem jetzt neu testen</a> <span style="color:var(--text-muted);">— z. B. wenn sich bei dir gerade etwas Grundlegendes geändert hat</span></div>
           </div>`;
@@ -4113,10 +4156,10 @@
     // ── KPI-Bar ──
     html += S.kpi = `
       <div class="kpi-row" style="margin-bottom:10px;">
-        <div class="kpi-card"><span class="kpi-icon">⚡</span><div class="kpi-val" style="color:${sc}">${Math.round(totalScore)}</div><div class="kpi-label">Vitalitäts-Index</div></div>
-        <div class="kpi-card"><span class="kpi-icon">🧬</span><div class="kpi-val" style="color:${bioColor}">${bioAge||"–"}</div><div class="kpi-label">Vitalitäts-Alter</div></div>
+        <div class="kpi-card"><span class="kpi-icon">${ICO("bolt")}</span><div class="kpi-val" style="color:${sc}">${Math.round(totalScore)}</div><div class="kpi-label">Vitalitäts-Index</div></div>
+        <div class="kpi-card"><span class="kpi-icon">${ICO("dna")}</span><div class="kpi-val" style="color:${bioColor}">${bioAge||"–"}</div><div class="kpi-label">Vitalitäts-Alter</div></div>
         <div class="kpi-card" onclick="switchResultTab('bereiche')" style="cursor:pointer;border-color:rgba(245,166,35,${weakCount>0?'0.3':'0.1'});">
-          <span class="kpi-icon">📊</span>
+          <span class="kpi-icon">${ICO("chart")}</span>
           <div class="kpi-val" style="color:var(--accent-amber)">${weakCount > 0 ? weakCount : growthCount}</div>
           <div class="kpi-label" style="color:${weakCount>0?'var(--accent-amber)':'var(--text-muted)'}">
             ${weakCount>0?'Fokusbereiche →':'Bereiche'}
@@ -4132,7 +4175,7 @@
           <div style="font-size:16px;font-weight:700;color:${sc};">✦ ${scoreLabel}</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${name?name+' · ':''}${personalData.age?personalData.age+' J. · ':''}${goalLabel}</div>
         </div>
-        <div style="font-size:22px;">⚡</div>
+        <div style="font-size:22px;">${ICO("bolt")}</div>
       </div>`;
 
     // v1.53.7 — Einordnung bei sehr niedrigem Index (externe Prüfung 03.10.2026).
@@ -4173,7 +4216,7 @@
       html += S.safetyBand = `
         <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);
              border-radius:14px;padding:14px 16px;margin-bottom:12px;display:flex;gap:11px;align-items:flex-start;">
-          <div style="font-size:17px;line-height:1.2;flex-shrink:0;" aria-hidden="true">⚠️</div>
+          <div style="font-size:17px;line-height:1.2;flex-shrink:0;" aria-hidden="true">${ICO("alert")}</div>
           <div>
             <div style="font-size:13.5px;font-weight:700;color:#ffb347;margin-bottom:3px;">${_bandTitle}</div>
             <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${_bandText}</div>
@@ -4211,9 +4254,9 @@
     // wirklich enthält — die Verlaufs-Auswertung (Edge baut den history-Block).
     const isLinkedRecheck = !!window._previousData;
     if (isLinkedRecheck) {
-      teaserRows += teaserRow("📈", "Deine Entwicklung seit dem letzten Check", "was sich verbessert hat, was stabil blieb — und dein nächster realistischer Schritt");
+      teaserRows += teaserRow(ICO("trending"), "Deine Entwicklung seit dem letzten Check", "was sich verbessert hat, was stabil blieb — und dein nächster realistischer Schritt");
       if (window._previousData.goal_scenario) {
-        teaserRows += teaserRow("🎯", "Die Auswertung deines gesetzten Ziels", "hast du erreicht, was du dir im Simulator vorgenommen hattest?");
+        teaserRows += teaserRow(ICO("target"), "Die Auswertung deines gesetzten Ziels", "hast du erreicht, was du dir im Simulator vorgenommen hattest?");
       }
     }
     // v1.32.5 — Die Box nannte als ersten Punkt den größten Hebel. Der steht
@@ -4222,7 +4265,7 @@
     // was es NUR in der Mail gibt — die geschriebene Einordnung, die
     // Bereichstabelle als Vergleichsbasis und der PIN als einziger Rückweg.
     if (!isLinkedRecheck) {
-      teaserRows += teaserRow("💬", "Deine persönliche Einordnung", `geschrieben auf deine Antworten — nicht die gleichen Tipps wie für alle anderen`);
+      teaserRows += teaserRow(ICO("chat"), "Deine persönliche Einordnung", `geschrieben auf deine Antworten — nicht die gleichen Tipps wie für alle anderen`);
     }
     // v1.38.0 — Der Fahrplan wird in der Mail unterdrückt, sobald ein
     // Sicherheitssignal gesetzt ist (dort gilt: erst der Hausarzt). Dann darf
@@ -4233,21 +4276,21 @@
     const _planPromised = !window._safetyTier && !window._doctorFirst && !!goalKeyForTeaser;
     if (!isLinkedRecheck || !window._previousData.goal_scenario) {
       teaserRows += _planPromised
-        ? teaserRow("🎯", `Dein 6-Wochen-Fahrplan für „${goalTeaser}“`, "konkret, Schritt für Schritt — mit Ausblick bis zu deinem Re-Check")
-        : teaserRow("🎯", `Deine konkreten nächsten Schritte für „${goalTeaser}“`, "was du selbst tun kannst, wo wir helfen");
+        ? teaserRow(ICO("target"), `Dein 6-Wochen-Fahrplan für „${goalTeaser}“`, "konkret, Schritt für Schritt — mit Ausblick bis zu deinem Re-Check")
+        : teaserRow(ICO("target"), `Deine konkreten nächsten Schritte für „${goalTeaser}“`, "was du selbst tun kannst, wo wir helfen");
     }
     if (!isLinkedRecheck) {
-      teaserRows += teaserRow("📊", "Alle Bereichswerte als Übersicht", "deine Vergleichsbasis für den nächsten Check");
+      teaserRows += teaserRow(ICO("chart"), "Alle Bereichswerte als Übersicht", "deine Vergleichsbasis für den nächsten Check");
     }
     if (AFFILIATE_ENABLED && result.score?.bloodtest_hint) { // Pilotfreigabe 5.5: Zeile verspricht Test-Spezifik, die die Mail ohne Freigabe nicht liefert
-      teaserRows += teaserRow("🩸", "Welche Blutwerte für dich sinnvoll wären", "und welche du dir sparen kannst");
+      teaserRows += teaserRow(ICO("drop"), "Welche Blutwerte für dich sinnvoll wären", "und welche du dir sparen kannst");
     }
     // Der PIN entsteht erst mit dieser Mail und steht nur darin — ohne sie ist
     // diese Auswertung später nicht mehr aufrufbar. Das sachlich sagen, ohne
     // Druck aufzubauen.
     teaserRows += isLinkedRecheck
-      ? teaserRow("🔑", "Dein neuer persönlicher PIN", "nur damit rufst du diese Auswertung später wieder auf und vergleichst beim nächsten Check erneut")
-      : teaserRow("🔑", "Dein persönlicher PIN", "nur damit kommst du später wieder an diese Auswertung — und vergleichst in 8–12 Wochen, was sich verändert hat");
+      ? teaserRow(ICO("key"), "Dein neuer persönlicher PIN", "nur damit rufst du diese Auswertung später wieder auf und vergleichst beim nächsten Check erneut")
+      : teaserRow(ICO("key"), "Dein persönlicher PIN", "nur damit kommst du später wieder an diese Auswertung — und vergleichst in 8–12 Wochen, was sich verändert hat");
     // v1.31.1 — Beim Wiederaufruf über PIN ist die Mail zwingend schon
     // versendet (der PIN entsteht erst mit ihr). Ein leeres Eingabefeld wäre
     // dort schlicht falsch: ein zweiter Versand wird serverseitig ohnehin
@@ -4316,7 +4359,7 @@
         <button id="vitalplanToggle" onclick="toggleVitalPlan()" aria-expanded="false" aria-controls="vitalplanBody"
           style="width:100%;background:none;border:none;color:inherit;font-family:inherit;text-align:left;
                  padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;min-height:56px;">
-          <div style="font-size:19px;line-height:1.2;flex-shrink:0;" aria-hidden="true">✉️</div>
+          <div style="font-size:19px;line-height:1.2;flex-shrink:0;" aria-hidden="true">${ICO("envelope")}</div>
           <div style="flex-grow:1;min-width:0;">
             <div style="font-size:13px;font-weight:700;">${window._isReviewMode && window._accessPin ? "Dein Vital-Plan" : "Dein persönlicher Vital-Plan"}</div>
             <div style="font-size:11.5px;color:var(--text-secondary);">${window._isReviewMode && window._accessPin ? (viaAccount() ? "Status ansehen" : "Status und PIN ansehen") : "Ausführliche Auswertung per Mail · kostenlos"}</div>
@@ -4416,7 +4459,7 @@
           Meine Angaben anzeigen ↓
         </button>
         <div id="${basisdatenId}" style="display:none;flex-wrap:wrap;gap:6px;margin-top:8px;" class="basisdaten-box">
-          ${name ? `<span class="pill">👤 ${name}</span>` : ""}
+          ${name ? `<span class="pill">${ICO("user")} ${name}</span>` : ""}
           <span class="pill">Alter: ${personalData.age}</span>
           <span class="pill">Geschlecht: ${personalData.gender}</span>
           <span class="pill">Größe: ${personalData.height_cm} cm</span>
@@ -4446,7 +4489,7 @@
     // Haupthebel
     if (totalScore >= 85) {
       if (worst && worst.score < 90) {
-        html += S.hebel = `<div class="hebel-box"><div class="hebel-icon">✨</div><div>
+        html += S.hebel = `<div class="hebel-box"><div class="hebel-icon">${ICO("spark")}</div><div>
           <div class="hebel-title">Dein einziger kleiner Feinschliff</div>
           <div class="hebel-text"><strong>${areaIco(worst.key)} ${worst.label}</strong> ist der einzige Bereich mit noch etwas Luft nach oben. Alles andere läuft bereits sehr stabil.</div>
         </div></div>`;
@@ -4456,7 +4499,7 @@
       // bisher fast wortgleich auf Tab 3. Tab 1 beantwortet "Wo stehe ich",
       // die Handlungsschritte (Sofort / Diese Woche) gehoeren zu "Was tue ich"
       // und stehen jetzt dort — verschoben, nicht doppelt.
-      html += S.hebel = `<div class="hebel-box" onclick="switchResultTab('empfehlungen')" style="cursor:pointer;"><div class="hebel-icon">💡</div><div>
+      html += S.hebel = `<div class="hebel-box" onclick="switchResultTab('empfehlungen')" style="cursor:pointer;"><div class="hebel-icon">${ICO("bulb")}</div><div>
         <div class="hebel-title">Dein größter Ansatzpunkt</div>
         <div class="hebel-text"><strong>${areaIco(worst.key)} ${worst.label}</strong></div>
         <div style="margin-top:8px;font-size:12.5px;color:var(--accent-green);font-weight:600;">Was das konkret heißt → Nächste Schritte</div>
@@ -4479,7 +4522,7 @@
     // VELUS-JET-Gutschein entfernt (Angebot war am 15.07.2026 abgelaufen).
     html += S.feedback = `
       <div class="feedback-box" id="feedbackBox" style="margin-top:8px;margin-bottom:4px;display:none;">
-        <h3>Wie hilfreich war der Check für dich? 🚀</h3>
+        <h3>Wie hilfreich war der Check für dich? ${ICO("rocket")}</h3>
         <p>Dein Vital-Plan ist unterwegs. Magst du uns kurz sagen, wie der Check für dich war?<br>
         Dein Feedback fließt direkt in die Weiterentwicklung ein.</p>
         <button class="next-btn" onclick="openGoogleForm()">Feedback geben →</button>
@@ -4586,7 +4629,7 @@
       html += S.answers = `
         <div class="section-card" style="margin-bottom:16px;">
           <div class="section-header" onclick="toggleAnswers()" style="cursor:pointer;user-select:none;">
-            <div class="section-title">📋 Meine Antworten aus diesem Check</div>
+            <div class="section-title">${ICO("clipboard")} Meine Antworten aus diesem Check</div>
             <button class="toggle-btn" id="answersToggleBtn">Einblenden</button>
           </div>
           <div id="answersPanel" style="display:none;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);">
@@ -4640,9 +4683,9 @@
         <div style="font-size:17px;font-weight:700;margin-bottom:8px;line-height:1.3;">${heroHead3}</div>
         <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${heroDesc3}</div>
         ${worst ? `<div style="margin-top:14px;background:rgba(0,0,0,0.18);border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.6;">
-            ⚡ <strong style="color:var(--accent-green)">Sofort:</strong> ${getInsightNow(worst.key, worst.score, result.bmi, result)}<br><br>
-            📅 <strong style="color:var(--accent-amber)">Diese Woche:</strong> ${getInsightSoon(worst.key, worst.score, result.bmi, result)}
-            ${HEBEL_SIGNS[worst.key] ? `<br><br>🔎 <strong style="color:var(--accent-blue)">Woran du es merkst:</strong> ${HEBEL_SIGNS[worst.key]}` : ``}
+            ${ICO("bolt")} <strong style="color:var(--accent-green)">Sofort:</strong> ${getInsightNow(worst.key, worst.score, result.bmi, result)}<br><br>
+            ${ICO("calendar")} <strong style="color:var(--accent-amber)">Diese Woche:</strong> ${getInsightSoon(worst.key, worst.score, result.bmi, result)}
+            ${HEBEL_SIGNS[worst.key] ? `<br><br>${ICO("search")} <strong style="color:var(--accent-blue)">Woran du es merkst:</strong> ${HEBEL_SIGNS[worst.key]}` : ``}
           </div>` : ``}
       </div>`;
     if (window._shown) window._shown.focus = true;   // v1.34.2: der eine Ort für die Kernbotschaft
@@ -4687,7 +4730,7 @@
     const mentalRisk = Math.max(riskOf('low_interest'), riskOf('low_mood'));
     if (mentalRisk >= 2) {
       html += S.mental = `<div class="hint-box" style="background:rgba(139,92,246,0.08);border-left:3px solid var(--accent-purple);border-radius:0;padding:14px 16px;margin-bottom:16px;">
-        <strong style="color:#a78bfa;">🌱 Mentales Wohlbefinden</strong><br>
+        <strong style="color:#a78bfa;">${ICO("sprout")} Mentales Wohlbefinden</strong><br>
         <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${(window._snips.notice.mental?.body) || "Deine Angaben zeigen, dass du an manchen Tagen weniger Freude oder Energie empfindest, als du dir wünschen würdest. Das ist ein Signal, das es wert ist, aufmerksam zu bleiben."}${mentalRisk >= 3 ? " Wenn sich das über längere Zeit so anfühlt, kann ein Gespräch mit deiner Hausärztin oder deinem Hausarzt gut tun." : ""}</span>
       </div>`;
     }
@@ -4735,7 +4778,7 @@
     if (cat1.length === 0) cat1.push(["Dranbleiben, was gut läuft", "Deine Basis stimmt — halte deine Routinen und beobachte, was dir Energie gibt."]);
 
     S.cat1Items = cat1;
-    html += `<div class="t3-zone-title">🏠 1 · Das kannst du selbst tun</div>`;
+    html += `<div class="t3-zone-title">${ICO("home")} 1 · Das kannst du selbst tun</div>`;
     cat1.forEach(([t, d]) => {
       html += `<div class="hint-box" style="background:var(--accent-green-dim);border-left:3px solid var(--accent-green);border-radius:0;padding:13px 16px;margin-bottom:8px;">
         <strong>${t}</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${d}</span>
@@ -4800,7 +4843,7 @@
     ).join('');
     S.rec2 = rec2;
     S.rec2Benefits = rec2Benefits;
-    html += `<div class="t3-zone-title" style="margin-top:16px;">🏋️ 2 · Mit uns im Studio — professionelle Begleitung</div>`;
+    html += `<div class="t3-zone-title" style="margin-top:16px;">${ICO("dumbbell")} 2 · Mit uns im Studio — professionelle Begleitung</div>`;
     html += `<div style="background:var(--brand-card2);border:1px solid rgba(59,158,255,0.25);border-radius:var(--radius-sm);padding:15px 16px;margin-bottom:8px;">
       <strong>${rec2[0]}</strong><br>
       <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${rec2[1]}</span>
@@ -4828,7 +4871,7 @@
     }
     S.cat3Items = cat3;
     if (cat3.length > 0) {
-      html += `<div class="t3-zone-title" style="margin-top:16px;">🔬 3 · Genauer hinschauen — vertiefende Messungen</div>`;
+      html += `<div class="t3-zone-title" style="margin-top:16px;">${ICO("microscope")} 3 · Genauer hinschauen — vertiefende Messungen</div>`;
       cat3.forEach(([t, d]) => {
         html += `<div class="hint-box" style="background:rgba(167,139,250,0.07);border-left:3px solid var(--accent-purple);border-radius:0;padding:13px 16px;margin-bottom:8px;">
           <strong>${t}</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${d}</span>
@@ -4849,7 +4892,7 @@
     `;
     html += `
       <div class="t3-leistung-row">
-        <div class="t3-leistung-icon">💪</div>
+        <div class="t3-leistung-icon">${ICO("dumbbell")}</div>
         <div class="t3-leistung-body">
           <div class="t3-leistung-title">Betreutes Training</div>
           <div class="t3-leistung-desc">Mit Plan, Technik und persönlicher Begleitung durch Trainer und Sportwissenschaftler</div>
@@ -4857,7 +4900,7 @@
         <a class="t3-link" href="https://le-vita.com/probetraining" target="_blank">→</a>
       </div>
       <div class="t3-leistung-row">
-        <div class="t3-leistung-icon">👥</div>
+        <div class="t3-leistung-icon">${ICO("users")}</div>
         <div class="t3-leistung-body">
           <div class="t3-leistung-title">Kurse in der Gruppe</div>
           <div class="t3-leistung-desc">Abwechslungsreich – gemeinsam macht Training mehr Spaß</div>
@@ -4865,7 +4908,7 @@
         <a class="t3-link" href="https://le-vita.com/probetraining" target="_blank">→</a>
       </div>
       <div class="t3-leistung-row">
-        <div class="t3-leistung-icon">🫧</div>
+        <div class="t3-leistung-icon">${ICO("bubbles")}</div>
         <div class="t3-leistung-body">
           <div class="t3-leistung-title">VELUS JET Wasserstrahlmassage</div>
           <div class="t3-leistung-desc">Tiefe Muskelentspannung, Regeneration, Stressabbau</div>
@@ -4873,7 +4916,7 @@
         <span class="t3-usp-badge">Alleinstellung</span>
       </div>
       <div class="t3-leistung-row">
-        <div class="t3-leistung-icon">📊</div>
+        <div class="t3-leistung-icon">${ICO("chart")}</div>
         <div class="t3-leistung-body">
           <div class="t3-leistung-title">Tanita Körperanalyse</div>
           <div class="t3-leistung-desc">Muskelmasse, Körperfett, Viszeral-Fett als Basiswert</div>
@@ -4881,7 +4924,7 @@
         <a class="t3-link" href="https://le-vita.com/probetraining" target="_blank">→</a>
       </div>
       <div class="t3-leistung-row">
-        <div class="t3-leistung-icon">🌿</div>
+        <div class="t3-leistung-icon">${ICO("leaf")}</div>
         <div class="t3-leistung-body">
           <div class="t3-leistung-title">Ernährungstipps im Training</div>
           <div class="t3-leistung-desc">Erstgespräch kostenlos — Tipps für deinen Essalltag, passend zu deinem Training</div>
@@ -4889,7 +4932,7 @@
         <a class="t3-link" href="https://le-vita.com/probetraining" target="_blank">→</a>
       </div>
       <div class="t3-leistung-row">
-        <div class="t3-leistung-icon">🧘</div>
+        <div class="t3-leistung-icon">${ICO("lotus")}</div>
         <div class="t3-leistung-body">
           <div class="t3-leistung-title">Physiotherapie</div>
           <div class="t3-leistung-desc">Manuelle Therapie, Kinesiotaping, Bobath — nahezu vollständiges Angebot</div>
@@ -4897,7 +4940,7 @@
         <a class="t3-link" href="https://le-vita.com/physiotherapie-anja-lerch-gemuenden-wohra" target="_blank">→</a>
       </div>
       <div class="t3-leistung-row">
-        <div class="t3-leistung-icon">🏃</div>
+        <div class="t3-leistung-icon">${ICO("run")}</div>
         <div class="t3-leistung-body">
           <div class="t3-leistung-title">Reha-Sport</div>
           <div class="t3-leistung-desc">Betreut, langfristig, sanfter Einstieg</div>
@@ -4905,7 +4948,7 @@
         <span class="t3-kk-badge">KK-Zuschuss</span>
       </div>
       <div class="t3-leistung-row">
-        <div class="t3-leistung-icon">📋</div>
+        <div class="t3-leistung-icon">${ICO("clipboard")}</div>
         <div class="t3-leistung-body">
           <div class="t3-leistung-title">Präventionskurse <span class="t3-coming-soon">In Planung</span></div>
           <div class="t3-leistung-desc">Online-Kurse werden sukzessive ausgebaut</div>
@@ -4945,8 +4988,8 @@
 
     html += S.actions = `
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
-        <button class="danger-btn" onclick="deleteMyData()">🗑 Daten löschen</button>
-        <button class="danger-btn" onclick="resetVitalCheck()">🔄 Erneut testen →</button>
+        <button class="danger-btn" onclick="deleteMyData()">${ICO("trash")} Daten löschen</button>
+        <button class="danger-btn" onclick="resetVitalCheck()">${ICO("refresh")} Erneut testen →</button>
       </div>`;
 
     html += `</div>`; // Ende Tab 3
@@ -5076,7 +5119,7 @@
       const first = fp.length && fp[0].text ? escHtml(fp[0].text)
         : (S.worst ? getInsightNow(S.worst.key, S.worst.score, S.result && S.result.bmi, S.result) : "");
       if (first) step = `<div class="stage-first-step"><span>Dein erster Schritt</span>${first}</div>`;
-      if (simScenarios && !simGoalSaved) cta = `<button type="button" class="stage-btn-primary" onclick="goToGoal()">🎯 Mein Ziel festlegen</button>`;
+      if (simScenarios && !simGoalSaved) cta = `<button type="button" class="stage-btn-primary" onclick="goToGoal()">${ICO("target")} Mein Ziel festlegen</button>`;
     }
     return `<div class="stage-summary">
         <div class="stage-kicker">${window._stage === 2 ? "Das bedeutet dein Ergebnis" : "Deine Einschätzung"}</div>
@@ -5495,14 +5538,14 @@
     let rows = "";
     if (best && Number(best.gain) >= 1) {
       const n = (best.question_keys || []).length || 1;
-      rows += row("🎯", n > 1 ? `Deine ${n} Hebel` : "Dein Hebel", `was du genau änderst, für +${fmtGain(best.gain)} Punkte`);
+      rows += row(ICO("target"), n > 1 ? `Deine ${n} Hebel` : "Dein Hebel", `was du genau änderst, für +${fmtGain(best.gain)} Punkte`);
     }
     rows += S.planPromised
-      ? row("🗓️", `Dein 6-Wochen-Fahrplan für „${S.goalTeaser}“`, "konkret, Schritt für Schritt – mit Ausblick bis zu deinem Re-Check")
-      : row("🗓️", `Deine konkreten nächsten Schritte für „${S.goalTeaser}“`, "was du selbst tun kannst, wo wir helfen");
-    rows += row("📊", "Alle Bereiche", "mit Wert, Einordnung für dein Alter und konkreten Schritten");
-    rows += row("💬", "Deine persönliche Einordnung", "geschrieben auf deine Antworten, per Mail");
-    rows += row("🔑", "Pilot-ID und PIN", "für deinen Vergleich in 8–12 Wochen");
+      ? row(ICO("calendar"), `Dein 6-Wochen-Fahrplan für „${S.goalTeaser}“`, "konkret, Schritt für Schritt – mit Ausblick bis zu deinem Re-Check")
+      : row(ICO("calendar"), `Deine konkreten nächsten Schritte für „${S.goalTeaser}“`, "was du selbst tun kannst, wo wir helfen");
+    rows += row(ICO("chart"), "Alle Bereiche", "mit Wert, Einordnung für dein Alter und konkreten Schritten");
+    rows += row(ICO("chat"), "Deine persönliche Einordnung", "geschrieben auf deine Antworten, per Mail");
+    rows += row(ICO("key"), "Pilot-ID und PIN", "für deinen Vergleich in 8–12 Wochen");
     const box = S.buildAiBox(rows, {
       badge: "✦ Kostenlos",
       title: "Was du konkret tust – sofort hier und per Mail",
@@ -5626,7 +5669,7 @@
 
     html += `<div class="result-tab-content" id="rtc-plan">`;
     // v2.7.1 — drei Zonen: allein / im Studio / Zugang (Jörg 14.10.2026)
-    html += planZoneHeadHtml("allein", "🏠", "Das kannst du allein tun", "Dein Fahrplan für die nächsten Wochen – ohne Termin, im eigenen Alltag.");
+    html += planZoneHeadHtml("allein", ICO("home"), "Das kannst du allein tun", "Dein Fahrplan für die nächsten Wochen – ohne Termin, im eigenen Alltag.");
     html += S.hero || "";
     html += S.simulator || "";
     html += stageFahrplanHtml(S);
@@ -5643,13 +5686,13 @@
     const review = !window._unlockInfo && window._isReviewMode && window._accessPin;
     if (review) html += S.recheckLater || "";   // Re-Check machst du selbst – mit Termin im Kalender
 
-    html += planZoneHeadHtml("studio", "🤝", "Das machen wir im Studio", "Was ein Fragebogen nicht kann: messen, einordnen und dich beim Start begleiten.");
+    html += planZoneHeadHtml("studio", ICO("users"), "Das machen wir im Studio", "Was ein Fragebogen nicht kann: messen, einordnen und dich beim Start begleiten.");
     html += stageWissenHtml(S);
     html += stageStudioCardHtml(S);
     html += stageNutritionOfferHtml();   // v2.7.0 – bleibt aus, bis das Team geschult ist
 
     if (review && S.mailBox) {
-      html += planZoneHeadHtml("zugang", "🔑", "Dein Zugang", "Pilot-ID, PIN und dein Vital-Plan per Mail.");
+      html += planZoneHeadHtml("zugang", ICO("key"), "Dein Zugang", "Pilot-ID, PIN und dein Vital-Plan per Mail.");
       html += S.mailBox;
     }
     if (!window._studioRequest) html += referralBoxHtml('plan');
@@ -5988,7 +6031,7 @@
     const src = srcKeys.map(k => SRC[k]).filter(Boolean)
       .map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener" onclick="event.stopPropagation();">${t}</a>`).join(" · ");
     return `<div class="area-info">
-        <div class="insight-label">🧭 Was dieser Bereich zeigt</div>
+        <div class="insight-label">${ICO("compass")} Was dieser Bereich zeigt</div>
         <p>${snip.title || info.what} ${snip.body || info.why}</p>
         ${ageTxt ? `<div class="ai-age"><b>Für dich mit ${age} Jahren:</b> ${ageTxt}</div>` : ""}
         ${src ? `<div class="ai-src">Quellen: ${src}</div>` : ""}
@@ -6058,9 +6101,9 @@
       ? `<div class="stage-lock-line">Deine Schritte für diesen Bereich stehen in deinem Vital-Plan.</div>` : "";
     const detailHtml = `
         <div class="area-detail${opts.open ? ' open' : ''}" id="detail-${area.key}">
-          ${_noTips ? "" : `<div class="insight-label">⚡ Sofort umsetzen</div>
+          ${_noTips ? "" : `<div class="insight-label">${ICO("bolt")} Sofort umsetzen</div>
           <div class="insight-text">${getInsightNow(area.key, area.score, result?.bmi, result)}</div>
-          <div class="insight-label">📅 Mittelfristig</div>
+          <div class="insight-label">${ICO("calendar")} Mittelfristig</div>
           <div class="insight-text">${getInsightSoon(area.key, area.score, result?.bmi, result)}</div>`}
           ${areaInfoHtml(area.key, result)}
           ${_lockLine}
@@ -6432,7 +6475,7 @@
     return `
       <div class="verlauf-card">
         <div class="verlauf-head">
-          <div class="verlauf-title">📈 Dein Verlauf</div>
+          <div class="verlauf-title">${ICO("trending")} Dein Verlauf</div>
           <div class="verlauf-date">Letzter Check: ${prevDate} · ${agoTxt}</div>
         </div>
         ${youngerHtml}
@@ -6552,7 +6595,7 @@
         <div id="simRadarLink" style="display:none;text-align:center;margin:0 0 10px;">
           <span onclick="goToRadar()" style="font-size:12.5px;font-weight:600;color:var(--accent-blue);cursor:pointer;">In der Vitalitäts-Spinne ansehen →</span>
         </div>
-        <button class="sim-goal-btn" id="simGoalBtn" onclick="setSimulatorGoal()" disabled>🎯 Mein Ziel festlegen</button>
+        <button class="sim-goal-btn" id="simGoalBtn" onclick="setSimulatorGoal()" disabled>${ICO("target")} Mein Ziel festlegen</button>
         <div id="referralHost"></div>
         <div class="sim-note">Eine Simulation, keine Messung — nur beeinflussbare Verhaltens-Hebel, Symptom-Fragen und BMI sind bewusst ausgenommen. Dein gesetztes Ziel greifen wir beim nächsten Check wieder auf.</div>
       </div>`;
@@ -6620,12 +6663,12 @@
     const movedCount = rows.filter(r => r.moved).length;
     const state = movedCount === rows.length ? 'erreicht' : movedCount > 0 ? 'teilweise' : 'offen';
     const head = state === 'erreicht'
-      ? { icon: '🏆', title: 'Dein Ziel: erreicht', color: 'var(--accent-green)', border: 'rgba(34,201,122,0.35)', bg: 'var(--accent-green-dim)',
+      ? { icon: `${ICO("trophy")}`, title: 'Dein Ziel: erreicht', color: 'var(--accent-green)', border: 'rgba(34,201,122,0.35)', bg: 'var(--accent-green-dim)',
           text: 'Du hattest dir das beim letzten Check vorgenommen — und genau dort hat sich etwas bewegt. Das ist der Teil, den die meisten nie zu sehen bekommen.' }
       : state === 'teilweise'
-      ? { icon: '📈', title: 'Dein Ziel: teilweise erreicht', color: 'var(--accent-green)', border: 'rgba(34,201,122,0.28)', bg: 'var(--accent-green-dim)',
+      ? { icon: `${ICO("trending")}`, title: 'Dein Ziel: teilweise erreicht', color: 'var(--accent-green)', border: 'rgba(34,201,122,0.28)', bg: 'var(--accent-green-dim)',
           text: 'Ein Teil deines Ziels ist aufgegangen. Das zählt — der Rest bleibt als nächster Schritt stehen.' }
-      : { icon: '🎯', title: 'Dein Ziel: noch offen', color: 'var(--accent-amber)', border: 'rgba(245,166,35,0.3)', bg: 'rgba(245,166,35,0.08)',
+      : { icon: `${ICO("target")}`, title: 'Dein Ziel: noch offen', color: 'var(--accent-amber)', border: 'rgba(245,166,35,0.3)', bg: 'rgba(245,166,35,0.08)',
           text: 'In diesen Bereichen hat sich noch nichts Messbares getan. Kein Grund zur Sorge — oft ist das Ziel einfach eine Nummer zu gross gewesen.' };
     const rowsHtml = rows.map(r => {
       const badge = r.moved
@@ -6700,12 +6743,12 @@
     // v2.8.2 — geöffnet über das Konto: kein PIN zu zeigen
     if (pin === ACCOUNT_PIN) return `
       <div style="background:rgba(34,201,122,0.08);border:1px solid rgba(34,201,122,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-top:12px;text-align:left;">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-green);margin-bottom:6px;">🔐 Liegt in deinem Konto</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-green);margin-bottom:6px;">${ICO("lock")} Liegt in deinem Konto</div>
         <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;">Diesen Check (${escHtml(publicCode)}) öffnest du jederzeit ohne PIN in <a href="konto.html" style="color:var(--accent-green);text-decoration:underline;">Mein Bereich</a>. Dein nächster Check wird dort automatisch verknüpft. Auf einem anderen Gerät meldest du dich dort mit einem Link per E-Mail an.</div>
       </div>`;
     return `
       <div style="background:rgba(34,201,122,0.08);border:1px solid rgba(34,201,122,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-top:12px;text-align:left;">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-green);margin-bottom:8px;">🔑 Dein persönlicher PIN</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-green);margin-bottom:8px;">${ICO("key")} Dein persönlicher PIN</div>
         <div style="display:flex;align-items:center;gap:10px;">
           <div style="font-family:'DM Serif Display',serif;font-size:23px;letter-spacing:.16em;flex-grow:1;word-break:break-all;">${pin}</div>
           <button onclick="copyAccessPin(this)" style="min-height:44px;padding:0 14px;background:rgba(255,255,255,0.06);color:var(--text-primary);border:1px solid var(--border);border-radius:9px;font-size:12.5px;cursor:pointer;flex-shrink:0;">Kopieren</button>
@@ -6744,7 +6787,7 @@
   function marketingOptinHtml(source) {
     return `
       <div id="mkOptin" style="margin-top:12px;padding:14px 16px;background:var(--accent-green-dim);border:1px solid rgba(34,201,122,0.3);border-radius:var(--radius-sm);text-align:left;">
-        <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">📬 Bleib dran — wir erinnern dich an deinen Re-Check</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">${ICO("envelope")} Bleib dran — wir erinnern dich an deinen Re-Check</div>
         <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:10px;">Höchstens einmal im Monat Tipps für deine Vitalität, Neues aus dem LeVITA Studio und rechtzeitig eine Erinnerung an deinen nächsten Check. Jederzeit abbestellbar.</div>
         <button id="mkBtn" onclick="requestMarketingOptin('${source}')" style="width:100%;padding:12px;border-radius:var(--radius-sm);border:none;background:var(--accent-green);color:#0a1628;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">Ja, halte mich auf dem Laufenden</button>
         <div style="font-size:10.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">${MARKETING_CONSENT_TEXT} Du bekommst gleich eine E-Mail, in der du deine Anmeldung bestätigst.</div>
@@ -6814,7 +6857,7 @@
           So lange braucht es, bis sich Veränderungen im Alltag auch im Wert zeigen. Trag ihn dir am besten gleich in deinen Kalender ein.
         </div>
         <button onclick="addRecheckToCalendar()" style="width:100%;padding:11px;border-radius:var(--radius-sm);border:1px solid rgba(59,158,255,0.4);background:transparent;color:var(--accent-blue);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;">
-          📅 Re-Check in meinen Kalender eintragen
+          ${ICO("calendar")} Re-Check in meinen Kalender eintragen
         </button>
       </div>`;
   }
@@ -6827,7 +6870,7 @@
       return `${escHtml(short)}${l.to_text ? ` (${escHtml(l.to_text)})` : ''}`;
     }).join(' · ');
     const projTxt = isFinite(Number(simGoalSaved.projected_total)) ? ` — Ziel-Index ~${Math.round(Number(simGoalSaved.projected_total))}` : '';
-    return `<div class="sim-goal-card"><strong>🎯 Dein gespeichertes Ziel</strong>${projTxt}<br>${leverTxt || 'Gewählte Hebel'}<br><span style="font-size:11px;color:var(--text-muted);">Beim nächsten Check schauen wir gemeinsam darauf, was daraus geworden ist.</span></div>`;
+    return `<div class="sim-goal-card"><strong>${ICO("target")} Dein gespeichertes Ziel</strong>${projTxt}<br>${leverTxt || 'Gewählte Hebel'}<br><span style="font-size:11px;color:var(--text-muted);">Beim nächsten Check schauen wir gemeinsam darauf, was daraus geworden ist.</span></div>`;
   }
 
   function toggleSimLever(key) {
@@ -6899,7 +6942,7 @@
       } else {
         btn.classList.remove('saved');
         btn.disabled = !(proj && proj.entry);
-        btn.textContent = simGoalSaved ? '🎯 Als neues Ziel festlegen' : '🎯 Mein Ziel festlegen';
+        btn.innerHTML = simGoalSaved ? `${ICO("target")} Als neues Ziel festlegen` : `${ICO("target")} Mein Ziel festlegen`;
       }
     }
 
@@ -6944,10 +6987,10 @@
   // Stellen: Stufe 1 (Seitenende), Stufe 2 (Ende "Mein Plan"), nach dem
   // Ziel-Speichern im Simulator und in der Bestätigung der Studio-Anfrage.
   const REFERRAL_COPY = {
-    stufe1: ["🤝 Kennst du jemanden, für den das auch passt?", "Schick den Check weiter — geteilt wird nur der Link, keine deiner Angaben."],
-    plan:   ["🤝 Kennst du jemanden, für den das auch passt?", "Zu zweit fällt der Anfang leichter. Geteilt wird nur der Link, keine deiner Angaben."],
-    ziel:   ["🤝 Kennst du jemanden, für den das auch passt?", "Schick den Check weiter — geteilt wird nur der Link, keine deiner Angaben."],
-    studio: ["🤝 Bring jemanden mit", "Training in Gruppen macht mehr Spaß. Schick den Check an jemanden, der mitkommen möchte — geteilt wird nur der Link."]
+    stufe1: [`${ICO("users")} Kennst du jemanden, für den das auch passt?`, "Schick den Check weiter — geteilt wird nur der Link, keine deiner Angaben."],
+    plan:   [`${ICO("users")} Kennst du jemanden, für den das auch passt?`, "Zu zweit fällt der Anfang leichter. Geteilt wird nur der Link, keine deiner Angaben."],
+    ziel:   [`${ICO("users")} Kennst du jemanden, für den das auch passt?`, "Schick den Check weiter — geteilt wird nur der Link, keine deiner Angaben."],
+    studio: [`${ICO("users")} Bring jemanden mit`, "Training in Gruppen macht mehr Spaß. Schick den Check an jemanden, der mitkommen möchte — geteilt wird nur der Link."]
   };
   function referralBoxHtml(place) {
     const c = REFERRAL_COPY[place] || REFERRAL_COPY.stufe1;
@@ -7073,7 +7116,7 @@
       let userMsg = 'Dein Ziel konnte nicht gespeichert werden — bitte versuche es gleich noch einmal.';
       if (msg.includes('PIN_LOCKED')) userMsg = 'Zu viele Fehlversuche — bitte in 15 Minuten erneut versuchen.';
       else if (msg.includes('PIN_REQUIRED') || msg.includes('PIN_INVALID') || msg.includes('aktuellen Sitzung')) userMsg = 'Dein Ziel lässt sich hier nur mit deinem PIN speichern — ruf deine Auswertung über den Link in deiner E-Mail auf und setze das Ziel dort.';
-      if (btn) { btn.disabled = false; btn.textContent = '🎯 Mein Ziel festlegen'; }
+      if (btn) { btn.disabled = false; btn.innerHTML = `${ICO("target")} Mein Ziel festlegen`; }
       const note = document.createElement('div');
       note.className = 'info-box box-warning';
       note.style.cssText = 'margin-top:10px;font-size:12.5px;';
@@ -7128,7 +7171,7 @@
     const note = document.createElement('div');
     note.id = 'recheckQuizNote';
     note.className = 'recheck-note-quiz';
-    note.innerHTML = `🔄 <strong>Re-Check:</strong> Dein neues Ergebnis wird nach dem Absenden mit ${escHtml(window._previousLink.public_code)} verglichen.`;
+    note.innerHTML = `${ICO("refresh")} <strong>Re-Check:</strong> Dein neues Ergebnis wird nach dem Absenden mit ${escHtml(window._previousLink.public_code)} verglichen.`;
     const flow = document.getElementById('quiz-flow');
     if (flow && flow.parentNode) flow.parentNode.insertBefore(note, flow);
   }
@@ -7338,7 +7381,7 @@
         if (innerErr.message === "PIN_REQUIRED") {
           const entered = prompt("Zum Löschen benötigen wir deinen 8-stelligen Zugangs-PIN aus deiner Auswertungs-Mail.\n\nFalls du ihn nicht mehr hast: Löschanfrage an datenschutz@le-vita.com mit deiner Pilot-ID " + latestResult.public_code + " genügt.");
           if (!entered) {
-            if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = "🗑 Daten löschen"; }
+            if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.innerHTML = `${ICO("trash")} Daten löschen`; }
             return;
           }
           result = await callFunction({ mode: "delete_submission", public_code: latestResult.public_code, pin: entered.trim(), send_confirmation_email: true });
@@ -7347,11 +7390,11 @@
         }
       }
       if (result?.success) { alert(`✓ Deine Daten wurden erfolgreich gelöscht.\n\nDu wirst jetzt zur Startseite weitergeleitet.`); resetVitalCheck(true); }
-      else { alert("Beim Löschen ist ein Fehler aufgetreten. Bitte wende dich an info@le-vita.com mit deiner Pilot-ID: " + latestResult.public_code); if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = "🗑 Daten löschen"; } }
+      else { alert("Beim Löschen ist ein Fehler aufgetreten. Bitte wende dich an info@le-vita.com mit deiner Pilot-ID: " + latestResult.public_code); if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.innerHTML = `${ICO("trash")} Daten löschen`; } }
     } catch (err) {
       console.error("Löschfehler:", err);
       const deleteBtn = document.querySelector('[onclick="deleteMyData()"]');
-      if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = "🗑 Daten löschen"; }
+      if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.innerHTML = `${ICO("trash")} Daten löschen`; }
       alert(err.message && err.message.length > 30 ? err.message : "Verbindungsfehler. Bitte versuche es erneut oder kontaktiere uns: info@le-vita.com");
     }
   }
@@ -7405,7 +7448,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.9</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.10</footer>
 
 
 </body>
