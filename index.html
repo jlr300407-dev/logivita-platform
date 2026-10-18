@@ -747,6 +747,15 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.21 (18.10.2026): Versorgung — Formulierungspruefung "nur Tipps, keine Befunde"
+       (gehoert zu Edge edge-2026-10-18.2, wortgleich zum Mail-Kasten). Kein "Bedarf, den du
+       nicht abdeckst", kein "versorgt dich gut", kein "Abklaeren" als Etikett mehr: Faelle,
+       Kurzsaetze, Etiketten je Praeparat ("nachvollziehbar", "in der Praxis ansprechen" …)
+       und Saetze je Naehrstoff als Tipps mit Quellenbezug (BfR, DGE). Jod nach DGE-Position
+       vegan 2024 (Jodsalz allein reicht oft nicht; Algen nur mit angegebenem Jodgehalt),
+       Fisch nach DGE 2024 (ein- bis zweimal pro Woche). Quellen:
+       versorgung-2026-10-18/dokumentation/Evidenz-Versorgungs-Check.md.
+
        v2.8.20 (18.10.2026): Versorgung & Nahrungsergaenzung, Phase A (gehoert zu
        03_Versorgung_Phase-A_v1.sql und Edge edge-2026-10-18.1). Der Fall kommt aus
        score.supply_payload (Wiederaufruf) bzw. score.supply (direkt nach dem Absenden).
@@ -7022,29 +7031,29 @@
   const SUPPLY_SELECTION_URL = "https://le-vita.com/mikronaehrstoff-versorgung";
   const SUPPLY_MODULE_URL = "";   // versorgung.html — leer = noch kein Modul-Link
   const SUPPLY_CASE_TEXT = {
-    kein_bedarf: "Aus deinen Angaben ergibt sich kein erkennbarer Bedarf für Nahrungsergänzung. Eine ausgewogene Ernährung versorgt dich gut.",
-    gezielt: "Du nimmst Nahrungsergänzung gezielt nach Bluttest oder ärztlicher Empfehlung — genau so ist es sinnvoll. Lass die Werte in Abständen kontrollieren.",
-    einnahme_mit_anlass: "Deine Einnahme hat einen nachvollziehbaren Anlass. Die Ernährung bleibt dabei die erste Quelle.",
-    bedarf_gedeckt_getestet: "Deine Einnahme passt zu deinem Bedarf und ist geprüft — gut so. Eine Kontrolle in Abständen genügt.",
-    bedarf_gedeckt: "Deine Einnahme passt gut zu deinem Bedarf. Lass deinen Status einmal prüfen, dann weißt du, dass die Menge stimmt.",
-    bedarf_offen_vitd: "Für Vitamin D gibt es bei dir einen erkennbaren Bedarf, den du bisher nicht abdeckst.",
-    bedarf_offen: "Aus deinen Angaben ergibt sich ein Bedarf, den du bisher nicht abdeckst.",
-    ohne_anlass: "Du nimmst Präparate, für die sich aus deinen Angaben kein Anlass ergibt. Das ist kein Fehler, aber ein guter Moment, den Nutzen zu prüfen — Ernährung zuerst.",
-    ohne_anlass_3plus: "Du nimmst mehrere Präparate ohne erkennbaren Anlass. Je mehr Produkte, desto eher summieren sich einzelne Stoffe über die empfohlenen Höchstmengen — lass deine Einnahme einmal prüfen.",
-    kritisch_ohne_test: "Mindestens ein Präparat solltest du nicht ohne Laborwert oder ärztliche Rücksprache nehmen. Lass das bitte abklären, bevor du es weiter einnimmst."
+    kein_bedarf: "Aus deinen Angaben ergibt sich kein Anlass für Nahrungsergänzung. Tipp: Eine abwechslungsreiche Ernährung ist die beste Grundlage.",
+    gezielt: "Du nimmst Nahrungsergänzung gezielt nach Bluttest oder ärztlicher Empfehlung. Tipp: Kontrollen in den Abständen, die deine Praxis vorschlägt.",
+    einnahme_mit_anlass: "Deine Einnahme hat einen nachvollziehbaren Anlass. Tipp: Die Ernährung bleibt die erste Quelle.",
+    bedarf_gedeckt_getestet: "Deine Einnahme passt zu den Anhaltspunkten aus deinen Angaben und ist geprüft. Tipp: Kontrollen in Abständen genügen.",
+    bedarf_gedeckt: "Deine Einnahme passt zu den Anhaltspunkten aus deinen Angaben. Tipp: Lass den Wert einmal prüfen — dann weißt du, ob die Menge zu dir passt.",
+    bedarf_offen_vitd: "Für Vitamin D ergibt sich aus deinen Angaben ein Anhaltspunkt. Den Tipp dazu findest du unten.",
+    bedarf_offen: "Aus deinen Angaben ergibt sich ein Anhaltspunkt, der bisher nicht abgedeckt ist. Die Tipps dazu findest du unten.",
+    ohne_anlass: "Du nimmst Präparate, für die sich aus deinen Angaben kein Anlass ergibt. Das ist kein Fehler. Tipp: Ein guter Moment, den Nutzen zu prüfen — Ernährung zuerst.",
+    ohne_anlass_3plus: "Du nimmst mehrere Präparate ohne erkennbaren Anlass. Je mehr Produkte, desto eher summieren sich einzelne Stoffe über die Höchstmengenvorschläge des BfR. Tipp: Lass deine Einnahme einmal in Apotheke oder Praxis durchsehen.",
+    kritisch_ohne_test: "Für mindestens ein Präparat raten BfR oder Fachgesellschaften zu Laborwert oder ärztlicher Rücksprache. Tipp: Sprich es in deiner Hausarztpraxis an — am besten, bevor du es weiter nimmst."
   };
   // Stufe 1 (Übersicht): kurz, bei kritischen Fällen ohne Stoffnamen
   const SUPPLY_SHORT = {
-    kein_bedarf: "Kein erkennbarer Bedarf für Nahrungsergänzung — eine ausgewogene Ernährung versorgt dich gut.",
-    gezielt: "Du nimmst gezielt nach Bluttest oder ärztlicher Empfehlung ein — genau so ist es sinnvoll.",
+    kein_bedarf: "Kein Anlass für Nahrungsergänzung erkennbar — Tipp: abwechslungsreich essen.",
+    gezielt: "Du nimmst gezielt nach Bluttest oder ärztlicher Empfehlung ein.",
     einnahme_mit_anlass: "Deine Einnahme hat einen nachvollziehbaren Anlass — Ernährung bleibt die erste Quelle.",
-    bedarf_gedeckt_getestet: "Deine Einnahme passt zu deinem Bedarf und ist geprüft.",
-    bedarf_gedeckt: "Deine Einnahme passt gut zu deinem Bedarf — lass den Status einmal prüfen.",
-    ohne_anlass: "Du nimmst Präparate ohne erkennbaren Anlass — ein guter Moment, den Nutzen zu prüfen.",
-    ohne_anlass_3plus: "Mehrere Präparate ohne erkennbaren Anlass — lass deine Einnahme einmal prüfen.",
-    kritisch_ohne_test: "Hier lohnt sich ein genauerer Blick. Die Einordnung findest du in deinem Vital-Plan."
+    bedarf_gedeckt_getestet: "Deine Einnahme passt zu deinen Angaben und ist geprüft.",
+    bedarf_gedeckt: "Deine Einnahme passt zu deinen Angaben — Tipp: den Wert einmal prüfen lassen.",
+    ohne_anlass: "Präparate ohne erkennbaren Anlass — Tipp: ein guter Moment, den Nutzen zu prüfen.",
+    ohne_anlass_3plus: "Mehrere Präparate ohne erkennbaren Anlass — Tipp: Einnahme einmal durchsehen lassen.",
+    kritisch_ohne_test: "Hier lohnt sich ein genauerer Blick. Die Tipps dazu findest du in deinem Vital-Plan."
   };
-  const SUPPLY_VERDICT_TEXT = { passt: "passt", passt_einmal_pruefen: "passt — Status einmal prüfen lassen", passt_ernaehrung_zuerst: "kann passen — Ernährung zuerst", nutzen_pruefen: "Nutzen prüfen", abklaeren: "ärztlich abklären" };
+  const SUPPLY_VERDICT_TEXT = { passt: "nachvollziehbar", passt_einmal_pruefen: "nachvollziehbar — Wert einmal prüfen lassen", passt_ernaehrung_zuerst: "möglich — Ernährung zuerst", nutzen_pruefen: "Nutzen prüfen", abklaeren: "in der Praxis ansprechen" };
   const SUPPLY_NUTRIENT = { vitd: "Vitamin D", b12: "Vitamin B12", iodine: "Jod", iron: "Eisen", omega3: "Omega-3", zinc: "Zink", selenium: "Selen", calcium: "Calcium", mag: "Magnesium", multi: "Multivitaminpräparat", other: "Andere" };
 
   function supplyOf(score) {
@@ -7057,7 +7066,7 @@
     if (v >= 80) return ["Passend — einmal prüfen", "var(--score-ok-text)"];
     if (v >= 60) return ["Prüfen lohnt sich", "var(--accent-amber-text)"];
     if (v >= 35) return ["Genauer hinschauen", "var(--accent-amber-text)"];
-    return ["Abklären", "var(--accent-red-text)"];
+    return ["In der Praxis ansprechen", "var(--accent-red-text)"];
   }
   function supplyHidden() { return !!window._doctorFirst; }   // gleiche Sperre wie der Mail-Kasten (Edge: _bDoctorFirst)
   function supplyNeedLines(s) {
@@ -7065,21 +7074,21 @@
     const taken = new Set((s.products || []).map(p => p.substance));
     (s.open_needs || []).forEach(n => {
       if (n === "b12") out.push(supplyHasRule(s, "vegan_b12")
-        ? ["Vitamin B12", "Bei veganer Ernährung gehört ein B12-Präparat laut DGE fest dazu."]
-        : ["Vitamin B12", "Ab etwa 65 Jahren nimmt der Körper B12 aus der Nahrung oft schlechter auf — lass deinen Status in deiner Hausarztpraxis prüfen."]);
-      else if (n === "vitd") out.push(["Vitamin D", "Von Oktober bis März reicht die Sonne in Deutschland für die Eigenbildung nicht aus. Ob eine Ergänzung für dich sinnvoll ist, klärst du am besten mit deiner Hausarztpraxis."]);
-      else if (n === "iodine") out.push(["Jod", "Verwende konsequent jodiertes Speisesalz. Algenprodukte sind als Jodquelle ungeeignet."]);
-      else out.push([SUPPLY_NUTRIENT[n] || n, "erkennbarer Bedarf."]);
+        ? ["Vitamin B12", "Die DGE empfiehlt bei veganer Ernährung, regelmäßig ein Vitamin-B12-Präparat zu verwenden und den B12-Wert regelmäßig prüfen zu lassen."]
+        : ["Vitamin B12", "Mit zunehmendem Alter wird B12 aus der Nahrung oft schlechter aufgenommen. Tipp: Sprich deinen B12-Wert beim nächsten Praxisbesuch an."]);
+      else if (n === "vitd") out.push(["Vitamin D", "Von Oktober bis März reicht die Sonne in Deutschland laut BfR nicht für eine ausreichende Vitamin-D-Bildung. Tipp: Ob eine Ergänzung für dich sinnvoll ist, klärst du am besten in deiner Praxis."]);
+      else if (n === "iodine") out.push(["Jod", "Laut DGE reicht jodiertes Speisesalz allein bei veganer Ernährung oft nicht aus. Tipp: Jodsalz konsequent verwenden, dazu jodangereicherte Lebensmittel; Algen nur mit angegebenem Jodgehalt."]);
+      else out.push([SUPPLY_NUTRIENT[n] || n, "Anhaltspunkt aus deinen Angaben."]);
     });
     (s.clarify || []).filter(n => !taken.has(n)).forEach(n => {
-      if (n === "iron") out.push(["Eisen", "Deine Angaben sprechen dafür, den Eisenstatus ärztlich abklären zu lassen. Eisen bitte nie ohne Laborwert einnehmen."]);
-      else if (n === "b12") out.push(["Vitamin B12", "Bei vegetarischer Ernährung lohnt es sich, den B12-Status einmal prüfen zu lassen."]);
-      else out.push([SUPPLY_NUTRIENT[n] || n, "einmal ärztlich abklären lassen."]);
+      if (n === "iron") out.push(["Eisen", "Deine Angaben sind ein Anlass, den Eisenwert in deiner Praxis anzusprechen. Das BfR rät, Eisen nur nach ärztlicher Rücksprache einzunehmen."]);
+      else if (n === "b12") out.push(["Vitamin B12", "Tipp: Bei vegetarischer Ernährung lohnt es sich, den B12-Wert einmal prüfen zu lassen."]);
+      else out.push([SUPPLY_NUTRIENT[n] || n, "Tipp: in deiner Praxis ansprechen."]);
     });
     (s.food_hints || []).forEach(n => {
       if (n === "omega3") out.push(["Omega-3", (supplyHasRule(s, "vegan_b12") || supplyHasRule(s, "veg_b12"))
-        ? "Bei pflanzlicher Ernährung ist Algenöl eine gute Quelle für EPA und DHA."
-        : "Ein bis zwei Portionen fetter Seefisch pro Woche sind die einfachste Quelle."]);
+        ? "Tipp: Bei pflanzlicher Ernährung liefert Algenöl direkt EPA und DHA."
+        : "Tipp: Ein- bis zweimal pro Woche Fisch, davon gern fettreichen Seefisch wie Hering, Makrele oder Lachs."]);
     });
     return out;
   }
@@ -7105,7 +7114,7 @@
     let text = SUPPLY_SHORT[s.case_key];
     if (!text) {   // offene Bedarfe: hier dürfen die Stoffe genannt werden
       const names = (s.open_needs || []).map(n => SUPPLY_NUTRIENT[n] || n);
-      text = names.length ? `Bei ${names.join(" und ")} gibt es einen erkennbaren Bedarf, den du bisher nicht abdeckst.` : (SUPPLY_CASE_TEXT[s.case_key] || "");
+      text = names.length ? `Bei ${names.join(" und ")} ergibt sich aus deinen Angaben ein Anhaltspunkt — die Tipps dazu stehen in deinem Vital-Plan.` : (SUPPLY_CASE_TEXT[s.case_key] || "");
     }
     return `<div class="supply-card">
         <div class="supply-head"><span class="supply-name">${ICO("pill")} Versorgung &amp; Nahrungsergänzung</span><span class="supply-chip">nicht im Index</span><span class="supply-val" style="color:${col};">${Math.round(v)}</span></div>
@@ -7113,7 +7122,7 @@
         <div class="supply-text">${escHtml(text)}</div>
       </div>`;
   }
-  // Mein Plan: Einordnung je Präparat (Stufe 2 — nach dem Mailversand bzw. im Wiederaufruf)
+  // Mein Plan: Tipps je Präparat (Stufe 2 — nach dem Mailversand bzw. im Wiederaufruf)
   function supplyPlanHtml(score) {
     const s = supplyOf(score);
     if (!s || supplyHidden()) return "";
@@ -7123,7 +7132,7 @@
     const full = !!(window._stageUnlocked || (window._isReviewMode && window._accessPin) || !RESULT_STAGES_ENABLED);
     if (!full) {
       return `<div class="supply-plan"><h3>Deine Versorgung</h3>
-        <div class="supply-text">${escHtml(SUPPLY_SHORT[s.case_key] || SUPPLY_CASE_TEXT[s.case_key] || "")} Die Einordnung je Präparat steht in deinem Vital-Plan per E-Mail.</div>
+        <div class="supply-text">${escHtml(SUPPLY_SHORT[s.case_key] || SUPPLY_CASE_TEXT[s.case_key] || "")} Die Tipps je Präparat stehen in deinem Vital-Plan per E-Mail.</div>
         <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">Dieser Bereich zählt nicht zum Vitalitäts-Index.</div></div>`;
     }
     const rows = products.map(p => {
@@ -8293,7 +8302,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.20</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.21</footer>
 
 
 </body>
