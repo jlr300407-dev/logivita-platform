@@ -29,6 +29,11 @@
   Aufruf mit ?code=LEV-2026-000123 füllt die Pilot-ID vor.
 
   Versionen:
+  1.0.0 (18.10.2026) Erste Hauptversion — die Einführungsphase läuft stabil, deshalb nicht mehr 0.x.
+        Einzige inhaltliche Änderung: einheitlicher Satz in der Fußzeile wie in Vital-Check und
+        Versorgungs-Check ("Tipps für gesunde Erwachsene — keine Diagnose, keine Therapieempfehlung,
+        ersetzt keine ärztliche Beratung."). Gehört zur Fortschreibung von Zweckbestimmung und
+        MDR-Selbsteinschätzung für die Zusatzmodule (18.10.2026). Sonst unverändert zu 0.6.4.
   0.6.4 (17.10.2026) Funnel (gehoert zu Vital-Check v2.8.18 und Funnel-Dashboard v3.0.0): Ereignisse
         tragen die Pilot-ID (public_code), den Host und den Einstiegsweg (entry: ergebnis, mail, konto,
         kampagne, verweis, direkt); neues Ereignis nutri_view beim Aufruf der Seite. FE_VERSION stand
@@ -450,7 +455,7 @@
 
   <main id="app"><div class="spinner"></div></main>
 
-  <footer><a href="konto.html" style="color:inherit">Mein Bereich</a> · LeVITA · Ernährungs-Check <span id="fe-version"></span></footer>
+  <footer><a href="konto.html" style="color:inherit">Mein Bereich</a> · LeVITA · Ernährungs-Check <span id="fe-version"></span><br>Tipps für gesunde Erwachsene — keine Diagnose, keine Therapieempfehlung, ersetzt keine ärztliche Beratung.</footer>
   <div id="fridge" aria-hidden="true"></div>
 </div>
 
@@ -486,7 +491,7 @@
 <script src="assets/konto.js?v=1.4.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "0.6.4";
+  const FE_VERSION = "1.0.0";
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
