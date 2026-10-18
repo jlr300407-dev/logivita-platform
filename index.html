@@ -747,6 +747,20 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.10.0 (18.10.2026): Paket B/C der Umsetzungsfassung (Regelversion 2026-10-R1).
+       (1) R1/R3/R4/R5: "Das kannst du selbst tun" mit eigener Eignungsbedingung je Tipp, an die
+       Antwort gebunden ("Bereich unter 70" nur Vorfilter); Alkohol-Tipp nur bei Konsum und ohne
+       Mengenziel ("Laut DGE gibt es keine unbedenkliche Alkoholmenge"); Körpergewicht nur bei BMI ab
+       25 oder Ziel Abnehmen, nie unter 18,5, nie bei Schwangerschaft "keine Angabe" oder
+       Essverhalten-Hinweis; 5-7 aktive Tage + Kraft 3-mal: "Beibehalten und gut erholen"; ohne
+       geeigneten Tipp "Halten, was gut läuft". (2) A1: "Alle Bereiche stehen stabil" nur, wenn ALLE
+       Bereiche inkl. BMI und Bewegung mindestens 70 erreichen. (3) A2: "bereits die günstigste
+       Antwort" nur bei 0 Risikopunkten im Bereich, sonst "zeigt die Rechnung für einen einzelnen
+       Schritt noch keinen Punktgewinn". (4) A3: Bereich heißt überall "Tageslicht" (Spinne, Karten,
+       Hebel) mit Satz "Sagt nichts über deinen Vitamin-D-Wert". (5) W1: feste Karte "Deine
+       Zusatzmodule" im Plan (Ernährungs-Check, Versorgungs-Check, Zustand, Knopf mit Pilot-ID).
+       (6) W3: Link "Mikronährstoff-Versorgung" ausgeblendet, bis die Seite existiert.
+
        v2.9.0 (18.10.2026): Paket A der Umsetzungsfassung (Regelversion 2026-10-R1, gehoert zu
        Edge edge-2026-10-18.5 und SQL 04a/04b). (1) Hinweisstatus aus submission_scores
        (care_status, berechnet in care_evaluate) steuert die Seite: Hinweis-Kasten als ERSTER
@@ -2495,10 +2509,13 @@
   // eigentliche Korrektur gehoert in die Bereichstabelle — bis dahin faengt die
   // Anwendung es hier ab. Ein vorhandenes area_label hat immer Vorrang.
   const AREA_LABELS_DE = { sleep:"Schlaf", activity:"Bewegung", nutrition:"Ernährung",
-    vitamin_d:"Vitamin D", bmi:"Körpergewicht", mental:"Mentale Balance",
+    vitamin_d:"Tageslicht", bmi:"Körpergewicht", mental:"Mentale Balance",
     smoking:"Rauchen", alcohol:"Alkohol", lifestyle:"Lebensstil",
     micronutrients:"Mikronährstoffe", metabolic:"Stoffwechsel" };
-  const areaName = (label, key) => label || AREA_LABELS_DE[key] || key || "";
+  // v2.10.0 (A3): Der Bereich heißt in allen Kanälen "Tageslicht" — er hat genau eine Frage (Zeit draußen im
+  // Winter) und sagt nichts über den Vitamin-D-Wert. Der Schlüssel vitamin_d bleibt (Vergleichbarkeit).
+  const VITD_AREA_NOTE = "Sagt nichts über deinen Vitamin-D-Wert – der lässt sich nur im Labor bestimmen.";
+  const areaName = (label, key) => key === "vitamin_d" ? "Tageslicht" : (label || AREA_LABELS_DE[key] || key || "");
   // v2.8.11 (A3b) — Welche Abschnittsansichten schon weggeklickt wurden. Wird in
   // startCheck zurueckgesetzt, damit ein Re-Check im selben Tab wieder fuehrt.
   let _areaIntroSeen = {};
@@ -4756,7 +4773,7 @@
     const sp = result.score?.score_payload || {};
     const areas = Object.entries(sp)
       .filter(([key]) => key !== "general")
-      .map(([key, value]) => ({ key, label: value.label, score: Number(value.score), weight: value.weight }));
+      .map(([key, value]) => ({ key, label: key === "vitamin_d" ? "Tageslicht" : value.label, score: Number(value.score), weight: value.weight }));   // v2.10.0 (A3)
     const totalScore = Number(result.score?.total_score || 0);
     // v2.9.0: Hinweisstatus zuerst — er bestimmt Alter, Stufe und den ersten Block (S1/S5, V2–V4)
     window._care = careFromResult(result);
@@ -5427,7 +5444,7 @@
     html += S.redFlag = renderRedFlagBox(score, totalScore);
 
     if (answersData && answersData.length > 0) {
-      const areaLabels = { activity:"Bewegung & Kraft", sleep:"Schlaf & Regeneration", nutrition:"Ernährung", mental:"Mentale Balance & Stress", vitamin_d:"Vitamin D & Tageslicht", bmi:"BMI", lifestyle:"Alkohol / Nikotin", micronutrients:"Mikronährstoffe", metabolic:"Energie & Stoffwechsel", general:"Allgemein" };
+      const areaLabels = { activity:"Bewegung & Kraft", sleep:"Schlaf & Regeneration", nutrition:"Ernährung", mental:"Mentale Balance & Stress", vitamin_d:"Tageslicht", bmi:"BMI", lifestyle:"Alkohol / Nikotin", micronutrients:"Mikronährstoffe", metabolic:"Energie & Stoffwechsel", general:"Allgemein" };
       const questionLabels = { activity_days:"Wie viele Tage pro Woche bist du körperlich aktiv?",activity_intensity:"Wie intensiv ist deine Bewegung?",strength_training:"Wie oft trainierst du gezielt Kraft?",muscle_cramps:"Hast du beim Sport Muskelkrämpfe?",sitting_hours:"Wie viele Stunden sitzt du täglich?",sleep_duration:"Wie viele Stunden schläfst du pro Nacht?",sleep_quality:"Wie erholsam ist dein Schlaf?",sleep_problems:"Hast du Einschlaf- oder Durchschlafschwierigkeiten?",sleep_latency:"Wie lange brauchst du zum Einschlafen?",daytime_sleepiness:"Bist du tagsüber müde oder schläfrig?",nutrition_type:"Wie ernährst du dich?",diet_type:"Wie ernährst du dich?",omega3_fish:"Wie oft isst du fettreichen Seefisch?",vegetable_fruit:"Wie oft isst du Gemüse und Obst?",protein_frequency:"Wie oft isst du bewusst eiweißreiche Lebensmittel?",meal_regularity:"Isst du regelmäßig zu festen Zeiten?",water_intake:"Wie viel trinkst du täglich?",sunlight_exposure:"Wie viel Zeit verbringst du täglich im Freien?",alcohol_frequency:"Wie häufig trinkst du Alkohol?",alcohol_amount:"Wie viele alkoholische Getränke pro Monat?",smoking:"Rauchst du?",nicotine_use:"Rauchst du oder nutzt du Nikotin?",stress_level:"Wie gestresst fühlst du dich im Alltag?",low_mood:"Wie oft fühlst du dich niedergeschlagen?",low_interest:"Wie oft verlierst du die Freude an Dingen?",social_connection:"Wie gut bist du sozial eingebunden?",energy_level:"Wie ist dein Energielevel im Alltag?",appetite_change:"Hast du Veränderungen beim Appetit?",weight_changes:"Hast du ungewollte Gewichtsveränderungen?",supplement_usage:"Nimmst du Nahrungsergänzungsmittel?",supplement_types:"Welche Supplements nimmst du?",vital_goal:"Was ist dein wichtigstes Ziel?",unintentional_weight_loss:"Hast du ungewollt an Gewicht verloren?",dizziness_pale_nails:"Hast du Schwindel oder blasse Nägel bemerkt?",vegetables_fruit:"Wie oft isst du Gemüse und Obst?",protein_intake:"Wie oft isst du bewusst eiweißreiche Lebensmittel?",sun_exposure_winter:"Wie viel Tageslicht bekommst du im Winter?",period_bleeding:"Wie stark ist deine Monatsblutung?",hormonal_transition:"Befindest du dich in den Wechseljahren?" };
       // v1.41.2 — Der Fragetext kommt jetzt ZUERST aus den geladenen Fragen.
       // Die Liste questionLabels war eine handgepflegte Kopie und im Laufe der
@@ -5576,7 +5593,7 @@
       vitamin_d: ["Täglich Tageslicht tanken", "15–25 Minuten im Freien, ideal vormittags — auch bei bewölktem Himmel wirksam."],
       mental: ["Kleine Entlastungs-Pausen einbauen", "Zwei, drei bewusste Kurzpausen am Tag — atmen, kurz gehen, Fenster auf — senken die Grundspannung spürbar."],
       smoking: ["Rauchfrei werden — mit Unterstützung", "Am meisten bringt der Rauchstopp. Kostenlose Begleitung: Rauchfrei-Telefon des BIÖG 0800 8 31 31 31 und rauchfrei-info.de."],
-      alcohol: ["Alkoholfreie Tage festlegen", "Lege zwei, drei feste Tage pro Woche ohne Alkohol fest — klein anfangen, dranbleiben."],
+      alcohol: ["Weniger ist besser", "Laut DGE gibt es keine unbedenkliche Alkoholmenge – weniger ist immer besser. Ein einfacher Anfang: feste Tage in der Woche ganz ohne Alkohol."],
       lifestyle: ["Ein rauch- bzw. alkoholfreies Zeitfenster", "Lege ein festes Zeitfenster am Tag fest, das bewusst frei bleibt. Klein anfangen, dranbleiben — jede Reduktion zählt."],
       micronutrients: ["Bunt und einfach essen", "Täglich eine Handvoll Gemüse mehr und ein- bis zweimal pro Woche Hülsenfrüchte decken viele Vitalstoffe ab."],
       metabolic: ["Regelmäßig essen und trinken", "Feste Mahlzeiten mit einem Glas Wasser dazu stabilisieren deine Energie über den Tag."],
@@ -5600,15 +5617,63 @@
       selfTips.nutrition = ["Ein Eiweißbaustein zu jeder Mahlzeit", "Eier, Quark, Hüttenkäse oder Hülsenfrüchte — Protein sättigt, unterstützt Muskeln und Regeneration. Starte heute mit einer Mahlzeit."];
     }
 
+    // v2.10.0 (R1/R3/R4/R5, Regelversion 2026-10-R1): Jeder Tipp hat eine eigene Eignungsbedingung,
+    // gebunden an die konkrete Antwort. "Bereich unter 70" ist nur Vorfilter; kein Ersatz-Tipp ohne
+    // Eignung — ohne geeigneten Tipp ist "Halten, was gut läuft" ein vollwertiger Plan.
+    const _careT = window._care || {};
+    const _areaScore = k => { const a = (score.score_payload || {})[k]; return a && a.score != null ? Number(a.score) : null; };
+    const _below70 = (...ks) => ks.some(k => { const v = _areaScore(k); return v !== null && v < 70; });
+    const _bmiVal = Number(result.bmi || score.bmi || 0);
+    const _goalW = (personalData.goal_key || "") === "goal_weight";
+    const tipEligible = {
+      nutrition: () => _below70('nutrition') && riskOf('protein_intake') >= 2,
+      activity: () => _below70('activity') && riskOf('activity_days') >= 2,
+      sleep: () => _below70('sleep') && (riskOf('sleep_duration') >= 3 || riskOf('sleep_latency') >= 2),
+      vitamin_d: () => _below70('vitamin_d') && riskOf('sun_exposure_winter') >= 3,
+      mental: () => _below70('mental') && riskOf('stress_level') >= 2,
+      smoking: () => riskOf('nicotine_use') >= 2,                           // R1: nur bei aktuellem Rauchen
+      alcohol: () => riskOf('alcohol_frequency') >= 2,                      // R3: nur bei Alkoholkonsum
+      lifestyle: () => false,                                               // ersetzt durch alcohol/smoking
+      micronutrients: () => false,                                          // Beschwerden: Hinweisstatus/Versorgung, kein Ess-Tipp
+      metabolic: () => false,                                               // Gewicht/Appetit: Sicherheitslogik, kein Ess-Tipp
+      // R4: BMI ist kein Hebel. Gewichtsbezogene Tipps nur bei BMI ab 25 oder Ziel Abnehmen,
+      // nie unter 18,5, nie bei "keine Angabe" zur Schwangerschaft (G3) oder Essverhalten-Hinweis.
+      bmi: () => (_bmiVal >= 25 || _goalW) && !(_bmiVal > 0 && _bmiVal < 18.5) && !_careT.pregnancyUnknown
+                 && !((_careT.reasons || []).includes('essverhalten'))
+    };
+    // Gemüse/Obst als zweiter Ernährungs-Tipp, wenn Eiweiß passt, aber Gemüse/Obst nicht
+    if (!tipEligible.nutrition() && _below70('nutrition') && riskOf('vegetables_fruit') >= 2) {
+      selfTips.nutrition = ["Bunt und einfach essen", "Täglich eine Handvoll Gemüse mehr und ein- bis zweimal pro Woche Hülsenfrüchte — klein anfangen, dranbleiben."];
+      tipEligible.nutrition = () => true;
+    }
+    // R5: Wer 5–7 Tage aktiv ist und 3-mal oder häufiger Kraft trainiert, bekommt keinen Steigerungs-Tipp.
+    const _trainsFully = riskOf('activity_days') === 0 && riskOf('strength_training') === 0
+      && answersT3.some(a => a.question_key === 'activity_days') && answersT3.some(a => a.question_key === 'strength_training');
+
     const usedAreas = new Set();
     const cat1 = [];
+    const _pushTip = key => {
+      if (cat1.length >= 3 || usedAreas.has(key) || !selfTips[key]) return;
+      if (!(tipEligible[key] ? tipEligible[key]() : false)) return;
+      usedAreas.add(key); cat1.push([...selfTips[key].slice(0, 2), key]);
+    };
     (score.top_priorities || []).forEach(p => {
       const key = p.area_key || p.key;
-      if (cat1.length < 3 && selfTips[key] && !usedAreas.has(key)) { usedAreas.add(key); cat1.push([...selfTips[key].slice(0, 2), key]); }
+      if (key === 'lifestyle') { _pushTip('alcohol'); _pushTip('smoking'); } else _pushTip(key);
     });
+    // Antworten mit klarem Anlass, auch wenn der Bereich nicht unter den Top-Prioritäten steht
     if (cat1.length < 3 && riskOf('sleep_latency') >= 3 && !usedAreas.has('sleep')) { usedAreas.add('sleep'); cat1.push([...selfTips.sleep.slice(0, 2), 'sleep']); }
-    if (cat1.length < 3 && riskOf('nicotine_use') >= 3 && !usedAreas.has('smoking')) { usedAreas.add('smoking'); cat1.push([...selfTips.smoking.slice(0, 2), 'smoking']); }
-    if (cat1.length === 0) cat1.push(["Dranbleiben, was gut läuft", "Deine Basis stimmt — halte deine Routinen und beobachte, was dir Energie gibt."]);
+    if (riskOf('nicotine_use') >= 3) _pushTip('smoking');
+    // v2.10.0 (A4): mehr als 9 Stunden Schlaf und trotzdem häufig müde → Tipp zur Praxis (vor allen anderen)
+    const _sleepTxt = (answersT3.find(a => a.question_key === 'sleep_duration')?.answer_text || '');
+    if (/mehr als 9/i.test(_sleepTxt) && riskOf('daytime_sleepiness') >= 3) {
+      cat1.unshift(["Viel Schlaf und trotzdem müde", "Wer mehr als 9 Stunden schläft und sich tagsüber trotzdem häufig müde fühlt, spricht das am besten in der Hausarztpraxis an.", "sleep_long"]);
+      if (cat1.length > 3) cat1.pop();
+    }
+    if (_trainsFully && cat1.length < 3) {
+      cat1.push(["Beibehalten und gut erholen", "Mit 5–7 aktiven Tagen und Krafttraining 3-mal oder häufiger pro Woche bist du sehr gut unterwegs. Behalte das bei und plane bewusst Erholung ein. Wenn du gezielt mehr willst, plant ein Trainer im Studio das gern mit dir.", "activity_keep"]);
+    }
+    if (cat1.length === 0) cat1.push(["Halten, was gut läuft", "Deine Angaben zeigen keinen Bereich, in dem ein zusätzlicher Schritt gerade mehr bringt. Halte deine Routinen bei und beobachte, was dir Energie gibt."]);
 
     S.cat1Items = cat1;
     html += `<div class="t3-zone-title">${ICO("home")} 1 · Das kannst du selbst tun</div>`;
@@ -5952,6 +6017,28 @@
   }
 
   // v2.8.16 — der Satz "X und Y tragen dich ... Am meisten Luft ist bei Z" fuer die Ergebnis-Karte
+  // v2.10.0 (A2): "bereits die günstigste Antwort" nur, wenn ALLE Antworten des Bereichs 0 Risikopunkte haben.
+  // Sonst liefert die Rechnung für einen einzelnen Schritt nur keinen Punktgewinn (z. B. bei Index 0).
+  const AREA_QKEYS = { alcohol: ["alcohol_frequency", "alcohol_amount"], smoking: ["nicotine_use"], lifestyle: ["alcohol_frequency", "alcohol_amount", "nicotine_use"] };
+  function areaAllZeroRisk(key) {
+    const ans = (latestResult && latestResult.answers) || [];
+    const ks = AREA_QKEYS[key];
+    const rel = ks ? ans.filter(a => ks.includes(a.question_key)) : ans.filter(a => a.area_key === key);
+    return rel.length > 0 && rel.every(a => Number(a.risk_points || 0) === 0);
+  }
+  function simNoAnswerGainHtml(worst, withIcon) {
+    const nm = `<strong>${withIcon ? areaIco(worst.key) + " " : ""}${escHtml(areaName(worst.label, worst.key))}</strong>`;
+    if (worst.key !== "bmi" && areaAllZeroRisk(worst.key)) {
+      return `Bei ${nm} hast du bereits die günstigste Antwort gegeben. Was dort weiterhilft, steht in deinem Vital-Plan.`;
+    }
+    return `Bei ${nm} zeigt die Rechnung für einen einzelnen Schritt noch keinen Punktgewinn – der Bereich bleibt dein größter Ansatzpunkt.`;
+  }
+  // v2.10.0 (A1): alle Bereiche einschließlich BMI und Bewegung — nicht nur die, die als Hebel zählen
+  function allAreasAtLeast70() {
+    const sp = (latestResult && latestResult.score && latestResult.score.score_payload) || {};
+    const vals = Object.values(sp).map(a => a && a.score != null ? Number(a.score) : null).filter(v => v !== null && isFinite(v));
+    return vals.length > 0 && vals.every(v => v >= 70);
+  }
   function stageStrengthLine(S) {
     const strengths = stageStrengths(S.areas);
     // Bereichsnamen als Satzglied: "Alkohol / Nikotin trägt dich" liest sich falsch.
@@ -5965,7 +6052,7 @@
     // v2.4.1 — nur wenn der Bereich wirklich Luft hat (< 70) und nicht zugleich als Stärke genannt wurde
     const s2 = (S.worst && Number(S.worst.score) < 70 && !strengths.some(a => a.key === S.worst.key))
       ? ` Am meisten Luft ist bei <strong>${areaName(S.worst.label, S.worst.key)}</strong>.`
-      : (S.worst && Number(S.worst.score) >= 70 && !(window._care && window._care.status && window._care.status !== "none") ? ` Alle Bereiche stehen stabil – jetzt geht es ums Halten.` : "");   // v2.9.0 (A1): nur ohne Hinweisstatus
+      : (S.worst && Number(S.worst.score) >= 70 && !(window._care && window._care.status && window._care.status !== "none") && allAreasAtLeast70() ? ` Alle Bereiche stehen stabil – jetzt geht es ums Halten.` : "");   // v2.9.0/v2.10.0 (A1): nur ohne Hinweisstatus und wenn ALLE Bereiche (auch BMI und Bewegung) mindestens 70 erreichen
     return s1 + s2;
   }
 
@@ -6094,7 +6181,7 @@
           </div>`;
       });
       if (worst && !(simScenarios.levers || []).some(l => l.area_key === worst.key)) {
-        body += `<div class="sim-note">Bei <strong>${areaName(worst.label, worst.key)}</strong> hast du bereits die günstigste Antwort gegeben. Was dort weiterhilft, steht in deinem Vital-Plan.</div>`;
+        body += `<div class="sim-note">${simNoAnswerGainHtml(worst, false)}</div>`;   // v2.10.0 (A2)
       }
       body += goalWeightNoteHtml(S);   // v2.7.2
       body += `<div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin:4px 0 10px;">Berechnet aus deinen Antworten, mit derselben Formel wie dein Ergebnis. Hebel addieren sich nicht einfach – die Kombination ist exakt gerechnet.</div>
@@ -6392,6 +6479,48 @@
       </div>`;
   }
 
+  // ── v2.10.0 (W1): feste Karte "Deine Zusatzmodule" — jede Ankündigung hat einen Weg ──
+  // Zustand je Modul: verfügbar / empfohlen / begonnen / zuerst ärztlich abklären / nicht passend (mit Grund).
+  // Die Empfehlungslogik bleibt unverändert (nutrition_offer aus der Edge); neu ist, dass der Weg immer sichtbar ist.
+  function stageModulesCardHtml() {
+    if (!latestResult || !latestResult.public_code) return "";
+    const code = encodeURIComponent(latestResult.public_code);
+    const care = window._care || {};
+    const doctor = !!window._doctorFirst || care.status === "doctor_first";
+    const offer = (window._unlockInfo && window._unlockInfo.nutrition_offer) || latestResult.nutrition_offer || null;
+    const rowsDef = [];
+    // Ernährungs-Check
+    let nState, nBtn = true;
+    if (doctor) { nState = "Zuerst ärztlich abklären – danach ist der Ernährungs-Check für dich da."; nBtn = false; }
+    else if ((care.reasons || []).includes("essverhalten")) { nState = "Gerade nicht passend: Deine Angaben zu Essen und Gewicht gehören zuerst in die Hausarztpraxis."; nBtn = false; }
+    else if (offer && offer.enrollment_status) nState = "Begonnen – mit Pilot-ID und PIN machst du weiter.";
+    else if (offer && offer.eligible === true) nState = "Empfohlen – passt zu deinem Ergebnis.";
+    else nState = "Verfügbar – wo beim Essen das meiste Potenzial liegt, ohne Diät und ohne Verbote.";
+    rowsDef.push({ ico: ICO("sprout"), name: "Ernährungs-Check", state: nState,
+      href: nBtn ? `${(offer && offer.url) || "ernaehrung.html"}?code=${code}&utm_source=vital-check&utm_medium=modulkarte` : "", ev: "nutrition" });
+    // Versorgungs-Check
+    if (SUPPLY_MODULE_URL) {
+      const sState = doctor ? "Zuerst ärztlich abklären – Nahrungsergänzung besprichst du am besten in der Praxis."
+        : "Verfügbar – ordnet ein, ob deine Nahrungsergänzung zu deinen Angaben passt.";
+      rowsDef.push({ ico: ICO("leaf"), name: "Versorgungs-Check", state: sState,
+        href: doctor ? "" : supplyUtm(SUPPLY_MODULE_URL + (SUPPLY_MODULE_URL.includes("?") ? "&" : "?") + "code=" + code, "modulkarte"), ev: "supply" });
+    }
+    const rows = rowsDef.map(r => `
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--border);">
+          <div style="flex:0 0 auto;margin-top:2px;">${r.ico}</div>
+          <div style="flex:1 1 auto;min-width:0;">
+            <div style="font-weight:700;">${escHtml(r.name)}</div>
+            <div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin:2px 0 ${r.href ? 8 : 0}px;">${escHtml(r.state)}</div>
+            ${r.href ? `<a class="stage-btn-blue" href="${escHtml(r.href)}" target="_blank" rel="noopener" onclick="try{trackEvent('module_card_click',{module:'${r.ev}'})}catch(e){}" style="display:inline-block;text-decoration:none;padding:8px 14px;font-size:13px;">Öffnen →</a>` : ""}
+          </div>
+        </div>`).join("");
+    return `<div class="stage-fahrplan" style="margin-top:14px;">
+        <div class="stage-kicker">Deine Zusatzmodule</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.55;margin-bottom:4px;">Mit derselben Pilot-ID und deinem PIN${viaAccount() ? " – oder direkt über dein Konto" : ""}.</div>
+        ${rows}
+      </div>`;
+  }
+
   function stageFahrplanHtml(S) {
     const fp = (window._unlockInfo && Array.isArray(window._unlockInfo.fahrplan) && window._unlockInfo.fahrplan.length)
       ? window._unlockInfo.fahrplan
@@ -6566,6 +6695,7 @@
     }
     html += S.support || "";
     html += S.supplyPlan || "";   // v2.8.20
+    html += stageModulesCardHtml();   // v2.10.0 (W1)
     html += S.watch || "";
     const review = !window._unlockInfo && window._isReviewMode && window._accessPin;
     if (review) html += S.recheckLater || "";   // Re-Check machst du selbst – mit Termin im Kalender
@@ -7002,6 +7132,7 @@
         </div>
         <div class="area-bar-track"><div class="area-bar-fill" data-w="${Math.round(area.score)}" style="width:0%"></div></div>
         <div class="area-status">${statusTxt}</div>
+        ${area.key === "vitamin_d" ? `<div style="font-size:12px;color:var(--text-muted);margin-top:4px;line-height:1.45;">${VITD_AREA_NOTE}</div>` : ""}
         ${prevDeltaHtml}
         ${areaSignalsHtml(area.key, result)}
         ${bmiHtml}${detailHtml}
@@ -7200,7 +7331,9 @@
      Quelle: score.supply_payload / score.supply (SQL supply_evaluate). Die Texte
      sind wortgleich zum Mail-Kasten der Edge edge-2026-10-18.1.
   ══════════════════════════════════════════════════════ */
-  const SUPPLY_SELECTION_URL = "https://le-vita.com/mikronaehrstoff-versorgung";
+  // v2.10.0 (W3): ausgeblendet, bis die Seite auf le-vita.com steht — dann hier wieder eintragen
+  // (vorher: "https://le-vita.com/mikronaehrstoff-versorgung", leitete laut Systemtest auf die Startseite um).
+  const SUPPLY_SELECTION_URL = "";
   const SUPPLY_MODULE_URL = "versorgung.html";   // v2.8.22: Versorgungs-Check freigeschaltet (relativ wie ernaehrung.html)
   const SUPPLY_CASE_TEXT = {
     kein_bedarf: "Aus deinen Angaben ergibt sich kein Anlass für Nahrungsergänzung. Tipp: Eine abwechslungsreiche Ernährung ist die beste Grundlage.",
@@ -7265,6 +7398,7 @@
     return out;
   }
   function supplySelectionAllowed(s) {
+    if (!SUPPLY_SELECTION_URL) return false;   // v2.10.0 (W3)
     if (!s || supplyHidden()) return false;
     if ((s.clarify || []).includes("iron")) return false;
     if ((s.products || []).some(p => p.verdict === "abklaeren")) return false;
@@ -7590,7 +7724,7 @@
     // Widerspruch zwischen den beiden Stellen.
     let ansatzNote = "";
     if (worst && worst.key && !simScenarios.levers.some(l => l.area_key === worst.key)) {
-      ansatzNote = `<div class="sim-note">Bei <strong>${areaIco(worst.key)} ${escHtml(areaName(worst.label, worst.key))}</strong> — deinem größten Ansatzpunkt — hast du bereits die günstigste Antwort gegeben. Was dort weiterhilft, steht in deinen nächsten Schritten.</div>`;
+      ansatzNote = `<div class="sim-note">${simNoAnswerGainHtml(worst, true)}</div>`;   // v2.10.0 (A2)
     }
     return `
       <div class="sim-box" id="simBox">
@@ -8234,7 +8368,7 @@
     if (radarChart) radarChart.destroy();
     const shortLabels = {
       sleep:"Schlaf", activity:"Bewegung", nutrition:"Ernährung",
-      vitamin_d:"Vit. D", bmi:"BMI", mental:"Mental",
+      vitamin_d:"Tageslicht", bmi:"BMI", mental:"Mental",
       smoking:"Rauchen", alcohol:"Alkohol",
       lifestyle:"Lebensstil", micronutrients:"Mikro", metabolic:"Energie"
     };
@@ -8475,7 +8609,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.9.0</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.10.0</footer>
 
 
 </body>

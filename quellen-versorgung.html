@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a1628">
+<script>
+  /* Hell/Dunkel wie im Vital-Check: gewaehltes Thema VOR dem ersten Zeichnen setzen.
+     Gemeinsamer Schluessel "levita-theme" (gleiche Herkunft app.le-vita.com). */
+  (function () { try { var t = localStorage.getItem('levita-theme');
+    if (t === 'hell' || t === 'dunkel') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+</script>
+<meta name="robots" content="noindex, nofollow">
+<title>Quellen und Regeln · LeVITA Versorgungs-Check</title>
+<style>
+  @font-face { font-family: 'DM Sans'; font-weight: 400; font-display: swap; src: url('assets/dm-sans-v17-latin-regular.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 500; font-display: swap; src: url('assets/dm-sans-v17-latin-500.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 600; font-display: swap; src: url('assets/dm-sans-v17-latin-600.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 700; font-display: swap; src: url('assets/dm-sans-v17-latin-700.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Serif Display'; font-weight: 400; font-display: swap; src: url('assets/dm-serif-display-v17-latin-regular.woff2') format('woff2'); }
+
+  :root {
+      --brand-dark: #0a1628;
+      --brand-card: #132338;
+      --accent-green: #22c97a;
+      --accent-green-dim: rgba(34,201,122,0.12);
+      --accent-blue: #3b9eff;
+      --accent-blue-dim: rgba(59,158,255,0.10);
+      --accent-amber: #f5a623;
+      --accent-red: #ff5c5c;
+      /* v1.41.4: beide wurden verwendet, waren aber nie definiert */
+      --accent-purple: #a78bfa;
+      --brand-card2: #1a2e47;
+      --text-primary: #f0f4f8;
+      --text-secondary: #8da0b8;
+      --text-muted: #8396ae;   /* v2.8.6: 4a6280 erfuellte WCAG AA nicht (2,5:1 auf --brand-card2); 8396ae = 5,99 / 5,24 / 4,55 */
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(255,255,255,0.14);
+      /* ── v2.8.12 (B1) ── */
+      /* Schriftrollen der Akzentfarben. Auf Dunkel identisch mit der Flaeche; auf Hell braucht
+         Schrift ein dunkleres Gruen/Blau/Amber/Rot (#22c97a erreicht dort nur 2,0:1). */
+      --accent-green-text: #22c97a;
+      --accent-blue-text: #3b9eff;
+      --accent-amber-text: #f5a623;
+      --accent-red-text: #ff5c5c;
+      --accent-purple-text: #a78bfa;
+      /* Warnueberschriften in Amber-Kaesten (heller als --accent-amber, fuer Lesbarkeit auf Dunkel) */
+      --warn-text: #ffb347;
+      --error-text: #ff8a8a;
+      /* Schrift AUF einer Akzentflaeche (gruene/blaue Schaltflaechen). Bleibt in beiden Themen dunkel. */
+      --on-accent: #0a1628;
+      /* Zweiter Gruenton am Ende des Schaltflaechen-Verlaufs */
+      --accent-green-deep: #1aaa65;
+      /* Schalterknopf im Simulator: immer weiss */
+      --knob: #ffffff;
+      /* Bewertungsstufen ohne eigenen Akzent (gut/mittel/niedrig nutzen Gruen/Amber/Rot) */
+      --score-ok: #5edb97;
+      --score-ok-text: #5edb97;
+      --score-ok-rgb: 94,219,151;
+      --score-focus: #ff8c42;
+      --score-focus-text: #ff8c42;
+      --score-focus-rgb: 255,140,66;
+      /* Abgesenkte Flaeche innerhalb einer Karte */
+      --sunken: rgba(0,0,0,0.18);
+      /* Startseite: Haupt-Schaltflaeche und Hero-Grund */
+      --cta-green: #3ddc84;
+      --on-cta: #0d1a14;
+      --hero-bg: #0d1a14;
+      /* RGB-Tripel fuer Toenungen mit wechselnder Deckkraft: rgba(var(--x-rgb), 0.08).
+         --ink-rgb ist die "Tinte" fuer Ueberlagerungen und Konturen: auf Dunkel Weiss,
+         auf Hell wird daraus Navy - damit drehen sich alle hellen Schleier auf einmal um. */
+      --ink-rgb: 255,255,255;
+      --shadow-rgb: 0,0,0;
+      --brand-dark-rgb: 10,22,40;
+      --accent-green-rgb: 34,201,122;
+      --accent-blue-rgb: 59,158,255;
+      --accent-amber-rgb: 245,166,35;
+      --accent-red-rgb: 255,92,92;
+      --accent-purple-rgb: 167,139,250;
+      --text-secondary-rgb: 141,160,184;
+      /* Drei Einzelgaenger, je ein- bis viermal benutzt. Zusammenlegen waere eine sichtbare
+         Aenderung und gehoert nicht in B1 - in der Liste fuer die Vereinheitlichung. */
+      --slate-rgb: 122,143,168;
+      --violet-rgb: 139,92,246;
+      --lgreen-alt-rgb: 59,200,100;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+    /* ── v2.8.13 (B2) — Helles Thema ───────────────────────────────────────
+       Gilt bei ausdruecklicher Wahl (data-theme="hell") ODER, ohne Wahl, wenn
+       das Geraet auf Hell steht. Die Werte sind in palette.py durchgerechnet:
+       Schrift >= 4,5:1 auf Papier, Karte, Flaeche 2 und auf den eigenen
+       Toenungen; Linien und Flaechen >= 3:1; weisse Knopfschrift >= 4,5:1.
+       Knopffarbe Dunkelgruen #097240 mit weisser Schrift (Entscheidung 17.10.). */
+    :root[data-theme="hell"] {
+      --brand-dark: #F7F6F2;
+      --brand-card: #FFFFFF;
+      --accent-green: #097240;
+      --accent-green-dim: rgba(9,114,64,0.10);
+      --accent-blue: #1B5FAD;
+      --accent-blue-dim: rgba(27,95,173,0.08);
+      --accent-amber: #B36B00;
+      --accent-red: #C53030;
+      --accent-purple: #6B4BC4;
+      --brand-card2: #EFEDE7;
+      --text-primary: #13263B;
+      --text-secondary: #4C5E72;
+      --text-muted: #58697C;
+      --border: rgba(19,38,59,0.12);
+      --border-hover: rgba(19,38,59,0.24);
+      --accent-green-text: #076A3B;
+      --accent-blue-text: #1B5FAD;
+      --accent-amber-text: #8A5300;
+      --accent-red-text: #B42318;
+      --accent-purple-text: #5A3DAA;
+      --warn-text: #8A5300;
+      --error-text: #B42318;
+      --on-accent: #FFFFFF;
+      --accent-green-deep: #065C33;
+      --knob: #ffffff;
+      --score-ok: #3B8A52;
+      --score-ok-text: #246B3A;
+      --score-ok-rgb: 59,138,82;
+      --score-focus: #C9561A;
+      --score-focus-text: #A8460F;
+      --score-focus-rgb: 201,86,26;
+      --sunken: rgba(19,38,59,0.05);
+      --cta-green: #097240;
+      --on-cta: #FFFFFF;
+      --hero-bg: #0d1a14;
+      --ink-rgb: 19,38,59;
+      --shadow-rgb: 19,38,59;
+      --brand-dark-rgb: 247,246,242;
+      --accent-green-rgb: 9,114,64;
+      --accent-blue-rgb: 27,95,173;
+      --accent-amber-rgb: 179,107,0;
+      --accent-red-rgb: 197,48,48;
+      --accent-purple-rgb: 107,75,196;
+      --text-secondary-rgb: 76,94,114;
+      --slate-rgb: 76,94,114;
+      --violet-rgb: 107,75,196;
+      --lgreen-alt-rgb: 59,138,82;
+    }
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dunkel"]) {
+        --brand-dark: #F7F6F2;
+        --brand-card: #FFFFFF;
+        --accent-green: #097240;
+        --accent-green-dim: rgba(9,114,64,0.10);
+        --accent-blue: #1B5FAD;
+        --accent-blue-dim: rgba(27,95,173,0.08);
+        --accent-amber: #B36B00;
+        --accent-red: #C53030;
+        --accent-purple: #6B4BC4;
+        --brand-card2: #EFEDE7;
+        --text-primary: #13263B;
+        --text-secondary: #4C5E72;
+        --text-muted: #58697C;
+        --border: rgba(19,38,59,0.12);
+        --border-hover: rgba(19,38,59,0.24);
+        --accent-green-text: #076A3B;
+        --accent-blue-text: #1B5FAD;
+        --accent-amber-text: #8A5300;
+        --accent-red-text: #B42318;
+        --accent-purple-text: #5A3DAA;
+        --warn-text: #8A5300;
+        --error-text: #B42318;
+        --on-accent: #FFFFFF;
+        --accent-green-deep: #065C33;
+        --knob: #ffffff;
+        --score-ok: #3B8A52;
+        --score-ok-text: #246B3A;
+        --score-ok-rgb: 59,138,82;
+        --score-focus: #C9561A;
+        --score-focus-text: #A8460F;
+        --score-focus-rgb: 201,86,26;
+        --sunken: rgba(19,38,59,0.05);
+        --cta-green: #097240;
+        --on-cta: #FFFFFF;
+        --hero-bg: #0d1a14;
+        --ink-rgb: 19,38,59;
+        --shadow-rgb: 19,38,59;
+        --brand-dark-rgb: 247,246,242;
+        --accent-green-rgb: 9,114,64;
+        --accent-blue-rgb: 27,95,173;
+        --accent-amber-rgb: 179,107,0;
+        --accent-red-rgb: 197,48,48;
+        --accent-purple-rgb: 107,75,196;
+        --text-secondary-rgb: 76,94,114;
+        --slate-rgb: 76,94,114;
+        --violet-rgb: 107,75,196;
+        --lgreen-alt-rgb: 59,138,82;
+      }
+    }
+
+  /* Umschalter (wie im Vital-Check) */
+  .hdr-right { display: flex; align-items: center; gap: 10px; }
+  .theme-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+    border-radius: 999px; border: 1px solid var(--border); background: rgba(var(--ink-rgb),0.04);
+    color: var(--text-secondary); cursor: pointer; padding: 0; flex: none; }
+  .theme-btn:hover { color: var(--text-primary); border-color: var(--border-hover); }
+  .theme-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  @media print { .theme-btn { display: none !important; } }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--brand-dark); color: var(--text-primary); min-height: 100vh; padding: 20px 16px 60px; line-height: 1.5; }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+  .logo-name { font-family: 'DM Serif Display', serif; font-size: 24px; }
+  .logo-sub { font-size: 12px; color: var(--text-secondary); letter-spacing: .04em; text-transform: uppercase; }
+  .phase-note { font-size: 12px; color: var(--accent-green-text); }
+  /* 0.6.0 Schritte */
+  .state { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 3px 10px; border-radius: 999px; margin-bottom: 8px; }
+  .state.s-v { background: rgba(var(--ink-rgb),.08); color: var(--text-secondary); }
+  .state.s-g { background: var(--accent-blue-dim); color: var(--accent-blue-text); }
+  .state.s-a { background: var(--accent-green); color: var(--on-accent); }
+  .ifthen { font-size: 16px; font-weight: 600; background: rgba(var(--ink-rgb),.04); border-radius: var(--radius-sm); padding: 12px 14px; margin: 6px 0 12px; }
+  .rate { display: flex; gap: 8px; margin: 8px 0 14px; }
+  .rate button { flex: 1; padding: 12px 0; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(var(--ink-rgb),.03); color: var(--text-primary); font: 700 16px 'DM Sans'; cursor: pointer; }
+  .rate button.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 14px; }
+  .chips button { padding: 9px 14px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); font: 500 14px 'DM Sans'; cursor: pointer; }
+  .chips button.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
+  .addlist li { list-style: none; display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
+  .addlist li:last-child { border-bottom: 0; }
+  .addlist button { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--accent-green); background: transparent; color: var(--accent-green-text); font: 600 13px 'DM Sans'; cursor: pointer; white-space: nowrap; }
+  #fridge { display: none; }
+  @media print {
+    body { background: #fff !important; color: #111 !important; padding: 0; }
+    .wrap > *:not(#fridge) { display: none !important; }
+    /* 0.6.3 — Zettel im LeVITA-Auftritt: Logo, ein Gruen-Akzent, Wochen beschriftet. Tintensparend. */
+    #fridge { display: block !important; font-family: 'DM Sans', Arial, sans-serif; color: #13263B; padding: 6mm 9mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    #fridge .f-head { display: flex; align-items: center; justify-content: space-between; gap: 6mm; padding-bottom: 3mm; margin-bottom: 4mm; border-bottom: 0.6mm solid #097240; }
+    #fridge .f-logo { display: flex; align-items: center; gap: 3mm; }
+    #fridge .f-logo .f-mark { height: 13mm; width: auto; }
+    #fridge .f-logo .f-word { height: 11mm; width: auto; }
+    #fridge .f-date { font-size: 9pt; color: #4C5E72; text-align: right; }
+    #fridge h1 { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; font-size: 21pt; margin: 0 0 4mm; color: #13263B; }
+    #fridge .f-step { border: 0.5mm solid #097240; border-radius: 4mm; padding: 4mm 5mm; margin-bottom: 4mm; page-break-inside: avoid; }
+    #fridge .f-title { font-size: 10pt; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #076A3B; margin-bottom: 2mm; }
+    #fridge .f-ifthen { font-size: 16pt; font-weight: 700; line-height: 1.26; margin-bottom: 3mm; color: #13263B; }
+    #fridge .f-days { display: grid; grid-template-columns: 14mm repeat(7, 1fr); gap: 1.6mm; align-items: center; }
+    #fridge .f-days .f-wk { font-size: 8pt; font-weight: 700; color: #4C5E72; }
+    #fridge .f-days .f-day { border: 0.35mm solid #8A96A3; border-radius: 1.5mm; height: 7.5mm; font-size: 7.5pt; color: #6B7785; padding: 0.8mm 1mm; }
+    #fridge .f-doc { font-size: 10pt; margin-top: 2.5mm; }
+    #fridge .f-foot { font-size: 9pt; color: #4C5E72; margin-top: 3mm; padding-top: 2.5mm; border-top: 0.3mm solid #C9CFD6; display: flex; justify-content: space-between; gap: 6mm; }
+    #fridge .f-foot strong { color: #13263B; }
+    @page { size: A5 portrait; margin: 6mm; }
+  }
+
+  h1 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 30px; line-height: 1.2; margin-bottom: 10px; }
+  h2 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 22px; margin-bottom: 8px; }
+  h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  p.lead { color: var(--text-secondary); font-size: 16px; margin-bottom: 22px; }
+  .muted { color: var(--text-secondary); font-size: 14px; }
+  .small { font-size: 13px; color: var(--text-muted); }
+
+  .card { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; }
+  .card.top { border-color: rgba(var(--accent-green-rgb),.45); background: linear-gradient(180deg, rgba(var(--accent-green-rgb),.10), var(--brand-card) 55%); }
+  .card.info { border-color: rgba(var(--accent-blue-rgb),.35); background: var(--accent-blue-dim); }
+  .card.warn { border-color: rgba(var(--accent-amber-rgb),.4); background: rgba(var(--accent-amber-rgb),.08); }
+
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  input[type=text], input[type=password], input[type=tel], textarea {
+    width: 100%; padding: 13px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+    background: rgba(var(--ink-rgb),.04); color: var(--text-primary); font: 500 15px 'DM Sans', sans-serif; -webkit-appearance: none; }
+  input:focus, textarea:focus { outline: none; border-color: var(--accent-green); }
+  textarea { min-height: 90px; resize: vertical; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 22px; border-radius: 999px; border: 0;
+    background: var(--accent-green); color: var(--on-accent); font: 700 15px 'DM Sans', sans-serif; cursor: pointer; transition: transform .12s, opacity .12s; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:disabled { opacity: .45; cursor: default; transform: none; }
+  .btn.ghost { background: transparent; color: var(--text-primary); border: 1px solid var(--border-hover); }
+  .btn.block { width: 100%; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row .btn { flex: 1; }
+
+  .error { color: var(--accent-red-text); font-size: 14px; margin-top: 10px; min-height: 1em; }
+
+  /* Fragebogen */
+  .progress { height: 6px; background: var(--brand-card2); border-radius: 999px; overflow: hidden; margin-bottom: 8px; }
+  .progress > div { height: 100%; background: var(--accent-green); transition: width .3s; }
+  .step-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 18px; }
+  .q { margin-bottom: 26px; }
+  .q.missing .q-label { color: var(--accent-amber-text); }
+  .q-label { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+  .q-help { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; }
+  .opts { display: grid; gap: 8px; margin-top: 10px; }
+  .opt { width: 100%; text-align: left; padding: 13px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+    background: rgba(var(--ink-rgb),.03); color: var(--text-primary); font: 500 15px 'DM Sans', sans-serif; cursor: pointer;
+    display: flex; gap: 12px; align-items: center; transition: border-color .15s, background .15s; }
+  .opt:hover { border-color: var(--border-hover); }
+  .opt .mark { flex: 0 0 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-muted); }
+  .opt.multi .mark { border-radius: 5px; }
+  .opt.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
+  .opt.on .mark { border-color: var(--accent-green); background: var(--accent-green); box-shadow: inset 0 0 0 3px var(--brand-card); }
+
+  /* Ergebnis */
+  .tier { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 3px 10px; border-radius: 999px; margin-bottom: 10px; }
+  .tier.t-top { background: var(--accent-green); color: var(--on-accent); }
+  .tier.t-strong { background: var(--accent-green-dim); color: var(--accent-green-text); }
+  .tier.t-also { background: rgba(var(--ink-rgb),.06); color: var(--text-secondary); }
+  .lever-body { font-size: 15px; margin-bottom: 12px; }
+  details { border-top: 1px solid var(--border); padding-top: 10px; margin-top: 6px; }
+  summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent-blue-text); list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  .kv { margin-top: 12px; }
+  .kv dt { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--text-secondary); margin-top: 10px; }
+  .kv dd { font-size: 14px; }
+  .kv ul { padding-left: 18px; font-size: 14px; }
+  .evidence { font-size: 12px; color: var(--text-muted); margin-top: 12px; }
+  .imag { font-size: 12px; color: var(--accent-green-text); margin-left: 6px; }
+  .why { font-size: 14px; background: rgba(var(--ink-rgb),.04); border-radius: var(--radius-sm); padding: 10px 12px; margin: 4px 0 12px; }
+  .why strong { color: var(--text-secondary); font-weight: 600; }
+  .choose { margin-top: 12px; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--accent-green); background: transparent;
+    color: var(--accent-green-text); font: 600 14px 'DM Sans', sans-serif; cursor: pointer; }
+  .choose.on { background: var(--accent-green); color: var(--on-accent); }
+  .choicebar { position: sticky; bottom: 12px; z-index: 5; background: var(--brand-card2); border: 1px solid var(--border-hover); border-radius: 999px;
+    padding: 10px 18px; font-size: 14px; text-align: center; margin: 16px 0; }
+  .tag-failed { font-size: 12px; color: var(--accent-amber-text); }
+  .variant { font-size: 14px; border-left: 3px solid var(--accent-blue); padding-left: 12px; margin: 10px 0; color: var(--text-secondary); }
+  .parking li { list-style: none; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px; display: flex; justify-content: space-between; gap: 10px; }
+  .parking li:last-child { border-bottom: 0; }
+  .buddy { width: 84px; height: 84px; float: right; margin: -6px -6px 6px 12px; }
+
+  .consent-box { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; color: var(--text-secondary); cursor: pointer; margin: 16px 0; }
+  .consent-box input { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--accent-green); flex: 0 0 18px; }
+
+  /* 0.4.0 Bestätigung */
+  .picked { list-style: none; margin: 4px 0 0; }
+  .picked li { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px; display: flex; gap: 10px; align-items: baseline; }
+  .picked li:last-child { border-bottom: 0; }
+  .picked .num { flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--accent-green); color: var(--on-accent); font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
+  .way { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(var(--ink-rgb),.03); cursor: pointer; margin-bottom: 8px; }
+  .way.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
+  .way input { margin-top: 4px; accent-color: var(--accent-green); }
+  .way strong { display: block; font-size: 15px; }
+  .slots { display: flex; gap: 8px; flex-wrap: wrap; }
+  .slots label { flex: 1; min-width: 110px; text-align: center; padding: 11px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border); cursor: pointer; font-size: 14px; }
+  .slots input { display: none; }
+  .slots label.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
+  .move-grid { display: grid; gap: 10px; margin-top: 12px; }
+  @media (min-width: 560px) { .move-grid { grid-template-columns: 1fr 1fr; } }
+  .move-grid > div { background: rgba(var(--ink-rgb),.04); border-radius: var(--radius-sm); padding: 14px; }
+  .choicebar .btn { margin-top: 8px; padding: 10px 18px; font-size: 14px; }
+  .contact-line { font-size: 15px; margin: 4px 0; }
+  .contact-line a { color: var(--accent-green-text); }
+
+  footer { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 40px; }
+  .hidden { display: none !important; }
+  .spinner { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--brand-card2); border-top-color: var(--accent-green); animation: spin .8s linear infinite; margin: 60px auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Testleiste (nur ?internal=1) */
+  #testbar { position: sticky; top: 0; z-index: 10; background: #2a1d05; border: 1px solid rgba(245,166,35,.5); border-radius: var(--radius-sm);
+    padding: 10px 12px; margin-bottom: 18px; font-size: 13px; }
+  #testbar .row { margin-top: 8px; }
+  #testbar button { padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(245,166,35,.5); background: transparent; color: var(--accent-amber-text); font: 600 12px 'DM Sans'; cursor: pointer; }
+  #testbar label { color: var(--accent-amber-text); display: inline-flex; gap: 6px; align-items: center; }
+  #raw { white-space: pre-wrap; font: 11px/1.4 ui-monospace, Menlo, monospace; background: #050c17; padding: 10px; border-radius: 8px; max-height: 320px; overflow: auto; margin-top: 8px; }
+  /* Entwickleransichten (Testleiste, Rohdaten): fester dunkler Grund, daher feste helle Schrift. */
+  #raw, #testbar { color: #f0f4f8; --accent-amber-text: #f5a623; }
+  /* Versorgungs-Check 1.0.0 */
+  select { width: 100%; padding: 13px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--brand-card2); color: var(--text-primary); font: 500 15px 'DM Sans', sans-serif; }
+  .item-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+  .rm { background: transparent; border: 0; color: var(--text-secondary); font: 600 13px 'DM Sans'; cursor: pointer; text-decoration: underline; }
+  .item .q { margin-bottom: 12px; }
+  .q.missing .q-label { color: var(--accent-amber-text); }
+  .grp { border-left: 4px solid var(--border-hover); }
+  .pl-over { display: inline-block; margin: 4px 0 2px; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
+             color: var(--accent-amber-text, #8A5300); background: rgba(245,166,35,0.14); border: 1px solid rgba(245,166,35,0.35); }   /* 1.1.0 (A6) */
+  .grp.v-red { border-left-color: var(--accent-red); }
+  .grp.v-blue { border-left-color: var(--accent-blue); }
+  .grp.v-green { border-left-color: var(--accent-green); }
+  .grp.v-gray { border-left-color: var(--text-muted); }
+  .pl-item { padding: 10px 0; border-top: 1px solid var(--border); }
+  .pl-item:first-of-type { border-top: 0; }
+  .pl-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+  .pl-note { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+  .pl-food { font-size: 14px; margin-top: 8px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--accent-green-dim); }
+  .pl-food strong { color: var(--accent-green-text); }
+  .pl-hope { font-size: 14px; margin-top: 6px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--accent-blue-dim, rgba(74,144,226,.12)); }
+  .pl-tip, .pl-lab { font-size: 13px; color: var(--text-secondary); margin-top: 6px; }
+  .pl-tip strong, .pl-lab strong, .pl-hope strong { color: var(--text-primary); }
+  #doc-sheet { display: none; }
+  .ds-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0; }
+  .ds-table th, .ds-table td { border: 1px solid #999; padding: 6px 8px; text-align: left; vertical-align: top; }
+  .ds-lines { border-bottom: 1px solid #999; height: 26px; }
+  @media print {
+    body.print-doc main, body.print-doc header { display: none !important; }
+    body.print-doc #doc-sheet { display: block !important; color: #111; font: 13px/1.45 'DM Sans', Arial, sans-serif; }
+    body.print-doc #doc-sheet h2 { font-size: 18px; margin: 0 0 4px; }
+    body.print-doc #doc-sheet p { margin: 6px 0; }
+  }
+  @media print {
+    body { background: #fff !important; color: #111 !important; padding: 0; }
+    #testbar, header .theme-btn, #konto-step, .row, footer { display: none !important; }
+    .card { border: 1px solid #ccc !important; background: #fff !important; break-inside: avoid; }
+    .muted, .pl-note, .small { color: #333 !important; }
+  }
+  /* quellen-versorgung.html 1.0.0 */
+  table.t { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0 4px; }
+  table.t th, table.t td { text-align: left; vertical-align: top; padding: 8px 6px; border-bottom: 1px solid var(--border); }
+  table.t th { color: var(--text-secondary); font-size: 12px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; }
+  .tw { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  ul.src { margin: 6px 0 14px 18px; font-size: 14px; line-height: 1.6; }
+  ul.src a, .card a { color: var(--accent-blue-text); }
+  ol.rules { margin: 6px 0 0 18px; font-size: 15px; line-height: 1.6; }
+  h3 { margin: 14px 0 4px; font-size: 16px; }
+</style>
+</head>
+<body>
+<!--
+  quellen-versorgung.html 1.0.0 (18.10.2026) — Regel W2 der Umsetzungsfassung (Regelversion 2026-10-R1).
+  Öffentliche Kurzfassung der Regeln und Quellen des Versorgungs-Checks. Quelle:
+  dokumentation/Evidenz-Versorgungs-Check.md (Teile 2–4, 10 und Quellenliste). Interne Prüfnotizen und
+  die MDR-Einschätzung stehen bewusst NICHT auf dieser Seite. Bei Änderungen an Regeln: Stand-Datum anpassen.
+-->
+<div class="wrap">
+  <header>
+    <div>
+      <div class="logo-name">LeVITA</div>
+      <div class="logo-sub">Versorgungs-Check · Quellen und Regeln</div>
+    </div>
+    <button type="button" class="theme-btn" onclick="toggleTheme()" aria-label="Helles Design einschalten"></button>
+  </header>
+  <main>
+    <h1>Quellen und Regeln</h1>
+    <p class="lead">Stand 18.10.2026. So entstehen die Tipps im Versorgungs-Check – und worauf sie sich stützen.</p>
+
+    <div class="card info"><p><strong>Was der Check kann – und was nicht:</strong> Er ordnet deine Angaben zu Präparaten, Ernährung und Lebensstil nach den Empfehlungen von DGE und BfR ein. Wie gut du tatsächlich versorgt bist, kann er nicht messen – einen Mangel weder feststellen noch ausschließen. Das kann nur ein Laborwert in deiner Praxis. Die Tipps sind keine Diagnose und ersetzen keine ärztliche Beratung.</p></div>
+
+    <div class="card">
+      <h2>Höchstmengenvorschläge des BfR</h2>
+      <p class="muted">Vorschläge des Bundesinstituts für Risikobewertung je Tagesverzehrempfehlung eines Nahrungsergänzungsmittels für Erwachsene – keine verbindlichen Grenzwerte. Liegt deine Tagesmenge darüber, steht im Ergebnis „über dem BfR-Höchstmengenvorschlag“. Nimmst du ein Präparat nicht täglich, rechne auf den Tag um (Wochenmenge geteilt durch 7). Vitamin D: 1 µg = 40 IE.</p>
+      <div class="tw"><table class="t"><thead><tr><th>Stoff</th><th>Vorschlag pro Tag</th><th>Hinweis des BfR</th></tr></thead><tbody><tr><td>Vitamin D</td><td>20 µg (800 IE)</td><td>—</td></tr><tr><td>Vitamin B12</td><td>25 µg</td><td>—</td></tr><tr><td>Magnesium</td><td>250 mg</td><td>auf zwei oder mehr Portionen am Tag verteilen</td></tr><tr><td>Eisen</td><td>6 mg</td><td>Männer, Frauen nach den Wechseljahren und Schwangere nur nach ärztlicher Rücksprache</td></tr><tr><td>Zink</td><td>6,5 mg</td><td>geringer Abstand zwischen sicherer Höchstzufuhr und üblicher Zufuhr</td></tr><tr><td>Calcium</td><td>500 mg</td><td>ab 250 mg je Portion auf ein weiteres calciumhaltiges Präparat verzichten</td></tr><tr><td>Jod</td><td>100 µg (Schwangere/Stillende 150 µg)</td><td>—</td></tr><tr><td>Selen</td><td>40 µg</td><td>—</td></tr></tbody></table></div>
+      <p class="small">Mehrere Präparate mit demselben Stoff addieren sich – das BfR rechnet deshalb mit einer Sicherheitsreserve für Mehrfacheinnahme.</p>
+    </div>
+
+    <div class="card">
+      <h2>Anhaltspunkte aus dem Vital-Check</h2>
+      <p class="muted">Ein Anhaltspunkt ist keine Feststellung über deinen Körper. Er sagt nur: Zu dieser Angabe gibt es eine anerkannte Empfehlung.</p>
+      <div class="tw"><table class="t"><thead><tr><th>Angabe</th><th>Tipp im Check</th><th>Grundlage</th></tr></thead><tbody><tr><td>Vegane Ernährung</td><td>Vitamin B12 als Empfehlung der DGE; Jod über Jodsalz und angereicherte Lebensmittel</td><td>DGE-Position vegane Ernährung 2024</td></tr><tr><td>Vegetarische Ernährung</td><td>Tipp: B12-Wert einmal prüfen lassen</td><td>BfR-FAQ Vitamin B12 (2023)</td></tr><tr><td>Ab 65 Jahren</td><td>B12 und Vitamin D beim Praxisbesuch ansprechen</td><td>BfR; Verbraucherzentrale</td></tr><tr><td>Wenig Zeit draußen im Winter</td><td>Von Oktober bis März reicht die Sonne nicht; Ergänzung in der Praxis klären</td><td>BfR-FAQ Vitamin D (12/2025)</td></tr><tr><td>Starke Regelblutung (Frauen 18–50)</td><td>Eisenwert in der Praxis ansprechen; Eisen nur nach ärztlicher Rücksprache</td><td>Onkopedia/DGHO 2025; BfR</td></tr><tr><td>Häufig Schwindel, Blässe, brüchige Nägel</td><td>In der Hausarztpraxis ansprechen – der Check deutet diese Angaben nicht</td><td>Konservative Regel ohne Deutung</td></tr><tr><td>Selten Fisch</td><td>Fettreicher Seefisch ein- bis zweimal pro Woche; pflanzlich Algenöl</td><td>DGE 2024; BfR-FAQ Omega-3</td></tr><tr><td>Magensäureblocker oder Metformin</td><td>Frag in der Praxis, ob eine Kontrolle des B12-Werts sinnvoll ist</td><td>MHRA 06/2022; Lam u. a., JAMA 2013</td></tr><tr><td>Schwangerschaft oder Stillzeit</td><td>Keine allgemeinen Tipps – Frauenarztpraxis oder Hebamme</td><td>Netzwerk Gesund ins Leben; Verbraucherzentrale</td></tr></tbody></table></div>
+    </div>
+
+    <div class="card">
+      <h2>Laborwerte</h2>
+      <p class="muted">Der Check misst und bewertet keine Werte. Er nennt höchstens eine mögliche Frage an deine Praxis – zum Beispiel nach dem 25-OH-Vitamin-D-Wert, dem B12-Status oder dem Ferritinwert – ohne Grenzwerte und ohne Deutung.</p>
+    </div>
+
+    <div class="card">
+      <h2>Unsere Formulierungsregeln</h2>
+      <ol class="rules">
+        <li>Keine Feststellung über den Körper: nicht „Mangel“ oder „du brauchst“, sondern „Aus deinen Angaben ergibt sich ein Anhaltspunkt“.</li>
+        <li>Keine Anordnung, nur Tipps: „Tipp: …“, „sprich … an“, „frag in der Praxis“.</li>
+        <li>Echte Empfehlungen mit Quelle: Wo eine besteht (vegan B12, Eisen nur nach Rücksprache), zitieren wir DGE bzw. BfR.</li>
+        <li>„Nicht belegt“ statt „wirkt nicht“ – wo Belege fehlen, behaupten wir nicht das Gegenteil.</li>
+        <li>Keine Dosierungen, keine Marken, keine Shops.</li>
+        <li>„Kein Anlass erkennbar“ ist kein Rat zum Absetzen – ärztlich Verordnetes nur in Absprache mit der Praxis ändern.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>Quellen</h2>
+      <h3>Höchstmengen und amtliche Bewertungen</h3>
+      <ul class="src"><li><a href="https://www.bfr.bund.de/cm/343/aktualisierte-hoechstmengenvorschlaege-fuer-vitamine-und-mineralstoffe-in-nahrungsergaenzungsmitteln-und-angereicherten-lebensmitteln-2024.pdf" target="_blank" rel="noopener">BfR 006/2024, Aktualisierte Höchstmengenvorschläge</a></li><li><a href="https://www.bfr.bund.de/cm/343/hoechstmengenempfehlungen-des-bfr.pdf" target="_blank" rel="noopener">BfR, Übersicht Höchstmengenempfehlungen</a></li><li><a href="https://www.bfr.bund.de/cm/343/aktualisierung-2023-hoechstmengenvorschlaege-fuer-selen-in-lebensmitteln-inklusive-nahrungsergaenzungsmitteln.pdf" target="_blank" rel="noopener">BfR 010/2024, Selen</a></li><li><a href="https://www.bfr.bund.de/assets/01_Ver%C3%B6ffentlichungen/Stellungnahmen_deutsch/aktualisierung-2025-h%C3%B6chstmengenvorschl%C3%A4ge-f%C3%BCr-jod-in-lebensmitteln-inklusive-nahrungserg%C3%A4nzungsmitteln.pdf" target="_blank" rel="noopener">BfR 065/2025, Jod</a></li><li><a href="https://www.BFR.bund.de/cm/343/hoechstmengenvorschlaege-fuer-calcium-in-lebensmitteln-inklusive-nahrungsergaenzungsmitteln.pdf" target="_blank" rel="noopener">BfR, Höchstmengenvorschläge Calcium</a></li><li><a href="https://www.BFR.bund.de/cm/343/bfr-bewertet-empfohlene-tageshoechstmenge-fuer-die-aufnahme-von-magnesium-ueber-nahrungsergaenzungsmitteln.pdf" target="_blank" rel="noopener">BfR 034/2017, Magnesium</a></li><li><a href="https://www.bfr.bund.de/cm/343/hoechstmengenvorschlaege-fuer-magnesium-in-lebensmitteln-inklusive-nahrungsergaenzungsmitteln.pdf" target="_blank" rel="noopener">BfR, Höchstmengenvorschläge Magnesium</a></li><li><a href="https://www.klartext-nahrungsergaenzung.de/sites/default/files/2025-09/hoechstmengen_europa_barrierefrei.pdf" target="_blank" rel="noopener">Verbraucherzentrale NRW, Höchstmengen Europa (Tabelle, 09/2025)</a></li><li><a href="https://www.gesetze-im-internet.de/min_tafelwv/anlage_6.html" target="_blank" rel="noopener">Min/TafelWV Anlage 6</a></li></ul>
+      <h3>Vitamin D</h3>
+      <ul class="src"><li><a href="https://www.bfr.bund.de/fragen-und-antworten/thema/ausgewaehlte-fragen-und-antworten-zu-vitamin-d/" target="_blank" rel="noopener">BfR, Ausgewählte Fragen und Antworten zu Vitamin D (12/2025)</a></li><li><a href="https://www.bfr.bund.de/cm/343/ausgewaehlte-fragen-und-antworten-zu-vitamin-d.pdf" target="_blank" rel="noopener">BfR-FAQ Vitamin D (PDF)</a></li><li><a href="https://www.verbraucherzentrale.de/wissen/lebensmittel/nahrungsergaenzungsmittel/vitamin-dprodukte-wann-sind-sie-sinnvoll-5446" target="_blank" rel="noopener">Verbraucherzentrale, Vitamin-D-Produkte (08/2026)</a></li><li><a href="https://www.em-consulte.com/article/952632/dietary-fat-increases-vitamin-d-3-absorption" target="_blank" rel="noopener">Dawson-Hughes u. a., J Acad Nutr Diet 2015</a></li></ul>
+      <h3>Vitamin B12 und vegane Ernährung</h3>
+      <ul class="src"><li><a href="https://ernaehrungs-umschau.de/fileadmin/Ernaehrungs-Umschau/pdfs/pdf_2024/07_24/EU07_2024_M382_M386.pdf" target="_blank" rel="noopener">DGE-Position vegan 2024, Ernährungs Umschau</a></li><li><a href="https://publications.pik-potsdam.de/pubman/item/item_29966_1/component/file_29967/DGE_Position_Vegan_2024_Langversion.pdf" target="_blank" rel="noopener">DGE-Position vegan 2024, Langfassung</a></li><li><a href="https://www.bfr.bund.de/fragen-und-antworten/thema/vitamin-b12-bei-pflanzenbasierter-ernaehrung-besonders-auf-eine-angemessene-versorgung-achten/" target="_blank" rel="noopener">BfR-FAQ Vitamin B12 bei pflanzenbasierter Ernährung (2023)</a></li><li><a href="https://www.verbraucherzentrale.de/wissen/lebensmittel/nahrungsergaenzungsmittel/vitamin-b12ergaenzung-fuer-blutbildung-nervenfunktion-und-immunsystem-8243" target="_blank" rel="noopener">Verbraucherzentrale, Vitamin B12 (12/2025)</a></li><li><a href="https://read.qxmd.com/doi/10.3238/arztebl.2008.0680" target="_blank" rel="noopener">Herrmann &amp; Obeid, Dtsch Arztebl Int 2008;105:680 (Abstract)</a></li><li><a href="https://di.aerzteblatt.de/int/archive/article/64390" target="_blank" rel="noopener">Herrmann &amp; Obeid, In reply, Dtsch Arztebl Int 2009</a></li><li><a href="https://www.gov.uk/drug-safety-update/metformin-and-reduced-vitamin-b12-levels-new-advice-for-monitoring-patients-at-risk" target="_blank" rel="noopener">MHRA Drug Safety Update 06/2022, Metformin und B12</a></li><li><a href="https://mdedge.com/content/gastric-acid-inhibitors-linked-vitamin-b12-deficiency" target="_blank" rel="noopener">MDedge zu Lam u. a., JAMA 2013 (Sek.)</a></li></ul>
+      <h3>Eisen, Zink, Calcium</h3>
+      <ul class="src"><li><a href="https://onkopedia.com/de/onkopedia/guidelines/eisenmangel-und-eisenmangelanaemie/@@view/html/index.html" target="_blank" rel="noopener">Onkopedia/DGHO, Eisenmangel und Eisenmangelanämie (04/2025)</a></li><li><a href="https://www.bfr.bund.de/fragen-und-antworten/thema/fragen-und-antworten-zu-eisen-in-lebensmitteln/" target="_blank" rel="noopener">BfR, Fragen und Antworten zu Eisen</a></li><li><a href="https://www.gesundheit.gv.at/leben/ernaehrung/vitamine-mineralstoffe/spurenelemente/eisen.html" target="_blank" rel="noopener">gesundheit.gv.at, Eisen</a></li><li><a href="https://www.dge.de/fileadmin/dok/gesunde-ernaehrung/faq/DGE-FAQ-Zink-2019.pdf" target="_blank" rel="noopener">DGE-FAQ Zink 2019</a></li><li><a href="https://www.verbraucherzentrale.de/faq/kupfer-zur-nahrungsergaenzung-89505" target="_blank" rel="noopener">Verbraucherzentrale, Kupfer (12/2025)</a></li><li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC3775249" target="_blank" rel="noopener">Lim u. a., Nutrients 2013</a></li><li><a href="https://www.verbraucherzentrale.de/wissen/lebensmittel/nahrungsergaenzungsmittel/calciumprodukte-fuer-den-knochenschutz-8048" target="_blank" rel="noopener">Verbraucherzentrale, Calcium-Produkte (08/2026)</a></li></ul>
+      <h3>Jod, Schwangerschaft</h3>
+      <ul class="src"><li><a href="https://www.verbraucherzentrale.de/wissen/lebensmittel/nahrungsergaenzungsmittel/oft-zu-viel-jod-in-meeresalgenprodukten-8540" target="_blank" rel="noopener">Verbraucherzentrale, Jod in Meeresalgen (08/2026)</a></li><li><a href="https://www.verbraucherzentrale.de/wissen/lebensmittel/nahrungsergaenzungsmittel/jod-folsaeure-eisen-welche-nahrungsergaenzungen-brauchen-schwangere-13324" target="_blank" rel="noopener">Verbraucherzentrale, Nahrungsergänzung in der Schwangerschaft (10/2025)</a></li><li><a href="https://www.gesund-ins-Leben.de/fileadmin/resources/import/pdf/vortrag_he_schwangerschaft_2020_4_supplemente.pdf" target="_blank" rel="noopener">Netzwerk Gesund ins Leben, Supplemente in der Schwangerschaft</a></li></ul>
+      <h3>Selen, Omega-3, Magnesium</h3>
+      <ul class="src"><li><a href="https://www.dge.de/fileadmin/dok/gesunde-ernaehrung/faq/DGE-FAQ-Selen-2021.pdf" target="_blank" rel="noopener">DGE-FAQ Selen 2021</a></li><li><a href="https://www.bfr.bund.de/fragen-und-antworten/thema/selen-der-gehalt-in-pflanzlichen-lebensmitteln-schwankt-von-region-zu-region/" target="_blank" rel="noopener">BfR, Selen in pflanzlichen Lebensmitteln (08/2025)</a></li><li><a href="https://dge.de/fileadmin/dok/leichte-sprache/DGE-Empfehlungen-LS-A4-barrierefrei.pdf" target="_blank" rel="noopener">DGE, Gut essen und trinken (2024)</a></li><li><a href="https://www.bfr.bund.de/assets/01_Ver%C3%B6ffentlichungen/FAQ_deutsch/fragen-und-antworten-omega-3-fettsaeuren-wichtig-aber-in-ma%C3%9Fen.pdf" target="_blank" rel="noopener">BfR-FAQ Omega-3 (04/2026)</a></li><li><a href="https://www.bfr.bund.de/cm/343/praeparate-mit-omega-3-fettsaeuren-koennen-bei-herzpatienten-das-risiko-fuer-vorhofflimmern-erhoehen.pdf" target="_blank" rel="noopener">BfR 57/2023, Omega-3 und Vorhofflimmern</a></li><li><a href="https://www.verbraucherzentrale.de/faq/sind-extra-omega3fettsaeuren-bei-vegetarischer-ernaehrung-noetig-25243" target="_blank" rel="noopener">Verbraucherzentrale, Omega-3 bei vegetarischer Ernährung (2024)</a></li><li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5587524" target="_blank" rel="noopener">J Atheroscler Thromb 2017, Omega-3 mit Mahlzeit</a></li><li><a href="https://www.verbraucherzentrale.de/wissen/lebensmittel/nahrungsergaenzungsmittel/magnesium-beim-sport-ist-das-sinnvoll-13354" target="_blank" rel="noopener">Verbraucherzentrale, Magnesium beim Sport (11/2025)</a></li><li><a href="https://cochranelibrary.com/cdsr/doi/10.1002/14651858.CD009402.pub3/information" target="_blank" rel="noopener">Cochrane, Magnesium bei Muskelkrämpfen (2020)</a></li><li><a href="https://agris.fao.org/search/en/records/65dfe41c4c5aef494fe65665" target="_blank" rel="noopener">Mah &amp; Pitre 2021, Magnesium bei Insomnie (AGRIS)</a></li></ul>
+      <h3>Erwartungen</h3>
+      <ul class="src"><li><a href="https://verbraucherzentrale-bawue.de/node/4160" target="_blank" rel="noopener">Verbraucherzentralen, Klartext Nahrungsergänzung — Positionen</a></li><li><a href="https://researchportal.northumbria.ac.uk/en/publications/nutrient-therapy-for-the-improvement-of-fatigue-symptoms/" target="_blank" rel="noopener">Barnish u. a., Nutrients 2023 (Gegenbeleg)</a></li><li><a href="https://www.cochrane.org/CD000980/vitamin-c-preventing-and-treating-common-cold" target="_blank" rel="noopener">Cochrane, Vitamin C und Erkältung (2013)</a></li><li><a href="https://www.cochrane.org/podcasts/10.1002/14651858.CD014914.pub2" target="_blank" rel="noopener">Cochrane Podcast, Zink und Erkältung (2024, Sek.)</a></li><li><a href="https://bjsm.bmj.com/content/52/6/376" target="_blank" rel="noopener">Morton u. a., BJSM 2018</a></li><li><a href="https://www.dge.de/fileadmin/dok/presse/meldungen/2011-2018/DGE-Pressemeldung-aktuell-08-2017-Referenzwert-Protein.pdf" target="_blank" rel="noopener">DGE, Referenzwert Protein (2017)</a></li><li><a href="https://register.awmf.org/assets/guidelines/063-003l_S3_Insomnie-bei-Erwachsenen_2025-04.pdf" target="_blank" rel="noopener">S3-Leitlinie Insomnie 2025, AWMF</a></li><li><a href="https://www.em-consulte.com/article/981157/the-role-of-sleep-hygiene-in-promoting-public-heal" target="_blank" rel="noopener">Irish u. a., Sleep Med Rev 2015</a></li><li><a href="https://scholarlyworks.lvhn.org/medicine/3049/" target="_blank" rel="noopener">Patel u. a. 2017, Biotin</a></li><li><a href="https://www.verbraucherzentrale.de/wissen/lebensmittel/nahrungsergaenzungsmittel/sorgt-biotin-fuer-gesunde-haut-glaenzende-haare-und-feste-naegel-13635" target="_blank" rel="noopener">Verbraucherzentrale, Biotin (03/2026)</a></li><li><a href="https://jamanetwork.com/journals/jama/fullarticle/2793451" target="_blank" rel="noopener">USPSTF, JAMA 2022</a></li></ul>
+    </div>
+    <p class="small"><a href="versorgung.html">Zum Versorgungs-Check</a> · <a href="./">Zum Vital-Check</a></p>
+  </main>
+  <footer>LeVITA · Versorgungs-Check · Quellen und Regeln 1.0.0</footer>
+</div>
+<script>
+  /* Hell/Dunkel - dieselbe Logik wie im Vital-Check (index.html, v2.8.13). */
+  (function () {
+    var KEY = 'levita-theme';
+    var SUN = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+    var MOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
+    function pref() { try { var v = localStorage.getItem(KEY); return (v === 'hell' || v === 'dunkel') ? v : 'auto'; } catch (e) { return 'auto'; } }
+    function eff() { var p = pref(); if (p !== 'auto') return p;
+      return (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'hell' : 'dunkel'; }
+    function apply() {
+      var p = pref(), r = document.documentElement;
+      if (p === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', p);
+      var e = eff(), m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.setAttribute('content', e === 'hell' ? '#F7F6F2' : '#0a1628');
+      var lbl = e === 'hell' ? 'Dunkles Design einschalten' : 'Helles Design einschalten';
+      var bs = document.querySelectorAll('.theme-btn');
+      for (var i = 0; i < bs.length; i++) { bs[i].innerHTML = e === 'hell' ? MOON : SUN; bs[i].setAttribute('aria-label', lbl); bs[i].title = lbl; }
+    }
+    window.toggleTheme = function () {
+      var next = eff() === 'hell' ? 'dunkel' : 'hell';
+      try { localStorage.setItem(KEY, next); } catch (e) {}
+      apply();
+    };
+    if (window.matchMedia) { var mq = window.matchMedia('(prefers-color-scheme: light)');
+      var h = function () { if (pref() === 'auto') apply(); };
+      if (mq.addEventListener) mq.addEventListener('change', h); else if (mq.addListener) mq.addListener(h); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply); else apply();
+  })();
+</script>
+</body>
+</html>

@@ -29,6 +29,10 @@
   Aufruf mit ?code=LEV-2026-000123 füllt die Pilot-ID vor.
 
   Versionen:
+  1.0.1 (18.10.2026) W4 (Systemtest): Link "So funktioniert die Anmeldung" bricht nicht mehr um
+        (white-space:nowrap, role=button). Ursache des Befunds: Der zweizeilige Link hatte seine
+        Mitte zwischen den beiden Textstücken — ein Klick/Tipp dorthin traf den Absatz, nicht den Link.
+        Live geprüft: Funktion und Tastatur (Enter) arbeiten; konto.js unverändert.
   1.0.0 (18.10.2026) Erste Hauptversion — die Einführungsphase läuft stabil, deshalb nicht mehr 0.x.
         Einzige inhaltliche Änderung: einheitlicher Satz in der Fußzeile wie in Vital-Check und
         Versorgungs-Check ("Tipps für gesunde Erwachsene — keine Diagnose, keine Therapieempfehlung,
@@ -491,7 +495,7 @@
 <script src="assets/konto.js?v=1.4.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.0.0";
+  const FE_VERSION = "1.0.1";
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
@@ -626,7 +630,7 @@
         <div class="error" id="err">${esc(msg)}</div>
       </div>
       <p class="small">Du findest Pilot-ID und PIN in der Mail zu deinem Vital-Check. Ohne Vital-Check ist der Ernährungs-Check nicht möglich — er baut auf deinen Antworten auf.</p>
-      <p class="small">Mit persönlichem Konto geht es ohne PIN: Melde dich in <a href="konto.html" style="color:var(--accent-green-text)">Mein Bereich</a> mit einem Link per E-Mail an, danach bleibt dieses Gerät angemeldet und der Ernährungs-Check öffnet sich direkt. <a href="#" id="b-kguide" style="color:var(--accent-green-text)">So funktioniert die Anmeldung</a></p>`);
+      <p class="small">Mit persönlichem Konto geht es ohne PIN: Melde dich in <a href="konto.html" style="color:var(--accent-green-text)">Mein Bereich</a> mit einem Link per E-Mail an, danach bleibt dieses Gerät angemeldet und der Ernährungs-Check öffnet sich direkt. <a href="#" id="b-kguide" role="button" style="color:var(--accent-green-text);white-space:nowrap;display:inline-block;padding:2px 0;">So funktioniert die Anmeldung</a></p>`);
     const kg = document.getElementById("b-kguide");
     if (kg) kg.onclick = (e) => { e.preventDefault(); if (window.LeVitaKonto && window.LeVitaKonto.showGuide) window.LeVitaKonto.showGuide(); };
     const go = async () => {
