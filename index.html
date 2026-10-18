@@ -747,6 +747,18 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.11.0 (18.10.2026): Paket D (Regelversion 2026-10-R1). (1) R2: EIN Haupthebel für Seite,
+       Simulator und Mail — der erste Hebel aus calculate_score_scenarios (dieselbe Liste nutzt die
+       Edge als "Hebel 1"); top_priorities nur noch als Rückfall. Satz "Dein wichtigster Hebel liegt
+       bei …" statt "Am meisten Luft ist bei …". (2) P1: Verlaufskarte zeigt "Frage geändert", wenn
+       der Vorcheck noch die alten Fragen zu Interesse und Stimmung hatte (gehört zu Edge .7).
+       (3) Nachprüfung der 16 Testprofile (Daten aus der DB, Seite lokal gerendert): Hebel nur aus
+       Bereichen unter 70 (P02 bekam "Alkohol" mit 100 als wichtigsten Schritt), bei ärztlichem
+       Vorrang kein Hebel und statt Selbst-Tipps "Zuerst die Abklärung"; Level-Erklärung und
+       Alters-Pille entfallen bei Hinweisstatus bzw. ohne V1-Erklärung; Alkohol-Hebel ohne Zielmenge
+       ("weniger" statt "13–25 Gläser pro Monat", R3); Essverhalten-Hinweis: keine Ess-Tipps in
+       Plan und Karten Ernährung/BMI (B3); Bewegungs-Tipp nicht bei BMI unter 18,5.
+
        v2.10.0 (18.10.2026): Paket B/C der Umsetzungsfassung (Regelversion 2026-10-R1).
        (1) R1/R3/R4/R5: "Das kannst du selbst tun" mit eigener Eignungsbedingung je Tipp, an die
        Antwort gebunden ("Bereich unter 70" nur Vorfilter); Alkohol-Tipp nur bei Konsum und ohne
@@ -2752,6 +2764,14 @@
   // das jsonb von calculate_score_scenarios unverändert durch; dieser Adapter
   // akzeptiert naheliegende Feldnamen-Varianten und ist der EINZIGE Ort, an dem
   // Feldnamen der Szenarien angefasst werden.
+  // v2.11.0 (R3): Alkohol-Hebel nennen keine Zielmenge ("13–25 Gläser pro Monat" war im Test P13 sichtbar).
+  // Laut DGE gibt es keine unbedenkliche Menge — der Schritt heißt "weniger", das Ziel "so wenig wie möglich".
+  function alcoholLeverText(l) {
+    if (!l) return l;
+    if (l.question_key === "alcohol_amount") return Object.assign({}, l, { to_text: "weniger", max_to_text: "so wenig wie möglich" });
+    if (l.question_key === "alcohol_frequency") return Object.assign({}, l, { to_text: "seltener", max_to_text: /^nie$/i.test(l.max_to_text || "") ? l.max_to_text : "so selten wie möglich" });
+    return l;
+  }
   function normalizeScenarios(raw) {
     if (!raw || typeof raw !== 'object') return null;
     const pickNum = (o, keys) => { for (const k of keys) { if (o && o[k] !== null && o[k] !== undefined && isFinite(Number(o[k]))) return Number(o[k]); } return null; };
@@ -2785,7 +2805,7 @@
       };
     };
     const base = raw.base || {};
-    const levers = (Array.isArray(raw.levers) ? raw.levers : []).map(normEntry).filter(l => l && l.question_keys.length === 1);
+    const levers = (Array.isArray(raw.levers) ? raw.levers : []).map(normEntry).filter(l => l && l.question_keys.length === 1).map(alcoholLeverText);
     const combos = (Array.isArray(raw.combos) ? raw.combos : []).map(normEntry).filter(c => c && c.question_keys.length >= 2);
     if (levers.length === 0) return null;
     return {
@@ -4882,9 +4902,15 @@
     // greift die alte Rechnung als Rückfall.
     const bmiNum = Number(result.bmi);
     const bmiIsLow = isFinite(bmiNum) && bmiNum < 18.5;
-    const areasForHebel = areas.filter(a => {
+    // v2.11.0 (R1/R2, Nachprüfung der Testprofile): Ein Hebel braucht Luft — Bereiche ab 70 sind kein
+    // "wichtigster Schritt" (vorher: 85-Jähriger mit ärztlichem Vorrang bekam "Alkohol" mit 100 als Hebel).
+    // Bei Essverhalten-Hinweis ist Ernährung kein Hebel (B3), bei ärztlichem Vorrang gibt es keinen (M3/S5).
+    const _careH = careFromResult(result);
+    const areasForHebel = _careH.status === "doctor_first" ? [] : areas.filter(a => {
       if (a.key === "bmi") return false;            // BMI ist keine Handlung
       if (bmiIsLow && a.key === "activity") return false;
+      if (!(Number(a.score) < 70)) return false;
+      if (_careH.reasons.includes("essverhalten") && a.key === "nutrition") return false;
       return true;
     });
     const sleepArea = areas.find(a => a.key === "sleep");
@@ -4892,7 +4918,16 @@
     const serverPrio = (result.score?.top_priorities || [])
       .map(p => areas.find(a => a.key === (p.area_key || p.key)))
       .filter(a => a && areasForHebel.includes(a))[0] || null;
-    const worst = serverPrio
+    // v2.11.0 (R2): EIN Haupthebel für Seite, Simulator, Mail und Dashboard — der erste Hebel aus
+    // calculate_score_scenarios (Server, nach Punktgewinn sortiert; dieselbe Liste nutzt die Edge als
+    // "Hebel 1"). top_priorities nur noch als Rückfall, wenn der Server keinen Hebel liefert.
+    const leverPrio = ((simScenarios && simScenarios.levers) || [])
+      .map(l => areas.find(a => a.key === l.area_key))
+      .filter(a => a && areasForHebel.includes(a))[0] || null;
+    window._mainLeverKey = leverPrio ? leverPrio.key : (serverPrio ? serverPrio.key : null);
+    const worst = leverPrio
+      ? leverPrio
+      : serverPrio
       ? serverPrio
       : (areasForHebel.length > 0
           ? (hasCriticalSleep && sleepArea ? sleepArea : [...areasForHebel].sort((a,b) => a.score - b.score)[0])
@@ -5309,14 +5344,13 @@
           <span class="pill">Größe: ${personalData.height_cm} cm</span>
           <span class="pill">Gewicht: ${personalData.weight_kg} kg</span>
           <span class="pill">BMI: ${isFinite(Number(result.bmi)) ? Number(result.bmi).toFixed(1).replace(".", ",") : result.bmi}</span>
-          ${bioAge ? `<span class="pill">Vitalitäts-Alter: ${bioAge} J.</span>` : ""}
           ${goalLabel ? `<span class="pill" style="background:var(--accent-green-dim);border-color:rgba(var(--accent-green-rgb),0.3);">${goalLabel}</span>` : ""}
         </div>
       </div>`;
 
     // Level-Erklärung — aufklappbar
     const vitalIndexId = 'vitalindex_' + Date.now();
-    html += S.levelInfo = `
+    html += S.levelInfo = (window._care && window._care.active) ? "" : `
       <div style="margin-bottom:12px;">
         <button onclick="const p=document.getElementById('${vitalIndexId}');const b=this;p.style.display=p.style.display==='none'?'block':'none';b.textContent=p.style.display==='none'?'Was bedeutet mein Level? ↓':'Was bedeutet mein Level? ↑';"
           style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;padding:0;text-decoration:underline;">
@@ -5512,7 +5546,11 @@
     // nennt ihn nicht noch einmal, sondern begruendet nur noch den Zusammenhang.
     const heroDesc3 = worst
       ? `${heroGoalShort ? `Um ${heroGoalShort}, führt der kürzeste Weg über diesen Bereich. ` : ""}Kleine Verbesserungen hier wirken sich auf alle anderen Bereiche aus.`
-      : `Deine Basis wirkt bereits stabil. Im LeVITA Studio helfen wir dir, das weiterzuentwickeln — individuell und ohne Druck.`;
+      : (window._care && window._care.active)
+        ? (window._care.status === "doctor_first"
+            ? `Zuerst steht die Abklärung in deiner Hausarztpraxis – der Hinweis oben. Steigere deine Belastung bis dahin nicht.`
+            : `Zuerst steht der Hinweis oben. Was du darüber hinaus tun kannst, findest du in deinem Plan.`)
+        : `Deine Basis wirkt bereits stabil. Im LeVITA Studio helfen wir dir, das weiterzuentwickeln — individuell und ohne Druck.`;
     // v1.34.2 — Die Ueberschrift nannte das ZIEL ("Nährstoffstatus klären"),
     // der Text darunter den HEBEL ("Bewegung & Kraft ist dein stärkster
     // Ansatzpunkt"). Zwei Richtungen in einem Block. Jetzt steht der Hebel in
@@ -5626,8 +5664,8 @@
     const _bmiVal = Number(result.bmi || score.bmi || 0);
     const _goalW = (personalData.goal_key || "") === "goal_weight";
     const tipEligible = {
-      nutrition: () => _below70('nutrition') && riskOf('protein_intake') >= 2,
-      activity: () => _below70('activity') && riskOf('activity_days') >= 2,
+      nutrition: () => _below70('nutrition') && riskOf('protein_intake') >= 2 && !((_careT.reasons || []).includes('essverhalten')),   // B3
+      activity: () => _below70('activity') && riskOf('activity_days') >= 2 && !(_bmiVal > 0 && _bmiVal < 18.5),
       sleep: () => _below70('sleep') && (riskOf('sleep_duration') >= 3 || riskOf('sleep_latency') >= 2),
       vitamin_d: () => _below70('vitamin_d') && riskOf('sun_exposure_winter') >= 3,
       mental: () => _below70('mental') && riskOf('stress_level') >= 2,
@@ -5642,7 +5680,7 @@
                  && !((_careT.reasons || []).includes('essverhalten'))
     };
     // Gemüse/Obst als zweiter Ernährungs-Tipp, wenn Eiweiß passt, aber Gemüse/Obst nicht
-    if (!tipEligible.nutrition() && _below70('nutrition') && riskOf('vegetables_fruit') >= 2) {
+    if (!tipEligible.nutrition() && _below70('nutrition') && riskOf('vegetables_fruit') >= 2 && !((_careT.reasons || []).includes('essverhalten'))) {
       selfTips.nutrition = ["Bunt und einfach essen", "Täglich eine Handvoll Gemüse mehr und ein- bis zweimal pro Woche Hülsenfrüchte — klein anfangen, dranbleiben."];
       tipEligible.nutrition = () => true;
     }
@@ -5672,6 +5710,11 @@
     }
     if (_trainsFully && cat1.length < 3) {
       cat1.push(["Beibehalten und gut erholen", "Mit 5–7 aktiven Tagen und Krafttraining 3-mal oder häufiger pro Woche bist du sehr gut unterwegs. Behalte das bei und plane bewusst Erholung ein. Wenn du gezielt mehr willst, plant ein Trainer im Studio das gern mit dir.", "activity_keep"]);
+    }
+    // v2.11.0 (M3/S5): Bei ärztlichem Vorrang ersetzt die Abklärung alle Selbst-Tipps (keine Belastungssteigerung)
+    if (_careT.status === "doctor_first") {
+      cat1.length = 0;
+      cat1.push(["Zuerst die Abklärung", "Bevor du an Training oder Ernährung etwas veränderst, sprich mit deiner Hausarztpraxis. Bis dahin: Belastung nicht steigern, gewohnte Bewegung beibehalten.", "doctor_first"]);
     }
     if (cat1.length === 0) cat1.push(["Halten, was gut läuft", "Deine Angaben zeigen keinen Bereich, in dem ein zusätzlicher Schritt gerade mehr bringt. Halte deine Routinen bei und beobachte, was dir Energie gibt."]);
 
@@ -6051,8 +6094,8 @@
     else s1 = `Dein Ergebnis zeigt mehrere Bereiche mit Luft nach oben – ein klarer Ausgangspunkt.`;
     // v2.4.1 — nur wenn der Bereich wirklich Luft hat (< 70) und nicht zugleich als Stärke genannt wurde
     const s2 = (S.worst && Number(S.worst.score) < 70 && !strengths.some(a => a.key === S.worst.key))
-      ? ` Am meisten Luft ist bei <strong>${areaName(S.worst.label, S.worst.key)}</strong>.`
-      : (S.worst && Number(S.worst.score) >= 70 && !(window._care && window._care.status && window._care.status !== "none") && allAreasAtLeast70() ? ` Alle Bereiche stehen stabil – jetzt geht es ums Halten.` : "");   // v2.9.0/v2.10.0 (A1): nur ohne Hinweisstatus und wenn ALLE Bereiche (auch BMI und Bewegung) mindestens 70 erreichen
+      ? ` Dein wichtigster Hebel liegt bei <strong>${areaName(S.worst.label, S.worst.key)}</strong>.`
+      : ((!S.worst || Number(S.worst.score) >= 70) && !(window._care && window._care.status && window._care.status !== "none") && allAreasAtLeast70() ? ` Alle Bereiche stehen stabil – jetzt geht es ums Halten.` : "");   // v2.9.0/v2.10.0 (A1): nur ohne Hinweisstatus und wenn ALLE Bereiche (auch BMI und Bewegung) mindestens 70 erreichen
     return s1 + s2;
   }
 
@@ -7112,15 +7155,17 @@
     // Tipps weiterhin nur unter 85 Punkten (sonst Füllmaterial, v1.41.4).
     const _noTips = (area.key !== "bmi" && Number(area.score) >= 85) || opts.lockTips === true;
     const _noDetail = false;
+    // v2.11.0 (B3): Bei Essverhalten-Hinweis keine Ess- oder Mengen-Tipps in den Karten Ernährung und BMI
+    const _essNoTips = (area.key === "nutrition" || area.key === "bmi") && !!(window._care && (window._care.reasons || []).includes("essverhalten"));
     const _lockLine = (opts.lockTips === true && !(area.key !== "bmi" && Number(area.score) >= 85))
       ? `<div class="stage-lock-line">Deine Schritte für diesen Bereich stehen in deinem Vital-Plan.</div>` : "";
     const detailHtml = `
         <div class="area-detail${opts.open ? ' open' : ''}" id="detail-${area.key}">
-          ${_noTips ? "" : `<div class="insight-label">${ICO("bolt")} Sofort umsetzen</div>
+          ${_essNoTips ? `<div class="insight-text">Wenn dich Essen oder Gewicht stark beschäftigen, sprich das in deiner Hausarztpraxis an.</div>` : _noTips ? "" : `<div class="insight-label">${ICO("bolt")} Sofort umsetzen</div>
           <div class="insight-text">${getInsightNow(area.key, area.score, result?.bmi, result)}</div>
           <div class="insight-label">${ICO("calendar")} Mittelfristig</div>
           <div class="insight-text">${getInsightSoon(area.key, area.score, result?.bmi, result)}</div>`}
-          ${areaInfoHtml(area.key, result)}
+          ${_essNoTips ? "" : areaInfoHtml(area.key, result)}
           ${_lockLine}
         </div>
         <div class="tap-hint" id="hint-${area.key}">${opts.open ? 'Weniger anzeigen ↑' : 'Mehr erfahren ↓'}</div>`;
@@ -7631,6 +7676,7 @@
         <div class="verlauf-row" style="font-size:15px;">Vitalitäts-Index: ${prevTotal} → <strong style="color:var(--text-primary);font-size:17px;">${curTotal}</strong> ${deltaHtml}</div>
         ${bioHtml}
         ${wbHtml}
+        ${(!prev.questionnaire_revision && ((latestResult && latestResult.submission && latestResult.submission.questionnaire_revision) || personalData.pregnancy_status)) ? `<div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">Frage geändert: Die Fragen zu Interesse und Stimmung sind seit 18.10.2026 anders gestellt (letzte 2 Wochen, neue Antwortstufen). Sie zählen nicht zum Index – der Vergleich oben bleibt gültig.</div>` : ""}
         ${window._weightCarried ? `<div style="font-size:11.5px;color:var(--accent-amber-text);line-height:1.5;margin-top:8px;">Dein Gewicht ist unverändert vom letzten Check übernommen. Der BMI-Vergleich sagt deshalb nichts über eine echte Veränderung — trag beim nächsten Check dein aktuelles Gewicht ein.</div>` : ''}
         <div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">${RESULT_STAGES_ENABLED ? 'Die Bereichs-Entwicklung siehst du in der Spinne – dort kannst du die Vorher-Ebene einblenden.' : 'Die Bereichs-Entwicklung siehst du unter „Meine Bereiche“ — dort kannst du in der Spinne die Vorher-Ebene einblenden.'}</div>
       </div>`;
@@ -8609,7 +8655,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.10.0</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.11.0</footer>
 
 
 </body>
