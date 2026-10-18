@@ -33,6 +33,12 @@
   „In der Praxis ansprechen / Ein Blick lohnt sich / Über die Ernährung /
   Kein Anlass erkennbar / Nachvollziehbar“ (interne Schlüssel unverändert).
   Fachliche Grundlagen und Quellen: dokumentation/Evidenz-Versorgungs-Check.md.
+  1.1.0 (18.10.2026, Umsetzungsfassung Systemtest, Regelversion 2026-10-R1): A5 neutraler
+  Einleitungssatz; "Aus deinem Vital-Check übernommen" nur bei unveränderter Vorbelegung.
+  A4 Hinweis "Wochenmenge geteilt durch 7" bei der Menge. A6 Merkmal "über dem
+  BfR-Höchstmengenvorschlag" in jeder Gruppe (aus dem festen Notiztext der Bewertung).
+  W2 Link "Quellen und Regeln" (quellen-versorgung.html) statt "auf Nachfrage im Studio".
+  W3 Link "Mikronährstoff-Versorgung" ausgeblendet, bis die Seite existiert.
 -->
 <style>
   @font-face { font-family: 'DM Sans'; font-weight: 400; font-display: swap; src: url('assets/dm-sans-v17-latin-regular.woff2') format('woff2'); }
@@ -390,6 +396,8 @@
   .item .q { margin-bottom: 12px; }
   .q.missing .q-label { color: var(--accent-amber-text); }
   .grp { border-left: 4px solid var(--border-hover); }
+  .pl-over { display: inline-block; margin: 4px 0 2px; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
+             color: var(--accent-amber-text, #8A5300); background: rgba(245,166,35,0.14); border: 1px solid rgba(245,166,35,0.35); }   /* 1.1.0 (A6) */
   .grp.v-red { border-left-color: var(--accent-red); }
   .grp.v-blue { border-left-color: var(--accent-blue); }
   .grp.v-green { border-left-color: var(--accent-green); }
@@ -471,14 +479,15 @@
 <script src="assets/konto.js?v=1.4.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.0.0";
+  const FE_VERSION = "1.1.0";
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/supply-check";
   const SUPABASE_URL = "https://koctweetotpqaazeicwj.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   // Hinweis auf die Auswahl-Seite: gleiche Regel wie Mail und Ergebnisseite (nie bei Abklärung,
   // nie wenn nur "weglassen" herauskommt). Entscheidung zum Modul offen → hier abschaltbar.
   const SELECTION_HINT = true;
-  const SELECTION_URL = "https://le-vita.com/mikronaehrstoff-versorgung";
+  // 1.1.0 (W3): ausgeblendet, bis die Seite auf le-vita.com steht — dann hier wieder eintragen
+  const SELECTION_URL = "";
 
   const params = new URLSearchParams(location.search);
   const INTERNAL = params.get("internal") === "1";
@@ -602,6 +611,11 @@
     document.getElementById("f-pin").onkeydown = (e) => { if (e.key === "Enter") go(); };
   }
 
+  function itemsKey(items) {
+    try { return JSON.stringify((items || []).map((i) => [i.substance_key, i.amount_level || null, i.reason || null, i.since || null, (i.combo_contents || []).slice().sort()])); }
+    catch (e) { return ""; }
+  }
+
   function route(r) {
     if (!r.success) return screenLogin(errorText(r.error));
     if (r.status === "consent_required") return screenConsent(r.consent);
@@ -609,6 +623,7 @@
     if (r.status === "none") { spinner(); return call("start").then(route); }
     st.data = r;
     st.items = (r.items || []).map((i) => ({ ...i, combo_contents: i.combo_contents || [] }));
+    st.prefillKey = itemsKey(st.items);   // 1.1.0 (A5): "übernommen" nur, solange die Liste unverändert ist
     st.ses = { ...(r.session || {}) };
     if (r.status === "result") return screenResult(r);
     return screenForm();
@@ -655,7 +670,7 @@
     return `<div class="card item" data-idx="${idx}">
       <div class="item-head"><h3>${esc(s.label || it.substance_key)}</h3><button type="button" class="rm" data-rm="${idx}" aria-label="Entfernen">Entfernen</button></div>
       ${s.ignore_in_score ? `<p class="small">Sporternährung — dazu gibt dieser Check keine Tipps.</p>` : `
-      ${s.asks_amount && lv.length ? `<div class="q${miss("amount_level")}"><div class="q-label">Menge pro Tag</div><div class="q-help">Gemeint ist die Wirkstoffmenge pro Tag laut Packung (z. B. „20 µg“ oder „800 IE“), nicht das Gewicht der Tablette.</div>${chips("amount_level", lv, it.amount_level)}</div>` : ""}
+      ${s.asks_amount && lv.length ? `<div class="q${miss("amount_level")}"><div class="q-label">Menge pro Tag</div><div class="q-help">Gemeint ist die Wirkstoffmenge pro Tag laut Packung (z. B. „20 µg“ oder „800 IE“), nicht das Gewicht der Tablette. Nimmst du es nicht täglich, rechne auf den Tag um (Wochenmenge geteilt durch 7).</div>${chips("amount_level", lv, it.amount_level)}</div>` : ""}
       ${s.is_combination ? `<div class="q"><div class="q-label">Was steht drauf?</div><div class="q-help">Mehrfachauswahl — leer lassen, wenn du es nicht weißt.</div>
         <div class="chips" data-multi="combo_contents">${COMBO.map((k) => `<button type="button" data-v="${k}" class="${(it.combo_contents || []).includes(k) ? "on" : ""}">${esc(label(k))}</button>`).join("")}</div></div>` : ""}
       <div class="q${miss("reason")}"><div class="q-label">Warum nimmst du es?</div>${chips("reason", REASON, it.reason)}</div>
@@ -670,7 +685,9 @@
     const has = st.items.some((i) => !((st.data.catalog || []).find((s) => s.substance_key === i.substance_key) || {}).ignore_in_score);
     h(`
       <h1>Deine Präparate</h1>
-      <p class="lead">${st.items.length ? "Aus deinem Vital-Check haben wir übernommen, was du angegeben hast. Ergänze Menge und Anlass — und füg hinzu, was fehlt." : "Trag ein, welche Nahrungsergänzung du regelmäßig nimmst. Nimmst du nichts, geht es direkt weiter."}</p>
+      <p class="lead">${st.items.length ? (st.prefillKey && itemsKey(st.items) === st.prefillKey && !st.data?.session?.completed_at
+          ? "Aus deinem Vital-Check übernommen: Hier stehen deine Präparate. Ergänze Menge und Anlass – und füg hinzu, was fehlt."
+          : "Hier stehen deine Präparate. Ergänze Menge und Anlass – und füg hinzu, was fehlt.") : "Trag ein, welche Nahrungsergänzung du regelmäßig nimmst. Nimmst du nichts, geht es direkt weiter."}</p>
       ${st.items.map((it, i) => itemCard(it, i, missing)).join("")}
       ${cat.length ? `<div class="card"><div class="field" style="margin:0"><label for="add">Präparat hinzufügen</label>
         <select id="add"><option value="">Bitte wählen …</option>${cat.map((s) => `<option value="${esc(s.substance_key)}">${esc(s.label)}</option>`).join("")}</select></div></div>` : ""}
@@ -734,12 +751,13 @@
     track("supply_result_view", { verdicts: Object.keys(res.counts || {}).join(",") }, true);
     const all = [...(res.items || []), ...(res.add || [])];
     const hasClarify = all.some((x) => x.verdict === "abklaeren");
-    const sel = SELECTION_HINT && !hasClarify && all.some((x) => ["ergaenzen", "behalten", "behalten_pruefen"].includes(x.verdict));
+    const sel = !!SELECTION_URL && SELECTION_HINT && !hasClarify && all.some((x) => ["ergaenzen", "behalten", "behalten_pruefen"].includes(x.verdict));
     const sec = GROUPS.map(([k, title, lead]) => {
       const list = all.filter((x) => x.verdict === k);
       if (!list.length) return "";
       return `<div class="card grp ${VERDICT[k][1]}"><h3>${esc(title)}</h3>${lead ? `<p class="muted" style="margin-bottom:8px">${esc(lead)}</p>` : ""}
         ${list.map((x) => `<div class="pl-item"><div class="pl-head"><strong>${esc(x.label)}</strong>${x.amount ? `<span class="small">${esc(x.amount)}</span>` : ""}</div>
+          ${(x.notes || []).some((n) => /über dem Höchstmengenvorschlag/.test(n)) ? `<p class="pl-over">über dem BfR-Höchstmengenvorschlag</p>` : ""}
           ${(x.notes || []).map((n) => `<p class="pl-note">${esc(n)}</p>`).join("")}
           ${x.hope_text ? `<p class="pl-hope"><strong>Zu deiner Erwartung:</strong> ${esc(x.hope_text)}</p>` : ""}
           ${x.food ? `<p class="pl-food"><strong>Über die Ernährung:</strong> ${esc(x.food)}</p>` : ""}
@@ -773,7 +791,7 @@
       <div class="card"><h3>Wie geht es weiter?</h3>
         <p class="muted">Mach den Versorgungs-Check zusammen mit deinem Re-Check in 8–12 Wochen noch einmal — dann siehst du, was sich verändert hat.
           Für ein Gespräch im Studio sprich uns einfach an.</p></div>
-      <p class="small">Diese Tipps folgen festen Regeln aus den Empfehlungen von DGE und BfR (Quellen auf Nachfrage im Studio). Sie sind keine Diagnose, ersetzen keine ärztliche Beratung und
+      <p class="small">Diese Tipps folgen festen Regeln aus den Empfehlungen von DGE und BfR (<a href="quellen-versorgung.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Quellen und Regeln, Stand 18.10.2026</a>). Sie sind keine Diagnose, ersetzen keine ärztliche Beratung und
         nennen bewusst keine Dosierungen. Wenn du dauerhaft Medikamente nimmst oder eine Vorerkrankung hast, sprich vor jeder Einnahme mit deiner Ärztin oder deinem Arzt.</p>
       ${INTERNAL ? `<p class="small">${esc(r.version || "")} · Fall im Vital-Check: ${esc(res.vital_check_case || "–")}</p>` : ""}`);
     document.getElementById("b-edit").onclick = () => screenForm();
