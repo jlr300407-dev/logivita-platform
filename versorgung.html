@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a1628">
+<script>
+  /* Hell/Dunkel wie im Vital-Check: gewaehltes Thema VOR dem ersten Zeichnen setzen.
+     Gemeinsamer Schluessel "levita-theme" (gleiche Herkunft app.le-vita.com). */
+  (function () { try { var t = localStorage.getItem('levita-theme');
+    if (t === 'hell' || t === 'dunkel') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+</script>
+<meta name="robots" content="noindex, nofollow">
+<title>Versorgungs-Check · LeVITA</title>
+<!--
+  Versorgungs-Check — Teilnehmerseite (versorgung.html)
+  1.0.0 (18.10.2026): erste Fassung. Gehört zu 07_Versorgungs-Check_v1.sql und zur
+  neuen Edge supply-check (supply-edge-2026-10-18.1). Baut auf dem Vital-Check auf
+  (Pilot-ID + PIN oder Konto, wie der Ernährungs-Check). Präparate mit festen
+  Mengenstufen, Anlass je Präparat, Dauer, Erwartung; Kombipräparate mit Inhalt.
+  Bewertung nur in der Datenbank (supply_plan_evaluate, feste Regeln, keine KI):
+  behalten, weglassen, abklären, ergänzen. Konto-Schritt im Ergebnis (seit Review freiwillig).
+  Lebensmittel als Alternative je Stoff und Ernaehrungsform ("Ueber die Ernaehrung").
+  Funnel: page='versorgung', Ereignisse supply_*. Gestaltung und Hell/Dunkel wie
+  ernaehrung.html 0.6.4 (CSS übernommen).
+  Nach externem Review (18.10.2026): Etikett "Anlass erkennbar" statt "Nachvollziehbar",
+  Karte "Was dieser Check kann — und was nicht", Kosten ohne errechnete Ersparnis (11),
+  Kombipräparate mit Hinweis "Gesamtmenge nicht beurteilbar" (11), Hilfetext Wirkstoffmenge,
+  "Nach Bluttest mit auffälligem Wert", Hinweis zu verordneten Präparaten, Transparenzsatz
+  bei der Produktübersicht, Rückmeldung "hilfreich?" (Funnel supply_feedback),
+  Konto freiwillig wie beim Ernährungs-Check (Rückkehr per PIN bleibt).
+  Sprache: nur Tipps, keine Befunde. Sichtbare Bezeichnungen der Gruppen sind
+  „In der Praxis ansprechen / Ein Blick lohnt sich / Über die Ernährung /
+  Kein Anlass erkennbar / Nachvollziehbar“ (interne Schlüssel unverändert).
+  Fachliche Grundlagen und Quellen: dokumentation/Evidenz-Versorgungs-Check.md.
+-->
+<style>
+  @font-face { font-family: 'DM Sans'; font-weight: 400; font-display: swap; src: url('assets/dm-sans-v17-latin-regular.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 500; font-display: swap; src: url('assets/dm-sans-v17-latin-500.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 600; font-display: swap; src: url('assets/dm-sans-v17-latin-600.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Sans'; font-weight: 700; font-display: swap; src: url('assets/dm-sans-v17-latin-700.woff2') format('woff2'); }
+  @font-face { font-family: 'DM Serif Display'; font-weight: 400; font-display: swap; src: url('assets/dm-serif-display-v17-latin-regular.woff2') format('woff2'); }
+
+  :root {
+      --brand-dark: #0a1628;
+      --brand-card: #132338;
+      --accent-green: #22c97a;
+      --accent-green-dim: rgba(34,201,122,0.12);
+      --accent-blue: #3b9eff;
+      --accent-blue-dim: rgba(59,158,255,0.10);
+      --accent-amber: #f5a623;
+      --accent-red: #ff5c5c;
+      /* v1.41.4: beide wurden verwendet, waren aber nie definiert */
+      --accent-purple: #a78bfa;
+      --brand-card2: #1a2e47;
+      --text-primary: #f0f4f8;
+      --text-secondary: #8da0b8;
+      --text-muted: #8396ae;   /* v2.8.6: 4a6280 erfuellte WCAG AA nicht (2,5:1 auf --brand-card2); 8396ae = 5,99 / 5,24 / 4,55 */
+      --border: rgba(255,255,255,0.07);
+      --border-hover: rgba(255,255,255,0.14);
+      /* ── v2.8.12 (B1) ── */
+      /* Schriftrollen der Akzentfarben. Auf Dunkel identisch mit der Flaeche; auf Hell braucht
+         Schrift ein dunkleres Gruen/Blau/Amber/Rot (#22c97a erreicht dort nur 2,0:1). */
+      --accent-green-text: #22c97a;
+      --accent-blue-text: #3b9eff;
+      --accent-amber-text: #f5a623;
+      --accent-red-text: #ff5c5c;
+      --accent-purple-text: #a78bfa;
+      /* Warnueberschriften in Amber-Kaesten (heller als --accent-amber, fuer Lesbarkeit auf Dunkel) */
+      --warn-text: #ffb347;
+      --error-text: #ff8a8a;
+      /* Schrift AUF einer Akzentflaeche (gruene/blaue Schaltflaechen). Bleibt in beiden Themen dunkel. */
+      --on-accent: #0a1628;
+      /* Zweiter Gruenton am Ende des Schaltflaechen-Verlaufs */
+      --accent-green-deep: #1aaa65;
+      /* Schalterknopf im Simulator: immer weiss */
+      --knob: #ffffff;
+      /* Bewertungsstufen ohne eigenen Akzent (gut/mittel/niedrig nutzen Gruen/Amber/Rot) */
+      --score-ok: #5edb97;
+      --score-ok-text: #5edb97;
+      --score-ok-rgb: 94,219,151;
+      --score-focus: #ff8c42;
+      --score-focus-text: #ff8c42;
+      --score-focus-rgb: 255,140,66;
+      /* Abgesenkte Flaeche innerhalb einer Karte */
+      --sunken: rgba(0,0,0,0.18);
+      /* Startseite: Haupt-Schaltflaeche und Hero-Grund */
+      --cta-green: #3ddc84;
+      --on-cta: #0d1a14;
+      --hero-bg: #0d1a14;
+      /* RGB-Tripel fuer Toenungen mit wechselnder Deckkraft: rgba(var(--x-rgb), 0.08).
+         --ink-rgb ist die "Tinte" fuer Ueberlagerungen und Konturen: auf Dunkel Weiss,
+         auf Hell wird daraus Navy - damit drehen sich alle hellen Schleier auf einmal um. */
+      --ink-rgb: 255,255,255;
+      --shadow-rgb: 0,0,0;
+      --brand-dark-rgb: 10,22,40;
+      --accent-green-rgb: 34,201,122;
+      --accent-blue-rgb: 59,158,255;
+      --accent-amber-rgb: 245,166,35;
+      --accent-red-rgb: 255,92,92;
+      --accent-purple-rgb: 167,139,250;
+      --text-secondary-rgb: 141,160,184;
+      /* Drei Einzelgaenger, je ein- bis viermal benutzt. Zusammenlegen waere eine sichtbare
+         Aenderung und gehoert nicht in B1 - in der Liste fuer die Vereinheitlichung. */
+      --slate-rgb: 122,143,168;
+      --violet-rgb: 139,92,246;
+      --lgreen-alt-rgb: 59,200,100;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+    /* ── v2.8.13 (B2) — Helles Thema ───────────────────────────────────────
+       Gilt bei ausdruecklicher Wahl (data-theme="hell") ODER, ohne Wahl, wenn
+       das Geraet auf Hell steht. Die Werte sind in palette.py durchgerechnet:
+       Schrift >= 4,5:1 auf Papier, Karte, Flaeche 2 und auf den eigenen
+       Toenungen; Linien und Flaechen >= 3:1; weisse Knopfschrift >= 4,5:1.
+       Knopffarbe Dunkelgruen #097240 mit weisser Schrift (Entscheidung 17.10.). */
+    :root[data-theme="hell"] {
+      --brand-dark: #F7F6F2;
+      --brand-card: #FFFFFF;
+      --accent-green: #097240;
+      --accent-green-dim: rgba(9,114,64,0.10);
+      --accent-blue: #1B5FAD;
+      --accent-blue-dim: rgba(27,95,173,0.08);
+      --accent-amber: #B36B00;
+      --accent-red: #C53030;
+      --accent-purple: #6B4BC4;
+      --brand-card2: #EFEDE7;
+      --text-primary: #13263B;
+      --text-secondary: #4C5E72;
+      --text-muted: #58697C;
+      --border: rgba(19,38,59,0.12);
+      --border-hover: rgba(19,38,59,0.24);
+      --accent-green-text: #076A3B;
+      --accent-blue-text: #1B5FAD;
+      --accent-amber-text: #8A5300;
+      --accent-red-text: #B42318;
+      --accent-purple-text: #5A3DAA;
+      --warn-text: #8A5300;
+      --error-text: #B42318;
+      --on-accent: #FFFFFF;
+      --accent-green-deep: #065C33;
+      --knob: #ffffff;
+      --score-ok: #3B8A52;
+      --score-ok-text: #246B3A;
+      --score-ok-rgb: 59,138,82;
+      --score-focus: #C9561A;
+      --score-focus-text: #A8460F;
+      --score-focus-rgb: 201,86,26;
+      --sunken: rgba(19,38,59,0.05);
+      --cta-green: #097240;
+      --on-cta: #FFFFFF;
+      --hero-bg: #0d1a14;
+      --ink-rgb: 19,38,59;
+      --shadow-rgb: 19,38,59;
+      --brand-dark-rgb: 247,246,242;
+      --accent-green-rgb: 9,114,64;
+      --accent-blue-rgb: 27,95,173;
+      --accent-amber-rgb: 179,107,0;
+      --accent-red-rgb: 197,48,48;
+      --accent-purple-rgb: 107,75,196;
+      --text-secondary-rgb: 76,94,114;
+      --slate-rgb: 76,94,114;
+      --violet-rgb: 107,75,196;
+      --lgreen-alt-rgb: 59,138,82;
+    }
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dunkel"]) {
+        --brand-dark: #F7F6F2;
+        --brand-card: #FFFFFF;
+        --accent-green: #097240;
+        --accent-green-dim: rgba(9,114,64,0.10);
+        --accent-blue: #1B5FAD;
+        --accent-blue-dim: rgba(27,95,173,0.08);
+        --accent-amber: #B36B00;
+        --accent-red: #C53030;
+        --accent-purple: #6B4BC4;
+        --brand-card2: #EFEDE7;
+        --text-primary: #13263B;
+        --text-secondary: #4C5E72;
+        --text-muted: #58697C;
+        --border: rgba(19,38,59,0.12);
+        --border-hover: rgba(19,38,59,0.24);
+        --accent-green-text: #076A3B;
+        --accent-blue-text: #1B5FAD;
+        --accent-amber-text: #8A5300;
+        --accent-red-text: #B42318;
+        --accent-purple-text: #5A3DAA;
+        --warn-text: #8A5300;
+        --error-text: #B42318;
+        --on-accent: #FFFFFF;
+        --accent-green-deep: #065C33;
+        --knob: #ffffff;
+        --score-ok: #3B8A52;
+        --score-ok-text: #246B3A;
+        --score-ok-rgb: 59,138,82;
+        --score-focus: #C9561A;
+        --score-focus-text: #A8460F;
+        --score-focus-rgb: 201,86,26;
+        --sunken: rgba(19,38,59,0.05);
+        --cta-green: #097240;
+        --on-cta: #FFFFFF;
+        --hero-bg: #0d1a14;
+        --ink-rgb: 19,38,59;
+        --shadow-rgb: 19,38,59;
+        --brand-dark-rgb: 247,246,242;
+        --accent-green-rgb: 9,114,64;
+        --accent-blue-rgb: 27,95,173;
+        --accent-amber-rgb: 179,107,0;
+        --accent-red-rgb: 197,48,48;
+        --accent-purple-rgb: 107,75,196;
+        --text-secondary-rgb: 76,94,114;
+        --slate-rgb: 76,94,114;
+        --violet-rgb: 107,75,196;
+        --lgreen-alt-rgb: 59,138,82;
+      }
+    }
+
+  /* Umschalter (wie im Vital-Check) */
+  .hdr-right { display: flex; align-items: center; gap: 10px; }
+  .theme-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+    border-radius: 999px; border: 1px solid var(--border); background: rgba(var(--ink-rgb),0.04);
+    color: var(--text-secondary); cursor: pointer; padding: 0; flex: none; }
+  .theme-btn:hover { color: var(--text-primary); border-color: var(--border-hover); }
+  .theme-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  @media print { .theme-btn { display: none !important; } }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--brand-dark); color: var(--text-primary); min-height: 100vh; padding: 20px 16px 60px; line-height: 1.5; }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+  .logo-name { font-family: 'DM Serif Display', serif; font-size: 24px; }
+  .logo-sub { font-size: 12px; color: var(--text-secondary); letter-spacing: .04em; text-transform: uppercase; }
+  .phase-note { font-size: 12px; color: var(--accent-green-text); }
+  /* 0.6.0 Schritte */
+  .state { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 3px 10px; border-radius: 999px; margin-bottom: 8px; }
+  .state.s-v { background: rgba(var(--ink-rgb),.08); color: var(--text-secondary); }
+  .state.s-g { background: var(--accent-blue-dim); color: var(--accent-blue-text); }
+  .state.s-a { background: var(--accent-green); color: var(--on-accent); }
+  .ifthen { font-size: 16px; font-weight: 600; background: rgba(var(--ink-rgb),.04); border-radius: var(--radius-sm); padding: 12px 14px; margin: 6px 0 12px; }
+  .rate { display: flex; gap: 8px; margin: 8px 0 14px; }
+  .rate button { flex: 1; padding: 12px 0; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(var(--ink-rgb),.03); color: var(--text-primary); font: 700 16px 'DM Sans'; cursor: pointer; }
+  .rate button.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 14px; }
+  .chips button { padding: 9px 14px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); font: 500 14px 'DM Sans'; cursor: pointer; }
+  .chips button.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
+  .addlist li { list-style: none; display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
+  .addlist li:last-child { border-bottom: 0; }
+  .addlist button { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--accent-green); background: transparent; color: var(--accent-green-text); font: 600 13px 'DM Sans'; cursor: pointer; white-space: nowrap; }
+  #fridge { display: none; }
+  @media print {
+    body { background: #fff !important; color: #111 !important; padding: 0; }
+    .wrap > *:not(#fridge) { display: none !important; }
+    /* 0.6.3 — Zettel im LeVITA-Auftritt: Logo, ein Gruen-Akzent, Wochen beschriftet. Tintensparend. */
+    #fridge { display: block !important; font-family: 'DM Sans', Arial, sans-serif; color: #13263B; padding: 6mm 9mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    #fridge .f-head { display: flex; align-items: center; justify-content: space-between; gap: 6mm; padding-bottom: 3mm; margin-bottom: 4mm; border-bottom: 0.6mm solid #097240; }
+    #fridge .f-logo { display: flex; align-items: center; gap: 3mm; }
+    #fridge .f-logo .f-mark { height: 13mm; width: auto; }
+    #fridge .f-logo .f-word { height: 11mm; width: auto; }
+    #fridge .f-date { font-size: 9pt; color: #4C5E72; text-align: right; }
+    #fridge h1 { font-family: 'DM Serif Display', Georgia, serif; font-weight: 400; font-size: 21pt; margin: 0 0 4mm; color: #13263B; }
+    #fridge .f-step { border: 0.5mm solid #097240; border-radius: 4mm; padding: 4mm 5mm; margin-bottom: 4mm; page-break-inside: avoid; }
+    #fridge .f-title { font-size: 10pt; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #076A3B; margin-bottom: 2mm; }
+    #fridge .f-ifthen { font-size: 16pt; font-weight: 700; line-height: 1.26; margin-bottom: 3mm; color: #13263B; }
+    #fridge .f-days { display: grid; grid-template-columns: 14mm repeat(7, 1fr); gap: 1.6mm; align-items: center; }
+    #fridge .f-days .f-wk { font-size: 8pt; font-weight: 700; color: #4C5E72; }
+    #fridge .f-days .f-day { border: 0.35mm solid #8A96A3; border-radius: 1.5mm; height: 7.5mm; font-size: 7.5pt; color: #6B7785; padding: 0.8mm 1mm; }
+    #fridge .f-doc { font-size: 10pt; margin-top: 2.5mm; }
+    #fridge .f-foot { font-size: 9pt; color: #4C5E72; margin-top: 3mm; padding-top: 2.5mm; border-top: 0.3mm solid #C9CFD6; display: flex; justify-content: space-between; gap: 6mm; }
+    #fridge .f-foot strong { color: #13263B; }
+    @page { size: A5 portrait; margin: 6mm; }
+  }
+
+  h1 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 30px; line-height: 1.2; margin-bottom: 10px; }
+  h2 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 22px; margin-bottom: 8px; }
+  h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  p.lead { color: var(--text-secondary); font-size: 16px; margin-bottom: 22px; }
+  .muted { color: var(--text-secondary); font-size: 14px; }
+  .small { font-size: 13px; color: var(--text-muted); }
+
+  .card { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; }
+  .card.top { border-color: rgba(var(--accent-green-rgb),.45); background: linear-gradient(180deg, rgba(var(--accent-green-rgb),.10), var(--brand-card) 55%); }
+  .card.info { border-color: rgba(var(--accent-blue-rgb),.35); background: var(--accent-blue-dim); }
+  .card.warn { border-color: rgba(var(--accent-amber-rgb),.4); background: rgba(var(--accent-amber-rgb),.08); }
+
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  input[type=text], input[type=password], input[type=tel], textarea {
+    width: 100%; padding: 13px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+    background: rgba(var(--ink-rgb),.04); color: var(--text-primary); font: 500 15px 'DM Sans', sans-serif; -webkit-appearance: none; }
+  input:focus, textarea:focus { outline: none; border-color: var(--accent-green); }
+  textarea { min-height: 90px; resize: vertical; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 22px; border-radius: 999px; border: 0;
+    background: var(--accent-green); color: var(--on-accent); font: 700 15px 'DM Sans', sans-serif; cursor: pointer; transition: transform .12s, opacity .12s; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:disabled { opacity: .45; cursor: default; transform: none; }
+  .btn.ghost { background: transparent; color: var(--text-primary); border: 1px solid var(--border-hover); }
+  .btn.block { width: 100%; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row .btn { flex: 1; }
+
+  .error { color: var(--accent-red-text); font-size: 14px; margin-top: 10px; min-height: 1em; }
+
+  /* Fragebogen */
+  .progress { height: 6px; background: var(--brand-card2); border-radius: 999px; overflow: hidden; margin-bottom: 8px; }
+  .progress > div { height: 100%; background: var(--accent-green); transition: width .3s; }
+  .step-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 18px; }
+  .q { margin-bottom: 26px; }
+  .q.missing .q-label { color: var(--accent-amber-text); }
+  .q-label { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+  .q-help { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; }
+  .opts { display: grid; gap: 8px; margin-top: 10px; }
+  .opt { width: 100%; text-align: left; padding: 13px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+    background: rgba(var(--ink-rgb),.03); color: var(--text-primary); font: 500 15px 'DM Sans', sans-serif; cursor: pointer;
+    display: flex; gap: 12px; align-items: center; transition: border-color .15s, background .15s; }
+  .opt:hover { border-color: var(--border-hover); }
+  .opt .mark { flex: 0 0 18px; height: 18px; border-radius: 50%; border: 2px solid var(--text-muted); }
+  .opt.multi .mark { border-radius: 5px; }
+  .opt.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
+  .opt.on .mark { border-color: var(--accent-green); background: var(--accent-green); box-shadow: inset 0 0 0 3px var(--brand-card); }
+
+  /* Ergebnis */
+  .tier { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 3px 10px; border-radius: 999px; margin-bottom: 10px; }
+  .tier.t-top { background: var(--accent-green); color: var(--on-accent); }
+  .tier.t-strong { background: var(--accent-green-dim); color: var(--accent-green-text); }
+  .tier.t-also { background: rgba(var(--ink-rgb),.06); color: var(--text-secondary); }
+  .lever-body { font-size: 15px; margin-bottom: 12px; }
+  details { border-top: 1px solid var(--border); padding-top: 10px; margin-top: 6px; }
+  summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent-blue-text); list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  .kv { margin-top: 12px; }
+  .kv dt { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--text-secondary); margin-top: 10px; }
+  .kv dd { font-size: 14px; }
+  .kv ul { padding-left: 18px; font-size: 14px; }
+  .evidence { font-size: 12px; color: var(--text-muted); margin-top: 12px; }
+  .imag { font-size: 12px; color: var(--accent-green-text); margin-left: 6px; }
+  .why { font-size: 14px; background: rgba(var(--ink-rgb),.04); border-radius: var(--radius-sm); padding: 10px 12px; margin: 4px 0 12px; }
+  .why strong { color: var(--text-secondary); font-weight: 600; }
+  .choose { margin-top: 12px; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--accent-green); background: transparent;
+    color: var(--accent-green-text); font: 600 14px 'DM Sans', sans-serif; cursor: pointer; }
+  .choose.on { background: var(--accent-green); color: var(--on-accent); }
+  .choicebar { position: sticky; bottom: 12px; z-index: 5; background: var(--brand-card2); border: 1px solid var(--border-hover); border-radius: 999px;
+    padding: 10px 18px; font-size: 14px; text-align: center; margin: 16px 0; }
+  .tag-failed { font-size: 12px; color: var(--accent-amber-text); }
+  .variant { font-size: 14px; border-left: 3px solid var(--accent-blue); padding-left: 12px; margin: 10px 0; color: var(--text-secondary); }
+  .parking li { list-style: none; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px; display: flex; justify-content: space-between; gap: 10px; }
+  .parking li:last-child { border-bottom: 0; }
+  .buddy { width: 84px; height: 84px; float: right; margin: -6px -6px 6px 12px; }
+
+  .consent-box { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; color: var(--text-secondary); cursor: pointer; margin: 16px 0; }
+  .consent-box input { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--accent-green); flex: 0 0 18px; }
+
+  /* 0.4.0 Bestätigung */
+  .picked { list-style: none; margin: 4px 0 0; }
+  .picked li { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px; display: flex; gap: 10px; align-items: baseline; }
+  .picked li:last-child { border-bottom: 0; }
+  .picked .num { flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--accent-green); color: var(--on-accent); font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
+  .way { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(var(--ink-rgb),.03); cursor: pointer; margin-bottom: 8px; }
+  .way.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
+  .way input { margin-top: 4px; accent-color: var(--accent-green); }
+  .way strong { display: block; font-size: 15px; }
+  .slots { display: flex; gap: 8px; flex-wrap: wrap; }
+  .slots label { flex: 1; min-width: 110px; text-align: center; padding: 11px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border); cursor: pointer; font-size: 14px; }
+  .slots input { display: none; }
+  .slots label.on { border-color: var(--accent-green); background: var(--accent-green-dim); }
+  .move-grid { display: grid; gap: 10px; margin-top: 12px; }
+  @media (min-width: 560px) { .move-grid { grid-template-columns: 1fr 1fr; } }
+  .move-grid > div { background: rgba(var(--ink-rgb),.04); border-radius: var(--radius-sm); padding: 14px; }
+  .choicebar .btn { margin-top: 8px; padding: 10px 18px; font-size: 14px; }
+  .contact-line { font-size: 15px; margin: 4px 0; }
+  .contact-line a { color: var(--accent-green-text); }
+
+  footer { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 40px; }
+  .hidden { display: none !important; }
+  .spinner { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--brand-card2); border-top-color: var(--accent-green); animation: spin .8s linear infinite; margin: 60px auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Testleiste (nur ?internal=1) */
+  #testbar { position: sticky; top: 0; z-index: 10; background: #2a1d05; border: 1px solid rgba(245,166,35,.5); border-radius: var(--radius-sm);
+    padding: 10px 12px; margin-bottom: 18px; font-size: 13px; }
+  #testbar .row { margin-top: 8px; }
+  #testbar button { padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(245,166,35,.5); background: transparent; color: var(--accent-amber-text); font: 600 12px 'DM Sans'; cursor: pointer; }
+  #testbar label { color: var(--accent-amber-text); display: inline-flex; gap: 6px; align-items: center; }
+  #raw { white-space: pre-wrap; font: 11px/1.4 ui-monospace, Menlo, monospace; background: #050c17; padding: 10px; border-radius: 8px; max-height: 320px; overflow: auto; margin-top: 8px; }
+  /* Entwickleransichten (Testleiste, Rohdaten): fester dunkler Grund, daher feste helle Schrift. */
+  #raw, #testbar { color: #f0f4f8; --accent-amber-text: #f5a623; }
+  /* Versorgungs-Check 1.0.0 */
+  select { width: 100%; padding: 13px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--brand-card2); color: var(--text-primary); font: 500 15px 'DM Sans', sans-serif; }
+  .item-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+  .rm { background: transparent; border: 0; color: var(--text-secondary); font: 600 13px 'DM Sans'; cursor: pointer; text-decoration: underline; }
+  .item .q { margin-bottom: 12px; }
+  .q.missing .q-label { color: var(--accent-amber-text); }
+  .grp { border-left: 4px solid var(--border-hover); }
+  .grp.v-red { border-left-color: var(--accent-red); }
+  .grp.v-blue { border-left-color: var(--accent-blue); }
+  .grp.v-green { border-left-color: var(--accent-green); }
+  .grp.v-gray { border-left-color: var(--text-muted); }
+  .pl-item { padding: 10px 0; border-top: 1px solid var(--border); }
+  .pl-item:first-of-type { border-top: 0; }
+  .pl-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+  .pl-note { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+  .pl-food { font-size: 14px; margin-top: 8px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--accent-green-dim); }
+  .pl-food strong { color: var(--accent-green-text); }
+  .pl-hope { font-size: 14px; margin-top: 6px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--accent-blue-dim, rgba(74,144,226,.12)); }
+  .pl-tip, .pl-lab { font-size: 13px; color: var(--text-secondary); margin-top: 6px; }
+  .pl-tip strong, .pl-lab strong, .pl-hope strong { color: var(--text-primary); }
+  #doc-sheet { display: none; }
+  .ds-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0; }
+  .ds-table th, .ds-table td { border: 1px solid #999; padding: 6px 8px; text-align: left; vertical-align: top; }
+  .ds-lines { border-bottom: 1px solid #999; height: 26px; }
+  @media print {
+    body.print-doc main, body.print-doc header { display: none !important; }
+    body.print-doc #doc-sheet { display: block !important; color: #111; font: 13px/1.45 'DM Sans', Arial, sans-serif; }
+    body.print-doc #doc-sheet h2 { font-size: 18px; margin: 0 0 4px; }
+    body.print-doc #doc-sheet p { margin: 6px 0; }
+  }
+  @media print {
+    body { background: #fff !important; color: #111 !important; padding: 0; }
+    #testbar, header .theme-btn, #konto-step, .row, footer { display: none !important; }
+    .card { border: 1px solid #ccc !important; background: #fff !important; break-inside: avoid; }
+    .muted, .pl-note, .small { color: #333 !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="testbar" class="hidden">
+    <strong>Testmodus</strong> · <span id="tb-version"></span>
+    <div class="row"><button id="tb-raw" type="button">Rohdaten</button></div>
+    <div id="raw" class="hidden"></div>
+  </div>
+  <header>
+    <div>
+      <div class="logo-name">LeVITA</div>
+      <div class="logo-sub">Versorgungs-Check</div>
+    </div>
+    <button type="button" class="theme-btn" onclick="toggleTheme()" aria-label="Helles Design einschalten"></button>
+  </header>
+  <main id="app"><div class="spinner"></div></main>
+  <div id="doc-sheet"></div>
+  <footer><a href="konto.html" style="color:inherit">Mein Bereich</a> · <a href="./" style="color:inherit">Vital-Check</a> · LeVITA · Versorgungs-Check <span id="fe-version"></span></footer>
+</div>
+<script>
+  /* Hell/Dunkel - dieselbe Logik wie im Vital-Check (index.html, v2.8.13). */
+  (function () {
+    var KEY = 'levita-theme';
+    var SUN = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+    var MOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
+    function pref() { try { var v = localStorage.getItem(KEY); return (v === 'hell' || v === 'dunkel') ? v : 'auto'; } catch (e) { return 'auto'; } }
+    function eff() { var p = pref(); if (p !== 'auto') return p;
+      return (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'hell' : 'dunkel'; }
+    function apply() {
+      var p = pref(), r = document.documentElement;
+      if (p === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', p);
+      var e = eff(), m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.setAttribute('content', e === 'hell' ? '#F7F6F2' : '#0a1628');
+      var lbl = e === 'hell' ? 'Dunkles Design einschalten' : 'Helles Design einschalten';
+      var bs = document.querySelectorAll('.theme-btn');
+      for (var i = 0; i < bs.length; i++) { bs[i].innerHTML = e === 'hell' ? MOON : SUN; bs[i].setAttribute('aria-label', lbl); bs[i].title = lbl; }
+    }
+    window.toggleTheme = function () {
+      var next = eff() === 'hell' ? 'dunkel' : 'hell';
+      try { localStorage.setItem(KEY, next); } catch (e) {}
+      apply();
+    };
+    if (window.matchMedia) { var mq = window.matchMedia('(prefers-color-scheme: light)');
+      var h = function () { if (pref() === 'auto') apply(); };
+      if (mq.addEventListener) mq.addEventListener('change', h); else if (mq.addListener) mq.addListener(h); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply); else apply();
+  })();
+</script>
+<script src="assets/konto.js?v=1.4.0"></script>
+<script>
+(() => {
+  const FE_VERSION = "1.0.0";
+  const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/supply-check";
+  const SUPABASE_URL = "https://koctweetotpqaazeicwj.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
+  // Hinweis auf die Auswahl-Seite: gleiche Regel wie Mail und Ergebnisseite (nie bei Abklärung,
+  // nie wenn nur "weglassen" herauskommt). Entscheidung zum Modul offen → hier abschaltbar.
+  const SELECTION_HINT = true;
+  const SELECTION_URL = "https://le-vita.com/mikronaehrstoff-versorgung";
+
+  const params = new URLSearchParams(location.search);
+  const INTERNAL = params.get("internal") === "1";
+  const $app = document.getElementById("app");
+  document.getElementById("fe-version").textContent = FE_VERSION;
+  const st = { code: (params.get("code") || "").trim().toUpperCase(), pin: "", acct: null, data: null, items: [], ses: {} };
+
+  // ── Funnel (wie Ernährungs-Check): ohne Cookies, ohne Gesundheitsdaten ──
+  const FUNNEL_SESSION = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const UTM = {};
+  ["utm_source", "utm_medium", "utm_campaign", "utm_content"].forEach((k) => { const v = params.get(k); if (v) UTM[k] = v.slice(0, 60); });
+  const ENTRY = (() => {
+    const s = String(UTM.utm_source || "").toLowerCase(), m = String(UTM.utm_medium || "").toLowerCase();
+    if (s === "vital-check" || m === "ergebnis") return "ergebnis";
+    if (s === "mail") return "mail";
+    if (s === "konto" || m === "konto") return "konto";
+    if (s) return "kampagne";
+    return document.referrer ? "verweis" : "direkt";
+  })();
+  const tracked = new Set();
+  function track(event_name, meta = {}, once = false) {
+    try {
+      if (once) { if (tracked.has(event_name)) return; tracked.add(event_name); }
+      const hn = location.hostname;
+      fetch(SUPABASE_URL + "/rest/v1/funnel_events", { method: "POST", keepalive: true,
+        headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, Prefer: "return=minimal" },
+        body: JSON.stringify({ event_name, session_id: FUNNEL_SESSION, meta: {
+          ...meta, source: UTM.utm_source || (document.referrer ? "referrer" : "direct"), ...UTM,
+          device: innerWidth < 600 ? "mobile" : "desktop",
+          env: (hn.endsWith("le-vita.com") || hn.endsWith("logivita.de")) ? "prod" : hn.endsWith("github.io") ? "dev" : "local",
+          is_internal: INTERNAL ? true : undefined, page: "versorgung", fe_version: FE_VERSION,
+          public_code: st.code || undefined, host: hn, entry: ENTRY } }) }).catch(() => {});
+    } catch (e) { /* still */ }
+  }
+
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const h = (html, keepScroll) => { $app.innerHTML = html; if (!keepScroll) window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const spinner = () => h('<div class="spinner"></div>');
+
+  async function call(mode, extra = {}) {
+    let auth = SUPABASE_ANON_KEY;
+    if (st.acct && window.LeVitaKonto) {
+      try { const ss = await window.LeVitaKonto.session(); st.acct = ss ? ss.access_token : null; } catch (e) { st.acct = null; }
+      if (st.acct) auth = st.acct;
+    }
+    let json;
+    try {
+      const res = await fetch(FUNCTION_URL, { method: "POST",
+        headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${auth}` },
+        body: JSON.stringify({ mode, public_code: st.code, ...(st.pin ? { pin: st.pin } : {}), ...(INTERNAL ? { internal: true } : {}), ...extra }) });
+      try { json = await res.json(); } catch (e) { json = { success: false, error: "BAD_RESPONSE" }; }
+      json._http = res.status;
+    } catch (e) { json = { success: false, error: "NETWORK" }; }
+    showRaw(mode, json);
+    return json;
+  }
+  function errorText(e) {
+    return ({
+      PIN_INVALID: "Pilot-ID oder PIN stimmen nicht. Bitte prüfe die Angaben aus deiner Mail.",
+      LOCKED: "Zu viele Versuche. Bitte warte 15 Minuten und versuche es dann erneut.",
+      PIN_REQUIRED: "Bitte gib Pilot-ID und PIN ein.",
+      CODE_REQUIRED: "Bitte gib deine Pilot-ID ein.",
+      NOT_FOUND: "Zu dieser Pilot-ID haben wir keinen Vital-Check gefunden.",
+      AGE: "Der Versorgungs-Check richtet sich an Erwachsene ab 18 Jahren.",
+      NO_SESSION: "Bitte starte den Versorgungs-Check noch einmal.",
+      NETWORK: "Keine Verbindung. Bitte versuche es gleich noch einmal.",
+    })[e] || "Da ist etwas schiefgegangen. Bitte versuche es gleich noch einmal.";
+  }
+
+  // ── Texte ──
+  const SINCE = [["unter_3m", "unter 3 Monaten"], ["3_12m", "3–12 Monate"], ["laenger", "länger"]];
+  const REASON = [["test", "Nach Bluttest mit auffälligem Wert"], ["arzt", "Ärztliche Empfehlung"], ["empfehlung", "Empfehlung (Apotheke, Studio, Bekannte)"], ["eigene", "Eigene Entscheidung"], ["weiss_nicht", "Weiß ich nicht mehr"]];
+  const HOPE = [["energie", "Energie"], ["immunsystem", "Immunsystem"], ["muskeln", "Muskeln"], ["schlaf", "Schlaf"], ["haut_haare", "Haut/Haare"], ["vorsorge", "Vorsorge"], ["anderes", "Anderes"]];
+  const LAST_TEST = [["unter_1_jahr", "im letzten Jahr"], ["1_2_jahre", "vor 1–2 Jahren"], ["aelter", "länger her"], ["nie", "noch nie"], ["weiss_nicht", "weiß ich nicht"]];
+  const ACID = [["nein", "Nein"], ["ja", "Ja"], ["weiss_nicht", "Weiß ich nicht"]];
+  const TOL = [["gut", "Ja, gut"], ["teils", "Teils"], ["nein", "Nein"]];
+  const COST = [["bis_10", "bis 10 €"], ["10_30", "10–30 €"], ["30_60", "30–60 €"], ["mehr_60", "mehr als 60 €"], ["weiss_nicht", "weiß ich nicht"]];
+  const PREG = [["nein", "Nein"], ["ja", "Ja"]];
+  const COMBO = ["vitd", "b12", "mag", "iron", "zinc", "calcium", "iodine", "selenium", "omega3"];
+  // Sichtbare Bezeichnungen sind Tipps, keine Befunde (Formulierungsprüfung 18.10.2026)
+  const VERDICT = {
+    abklaeren: ["In der Praxis ansprechen", "v-red"], ergaenzen: ["Ein Blick lohnt sich", "v-blue"], ernaehrung: ["Über die Ernährung", "v-blue"],
+    weglassen: ["Kein Anlass erkennbar", "v-gray"], behalten_pruefen: ["Anlass erkennbar — Wert einmal prüfen lassen", "v-green"], behalten: ["Anlass erkennbar", "v-green"],
+  };
+  const GROUPS = [
+    ["abklaeren", "In der Praxis ansprechen", "Hier raten BfR oder Fachgesellschaften zu ärztlicher Rücksprache. Tipp: Nimm diese Punkte zu deinem nächsten Termin in der Hausarztpraxis mit — am besten, bevor du das Präparat weiter nimmst."],
+    ["ergaenzen", "Ein Blick lohnt sich", "Aus deinen Angaben ergibt sich hier ein Anhaltspunkt. Tipp: Ernährung zuerst — und ob eine Ergänzung für dich sinnvoll ist, klärst du am besten in deiner Praxis."],
+    ["ernaehrung", "Über die Ernährung", "Tipp: Hier ist die Ernährung der einfachste Weg."],
+    ["weglassen", "Kein Anlass erkennbar", "Laut BfR sind Nahrungsergänzungsmittel für die überwiegend gut versorgte Bevölkerung nicht notwendig. Was dir ärztlich verordnet wurde, änderst du bitte nur in Absprache mit deiner Praxis."],
+    ["behalten_pruefen", "Anlass erkennbar — Wert einmal prüfen lassen", "Aus deinen Angaben ist ein Einnahmegrund erkennbar. Ob Menge und Präparat zu dir passen, zeigt erst ein Laborwert."],
+    ["behalten", "Anlass erkennbar", "Aus deinen Angaben ist ein Einnahmegrund erkennbar. Tipp: Überprüf die Einnahme von Zeit zu Zeit."],
+  ];
+  const label = (k) => (st.data?.catalog || []).find((s) => s.substance_key === k)?.label || k;
+
+  // ── Anmeldung ──
+  function screenLogin(msg = "") {
+    h(`
+      <h1>Dein Versorgungs-Check</h1>
+      <p class="lead">Welche Nahrungsergänzung passt zu dir — und welche kannst du dir sparen? Du trägst ein, was du nimmst,
+        und bekommst eine Orientierung: wofür sich aus deinen Angaben ein Anlass erkennen lässt, wofür nicht und was du in deiner Praxis ansprechen kannst. Ernährung zuerst. Der Check misst nicht, wie gut du versorgt bist.</p>
+      <div class="card">
+        <div class="field"><label for="f-code">Pilot-ID aus deinem Vital-Check</label>
+          <input type="text" id="f-code" autocomplete="off" placeholder="LEV-2026-000123" value="${esc(st.code)}"></div>
+        <div class="field"><label for="f-pin">PIN aus deiner Mail</label>
+          <input type="password" id="f-pin" autocomplete="off" placeholder="8-stellig"></div>
+        <button class="btn block" id="b-go">Weiter</button>
+        <div class="error" id="err">${esc(msg)}</div>
+      </div>
+      <p class="small">Der Versorgungs-Check baut auf deinem Vital-Check auf. Mit persönlichem Konto geht es ohne PIN: Melde dich in
+        <a href="konto.html" style="color:var(--accent-green-text)">Mein Bereich</a> an, danach öffnet sich der Check direkt.</p>`);
+    const go = async () => {
+      st.code = document.getElementById("f-code").value.trim().toUpperCase();
+      st.pin = document.getElementById("f-pin").value.trim();
+      if (!st.code || !st.pin) return (document.getElementById("err").textContent = errorText("PIN_REQUIRED"));
+      spinner(); st.acct = null;
+      const r = await call("start");
+      if (r.success) track("supply_start", { via: "pin" }, true);
+      route(r);
+    };
+    document.getElementById("b-go").onclick = go;
+    document.getElementById("f-pin").onkeydown = (e) => { if (e.key === "Enter") go(); };
+  }
+
+  function route(r) {
+    if (!r.success) return screenLogin(errorText(r.error));
+    if (r.status === "consent_required") return screenConsent(r.consent);
+    if (r.status === "zuerst_klaeren") return screenDoctorFirst();
+    if (r.status === "none") { spinner(); return call("start").then(route); }
+    st.data = r;
+    st.items = (r.items || []).map((i) => ({ ...i, combo_contents: i.combo_contents || [] }));
+    st.ses = { ...(r.session || {}) };
+    if (r.status === "result") return screenResult(r);
+    return screenForm();
+  }
+
+  function screenConsent(c) {
+    h(`
+      <h1>Bevor es losgeht</h1>
+      <p class="lead">Damit wir deine Präparate einordnen können, speichern wir deine Angaben zusammen mit deinem Vital-Check.</p>
+      <div class="card">
+        <label class="consent-box"><input type="checkbox" id="c-ok"><span>${esc(c?.text)}</span></label>
+        <label class="consent-box"><input type="checkbox" id="c-tr"><span>${esc(c?.trainer_text)}</span></label>
+        <button class="btn block" id="b-c" disabled>Einverstanden, weiter</button>
+      </div>
+      <p class="small">Version ${esc(c?.version)}</p>`);
+    const box = document.getElementById("c-ok"), btn = document.getElementById("b-c");
+    box.onchange = () => (btn.disabled = !box.checked);
+    btn.onclick = async () => {
+      const tr = document.getElementById("c-tr").checked;
+      spinner();
+      route(await call("start", { consent: { documentation: true, trainer_access: tr } }));
+    };
+  }
+
+  function screenDoctorFirst() {
+    track("supply_doctor_first", {}, true);
+    h(`
+      <div class="card warn">
+        <h2>Zuerst mit deiner Praxis sprechen</h2>
+        <p>Einige Angaben in deinem Vital-Check sind ein guter Grund, zuerst mit deiner Hausarztpraxis zu sprechen — auch bevor du neue Präparate
+          nimmst. Tipps zu Nahrungsergänzung geben wir dir deshalb im Moment nicht.</p>
+      </div>
+      <a class="btn ghost block" href="./${INTERNAL ? "?internal=1" : ""}">Zurück zum Vital-Check</a>`);
+  }
+
+  // ── Formular ──
+  const chips = (name, opts, val, extra = "") =>
+    `<div class="chips" data-f="${name}"${extra}>${opts.map(([k, t]) => `<button type="button" data-v="${esc(k)}" class="${val === k ? "on" : ""}">${esc(t)}</button>`).join("")}</div>`;
+
+  function itemCard(it, idx, missing) {
+    const s = (st.data.catalog || []).find((x) => x.substance_key === it.substance_key) || {};
+    const lv = (s.levels || []).map((l) => [l.level_key, l.label]);
+    const miss = (f) => missing && missing.has(idx + ":" + f) ? " missing" : "";
+    return `<div class="card item" data-idx="${idx}">
+      <div class="item-head"><h3>${esc(s.label || it.substance_key)}</h3><button type="button" class="rm" data-rm="${idx}" aria-label="Entfernen">Entfernen</button></div>
+      ${s.ignore_in_score ? `<p class="small">Sporternährung — dazu gibt dieser Check keine Tipps.</p>` : `
+      ${s.asks_amount && lv.length ? `<div class="q${miss("amount_level")}"><div class="q-label">Menge pro Tag</div><div class="q-help">Gemeint ist die Wirkstoffmenge pro Tag laut Packung (z. B. „20 µg“ oder „800 IE“), nicht das Gewicht der Tablette.</div>${chips("amount_level", lv, it.amount_level)}</div>` : ""}
+      ${s.is_combination ? `<div class="q"><div class="q-label">Was steht drauf?</div><div class="q-help">Mehrfachauswahl — leer lassen, wenn du es nicht weißt.</div>
+        <div class="chips" data-multi="combo_contents">${COMBO.map((k) => `<button type="button" data-v="${k}" class="${(it.combo_contents || []).includes(k) ? "on" : ""}">${esc(label(k))}</button>`).join("")}</div></div>` : ""}
+      <div class="q${miss("reason")}"><div class="q-label">Warum nimmst du es?</div>${chips("reason", REASON, it.reason)}</div>
+      <div class="q"><div class="q-label">Seit wann?</div>${chips("since", SINCE, it.since)}</div>
+      <div class="q"><div class="q-label">Was erhoffst du dir davon? <span class="small">(freiwillig)</span></div>${chips("hope", HOPE, it.hope)}</div>`}
+    </div>`;
+  }
+
+  function screenForm(missing) {
+    track("supply_form_view", { prefilled: st.items.length }, true);
+    const cat = (st.data.catalog || []).filter((s) => !st.items.some((i) => i.substance_key === s.substance_key));
+    const has = st.items.some((i) => !((st.data.catalog || []).find((s) => s.substance_key === i.substance_key) || {}).ignore_in_score);
+    h(`
+      <h1>Deine Präparate</h1>
+      <p class="lead">${st.items.length ? "Aus deinem Vital-Check haben wir übernommen, was du angegeben hast. Ergänze Menge und Anlass — und füg hinzu, was fehlt." : "Trag ein, welche Nahrungsergänzung du regelmäßig nimmst. Nimmst du nichts, geht es direkt weiter."}</p>
+      ${st.items.map((it, i) => itemCard(it, i, missing)).join("")}
+      ${cat.length ? `<div class="card"><div class="field" style="margin:0"><label for="add">Präparat hinzufügen</label>
+        <select id="add"><option value="">Bitte wählen …</option>${cat.map((s) => `<option value="${esc(s.substance_key)}">${esc(s.label)}</option>`).join("")}</select></div></div>` : ""}
+      <div class="card">
+        <h3>Noch ein paar Fragen</h3>
+        ${st.data.person?.ask_pregnancy ? `<div class="q${missing && missing.has("ses:pregnancy") ? " missing" : ""}"><div class="q-label">Bist du schwanger oder stillst du?</div><div class="q-help">In Schwangerschaft und Stillzeit gelten eigene Empfehlungen.</div>${chips("pregnancy", PREG, st.ses.pregnancy)}</div>` : ""}
+        <div class="q"><div class="q-label">Wann wurden zuletzt Blutwerte bestimmt (z. B. Vitamin D, B12, Ferritin)?</div>${chips("last_test", LAST_TEST, st.ses.last_test)}</div>
+        <div class="q"><div class="q-label">Nimmst du dauerhaft Magensäureblocker (z. B. Pantoprazol, Omeprazol) oder Metformin?</div>${chips("acid_metformin", ACID, st.ses.acid_metformin)}</div>
+        ${has ? `<div class="q"><div class="q-label">Verträgst du deine Präparate gut?</div>${chips("tolerability", TOL, st.ses.tolerability)}</div>
+        <div class="q"><div class="q-label">Was gibst du ungefähr pro Monat dafür aus?</div>${chips("monthly_cost", COST, st.ses.monthly_cost)}</div>` : ""}
+      </div>
+      <button class="btn block" id="b-save">Meine Tipps anzeigen</button>
+      <div class="error" id="err">${missing && missing.size ? "Bitte ergänze die markierten Angaben." : ""}</div>
+      <p class="small" style="margin-top:14px">Keine Diagnose: Die Tipps folgen festen Regeln aus den Empfehlungen von DGE und BfR und ersetzen keine ärztliche Beratung.</p>`, !!missing);
+    // Bindungen
+    $app.querySelectorAll(".item").forEach((card) => {
+      const i = Number(card.dataset.idx);
+      card.querySelectorAll(".chips[data-f]").forEach((c) => c.querySelectorAll("button").forEach((b) => b.onclick = () => {
+        const f = c.dataset.f, v = b.dataset.v;
+        st.items[i][f] = st.items[i][f] === v ? null : v;
+        c.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x.dataset.v === st.items[i][f]));
+      }));
+      card.querySelectorAll(".chips[data-multi]").forEach((c) => c.querySelectorAll("button").forEach((b) => b.onclick = () => {
+        const set = new Set(st.items[i].combo_contents || []); set.has(b.dataset.v) ? set.delete(b.dataset.v) : set.add(b.dataset.v);
+        st.items[i].combo_contents = [...set]; b.classList.toggle("on");
+      }));
+    });
+    $app.querySelectorAll("[data-rm]").forEach((b) => b.onclick = () => { st.items.splice(Number(b.dataset.rm), 1); screenForm(); });
+    $app.querySelectorAll(".chips[data-f]").forEach((c) => {
+      if (c.closest(".item")) return;   // Präparate haben eigene Bindung
+      c.querySelectorAll("button").forEach((b) => b.onclick = () => {
+        const f = c.dataset.f; st.ses[f] = st.ses[f] === b.dataset.v ? null : b.dataset.v;
+        c.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x.dataset.v === st.ses[f]));
+      });
+    });
+    const add = document.getElementById("add");
+    if (add) add.onchange = () => { if (add.value) { st.items.push({ substance_key: add.value, combo_contents: [] }); screenForm(); setTimeout(() => $app.querySelectorAll(".item")[st.items.length - 1]?.scrollIntoView({ behavior: "smooth", block: "center" }), 50); } };
+    document.getElementById("b-save").onclick = save;
+  }
+
+  async function save() {
+    const miss = new Set();
+    st.items.forEach((it, i) => {
+      const s = (st.data.catalog || []).find((x) => x.substance_key === it.substance_key) || {};
+      if (s.ignore_in_score) return;
+      if (!it.reason) miss.add(i + ":reason");
+      if (s.asks_amount && (s.levels || []).length && !it.amount_level) miss.add(i + ":amount_level");
+    });
+    if (st.data.person?.ask_pregnancy && !st.ses.pregnancy) miss.add("ses:pregnancy");
+    if (miss.size) { screenForm(miss); const el = $app.querySelector(".q.missing"); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+    spinner();
+    const r = await call("save", { items: st.items, session: st.ses });
+    if (r.success) track("supply_submit", { items: st.items.length });
+    route(r);
+  }
+
+  // ── Ergebnis ──
+  function screenResult(r) {
+    const res = r.result || {};
+    if (res.status === "schwangerschaft") return screenPregnancy(r);
+    track("supply_result_view", { verdicts: Object.keys(res.counts || {}).join(",") }, true);
+    const all = [...(res.items || []), ...(res.add || [])];
+    const hasClarify = all.some((x) => x.verdict === "abklaeren");
+    const sel = SELECTION_HINT && !hasClarify && all.some((x) => ["ergaenzen", "behalten", "behalten_pruefen"].includes(x.verdict));
+    const sec = GROUPS.map(([k, title, lead]) => {
+      const list = all.filter((x) => x.verdict === k);
+      if (!list.length) return "";
+      return `<div class="card grp ${VERDICT[k][1]}"><h3>${esc(title)}</h3>${lead ? `<p class="muted" style="margin-bottom:8px">${esc(lead)}</p>` : ""}
+        ${list.map((x) => `<div class="pl-item"><div class="pl-head"><strong>${esc(x.label)}</strong>${x.amount ? `<span class="small">${esc(x.amount)}</span>` : ""}</div>
+          ${(x.notes || []).map((n) => `<p class="pl-note">${esc(n)}</p>`).join("")}
+          ${x.hope_text ? `<p class="pl-hope"><strong>Zu deiner Erwartung:</strong> ${esc(x.hope_text)}</p>` : ""}
+          ${x.food ? `<p class="pl-food"><strong>Über die Ernährung:</strong> ${esc(x.food)}</p>` : ""}
+          ${x.lab_hint ? `<p class="pl-lab"><strong>Mögliche Frage an die Praxis:</strong> Ist ${esc(x.lab_hint)} für mich sinnvoll?</p>` : ""}
+          ${x.intake_tip && k !== "weglassen" ? `<p class="pl-tip"><strong>Einnahme:</strong> ${esc(x.intake_tip)}</p>` : ""}</div>`).join("")}</div>`;
+    }).join("");
+    const done = r.session?.completed_at ? new Date(r.session.completed_at).toLocaleDateString("de-DE") : "";
+    h(`
+      <h1>Dein Versorgungsplan</h1>
+      <div class="card top"><h2 style="margin-bottom:4px">${esc(res.headline || "")}</h2>
+        <p class="muted">${done ? "Stand " + esc(done) + " · " : ""}Ernährung zuerst — und gezielte Ergänzung dort, wo es einen Anlass gibt.</p></div>
+      <div class="card info"><p><strong>Was dieser Check kann — und was nicht:</strong> Er ordnet deine Angaben zu Präparaten, Ernährung und Lebensstil nach den Empfehlungen von DGE und BfR ein. Wie gut du tatsächlich versorgt bist, kann er nicht messen — einen Mangel weder feststellen noch ausschließen. Das kann nur ein Laborwert in deiner Praxis.</p></div>
+      ${(res.items || []).length || (res.add || []).length ? sec : `<div class="card"><p>Du nimmst keine Nahrungsergänzung, und aus deinen Angaben ergibt sich kein Anlass dafür. Tipp: Eine abwechslungsreiche Ernährung ist die beste Grundlage.</p></div>`}
+      ${(res.notes || []).length ? `<div class="card info">${res.notes.map((n) => `<p>${esc(n)}</p>`).join("")}</div>` : ""}
+      ${res.doctor_sheet ? `<div class="card"><h3>Für deinen Praxistermin</h3>
+        <p class="muted">Ein Zettel mit deinen Präparaten, den offenen Punkten und möglichen Fragen — zum Mitnehmen in deine Hausarztpraxis.</p>
+        <button class="btn ghost" id="b-doc" style="margin-top:8px">Zettel für die Praxis drucken</button></div>` : ""}
+      ${res.nutrition_check ? `<div class="card"><h3>Ernährung zuerst</h3>
+        <p class="muted">Dein Vital-Check zeigt bei der Ernährung noch Luft nach oben. Der Ernährungs-Check gibt dir in wenigen Minuten Tipps, wo du ansetzen kannst — Ernährung zuerst, dann Ergänzung.</p>
+        <a id="nut" class="btn block" style="margin-top:10px" href="ernaehrung.html?code=${encodeURIComponent(st.code)}&utm_source=versorgung&utm_medium=versorgung&utm_campaign=versorgung${INTERNAL ? "&internal=1" : ""}">Zum Ernährungs-Check</a></div>` : ""}
+      ${sel ? `<div class="card"><p class="muted">Wenn du dich zu Nahrungsergänzung orientieren möchtest: Auf le-vita.com findest du eine kleine, sorgfältig ausgewählte Übersicht mit Erklärungen. Sie ist ein Angebot von LeVITA; die Tipps oben entstehen unabhängig davon.</p>
+        <a id="sel" href="${esc(SELECTION_URL)}?utm_source=vital-check&utm_medium=versorgung&utm_campaign=versorgung" target="_blank" rel="noopener" style="color:var(--accent-blue-text);font-weight:700">Zur Übersicht Mikronährstoff-Versorgung →</a></div>` : ""}
+      <div id="konto-step"></div>
+      <div class="row" style="margin:6px 0 16px">
+        <button class="btn ghost" id="b-edit">Angaben ändern</button>
+        <button class="btn ghost" id="b-print">Plan drucken</button>
+      </div>
+      ${r.mail_sent ? `<p class="small">Wir haben dir eine kurze Mail mit dem Link zu diesem Plan geschickt — ohne Gesundheitsdaten.</p>` : ""}
+      <div class="card" id="fb"><h3>War diese Orientierung hilfreich?</h3>
+        <div class="chips" style="margin-top:8px">${[["ja", "Ja"], ["teils", "Teils"], ["nein", "Nein"]].map(([k, t]) => `<button type="button" data-fb="${k}">${t}</button>`).join("")}</div></div>
+      <div class="card"><h3>Wie geht es weiter?</h3>
+        <p class="muted">Mach den Versorgungs-Check zusammen mit deinem Re-Check in 8–12 Wochen noch einmal — dann siehst du, was sich verändert hat.
+          Für ein Gespräch im Studio sprich uns einfach an.</p></div>
+      <p class="small">Diese Tipps folgen festen Regeln aus den Empfehlungen von DGE und BfR (Quellen auf Nachfrage im Studio). Sie sind keine Diagnose, ersetzen keine ärztliche Beratung und
+        nennen bewusst keine Dosierungen. Wenn du dauerhaft Medikamente nimmst oder eine Vorerkrankung hast, sprich vor jeder Einnahme mit deiner Ärztin oder deinem Arzt.</p>
+      ${INTERNAL ? `<p class="small">${esc(r.version || "")} · Fall im Vital-Check: ${esc(res.vital_check_case || "–")}</p>` : ""}`);
+    document.getElementById("b-edit").onclick = () => screenForm();
+    $app.querySelectorAll("[data-fb]").forEach((b) => b.onclick = () => {
+      track("supply_feedback", { value: b.dataset.fb }, true);
+      document.getElementById("fb").innerHTML = `<p class="muted">Danke für deine Rückmeldung!</p>`;
+    });
+    document.getElementById("b-print").onclick = () => { track("supply_print"); window.print(); };
+    const sl = document.getElementById("sel"); if (sl) sl.onclick = () => track("supply_selection_click");
+    const nu = document.getElementById("nut"); if (nu) nu.onclick = () => track("supply_nutrition_click");
+    const bd = document.getElementById("b-doc"); if (bd) bd.onclick = () => printDoctorSheet(r);
+    if (window.LeVitaKonto && st.pin && !r.account?.in_account) {
+      window.LeVitaKonto.mountStep(document.getElementById("konto-step"), {
+        publicCode: st.code, pin: st.pin, context: "nutrition", required: false,   // freiwillig (Jörg 18.10.2026 nach Review)
+        lead: "Mit Konto bleibt dein Versorgungsplan gespeichert, und du öffnest ihn beim Re-Check ohne PIN, mit einem Link per E-Mail.",
+        onRequested: () => track("supply_account", { action: "requested" }),
+      });
+      document.getElementById("konto-step").addEventListener("click", (ev) => { if (ev.target && ev.target.id === "lk-skip") track("supply_account", { action: "skipped" }); });
+    }
+  }
+
+  function screenPregnancy(r) {
+    track("supply_pregnancy", {}, true);
+    h(`
+      <h1>Dein Versorgungsplan</h1>
+      <div class="card warn"><h2>Schwangerschaft und Stillzeit</h2>
+        <p>${esc(r.result?.headline || "In Schwangerschaft und Stillzeit gelten eigene Empfehlungen. Bitte besprich deine Versorgung mit deiner Frauenarztpraxis.")}</p></div>
+      <div class="row" style="margin:6px 0 16px"><button class="btn ghost" id="b-edit">Angaben ändern</button></div>
+      <a class="btn ghost block" href="./${INTERNAL ? "?internal=1" : ""}">Zurück zum Vital-Check</a>`);
+    document.getElementById("b-edit").onclick = () => screenForm();
+  }
+
+  // Zettel für die Praxis: nur Angaben aus diesem Check, keine Dosierungsempfehlung
+  function printDoctorSheet(r) {
+    track("supply_doctor_sheet");
+    const res = r.result || {};
+    const label2 = (list, k) => (list.find(([a]) => a === k) || [, "–"])[1];
+    const rows = [...(res.items || []), ...(res.add || [])].filter((x) => x.verdict !== "ernaehrung");
+    const open = rows.filter((x) => ["abklaeren", "ergaenzen", "behalten_pruefen"].includes(x.verdict));
+    const labs = [...new Set(open.map((x) => x.lab_hint).filter(Boolean))];
+    document.getElementById("doc-sheet").innerHTML = `
+      <h2>Versorgungs-Check — Notiz für den Praxistermin</h2>
+      <p>Pilot-ID ${esc(st.code)} · Stand ${esc(new Date(r.session?.completed_at || Date.now()).toLocaleDateString("de-DE"))}</p>
+      <table class="ds-table"><thead><tr><th>Präparat</th><th>Menge/Tag</th><th>Seit</th><th>Anlass</th><th>Hinweis im Check</th></tr></thead><tbody>
+        ${rows.map((x) => `<tr><td>${esc(x.label)}</td><td>${esc(x.amount || "–")}</td><td>${esc(x.since ? label2(SINCE, x.since) : "–")}</td>
+          <td>${esc(x.reason ? label2(REASON, x.reason) : (x.substance && !(res.items || []).includes(x) ? "nimmt es nicht" : "–"))}</td><td>${esc(VERDICT[x.verdict]?.[0] || x.verdict)}</td></tr>`).join("")}
+      </tbody></table>
+      <p><strong>Letzte Blutwerte:</strong> ${esc(label2(LAST_TEST, r.session?.last_test))} · <strong>Magensäureblocker/Metformin:</strong> ${esc(label2(ACID, r.session?.acid_metformin))}</p>
+      ${labs.length ? `<p><strong>Mögliche Fragen an die Praxis:</strong> Sind diese Werte für mich sinnvoll? ${labs.map(esc).join(" · ")}</p>` : ""}
+      <p><strong>Notizen:</strong></p><div class="ds-lines"></div><div class="ds-lines"></div><div class="ds-lines"></div>
+      <p style="font-size:11px;margin-top:14px">Erstellt mit dem LeVITA Versorgungs-Check aus Selbstangaben. Die Hinweise folgen festen Regeln nach DGE- und BfR-Empfehlungen; sie sind keine Diagnose und keine Therapieempfehlung.</p>`;
+    document.body.classList.add("print-doc");
+    const off = () => { document.body.classList.remove("print-doc"); window.removeEventListener("afterprint", off); };
+    window.addEventListener("afterprint", off);
+    window.print();
+    setTimeout(off, 1500);
+  }
+
+  // ── Testmodus ──
+  function showRaw(mode, json) {
+    if (!INTERNAL) return;
+    document.getElementById("tb-version").textContent = `Frontend ${FE_VERSION} · ${json.version || "Edge ?"} · ${mode} (HTTP ${json._http})`;
+    document.getElementById("raw").textContent = JSON.stringify(json, null, 2);
+  }
+  if (INTERNAL) {
+    document.getElementById("testbar").classList.remove("hidden");
+    document.getElementById("tb-raw").onclick = () => document.getElementById("raw").classList.toggle("hidden");
+  }
+
+  // ── Los ──
+  (async () => {
+    track("supply_view", { has_code: !!st.code }, true);
+    if (st.code && window.LeVitaKonto) {
+      try {
+        const ss = await window.LeVitaKonto.session();
+        if (ss && ss.access_token) {
+          st.acct = ss.access_token; spinner();
+          const r = await call("start");
+          if (r.success) { track("supply_start", { via: "account" }, true); return route(r); }
+          st.acct = null;
+        }
+      } catch (e) { st.acct = null; }
+    }
+    screenLogin();
+  })();
+})();
+</script>
+</body>
+</html>

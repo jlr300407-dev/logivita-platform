@@ -22,6 +22,7 @@ RewriteCond %{REQUEST_URI} !^/$
 RewriteCond %{REQUEST_URI} !^/index\.html$
 RewriteCond %{REQUEST_URI} !^/konto\.html$
 RewriteCond %{REQUEST_URI} !^/ernaehrung\.html$
+RewriteCond %{REQUEST_URI} !^/versorgung\.html$
 RewriteCond %{REQUEST_URI} !^/assets/
 RewriteCond %{REQUEST_URI} !^/robots\.txt$
 RewriteRule ^ - [F]
@@ -32,6 +33,9 @@ RewriteRule ^ - [F]
 # Git-Pull mitgebracht; ohne diese zwei Zeilen antwortet der Server mit 403.
 # Die Positivliste bleibt im Uebrigen unveraendert — frontend/, supabase/ und
 # tools/ sind weiterhin gesperrt.
+
+# 18.10.2026: versorgung.html (Versorgungs-Check, Ziel des Links aus Auswertungs-
+# mail, Ergebnisseite und Versorgungsplan-Mail) ergaenzt. Sonst unveraendert.
 
 DirectoryIndex index.html
 <IfModule mod_autoindex.c>
