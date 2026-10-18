@@ -36,6 +36,8 @@
   Testmodus: ?internal=1 zeigt die letzte Server-Antwort.
 
   Versionen:
+  1.5.0 (19.10.2026) Paket G: Modulkarte liest module_access aus my_checks (SQL 07) — dieselbe Zugangsregel wie
+  Vital-Check-Seite, Mail und Modul-Eingänge (ärztlicher Vorrang, Essverhalten, BMI-Grenzen des Ernährungs-Checks).
   1.4.0 (18.10.2026) Umsetzungsfassung Systemtest (Regelversion 2026-10-R1): Liste der Checks liest den
         Hinweisstatus aus my_checks (SQL 06) — bei Status keine Stufe und kein Vitalitäts-Alter (S1/V4), sonst
         Alter nie unter 18 und als experimentelle Umrechnung gekennzeichnet (V1–V3). Neue Karte "Deine
@@ -374,7 +376,7 @@
 <script src="assets/konto.js?v=1.4.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.4.0";
+  const FE_VERSION = "1.5.0";
   const K = window.LeVitaKonto;
   const esc = K.esc;
   const params = new URLSearchParams(location.search);
@@ -513,6 +515,11 @@
     if (!c || !c.public_code) return "";
     const code = encodeURIComponent(c.public_code);
     const doctor = c.care_status === "doctor_first";
+    // 1.5.0 (Paket G): Zugang aus der Datenbank; ohne module_access (vor SQL 07) wie bisher
+    const acc = (c.module_access && c.module_access.nutrition && c.module_access.supply) ? c.module_access : null;
+    const nOk = acc ? acc.nutrition.ok : !doctor, sOk = acc ? acc.supply.ok : !doctor;
+    const nTxt = acc && !acc.nutrition.ok ? acc.nutrition.state : "Zuerst ärztlich abklären – danach ist der Ernährungs-Check für dich da.";
+    const sTxt = acc && !acc.supply.ok ? acc.supply.state : "Zuerst ärztlich abklären – Nahrungsergänzung besprichst du am besten in der Praxis.";
     const row = (name, state, href) => `<div style="padding:12px 0;border-top:1px solid var(--border);">
         <div style="font-weight:700;">${esc(name)}</div>
         <div class="muted" style="margin:2px 0 ${href ? 8 : 0}px;">${esc(state)}</div>
@@ -520,12 +527,12 @@
     return `<div class="card">
         <h2>Deine Zusatzmodule</h2>
         <p class="muted">Zu deinem Check vom ${esc(dateDe(c.created_at))} – mit deinem Konto ohne PIN.</p>
-        ${row("Ernährungs-Check", doctor ? "Zuerst ärztlich abklären – danach ist der Ernährungs-Check für dich da."
+        ${row("Ernährungs-Check", !nOk ? nTxt
               : "Verfügbar – wo beim Essen das meiste Potenzial liegt, ohne Diät und ohne Verbote.",
-              doctor ? "" : `ernaehrung.html?code=${code}&utm_source=konto&utm_medium=modulkarte`)}
-        ${row("Versorgungs-Check", doctor ? "Zuerst ärztlich abklären – Nahrungsergänzung besprichst du am besten in der Praxis."
+              !nOk ? "" : `ernaehrung.html?code=${code}&utm_source=konto&utm_medium=modulkarte`)}
+        ${row("Versorgungs-Check", !sOk ? sTxt
               : c.supply_done ? "Abgeschlossen – dein Versorgungsplan ist gespeichert." : "Verfügbar – ordnet ein, ob deine Nahrungsergänzung zu deinen Angaben passt.",
-              doctor ? "" : `versorgung.html?code=${code}&utm_source=konto&utm_medium=modulkarte`)}
+              !sOk ? "" : `versorgung.html?code=${code}&utm_source=konto&utm_medium=modulkarte`)}
       </div>`;
   }
 
