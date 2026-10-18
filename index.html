@@ -747,6 +747,18 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.12.0 (18.10.2026): Paket E (Regelversion 2026-10-R1, Nachtest R2). EINE zentrale
+       Ergebnis-Entscheidung (resultDecision → window._decision): Hinweisstatus, erster Schritt,
+       gesperrte Themen. Alle nachgelagerten Bausteine lesen nur noch sie: "Wir vermuten" ohne
+       "Basis stabil … Feinschliff" bei Hinweisstatus (R2-F01); Sofort-Schritt = Praxisgespräch,
+       Hebel nur ergänzend und ohne Wirkungszusage (R2-F02); Szenarien gefiltert — bei ärztlichem
+       Vorrang keine Hebel/Punkte, bei Essverhalten keine Ernährungs-, bei BMI < 18,5 keine
+       Bewegungshebel (R2-F05); bei Hinweisstatus fester Schritte-Block statt "Fahrplan steht in
+       deiner Mail" (R2-F07, Mail ist dann die feste Vorlage, Edge .8); Hinweis-Kasten nennt die
+       starke Regelblutung auch ohne care_details (R2-F06); "kein Anlass" bei Abklärungsanlass
+       umformuliert; B12-Laborsatz als Frage an die Praxis; Studio-Karte bei ärztlichem Vorrang
+       nur Reha-Sport; Versorgungs-Check bei Essverhalten zurückgehalten.
+
        v2.11.0 (18.10.2026): Paket D (Regelversion 2026-10-R1). (1) R2: EIN Haupthebel für Seite,
        Simulator und Mail — der erste Hebel aus calculate_score_scenarios (dieselbe Liste nutzt die
        Edge als "Hebel 1"); top_priorities nur noch als Rückfall. Satz "Dein wichtigster Hebel liegt
@@ -2573,6 +2585,69 @@
     return { status, active: !!status && CARE_ACTIVE.includes(status), reasons: arr(c.care_reasons),
              missing: arr(c.missing_items), details, pregnancyUnknown: preg === "keine_angabe" || details.pregnancy_unknown === true };
   }
+  // ══ v2.12.0 (Paket E) — ZENTRALE ERGEBNIS-ENTSCHEIDUNG ═══════════════════
+  // Einmal pro Ergebnis berechnet (window._decision). Jeder nachgelagerte Baustein
+  // (Hero, Sofort, Fahrplan, "Wir vermuten", Simulator, Studio, Module) liest NUR
+  // diese Entscheidung — nicht mehr eigene Punktzahl-Regeln. Gleiche Logik in der
+  // Edge (decisionOf, edge-2026-10-18.8), damit Seite und Mail übereinstimmen.
+  const CARE_FIRST_STEP = {
+    doctor: "Vereinbare einen Termin in deiner Hausarztpraxis und nimm diese Auswertung mit. Steigere deine Belastung bis dahin nicht.",
+    phq2: "Vereinbare in den nächsten Tagen einen Termin in deiner Hausarztpraxis und sprich an, wie es dir mit Interesse und Stimmung geht.",
+    essverhalten: "Vereinbare einen Termin in deiner Hausarztpraxis und sprich deine Angaben zu Essen und Gewicht an.",
+    eisen: "Sprich deine Angaben zu Regelblutung, Schwindel oder Blässe in deiner Hausarztpraxis an – dort lässt sich klären, ob ein Blick auf den Eisenwert sinnvoll ist.",
+    beschwerden: "Sprich deine Angaben zu Schwindel, Blässe oder brüchigen Nägeln in deiner Hausarztpraxis an."
+  };
+  const DECISION_TOPIC = {
+    activity_days: "aktiven Tagen pro Woche", strength_training: "Krafttraining", sitting_hours: "Sitzzeit",
+    sleep_duration: "Schlafdauer", sleep_latency: "Einschlafzeit", daytime_sleepiness: "Tagesmüdigkeit",
+    water_intake: "Trinkmenge", vegetables_fruit: "Gemüse und Obst", diet_type: "Ernährungsweise",
+    protein_intake: "Eiweiß", omega3_fish: "fettreichem Seefisch", sun_exposure_winter: "Zeit draußen im Winter",
+    alcohol_frequency: "Alkohol", alcohol_amount: "Alkohol-Menge", nicotine_use: "Rauchen",
+    stress_level: "Stress", social_connection: "sozialen Kontakten"
+  };
+  // Bereiche, aus denen bei diesem Status KEIN Hebel kommen darf ("*" = gar keiner)
+  function careBlockedAreas(care, bmi) {
+    const r = (care && care.reasons) || [];
+    if (care && care.status === "doctor_first") return ["*"];
+    const out = [];
+    if (r.includes("essverhalten")) out.push("nutrition", "bmi");
+    const b = Number(bmi);
+    if (isFinite(b) && b > 0 && b < 18.5) out.push("activity");
+    return out;
+  }
+  function filterScenariosForCare(sc, care, bmi) {
+    if (!sc) return sc;
+    const blocked = careBlockedAreas(care, bmi);
+    if (!blocked.length) return sc;
+    if (blocked.includes("*")) return null;
+    const levers = (sc.levers || []).filter(l => l && !blocked.includes(l.area_key));
+    if (!levers.length) return null;
+    const ok = new Set(levers.map(l => l.question_key));
+    const combos = (sc.combos || []).filter(c => c && (c.question_keys || []).length && c.question_keys.every(k => ok.has(k)));
+    return Object.assign({}, sc, { levers, combos });
+  }
+  function resultDecision(care, worst, bmi) {
+    const st = (care && care.status) || "none";
+    const r = (care && care.reasons) || [];
+    const doctor = st === "doctor_first";
+    const praxis = doctor || st === "care_note";
+    const key = doctor ? "doctor" : (["phq2", "essverhalten", "eisen", "beschwerden"].find(k => r.includes(k)) || "beschwerden");
+    const lever = (!doctor && worst && simScenarios && simScenarios.levers)
+      ? (simScenarios.levers.find(l => l.area_key === worst.key) || null) : null;
+    return {
+      status: st, doctor, praxis,
+      calm: !(care && care.active),                       // beruhigende Standardsätze nur ohne Hinweisstatus
+      firstStep: praxis ? CARE_FIRST_STEP[key] : null,   // Sofort-Schritt
+      fixedPlan: praxis,                                  // feste Schritte statt KI-Fahrplan (Mail: Vorlage)
+      noOptimize: doctor,                                 // keine Punkte, kein Simulator-Hebel
+      noSupply: doctor || r.includes("essverhalten"),     // Versorgungs-Check zurückhalten
+      blocked: careBlockedAreas(care, bmi),
+      worstKey: worst ? worst.key : null,
+      lever,                                              // ergänzender Schritt (nur Text, keine Wirkungszusage)
+      leverText: lever ? `bei ${DECISION_TOPIC[lever.question_key] || lever.area_label || "diesem Thema"} von „${lever.from_text}“ auf „${lever.to_text}“` : ""
+    };
+  }
+
   // V2–V4: ganze Jahre, nie unter 18, bei Hinweisstatus gar nicht
   function displayBioAge(raw) {
     if (window._care && window._care.active) return null;
@@ -2613,8 +2688,8 @@
     }
     if (has("eisen")) {
       const keys = [];
-      if (["d", "e", "f"].includes(String(d.period || ""))) keys.push("period_bleeding");
-      if (["d", "e"].includes(String(d.dizziness || ""))) keys.push("dizziness_pale_nails");
+      if (["d", "e", "f"].includes(String(d.period || "")) || careRiskOf(answers, "period_bleeding") >= 3) keys.push("period_bleeding");
+      if (["d", "e"].includes(String(d.dizziness || "")) || careRiskOf(answers, "dizziness_pale_nails") >= 3) keys.push("dizziness_pale_nails");
       const said = careSaid(answers, keys.length ? keys : ["dizziness_pale_nails"]);
       out.push(`${said ? said + " " : ""}Das ist ein Anlass, es in deiner Hausarztpraxis anzusprechen. Das BfR rät, Eisen nur nach ärztlicher Rücksprache einzunehmen.`);
     } else if (has("beschwerden")) {
@@ -2817,6 +2892,8 @@
   // Zentrale Übernahme der V2-Felder aus jeder Edge-Response (Submit + load_result)
   function absorbV2Result(result) {
     simScenarios = normalizeScenarios(result.scenarios);
+    // v2.12.0 (Paket E, R2-F05): gesperrte Bereiche liefern keine Hebel und keine Punkte
+    try { simScenarios = filterScenariosForCare(simScenarios, careFromResult(result), result.bmi); } catch (e) { /* Szenarien bleiben */ }
     simActiveKeys = [];
     window._previousData = result.previous || null;
     window._linkStatus = result.link_status || null;
@@ -4981,6 +5058,8 @@
       : _lightCombo ? "light"
       : _singleSignal ? "single"
       : null;
+    // v2.12.0 (Paket E): die eine Entscheidung, die alle folgenden Bausteine lesen
+    window._decision = resultDecision(window._care, worst, result.bmi);
 
     // ── V2: Re-Check-Einstieg aus der PIN-Ansicht ──
     // Nur im Wiederaufruf (PIN bereits serverseitig verifiziert): von hier aus
@@ -5144,7 +5223,9 @@
     // was es NUR in der Mail gibt — die geschriebene Einordnung, die
     // Bereichstabelle als Vergleichsbasis und der PIN als einziger Rückweg.
     if (!isLinkedRecheck) {
-      teaserRows += teaserRow(ICO("chat"), "Deine persönliche Einordnung", `geschrieben auf deine Antworten — nicht die gleichen Tipps wie für alle anderen`);
+      teaserRows += (window._decision && window._decision.fixedPlan)
+        ? teaserRow(ICO("chat"), "Deine Auswertung per Mail", "mit dem Hinweis, deinen nächsten Schritten und allen Bereichswerten")
+        : teaserRow(ICO("chat"), "Deine persönliche Einordnung", `geschrieben auf deine Antworten — nicht die gleichen Tipps wie für alle anderen`);
     }
     // v1.38.0 — Der Fahrplan wird in der Mail unterdrückt, sobald ein
     // Sicherheitssignal gesetzt ist (dort gilt: erst der Hausarzt). Dann darf
@@ -5152,7 +5233,8 @@
     // an der jemand seine Adresse hergibt, muss eingelöst werden.
     // v1.41.4 — Die Edge schreibt den Fahrplan nur mit gesetztem Ziel (goalKey).
     // Ohne Ziel darf der Teaser ihn deshalb auch nicht versprechen.
-    const _planPromised = !window._safetyTier && !window._doctorFirst && !!goalKeyForTeaser;
+    const _planPromised = !window._safetyTier && !window._doctorFirst && !!goalKeyForTeaser
+      && !(window._decision && window._decision.fixedPlan);   // v2.12.0 (R2-F07)
     if (!isLinkedRecheck || !window._previousData.goal_scenario) {
       teaserRows += _planPromised
         ? teaserRow(ICO("target"), `Dein 6-Wochen-Fahrplan für „${goalTeaser}“`, "konkret, Schritt für Schritt — mit Ausblick bis zu deinem Re-Check")
@@ -5365,7 +5447,15 @@
 
 
     // Haupthebel
-    if (totalScore >= 85) {
+    // v2.12.0 (Paket E): bei Hinweisstatus ist der erste Schritt das Praxisgespräch — kein "Feinschliff"
+    const _DH = window._decision || { calm: true };
+    if (_DH.praxis) {
+      html += S.hebel = `<div class="hebel-box" onclick="switchResultTab('empfehlungen')" style="cursor:pointer;"><div class="hebel-icon">${ICO("bulb")}</div><div>
+        <div class="hebel-title">Dein wichtigster nächster Schritt</div>
+        <div class="hebel-text">${escHtml(_DH.firstStep)}</div>
+        <div style="margin-top:8px;font-size:12.5px;color:var(--accent-green-text);font-weight:600;">Was das konkret heißt → Nächste Schritte</div>
+      </div></div>`;
+    } else if (totalScore >= 85 && _DH.calm) {
       if (worst && worst.score < 90) {
         html += S.hebel = `<div class="hebel-box"><div class="hebel-icon">${ICO("spark")}</div><div>
           <div class="hebel-title">Dein einziger kleiner Feinschliff</div>
@@ -5556,16 +5646,22 @@
     // Ansatzpunkt"). Zwei Richtungen in einem Block. Jetzt steht der Hebel in
     // der Ueberschrift, das Ziel in der Kicker-Zeile darueber — die Verbindung
     // aus v1.31.3 bleibt im Satz erhalten.
-    const heroHead3 = worst ? `${areaIco(worst.key)} ${areaName(worst.label, worst.key)}` : heroTitle3;
-    const heroKicker3 = worst && heroTitle3 ? `✦ Dein Weg zu: ${heroTitle3}` : "✦ Dein wichtigster nächster Schritt";
+    const _D3 = window._decision || {};
+    const heroHead3 = _D3.praxis ? "Zuerst: das Gespräch in deiner Hausarztpraxis"
+      : worst ? `${areaIco(worst.key)} ${areaName(worst.label, worst.key)}` : heroTitle3;
+    const heroKicker3 = _D3.praxis ? "✦ Dein wichtigster nächster Schritt"
+      : worst && heroTitle3 ? `✦ Dein Weg zu: ${heroTitle3}` : "✦ Dein wichtigster nächster Schritt";
     html += S.hero = `
       <div style="background:linear-gradient(135deg,rgba(var(--accent-green-rgb),0.12),rgba(var(--accent-blue-rgb),0.08));
            border:1px solid rgba(var(--accent-green-rgb),0.3);border-radius:var(--radius);padding:18px;margin-bottom:16px;">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
              color:var(--accent-green-text);margin-bottom:8px;">${heroKicker3}</div>
         <div style="font-size:17px;font-weight:700;margin-bottom:8px;line-height:1.3;">${heroHead3}</div>
-        <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${heroDesc3}</div>
-        ${worst ? `<div style="margin-top:14px;background:var(--sunken);border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.6;">
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${_D3.praxis ? (_D3.doctor ? "Die Abklärung geht allem anderen vor – der Hinweis oben." : "Das ist der wichtigste Schritt aus diesem Check – der Hinweis oben.") : heroDesc3}</div>
+        ${_D3.praxis ? `<div style="margin-top:14px;background:var(--sunken);border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.6;">
+            ${ICO("bolt")} <strong style="color:var(--accent-green-text)">Sofort:</strong> ${escHtml(_D3.firstStep)}
+            ${(!_D3.doctor && _D3.leverText) ? `<br><br>${ICO("calendar")} <strong style="color:var(--accent-amber-text)">Ergänzend, wenn es für dich passt:</strong> ${escHtml(_D3.leverText.replace(/^./, m => m.toUpperCase()))}.` : ``}
+          </div>` : worst ? `<div style="margin-top:14px;background:var(--sunken);border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.6;">
             ${ICO("bolt")} <strong style="color:var(--accent-green-text)">Sofort:</strong> ${getInsightNow(worst.key, worst.score, result.bmi, result)}<br><br>
             ${ICO("calendar")} <strong style="color:var(--accent-amber-text)">Diese Woche:</strong> ${getInsightSoon(worst.key, worst.score, result.bmi, result)}
             ${HEBEL_SIGNS[worst.key] ? `<br><br>${ICO("search")} <strong style="color:var(--accent-blue-text)">Woran du es merkst:</strong> ${HEBEL_SIGNS[worst.key]}` : ``}
@@ -5709,7 +5805,7 @@
       if (cat1.length > 3) cat1.pop();
     }
     if (_trainsFully && cat1.length < 3) {
-      cat1.push(["Beibehalten und gut erholen", "Mit 5–7 aktiven Tagen und Krafttraining 3-mal oder häufiger pro Woche bist du sehr gut unterwegs. Behalte das bei und plane bewusst Erholung ein. Wenn du gezielt mehr willst, plant ein Trainer im Studio das gern mit dir.", "activity_keep"]);
+      cat1.push(["Beibehalten und gut erholen", `Mit 5–7 aktiven Tagen und Krafttraining 3-mal oder häufiger pro Woche bist du sehr gut unterwegs. Behalte das bei und plane bewusst Erholung ein.${(isFinite(Number(result.bmi)) && Number(result.bmi) < 18.5) || (window._decision && window._decision.praxis) ? "" : " Wenn du gezielt mehr willst, plant ein Trainer im Studio das gern mit dir."}`, "activity_keep"]);
     }
     // v2.11.0 (M3/S5): Bei ärztlichem Vorrang ersetzt die Abklärung alle Selbst-Tipps (keine Belastungssteigerung)
     if (_careT.status === "doctor_first") {
@@ -6319,8 +6415,11 @@
   }
 
   function stageStudioCardHtml(S) {
-    const rec = S.rec2 || ["Betreutes Training", "Gemeinsam deine Auswertung einordnen und den passenden Einstieg finden."];
-    const services = stageMatchedServices(S).map(([t, d]) => `
+    const _DS = window._decision || {};
+    const rec = _DS.doctor
+      ? ["Reha-Sport – wenn deine Praxis ihn verordnet", "Training planen wir erst nach der ärztlichen Abklärung. Verordnet deine Praxis Reha-Sport, kannst du ihn bei uns machen – dafür braucht es eine ärztliche Verordnung."]
+      : (S.rec2 || ["Betreutes Training", "Gemeinsam deine Auswertung einordnen und den passenden Einstieg finden."]);
+    const services = (_DS.doctor ? [] : stageMatchedServices(S)).map(([t, d]) => `
         <div class="stage-service"><div class="stage-service-title">${t}</div><div class="stage-service-desc">${d}</div></div>`).join("");
     return `<div class="stage-studio" id="stageStudio">
         <div class="stage-step">
@@ -6331,11 +6430,11 @@
         <div style="font-size:11px;color:var(--text-secondary);">Für dich passt besonders</div>
         <div style="font-size:15px;font-weight:700;margin:2px 0 4px;">${rec[0]}</div>
         <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:10px;">${rec[1]}</div>
-        ${S.rec2Benefits || ""}
+        ${_DS.doctor ? "" : (S.rec2Benefits || "")}
         ${services}
         <div id="stageStudioForm">${stageStudioFormHtml()}</div>
-        ${S.studioList || ""}
-        ${S.promo || ""}
+        ${_DS.doctor ? "" : (S.studioList || "")}
+        ${_DS.doctor ? "" : (S.promo || "")}
       </div>`;
   }
 
@@ -6356,8 +6455,8 @@
       <div class="stage-form" id="srForm" style="display:none;">
         <div class="stage-form-legend">Dein kostenloses Ergebnisgespräch</div>
         ${radio("sr_offer", "gespraech", "Ergebnisgespräch", "15 Minuten · kostenlos · wir schauen gemeinsam auf dein Ergebnis", true)}
-        <div class="stage-form-or">Lieber gleich ausführlich?</div>
-        <div class="stage-choice-minor">${radio("sr_offer", "vital_analyse_plus", "Vital-Analyse Plus · 49,00 €", "rund 45 Minuten: Tanita, Griffkraft, Aufsteh- und Gleichgewichtstest, Ziel und Re-Check. Wird bei neuen und bestehenden Mitgliedschaften vollständig angerechnet.", false)}</div>
+        ${(window._decision && window._decision.doctor) ? "" : `<div class="stage-form-or">Lieber gleich ausführlich?</div>
+        <div class="stage-choice-minor">${radio("sr_offer", "vital_analyse_plus", "Vital-Analyse Plus · 49,00 €", "rund 45 Minuten: Tanita, Griffkraft, Aufsteh- und Gleichgewichtstest, Ziel und Re-Check. Wird bei neuen und bestehenden Mitgliedschaften vollständig angerechnet.", false)}</div>`}
         <label class="stage-form-label" for="sr_name">Vorname</label>
         <input type="text" id="sr_name" class="stage-input" autocomplete="given-name" maxlength="60" value="${name}">
         <div class="stage-form-legend" style="margin-top:12px;">Wie kommen wir zusammen?</div>
@@ -6543,10 +6642,12 @@
       href: nBtn ? `${(offer && offer.url) || "ernaehrung.html"}?code=${code}&utm_source=vital-check&utm_medium=modulkarte` : "", ev: "nutrition" });
     // Versorgungs-Check
     if (SUPPLY_MODULE_URL) {
+      const _ess = (care.reasons || []).includes("essverhalten");   // v2.12.0 (Paket E)
       const sState = doctor ? "Zuerst ärztlich abklären – Nahrungsergänzung besprichst du am besten in der Praxis."
+        : _ess ? "Gerade nicht passend: Nahrungsergänzung besprichst du am besten zusammen mit deinen Angaben zu Essen und Gewicht in deiner Hausarztpraxis."
         : "Verfügbar – ordnet ein, ob deine Nahrungsergänzung zu deinen Angaben passt.";
       rowsDef.push({ ico: ICO("leaf"), name: "Versorgungs-Check", state: sState,
-        href: doctor ? "" : supplyUtm(SUPPLY_MODULE_URL + (SUPPLY_MODULE_URL.includes("?") ? "&" : "?") + "code=" + code, "modulkarte"), ev: "supply" });
+        href: (doctor || _ess) ? "" : supplyUtm(SUPPLY_MODULE_URL + (SUPPLY_MODULE_URL.includes("?") ? "&" : "?") + "code=" + code, "modulkarte"), ev: "supply" });
     }
     const rows = rowsDef.map(r => `
         <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--border);">
@@ -6564,7 +6665,23 @@
       </div>`;
   }
 
+  // v2.12.0 (Paket E): feste Schritte bei Hinweisstatus — wortgleich zur Mail-Vorlage (Edge .8)
+  function stageFixedStepsHtml(D) {
+    const rows = [["Zuerst", D.firstStep]];
+    if (!D.doctor && D.leverText) rows.push(["Ergänzend, wenn es für dich passt", D.leverText.replace(/^./, m => m.toUpperCase()) + "."]);
+    rows.push(["Danach", D.doctor ? "Wenn die ärztliche Abklärung erfolgt ist, kannst du den Vital-Check erneut machen."
+      : "Nach dem Gespräch in der Praxis zeigt dir dein nächster Check, wo du stehst."]);
+    return `<div class="stage-fahrplan">
+        <div class="stage-kicker" style="color:var(--accent-amber-text);">Deine nächsten Schritte</div>
+        ${rows.map(([l, t], i) => `
+          <div class="stage-fp-row${i === rows.length - 1 ? " last" : ""}">
+            <div class="stage-fp-dot${i === 0 ? " first" : ""}"></div>
+            <div><div class="stage-fp-label">${escHtml(l)}</div><div class="stage-fp-text">${escHtml(t)}</div></div>
+          </div>`).join("")}
+      </div>`;
+  }
   function stageFahrplanHtml(S) {
+    if (window._decision && window._decision.fixedPlan) return stageFixedStepsHtml(window._decision);
     const fp = (window._unlockInfo && Array.isArray(window._unlockInfo.fahrplan) && window._unlockInfo.fahrplan.length)
       ? window._unlockInfo.fahrplan
       : (Array.isArray(S.result.fahrplan) ? S.result.fahrplan : []);
@@ -6596,10 +6713,12 @@
       ? row(ICO("calendar"), `Dein 6-Wochen-Fahrplan für „${S.goalTeaser}“`, "konkret, Schritt für Schritt – mit Ausblick bis zu deinem Re-Check")
       : row(ICO("calendar"), `Deine konkreten nächsten Schritte für „${S.goalTeaser}“`, "was du selbst tun kannst, wo wir helfen");
     rows += row(ICO("chart"), "Alle Bereiche", "mit Wert, Einordnung für dein Alter und konkreten Schritten");
-    rows += row(ICO("chat"), "Deine persönliche Einordnung", "geschrieben auf deine Antworten, per Mail");
+    rows += (window._decision && window._decision.fixedPlan)
+      ? row(ICO("chat"), "Deine Auswertung per Mail", "mit dem Hinweis, deinen nächsten Schritten und allen Bereichswerten")
+      : row(ICO("chat"), "Deine persönliche Einordnung", "geschrieben auf deine Antworten, per Mail");
     rows += row(ICO("key"), "Pilot-ID und PIN", "für deinen Vergleich in 8–12 Wochen");
     // v2.8.22 — Hinweis auf die Zusatzmodule (Jörg 18.10.2026); Versorgungs-Check nicht bei "Zuerst klären"
-    rows += row(ICO("leaf"), "Zugang zu den Zusatzmodulen", (SUPPLY_MODULE_URL && !window._doctorFirst)
+    rows += row(ICO("leaf"), "Zugang zu den Zusatzmodulen", (SUPPLY_MODULE_URL && !window._doctorFirst && !(window._decision && window._decision.noSupply))
       ? "Ernährungs-Check und Versorgungs-Check — mit derselben Pilot-ID und PIN"
       : "Ernährungs-Check — mit derselben Pilot-ID und PIN");
     const box = S.buildAiBox(rows, {
@@ -6640,7 +6759,11 @@
   function stageWissenHtml(S) {
     const items = (S.cat3Items && S.cat3Items.length) ? S.cat3Items
       : [["Tanita-Körperanalyse im Studio", "Muskelmasse, Körperfett und Wasserhaushalt – die Zahlen hinter deinem Ergebnis."]];
-    const vermuten = S.worst ? `Dass sich bei dir über ${areaName(S.worst.label, S.worst.key)} am meisten bewegen lässt.` : "Dass deine Basis stabil ist und Feinschliff genügt.";
+    const _DW = window._decision || {};
+    const vermuten = _DW.doctor ? "Dazu legen wir uns erst nach der ärztlichen Abklärung fest."
+      : _DW.praxis ? "Dazu legen wir uns erst nach dem Gespräch in deiner Hausarztpraxis fest."
+      : !_DW.calm ? (S.worst ? `Dass sich bei dir über ${areaName(S.worst.label, S.worst.key)} am meisten bewegen lässt.` : "Dazu fehlen uns noch Angaben.")
+      : S.worst ? `Dass sich bei dir über ${areaName(S.worst.label, S.worst.key)} am meisten bewegen lässt.` : "Dass deine Basis stabil ist und Feinschliff genügt.";   // v2.12.0 (R2-F01)
     return `<div class="stage-wissen">
         <div style="font-size:15px;font-weight:700;">Was wir wissen – und was wir messen könnten</div>
         <div class="stage-wissen-grid">
@@ -6724,7 +6847,9 @@
 
     html += `<div class="result-tab-content" id="rtc-plan">`;
     // v2.7.1 — drei Zonen: allein / im Studio / Zugang (Jörg 14.10.2026)
-    html += planZoneHeadHtml("allein", ICO("home"), "Das kannst du allein tun", "Dein Fahrplan für die nächsten Wochen – ohne Termin, im eigenen Alltag.");
+    html += planZoneHeadHtml("allein", ICO("home"), "Das kannst du allein tun", (window._decision && window._decision.fixedPlan)
+      ? "Deine nächsten Schritte – der erste ist das Gespräch in deiner Hausarztpraxis."   // v2.12.0 (Paket E)
+      : "Dein Fahrplan für die nächsten Wochen – ohne Termin, im eigenen Alltag.");
     html += S.hero || "";
     html += S.simulator || "";
     html += stageFahrplanHtml(S);
@@ -6855,6 +6980,7 @@
       .sort((a,b) => a.score-b.score).filter(a => a.score < 70).slice(0,3).map(a => a.label);
     const focusTxt = focus.length > 0
       ? `Bei dir liegen besonders <strong>${focus.join(", ")}</strong> weiter innen — das zeigt, wo kleine Hebel aktuell den größten Nutzen bringen.`
+      : (window._decision && !window._decision.calm) ? "Alle Bereiche liegen bei 70 oder mehr."   // v2.12.0 (R2-F01)
       : "Deine Bereiche wirken insgesamt stabil. Der Fokus liegt auf Erhalt und Feinschliff.";
     const uid = "radarExp_" + Date.now();
     return `
@@ -7052,7 +7178,7 @@
       age: (a, w, r) => {
         const schwach = Number(r.dizziness_pale_nails || 0) >= 3;
         if (a >= 70 || (a >= 60 && schwach)) {
-          return "Ab etwa 60 bildet der Magen das Eiweiß, das Vitamin B12 aufnimmt, oft nicht mehr in ausreichender Menge — unabhängig davon, wie gut du isst. Das BfR rät, den Status einmal ärztlich prüfen zu lassen. Aussagekräftig ist Holo-Transcobalamin zusammen mit Methylmalonsäure.";
+          return "Ab etwa 60 bildet der Magen das Eiweiß, das Vitamin B12 aufnimmt, oft nicht mehr in ausreichender Menge — unabhängig davon, wie gut du isst. Das BfR rät, den Status einmal ärztlich prüfen zu lassen. Tipp: Frag in deiner Praxis, welche Blutwerte dafür sinnvoll sind.";
         }
         return "";
       },
@@ -7250,7 +7376,7 @@
     if (key === "mental") {
       const stress = getRisk("stress_level"); const mood = getRisk("low_mood"); const interest = getRisk("low_interest"); const social = getRisk("social_connection");
       if (l === "low") { if (stress >= 3) return "Heute eine feste 5-Minuten-Erholungsinsel einplanen — ohne Handy, ohne To-do."; if (mood >= 2 || interest >= 2) return "Ein kurzes Gespräch mit jemandem dem du vertraust kann Erleichterung bringen."; return "Heute eine feste 5-Minuten-Erholungsinsel einplanen — ohne Handy, ohne To-do."; }
-      if (l === "medium") { if (stress >= 3) return "Einen festen Erholungsanker pro Tag setzen — zur gleichen Zeit, ohne Ausnahme."; if (social >= 2) return "Sozialer Kontakt schützt die mentale Gesundheit — eine Nachricht oder ein Anruf reicht."; return "10 Minuten ohne Handy — spazieren oder bewusst atmen."; }
+      if (l === "medium") { if (stress >= 3) return "Einen festen Erholungsanker pro Tag setzen — zur gleichen Zeit, ohne Ausnahme."; if (social >= 2) return "Melde dich heute bei einem Menschen, der dir guttut — eine Nachricht oder ein Anruf reicht."; return "10 Minuten ohne Handy — spazieren oder bewusst atmen."; }
       return "Erholung aktiv schützen und nicht als Luxus betrachten.";
     }
     if (key === "smoking") {   // v2.8.0
@@ -7393,6 +7519,8 @@
     kritisch_ohne_test: "Für mindestens ein Präparat raten BfR oder Fachgesellschaften zu Laborwert oder ärztlicher Rücksprache. Tipp: Sprich es in deiner Hausarztpraxis an — am besten, bevor du es weiter nimmst."
   };
   // Stufe 1 (Übersicht): kurz, bei kritischen Fällen ohne Stoffnamen
+  // v2.12.0 (R2-F06): keine Einnahmeempfehlung, aber ein Abklärungsanlass — beides getrennt sagen
+  const SUPPLY_KEIN_BEDARF_MIT_ANLASS = "Aus deinen Angaben ergibt sich keine Empfehlung, etwas einzunehmen. Wo es einen Anlass gibt, etwas in der Praxis anzusprechen, steht er hier.";
   const SUPPLY_SHORT = {
     kein_bedarf: "Kein Anlass für Nahrungsergänzung erkennbar — Tipp: abwechslungsreich essen.",
     gezielt: "Du nimmst gezielt nach Bluttest oder ärztlicher Empfehlung ein.",
@@ -7494,11 +7622,11 @@
     const needs = lines.map(([n, t]) => `<div class="supply-need"><strong>${escHtml(n)}:</strong> ${escHtml(t)}</div>`).join("");
     const sel = supplySelectionAllowed(s) ? `<div class="supply-sel">Wenn du dich zu Nahrungsergänzung orientieren möchtest: Auf le-vita.com findest du eine kleine, sorgfältig ausgewählte Übersicht mit Erklärungen.
         <a href="${escHtml(supplyUtm(SUPPLY_SELECTION_URL, "ergebnis"))}" target="_blank" rel="noopener" onclick="try{trackEvent('supply_selection_click',{case_key:'${escHtml(s.case_key)}'})}catch(e){}">Zur Übersicht Mikronährstoff-Versorgung →</a></div>` : "";
-    const mod = SUPPLY_MODULE_URL ? `<a class="stage-btn-blue" href="${escHtml(supplyUtm(SUPPLY_MODULE_URL + (SUPPLY_MODULE_URL.includes("?") ? "&" : "?") + "code=" + encodeURIComponent(latestResult?.public_code || ""), "ergebnis"))}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;margin-top:14px;">Versorgungs-Check starten →</a>` : "";
+    const mod = (SUPPLY_MODULE_URL && !(window._decision && window._decision.noSupply)) ? `<a class="stage-btn-blue" href="${escHtml(supplyUtm(SUPPLY_MODULE_URL + (SUPPLY_MODULE_URL.includes("?") ? "&" : "?") + "code=" + encodeURIComponent(latestResult?.public_code || ""), "ergebnis"))}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;margin-top:14px;">Versorgungs-Check starten →</a>` : "";
     return `<div class="supply-plan">
         <div style="font-size:11px;color:var(--text-secondary);font-weight:700;letter-spacing:1px;text-transform:uppercase;">Versorgung &amp; Nahrungsergänzung · nicht im Index</div>
         <h3>Deine Versorgung</h3>
-        <div class="supply-text" style="margin-bottom:${rows ? 8 : 0}px;">${escHtml(SUPPLY_CASE_TEXT[s.case_key] || "")}</div>
+        <div class="supply-text" style="margin-bottom:${rows ? 8 : 0}px;">${escHtml((s.case_key === "kein_bedarf" && lines.length) ? SUPPLY_KEIN_BEDARF_MIT_ANLASS : (SUPPLY_CASE_TEXT[s.case_key] || ""))}</div>
         ${rows}${needs}${sel}${mod}
       </div>`;
   }
@@ -8655,7 +8783,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.11.0</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.12.0</footer>
 
 
 </body>
