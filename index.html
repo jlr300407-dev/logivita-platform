@@ -747,6 +747,22 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.9.0 (18.10.2026): Paket A der Umsetzungsfassung (Regelversion 2026-10-R1, gehoert zu
+       Edge edge-2026-10-18.5 und SQL 04a/04b). (1) Hinweisstatus aus submission_scores
+       (care_status, berechnet in care_evaluate) steuert die Seite: Hinweis-Kasten als ERSTER
+       Block vor Index, Bereichen und Mail-Schranke; bei Status keine Stufenbezeichnung, kein
+       Vitalitaets-Alter, kein "Alle Bereiche stehen stabil", Ueberschrift "Dein Lebensstilprofil"
+       (S1, S4, S5). PHQ-2-Hinweis mit Hilfebaustein TelefonSeelsorge (P3/P4), Eisen/Beschwerden/
+       Essverhalten mit woertlichen Antworten (B1-B3). Aerztlicher Vorrang aus dem Status ergaenzt
+       window._doctorFirst. (2) Basisdaten: "Bist du schwanger oder stillst du?" fuer alle,
+       Pflicht; "ja" beendet den Check ohne Speicherung (G1/G2), "moechte ich nicht angeben"
+       setzt den Satz aus G3. Formularfassung form_revision = "2026-10-R1". (3) PHQ-2 im Wortlaut
+       (Du-Form): Einleitung mit Zeitraum ueber der Frage, Quelle unter den Antworten (P1);
+       Zusatzfrage "soziale Kontakte" auch bei den neuen Stufen p2/p3 und erst nach beiden Fragen.
+       Alter Stimmungs-Hinweis ohne "an manchen Tagen", Antworten woertlich (P3/R10).
+       (4) Vitalitaets-Alter nach V1-V5: Erklaerung "experimentelle Umrechnung" am Wert, nie unter
+       18, kein "jünger" in Ergebnis-Karte, Potenzial, Simulator, Verlauf und Beispiel der Startseite.
+
        v2.8.22 (18.10.2026): Versorgungs-Check freigeschaltet (gehoert zu Edge edge-2026-10-18.3 und
        versorgung.html 1.0.0). SUPPLY_MODULE_URL = "versorgung.html": Knopf "Versorgungs-Check
        starten" in "Deine Versorgung". Etikett je Praeparat "Anlass erkennbar" statt
@@ -2342,7 +2358,7 @@
           <div class="lp-ex-facts">
             <div class="lp-ex-fact"><b>Stärken:</b> Schlaf und ein ausgewogener Lebensstil — ihre Basis.</div>
             <div class="lp-ex-fact hebel"><b>Größter Hebel:</b> Bewegung — hier bringt der erste Schritt am meisten.</div>
-            <div class="lp-ex-fact sim"><b>Simulator:</b> Ein zweiter Bewegungstermin pro Woche bringt ihr rund +5 Punkte – und macht sie rund 1 Jahr jünger.</div>
+            <div class="lp-ex-fact sim"><b>Simulator:</b> Ein zweiter Bewegungstermin pro Woche bringt ihr rund +5 Punkte im Vitalitäts-Index.</div>
           </div>
           <div class="lp-ex-mail">„Dein Schlaf ist eine echte Stärke, darauf kannst du aufbauen. Für mehr Energie liegt dein größter Hebel in der Bewegung: Starte mit einem zweiten festen Termin pro Woche — 30 Minuten zügig gehen, mit Uhr oder Handy rund 3.000 Schritte.“<span>Auszug aus einem Vital-Plan</span></div>
         </div>
@@ -2496,6 +2512,107 @@
     return t >= LEVEL_MIN.vital ? "Vital & Stabil" : t >= LEVEL_MIN.momentum ? "Aktiv mit Momentum"
       : t >= LEVEL_MIN.weg ? "Auf dem Weg" : t >= LEVEL_MIN.aufbau ? "Im Aufbau" : "Neustart";
   }
+  // ══════════════════════════════════════════════════════════════
+  // v2.9.0 — HINWEISSTATUS (Paket A, Regelversion 2026-10-R1). Der Status kommt
+  // aus der Datenbank (care_evaluate) — die Seite rechnet ihn NICHT nach (S1).
+  // Texte wortgleich zur Edge (careParagraphs, edge-2026-10-18.4/.5).
+  // ══════════════════════════════════════════════════════════════
+  const FORM_REVISION = "2026-10-R1";
+  const CARE_ACTIVE = ["doctor_first", "care_note", "incomplete"];
+  const VITAL_AGE_NOTE = "Dein Vitalitäts-Alter ist eine experimentelle Umrechnung deines Lebensstil-Index in ein Alter – kein biologisches oder medizinisches Alter und nicht wissenschaftlich geprüft.";
+  const CARE_HEADLINE = "Dein Lebensstilprofil";
+  const CARE_SUBLINE = "Einige Angaben solltest du ärztlich besprechen";
+  const CARE_CRISIS = "Wenn es dir gerade sehr schlecht geht: TelefonSeelsorge 0800 111 0 111 oder 0800 111 0 222, rund um die Uhr. In akuter Gefahr: 112.";
+  const CARE_PREGNANCY_UNKNOWN = "Falls du schwanger bist oder stillst: Diese Tipps sind dafür nicht gedacht – sprich mit deiner Frauenarztpraxis oder Hebamme.";
+  const CARE_PREGNANCY_STOP = "In Schwangerschaft und Stillzeit gelten eigene Empfehlungen – zum Beispiel zu Ernährung, Bewegung und Nahrungsergänzung. Allgemeine Tipps wären hier nicht passend. Sprich deine Fragen am besten mit deiner Frauenarztpraxis oder Hebamme durch. Nach der Stillzeit ist der Vital-Check gern wieder für dich da.";
+  const PHQ_KEYS = ["low_interest", "low_mood"];
+  const PHQ_SOURCE = "Fragen nach dem Gesundheitsfragebogen für Patienten (PHQ-2), deutsche Version © Prof. Dr. Bernd Löwe, UKE; an die Du-Form angepasst.";
+  const CARE_TOPIC = {
+    unintentional_weight_loss: "ungewolltem Gewichtsverlust", appetite_change: "Veränderungen deines Appetits",
+    dizziness_pale_nails: "Schwindel, Blässe oder brüchigen Nägeln", period_bleeding: "der Stärke deiner Regelblutung",
+    low_interest: "wenig Interesse oder Freude an deinen Tätigkeiten", low_mood: "Niedergeschlagenheit, Schwermut oder Hoffnungslosigkeit"
+  };
+
+  // Status aus Submit-Antwort (score.care) oder Wiederaufruf (Spalten der Zeile)
+  function careFromResult(result) {
+    const sc = (result && result.score) || {};
+    const c = (sc.care && typeof sc.care === "object") ? sc.care : sc;
+    const status = typeof c.care_status === "string" ? c.care_status : null;
+    const arr = v => Array.isArray(v) ? v.map(String) : [];
+    const details = (sc.care_details && typeof sc.care_details === "object") ? sc.care_details : {};
+    const preg = personalData.pregnancy_status || details.pregnancy || null;
+    return { status, active: !!status && CARE_ACTIVE.includes(status), reasons: arr(c.care_reasons),
+             missing: arr(c.missing_items), details, pregnancyUnknown: preg === "keine_angabe" || details.pregnancy_unknown === true };
+  }
+  // V2–V4: ganze Jahre, nie unter 18, bei Hinweisstatus gar nicht
+  function displayBioAge(raw) {
+    if (window._care && window._care.active) return null;
+    const b = Number(raw);
+    if (!isFinite(b) || b <= 0) return null;
+    return Math.max(18, Math.round(b));
+  }
+  function careAnswer(answers, key) {
+    const a = (answers || []).find(x => x && x.question_key === key);
+    const t = a && String(a.answer_text || "").trim();
+    return t ? `„${t}“` : null;
+  }
+  function careRiskOf(answers, key) {
+    const a = (answers || []).find(x => x && x.question_key === key);
+    const n = Number(a && a.risk_points);
+    return isFinite(n) ? n : 0;
+  }
+  function careSaid(answers, keys) {
+    const parts = keys.map(k => { const q = careAnswer(answers, k); return q ? `bei der Frage nach ${CARE_TOPIC[k] || k} ${q}` : null; }).filter(Boolean);
+    if (!parts.length) return "";
+    return `Du hast ${parts.length === 1 ? parts[0] : parts.slice(0, -1).join(", ") + " und " + parts[parts.length - 1]} angegeben.`;
+  }
+  // Feste Hinweis-Absätze (Reihenfolge wie in der Mail)
+  function careParagraphs(care, answers) {
+    const out = []; let crisis = false;
+    if (!care || !care.status) return { paras: out, crisis };
+    const has = r => care.reasons.includes(r);
+    const d = care.details || {};
+    if (care.status === "doctor_first") {
+      const keys = ["unintentional_weight_loss", "appetite_change", "dizziness_pale_nails"].filter(k => careRiskOf(answers, k) >= 2);
+      const said = careSaid(answers, keys);
+      out.push(`${said ? said + " " : "Einige deiner Angaben sind ein Anlass für ein ärztliches Gespräch. "}Das solltest du zuerst in deiner Hausarztpraxis abklären lassen – bevor du an Training oder Ernährung etwas veränderst. Unser Tipp: Steigere deine Belastung bis dahin nicht. Die Tipps in dieser Auswertung sind allgemeine Lebensstil-Hinweise und ersetzen dieses Gespräch nicht.`);
+    }
+    if (has("phq2")) {
+      const said = careSaid(answers, PHQ_KEYS);
+      out.push(`${said ? said + " " : ""}Das ist ein Anlass, in deiner Hausarztpraxis darüber zu sprechen – das ist der wichtigste Schritt aus diesem Check.`);
+      crisis = true;
+    }
+    if (has("eisen")) {
+      const keys = [];
+      if (["d", "e", "f"].includes(String(d.period || ""))) keys.push("period_bleeding");
+      if (["d", "e"].includes(String(d.dizziness || ""))) keys.push("dizziness_pale_nails");
+      const said = careSaid(answers, keys.length ? keys : ["dizziness_pale_nails"]);
+      out.push(`${said ? said + " " : ""}Das ist ein Anlass, es in deiner Hausarztpraxis anzusprechen. Das BfR rät, Eisen nur nach ärztlicher Rücksprache einzunehmen.`);
+    } else if (has("beschwerden")) {
+      out.push(`Du hast bei der Frage nach Schwindel, Blässe oder brüchigen Nägeln ${careAnswer(answers, "dizziness_pale_nails") || "„häufig“"} angegeben. Das ist ein Anlass, es in deiner Hausarztpraxis anzusprechen.`);
+    }
+    if (has("essverhalten")) out.push("Deine Angaben zu Essen und Gewicht sind ein Anlass, das in deiner Hausarztpraxis anzusprechen.");
+    if ((care.status === "incomplete" || has("unvollstaendig") || care.missing.length) && care.status !== "doctor_first") {
+      out.push("Einige wichtige Fragen sind nicht beantwortet – deshalb zeigen wir keine Gesamteinordnung. Du kannst sie jederzeit ergänzen.");
+    }
+    if (care.pregnancyUnknown) out.push(CARE_PREGNANCY_UNKNOWN);
+    return { paras: out, crisis };
+  }
+  // Erster Block der Ergebnisseite (S5) — vor Index, Bereichen und Mail-Schranke
+  function careBoxHtml(answers) {
+    const care = window._care;
+    const { paras, crisis } = careParagraphs(care, answers);
+    if (!paras.length) return "";
+    const title = care.status === "doctor_first" ? "Zuerst ärztlich abklären"
+      : care.status === "care_note" ? "Bitte in der Praxis ansprechen"
+      : care.status === "incomplete" ? "Einige Fragen fehlen" : "Hinweis";
+    return `<div class="care-box" role="note" style="background:rgba(var(--accent-amber-rgb),0.08);border:1px solid rgba(var(--accent-amber-rgb),0.3);border-left:4px solid var(--accent-amber);border-radius:14px;padding:15px 17px;margin-bottom:14px;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warn-text);margin-bottom:6px;">${escHtml(title)}</div>
+        ${paras.map(p => `<p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:var(--text-primary);">${escHtml(p)}</p>`).join("")}
+        ${crisis ? `<div style="margin-top:10px;padding:11px 13px;background:var(--brand-card);border:1px solid var(--border);border-radius:10px;font-size:13.5px;line-height:1.55;color:var(--text-primary);">${escHtml(CARE_CRISIS)}</div>` : ""}
+      </div>`;
+  }
+
   function indexColor(t) {
     t = Number(t);
     return t >= LEVEL_MIN.vital ? "var(--accent-green-text)" : t >= LEVEL_MIN.momentum ? "var(--score-ok-text)" : t >= LEVEL_MIN.weg ? "var(--accent-amber-text)" : t >= LEVEL_MIN.aufbau ? "var(--score-focus-text)" : "var(--accent-red-text)";
@@ -2723,7 +2840,7 @@
       if (result.scenarios && !simScenarios) console.warn('[V2] Szenarien vorhanden, aber nicht normalisierbar — Feldnamen prüfen (siehe normalizeScenarios).');
     }
   }
-  const personalData = { age:null, gender:"", height_cm:null, weight_kg:null, first_name:"", last_name:"", consent_privacy:false, consent_storage:false, goal_key:"", goal_option_id:"", wellbeing_self:null };
+  const personalData = { age:null, gender:"", height_cm:null, weight_kg:null, first_name:"", last_name:"", consent_privacy:false, consent_storage:false, goal_key:"", goal_option_id:"", wellbeing_self:null, pregnancy_status:"" };
 
   // ── PIN-Screen bauen ──────────────────────────────────
   function buildPinScreen(publicCode) {
@@ -3510,6 +3627,14 @@
               <option value="keine_angabe"${sel('keine_angabe')}>Keine Angabe</option>
             </select>
           </div>
+          <div class="form-field"><label>Bist du schwanger oder stillst du? *</label>
+            <select id="pregnancy_status">
+              <option value="">Bitte wählen</option>
+              <option value="nein"${personalData.pregnancy_status === 'nein' ? ' selected' : ''}>Nein</option>
+              <option value="ja">Ja</option>
+              <option value="keine_angabe"${personalData.pregnancy_status === 'keine_angabe' ? ' selected' : ''}>Möchte ich nicht angeben</option>
+            </select>
+          </div>
           <div class="form-field"><label>Größe (cm) *</label><input type="number" id="height_cm" placeholder="z.B. 178" min="120" max="230" value="${pre ? v(pre.height_cm) : ''}" /></div>
           <div class="form-field"><label>${pre ? 'Gewicht heute (kg) *' : 'Gewicht (kg) *'}</label><input type="number" id="weight_kg" placeholder="z.B. 76" min="35" max="250" value="${pre ? v(pre.weight_kg) : ''}"${pre ? ` oninput="if(window._recheckPrefill)window._recheckPrefill.weight_touched=true;"` : ''} /></div>
         </div>
@@ -3588,10 +3713,13 @@
     // auf die naechste Karte und stand damit mitten im Abschnitt.
     const buddy = (noBuddy || BUDDY_ENABLED) ? "" : buddyForStep(q);
     const badge = `<div class="area-badge">${icon} ${areaName(q.area_label, q.area_key)}</div>`;
+    // v2.9.0 (P1): PHQ-2 — Einleitung mit Zeitraum ÜBER der Frage, Quelle unter den Antworten
+    const isPhq = PHQ_KEYS.includes(q.question_key) && (q.options || []).some(o => /^p[0-3]$/.test(o.option_key || ""));
     let html = `<div class="card">`
       + (buddy ? `<div class="buddy-row">${buddy}${badge}</div>` : badge)
+      + (isPhq && q.help_text ? `<div class="help-text" style="margin-bottom:6px;">${q.help_text}</div>` : "")
       + `<div class="question-text">${q.question_text}</div>`;
-    if (q.help_text) html += `<div class="help-text">${q.help_text}</div>`;
+    if (q.help_text && !isPhq) html += `<div class="help-text">${q.help_text}</div>`;
     if (isMultiChoice(q)) {
       html += `<div class="help-text" style="margin-bottom:10px;">Mehrfachauswahl möglich — wähle alles Zutreffende aus.</div>`;
       html += `<div class="options-grid">`;
@@ -3603,7 +3731,9 @@
     }
     html += `<div class="options-grid">`;
     q.options.forEach(opt => { html += `<button class="option-btn" onclick="saveAnswer('${opt.option_id}')">${opt.option_text}</button>`; });
-    html += `</div></div>`;
+    html += `</div>`;
+    if (isPhq) html += `<div class="help-text" style="margin-top:12px;font-size:11.5px;color:var(--text-muted);">${PHQ_SOURCE}</div>`;
+    html += `</div>`;
     return html;
   }
 
@@ -3807,9 +3937,14 @@
       return;
     }
     if (!gender) return alert("Bitte Geschlecht auswählen.");
+    // v2.9.0 (G1/G2): Pflichtfeld für alle; "ja" beendet den Check, ohne etwas zu speichern
+    const pregnancy = (document.getElementById("pregnancy_status") || {}).value || "";
+    if (!pregnancy) return alert("Bitte beantworte die Frage zu Schwangerschaft oder Stillzeit.");
+    if (pregnancy === "ja") { showPregnancyStop(); return; }
     if (!height_cm || height_cm < 120 || height_cm > 230) return alert("Bitte eine gültige Größe eingeben.");
     if (!weight_kg || weight_kg < 35 || weight_kg > 250) return alert("Bitte ein gültiges Gewicht eingeben.");
     personalData.age = age; personalData.gender = gender; personalData.height_cm = height_cm; personalData.weight_kg = weight_kg;
+    personalData.pregnancy_status = pregnancy;   // v2.9.0: "nein" oder "keine_angabe"
     // v1.33.0: Beim Re-Check ist das Gewicht vorbelegt. Bleibt der Wert unverändert,
     // ist er übernommen und nicht bestätigt — der BMI-Verlauf ist dann mit Vorbehalt
     // zu lesen. Wer abgenommen hat, überschreibt; wer zugenommen hat, eher nicht.
@@ -3827,6 +3962,24 @@
     currentStep = nextStepIndex;
     saveProgress();   // v1.41.0
     updateProgress();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // v2.9.0 (G2) — Schwangerschaft oder Stillzeit: Der Check endet hier wie bei der
+  // Altersgrenze. Nichts wird gespeichert, auch kein Zwischenstand, keine Mail.
+  function showPregnancyStop() {
+    try { clearProgress(); } catch (e) { /* still */ }
+    selectedAnswers = [];
+    Object.assign(personalData, { age:null, gender:"", height_cm:null, weight_kg:null, pregnancy_status:"" });
+    const step = document.getElementById(`step-${currentStep}`);
+    if (!step) { alert(CARE_PREGNANCY_STOP); return; }
+    step.innerHTML = `<div class="card">
+        <div class="area-badge">${ICO("user")} Basisdaten</div>
+        <div class="question-text">Danke für deine Offenheit</div>
+        <div class="help-text" style="font-size:15px;line-height:1.65;color:var(--text-primary);">${escHtml(CARE_PREGNANCY_STOP)}</div>
+        <div class="help-text">Deine Angaben wurden nicht gespeichert.</div>
+        <button class="next-btn" onclick="window.location.href=window.location.pathname">Zur Startseite</button>
+      </div>`;
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -4098,7 +4251,7 @@
       if (currentQ?.question_key === "low_mood" || currentQ?.question_key === "low_interest") {
         const moodOptText = (currentQ?.options?.find(o => o.option_id === selectedAnswers[selectedAnswers.length - 1]?.option_id)?.option_text || "").toLowerCase();
         const moodRisk = Number(currentQ?.options?.find(o => o.option_id === selectedAnswers[selectedAnswers.length - 1]?.option_id)?.risk_points || 0);
-        const triggerKeys = ["c", "d", "e"];
+        const triggerKeys = ["c", "d", "e", "p2", "p3"];   // v2.9.0: PHQ-2-Stufen „mehr als die Hälfte“ / „beinahe jeden Tag“
         const shouldShow = triggerKeys.includes(optionKey) || moodRisk >= 2 || moodOptText.includes("hälfte") || moodOptText.includes("meist") || moodOptText.includes("täglich");
         const otherKey = currentQ.question_key === "low_mood" ? "low_interest" : "low_mood";
         const otherAnswer = selectedAnswers.slice(0, -1).find(a => { const q = questions.find(q2 => q2.options.some(o => o.option_id === a.option_id)); return q?.question_key === otherKey; });
@@ -4108,7 +4261,8 @@
         if ((shouldShow || otherTriggers) && !hasSocial) {
           const socialQ = tierFiltered(questions).find(q => q.question_key === "social_connection");
           if (socialQ) {
-            const interestIdx = groupedQuestions.findIndex(q => q.question_key === "low_interest");
+            // v2.9.0: nach der LETZTEN der beiden Fragen (PHQ-2: erst Interesse, dann Stimmung)
+            const interestIdx = Math.max(groupedQuestions.findIndex(q => q.question_key === "low_interest"), groupedQuestions.findIndex(q => q.question_key === "low_mood"));
             if (interestIdx !== -1) { groupedQuestions.splice(interestIdx + 1, 0, socialQ); buildSteps(currentStep); }
           }
         } else if (!shouldShow && !otherTriggers && hasSocial) {
@@ -4359,6 +4513,13 @@
       // v1.54.0 — Selbsteinschätzung: wird gespeichert und in die Mail gegeben,
       // fliesst aber NICHT in den Index (Vergleichbarkeit).
       if (personalData.wellbeing_self) payload.wellbeing_self = personalData.wellbeing_self;
+      // v2.9.0 (G1): Schwangerschaft/Stillzeit und Formularfassung (P1)
+      // Formularfassung nur zusammen mit der Schwangerschaftsangabe: Ein vor v2.9.0 zwischengespeicherter
+      // Check (ohne diese Frage) gilt als alte Fassung und wird dadurch nicht "unvollständig" (S4).
+      if (personalData.pregnancy_status === "nein" || personalData.pregnancy_status === "keine_angabe") {
+        payload.pregnancy_status = personalData.pregnancy_status;
+        payload.form_revision = FORM_REVISION;
+      }
       const wasRecheck = !!(window._previousLink && window._previousLink.public_code && window._previousLink.pin);
       // Merker sichern, bevor _recheckPrefill weiter unten verworfen wird
       const _weightCarried = !!(window._recheckPrefill && window._recheckPrefill.weight_carried);
@@ -4597,7 +4758,9 @@
       .filter(([key]) => key !== "general")
       .map(([key, value]) => ({ key, label: value.label, score: Number(value.score), weight: value.weight }));
     const totalScore = Number(result.score?.total_score || 0);
-    const bioAge = result.score?.bio_age || result.bio_age || null;
+    // v2.9.0: Hinweisstatus zuerst — er bestimmt Alter, Stufe und den ersten Block (S1/S5, V2–V4)
+    window._care = careFromResult(result);
+    const bioAge = displayBioAge(result.score?.bio_age || result.bio_age || null);
     const suppFocus = Array.isArray(result.supplement_focus) ? result.supplement_focus : [];
     if (!personalData.age && result.submission?.age) {
       personalData.age = result.submission.age;
@@ -4606,9 +4769,10 @@
       personalData.weight_kg = result.submission.weight_kg || personalData.weight_kg;
       personalData.goal_key = result.submission.goal_key || personalData.goal_key;
     }
-    const correctedScoreLabel = levelOf(totalScore);   // v2.8.0: 85 / 65 / 50 / 35
+    const correctedScoreLabel = window._care.active ? CARE_HEADLINE : levelOf(totalScore);   // v2.8.0: 85 / 65 / 50 / 35 · v2.9.0: bei Hinweisstatus keine Stufe
     window._lastResultData = { areas }; // V2: Radar-Ebenen brauchen die Bereiche bei jedem Re-Render
-    document.getElementById("result-content").innerHTML = buildResultHtml(result, areas, totalScore, bioAge, suppFocus, correctedScoreLabel);
+    // v2.9.0 (S5): Hinweis-Kasten als erster Block der Seite, in beiden Stufen
+    document.getElementById("result-content").innerHTML = careBoxHtml(result.answers || []) + buildResultHtml(result, areas, totalScore, bioAge, suppFocus, correctedScoreLabel);
     setTimeout(() => animateScoreRing(totalScore), 100);
     setTimeout(() => renderRadarChart(areas), 200);
     setTimeout(() => { updateSimulatorUI(); syncRadarToggleButtons(); }, 120); // V2: Startzustand Simulator + Radar-Schalter
@@ -4641,7 +4805,7 @@
   // nutzen dieselben Texte.
   function resultGreetingParts(totalScore, isRecheck, size) {
     const back = window._isReviewMode && window._accessPin;
-    const img = BUDDY_ENABLED ? buddyHtml(back ? "buddy-welcome-back" : "buddy-success", size || "lg") : "";
+    const img = (BUDDY_ENABLED && !(window._care && window._care.active)) ? buddyHtml(back ? "buddy-welcome-back" : "buddy-success", size || "lg") : "";   // v2.9.0: keine Jubelfigur über einem Hinweis
     const first = (personalData.first_name || "").trim();
     const hi = first ? `Schön, dass du wieder da bist, ${escHtml(capName(first))}!` : "Schön, dass du wieder da bist!";
     let title, sub;
@@ -4651,6 +4815,10 @@
     } else if (isRecheck) {
       title = "Geschafft — und diesmal mit Vergleich!";
       sub = "Dein neuer Vitalitäts-Überblick ist fertig. Weiter unten siehst du, was sich seit deinem letzten Check verändert hat.";
+    } else if (window._care && window._care.active) {
+      // v2.9.0 (S5): kein Jubel über einem Hinweis
+      title = "Dein Lebensstilprofil ist fertig.";
+      sub = "Bitte lies zuerst den Hinweis oben. Darunter siehst du deine Angaben im Überblick.";
     } else {
       title = "Geschafft! Dein Vitalitäts-Überblick ist fertig.";
       sub = totalScore >= 70
@@ -4752,6 +4920,7 @@
       || _lightComboSenior
       || (_ageSafe >= 65 && _metabolic < 55)
       || _wl >= 3;
+    if (window._care && window._care.status === "doctor_first") window._doctorFirst = true;   // v2.9.0: zentraler Status (S1/S2)
     window._redFlagNoBloodtest = window._doctorFirst || _lightComboSenior;
 
     // Für die Textauswahl der Sicherheitsbox
@@ -5387,10 +5556,15 @@
     // Sanfter Mental-Hinweis (reaktiviert 19.08.2026): sensible Einzelsignale dürfen nicht
     // durchs Top-Prioritäten-Raster fallen — eigenständige ruhige Box, nie als "Tipp" verpackt
     const mentalRisk = Math.max(riskOf('low_interest'), riskOf('low_mood'));
-    if (mentalRisk >= 2) {
+    // v2.9.0 (P3/R10): Beim PHQ-2-Hinweis steht alles im Hinweis-Kasten oben — hier nichts doppeln.
+    // Sonst: Antworten wörtlich, kein "an manchen Tagen".
+    if (mentalRisk >= 2 && !(window._care && window._care.reasons.includes("phq2"))) {
+      const _mAns = result.answers || [];
+      const _mKeys = PHQ_KEYS.filter(k => careRiskOf(_mAns, k) >= 2);
+      const _mSaid = careSaid(_mAns, _mKeys);
       html += S.mental = `<div class="hint-box" style="background:rgba(var(--violet-rgb),0.08);border-left:3px solid var(--accent-purple);border-radius:0;padding:14px 16px;margin-bottom:16px;">
         <strong style="color:var(--accent-purple-text);">${ICO("sprout")} Mentales Wohlbefinden</strong><br>
-        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${(window._snips.notice.mental?.body) || "Deine Angaben zeigen, dass du an manchen Tagen weniger Freude oder Energie empfindest, als du dir wünschen würdest. Das ist ein Signal, das es wert ist, aufmerksam zu bleiben."}${mentalRisk >= 3 ? " Wenn sich das über längere Zeit so anfühlt, kann ein Gespräch mit deiner Hausärztin oder deinem Hausarzt gut tun." : ""}</span>
+        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${escHtml((_mSaid ? _mSaid + " " : "") + "Wenn dich das beschäftigt, ist ein Gespräch in deiner Hausarztpraxis ein guter Schritt.")}</span>
       </div>`;
     }
 
@@ -5694,7 +5868,7 @@
               ${a ? `<span style="font-size:12px;color:var(--text-muted);">· kalendarisch ${a}</span>` : ""}
             </div>
             <div class="stage-age-line" style="font-size:13px;font-weight:600;color:${color};line-height:1.45;margin-bottom:6px;">${line}</div>
-            <div style="font-size:11px;color:var(--text-muted);line-height:1.5;">Orientierungswert aus Lebensstilantworten — kein medizinischer Biomarker</div>`;
+            <div style="font-size:11px;color:var(--text-muted);line-height:1.5;">${VITAL_AGE_NOTE}</div>`;
   }
 
   // v2.8.16 — Satz unter dem Vitalitaets-Alter; kind = "gain", wenn er vom Potenzial spricht
@@ -5706,25 +5880,11 @@
       // v2.4.1 — bei ärztlichem Vorrang keine Feier: erst abklären, dann weiter
       line = "Ein Orientierungswert – wichtiger ist jetzt der Hinweis zur ärztlichen Abklärung.";
       color = "var(--text-secondary)";
-    } else if (a && b < a) {
-      line = `Rund ${yrs(a - b)} jünger als dein Kalender – darauf kannst du bauen.`;
-    } else if (a && b === a) {
-      line = "Genau im Takt deines Kalenders.";
     } else {
-      const best = stageBestScenario();
-      // gleiche Rechnung wie die Potenzial-Box (stagePotentialHtml), damit beide dieselbe Zahl nennen
-      const baseBio = simScenarios && simScenarios.base && Number(simScenarios.base.bio_age);
-      const gain = (best && isFinite(baseBio) && isFinite(Number(best.new_bio_age)) && best.new_bio_age !== null)
-        ? Math.round(baseBio - Number(best.new_bio_age)) : 0;
-      const n = best ? ((best.question_keys && best.question_keys.length) || 1) : 0;
-      if (gain >= 1) {
-        const how = n === 1 ? "einer gezielten Veränderung" : (n === 2 ? "zwei" : n === 3 ? "drei" : String(n)) + " gezielten Veränderungen";
-        line = `Mit ${how} rund ${yrs(gain)} jünger – ${window._stage === 2 ? "wie, steht in deinem Plan" : "das zeigen wir dir in deinem Vital-Plan"}.`;
-        color = "var(--accent-blue-text)"; kind = "gain";
-      } else {
-        line = "Dein Startwert – beim Re-Check siehst du, wie er sich bewegt.";
-        color = "var(--text-secondary)";
-      }
+      // v2.9.0 (V1/V5): keine "jünger"-Aussagen, keine Umrechnung von Hebeln in Jahre
+      void yrs;
+      line = "Dein Startwert – beim Re-Check siehst du, wie sich dein Vitalitäts-Index bewegt.";
+      color = "var(--text-secondary)";
     }
     return { line, color, kind };
   }
@@ -5743,7 +5903,7 @@
       const showNote = note.line && !(window._stage !== 2 && note.kind === "gain");
       ageHtml = `<div class="res-hero-age">${ICO("dna")}<div>Vitalitäts-Alter <strong>${b} Jahre</strong>${a ? ` · kalendarisch ${a}` : ""}`
         + (showNote ? `<div class="res-hero-age-line" style="color:${note.color};">${note.line}</div>` : "")
-        + `<div class="res-hero-age-hint">Orientierungswert aus Lebensstilantworten — kein medizinischer Biomarker</div></div></div>`;
+        + `<div class="res-hero-age-hint">${VITAL_AGE_NOTE}</div></div></div>`;
     }
     return `<div class="res-hero">
         ${g.img || g.title ? `<div class="res-hero-head">${g.img || ""}<div><div class="res-hero-title">${g.title}</div><div class="res-hero-sub">${g.sub}</div></div></div>` : ""}
@@ -5757,7 +5917,9 @@
             <div class="res-hero-num"><div id="scoreDisplayNum">0</div><div>von 100</div></div>
           </div>
           <div class="res-hero-meaning">
-            <span class="res-level" style="color:${S.sc};">${S.scoreLabel}</span>
+            ${window._care && window._care.active
+              ? `<span class="res-level" style="color:var(--text-primary);">${CARE_HEADLINE}</span>${window._care.status !== "incomplete" ? `<p style="color:var(--warn-text);font-weight:600;">${CARE_SUBLINE}</p>` : ""}`
+              : `<span class="res-level" style="color:${S.sc};">${S.scoreLabel}</span>`}
             <p>${stageStrengthLine(S)}</p>
           </div>
         </div>
@@ -5803,7 +5965,7 @@
     // v2.4.1 — nur wenn der Bereich wirklich Luft hat (< 70) und nicht zugleich als Stärke genannt wurde
     const s2 = (S.worst && Number(S.worst.score) < 70 && !strengths.some(a => a.key === S.worst.key))
       ? ` Am meisten Luft ist bei <strong>${areaName(S.worst.label, S.worst.key)}</strong>.`
-      : (S.worst && Number(S.worst.score) >= 70 ? ` Alle Bereiche stehen stabil – jetzt geht es ums Halten.` : "");
+      : (S.worst && Number(S.worst.score) >= 70 && !(window._care && window._care.status && window._care.status !== "none") ? ` Alle Bereiche stehen stabil – jetzt geht es ums Halten.` : "");   // v2.9.0 (A1): nur ohne Hinweisstatus
     return s1 + s2;
   }
 
@@ -5820,9 +5982,9 @@
     }
     // v2.4.0 — Index und Vitalitäts-Alter als ein Satz vor der Einordnung
     const tot = Math.round(Number(S.totalScore));
-    const bio = Number(latestResult && latestResult.score && latestResult.score.bio_age);
+    const bio = Number(S.bioAge);   // v2.9.0: angezeigtes Alter (V2–V4), nicht der Rohwert
     const s0 = !compact && isFinite(tot) && tot > 0
-      ? `Dein Vitalitäts-Index liegt bei <strong>${tot} Punkten</strong>${isFinite(bio) && bio > 0 ? `, dein rechnerisches Vitalitäts-Alter bei <strong>${bio} Jahren</strong> (Schätzung)` : ""}. `
+      ? `Dein Vitalitäts-Index liegt bei <strong>${tot} Punkten</strong>${isFinite(bio) && bio > 0 ? `, dein Vitalitäts-Alter bei <strong>${bio} Jahren</strong> (experimentelle Umrechnung)` : ""}. `
       : "";
     // Stufe 2: erster Schritt + Hauptknopf "Mein Ziel festlegen"
     let step = "", cta = "";
@@ -5910,8 +6072,7 @@
       const newT = Number(best.new_total);
       const baseBio = simScenarios.base && Number(simScenarios.base.bio_age);
       const dy = (isFinite(baseBio) && isFinite(Number(best.new_bio_age))) ? Math.round(baseBio - Number(best.new_bio_age)) : null;
-      const bioTxt = dy === null ? "" : dy >= 2 ? ` · Vitalitäts-Alter rund <strong style="color:var(--accent-blue-text);">${dy} Jahre jünger</strong>`
-        : dy === 1 ? ` · Vitalitäts-Alter rund <strong style="color:var(--accent-blue-text);">1 Jahr jünger</strong>` : "";
+      void dy; const bioTxt = "";   // v2.9.0 (V5): Potenzial nur in Indexpunkten
       const keys = best.question_keys && best.question_keys.length ? best.question_keys : [best.question_key];
       const n = keys.length;
       body += `<div style="font-size:11.5px;color:var(--text-secondary);margin:0 0 4px;">Dein Vitalitäts-Index</div>
@@ -7302,12 +7463,13 @@
         : `<span class="verlauf-delta-down">▼ ${fmtGain(delta)} Punkte</span>`;
     let bioHtml = "", youngerHtml = "";
     if (prev.bio_age && bioAge) {
+      prev = Object.assign({}, prev, { bio_age: Math.max(18, Math.round(Number(prev.bio_age))) });   // v2.9.0 (V3)
       const bd = Number(bioAge) - Number(prev.bio_age);
       // v2.3.0 — "Seit deinem letzten Check X Jahre jünger" ist die stärkste
       // Erfolgsgeschichte des Checks und steht deshalb groß oben in der Karte.
       // Unter 4 Wochen Abstand nicht feiern (gleiche Vorsichtsregel wie die Mail):
       // dann ist eine geänderte Antwort wahrscheinlicher als eine echte Veränderung.
-      if (bd < 0 && days >= 28) {
+      if (false && bd < 0 && days >= 28) {   // v2.9.0 (V5): keine "Jahre jünger"-Überschrift mehr
         const n = -bd;
         youngerHtml = `<div class="verlauf-younger" style="background:var(--accent-green-dim);border:1px solid rgba(var(--accent-green-rgb),0.35);border-radius:10px;padding:12px 14px;margin:4px 0 10px;">
           <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Dein Vitalitäts-Alter</div>
@@ -7766,7 +7928,7 @@
         // Beide Werte kommen vom Server, das Frontend rechnet nur die Differenz.
         const baseBio = simScenarios.base && simScenarios.base.bio_age;
         let bioTxt = '';
-        if (proj.bio_age) {
+        if (false && proj.bio_age) {   // v2.9.0 (V5): Simulator nennt nur Indexpunkte
           const dy = (baseBio && isFinite(baseBio)) ? Math.round(baseBio - proj.bio_age) : null;
           const dTxt = dy === null ? ''
             : dy >= 2 ? ` <span style="color:var(--accent-green-text);font-weight:600;">(${dy} Jahre jünger)</span>`
@@ -8279,7 +8441,7 @@
       const rn = document.getElementById('recheckQuizNote'); if (rn) rn.remove();
     }
     if (radarChart) { radarChart.destroy(); radarChart=null; }
-    Object.assign(personalData, { age:null, gender:"", height_cm:null, weight_kg:null, email:"", first_name:"", last_name:"", consent_privacy:false, consent_storage:false, goal_key:"", goal_option_id:"", wellbeing_self:null });
+    Object.assign(personalData, { age:null, gender:"", height_cm:null, weight_kg:null, email:"", first_name:"", last_name:"", consent_privacy:false, consent_storage:false, goal_key:"", goal_option_id:"", wellbeing_self:null, pregnancy_status:"" });
     document.getElementById("result-area").style.display = "none";
     document.getElementById("result-content").innerHTML = "";
     document.getElementById("quiz-flow").style.display = "";
@@ -8313,7 +8475,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.22</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.9.0</footer>
 
 
 </body>
