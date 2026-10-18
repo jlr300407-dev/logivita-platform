@@ -747,6 +747,20 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.19 (18.10.2026): Zwei Korrekturen nach Joergs Handy-Durchlauf.
+         (1) Scheinbar vorbelegte Antworten (Fisch, niedergeschlagen, Freude):
+         Es war keine Vorbelegung, sondern iOS-"Sticky Hover". Nach dem Tippen
+         bleibt :hover am Finger-Punkt stehen; die naechste Frage liegt an
+         derselben Stelle, also leuchtete dort die Antwort in Auswahl-Optik.
+         Die Hover-Regeln der Antwortknoepfe gelten jetzt nur noch bei echtem
+         Mauszeiger (@media hover:hover and pointer:fine). Gespeichert wurde nie
+         etwas — die Antworten kamen immer aus dem eigenen Tippen.
+         (2) Buddy mitten im Abschnitt: Die Fragekarte zeigt keinen Buddy mehr,
+         die Abschnittsansicht ist der einzige Ort. Vorher sprang er hinter
+         die gesperrte Frage "niedergeschlagen" auf "Freude/Interesse".
+         Die eigentliche Sortierung der Abschnitte (Bereiche liegen in der
+         Datenbank verstreut) ist ein eigener Schritt ueber sort_order.
+
        v2.8.18 (17.10.2026): Funnel-Ueberarbeitung (gehoert zu Funnel-Dashboard v3.0.0 und
        ernaehrung.html 0.6.4). Ereignisse tragen host und page='check'; die Kurzfassung
        meta.source unterscheidet jetzt nach Host: eigene App-Seiten 'app' (vorher als
@@ -1572,8 +1586,13 @@
     .options-grid { display: flex; flex-direction: column; gap: 9px; }
     .option-btn { width: 100%; padding: 15px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(var(--ink-rgb),0.03); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; text-align: left; cursor: pointer; transition: all 0.18s; display: flex; align-items: center; gap: 12px; }
     .option-btn::before { content: ''; width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(var(--ink-rgb),0.15); flex-shrink: 0; transition: all 0.18s; }
-    .option-btn:hover { border-color: var(--accent-green); background: var(--accent-green-dim); transform: translateX(2px); }
-    .option-btn:hover::before { border-color: var(--accent-green); background: var(--accent-green); }
+    /* v2.8.19 — Hover nur bei echtem Mauszeiger. Auf dem Handy bleibt :hover nach dem
+       Tippen am Finger-Punkt haengen und sass auf der Antwort der NAECHSTEN Frage an
+       derselben Stelle — sah aus wie eine Vorbelegung. */
+    @media (hover: hover) and (pointer: fine) {
+      .option-btn:hover { border-color: var(--accent-green); background: var(--accent-green-dim); transform: translateX(2px); }
+      .option-btn:hover::before { border-color: var(--accent-green); background: var(--accent-green); }
+    }
     /* Benchmark-Sofort-Feedback (v1.28.23: inline unter den Antworten statt Overlay — überdeckt nichts) */
     .benchmark-flash { margin-top: 14px; background: var(--accent-green-dim); border-left: 3px solid var(--accent-green); border-radius: 10px; padding: 12px 16px; font-size: 13.5px; line-height: 1.55; color: var(--text-primary); animation: bmIn .3s ease; cursor: pointer; }
     .benchmark-flash .benchmark-source { font-size: 10.5px; color: var(--text-muted); margin-top: 6px; }
@@ -1583,7 +1602,7 @@
     /* Multi-Choice (Sofort-Fix 2): Checkbox-Optik statt Radio-Kreis */
     .option-btn.multi-option input { display: none; }
     .option-btn.multi-option::before { border-radius: 5px; }
-    .option-btn.multi-option:hover::before { background: transparent; }
+    @media (hover: hover) and (pointer: fine) { .option-btn.multi-option:hover::before { background: transparent; } }
     .option-btn.multi-option.checked { border-color: var(--accent-green); background: var(--accent-green-dim); }
     .option-btn.multi-option.checked::before { border-color: var(--accent-green); background: var(--accent-green); content: '✓'; color: var(--on-accent); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
@@ -3519,7 +3538,10 @@
 
   function questionCardHtml(q, noBuddy) {
     const icon = areaIco(q.area_key);
-    const buddy = noBuddy ? "" : buddyForStep(q);
+    // v2.8.19 — Seit es die Abschnittsansicht gibt, traegt NUR sie den Buddy.
+    // Vorher rutschte er hinter eine gesperrte Frage (z. B. "niedergeschlagen")
+    // auf die naechste Karte und stand damit mitten im Abschnitt.
+    const buddy = (noBuddy || BUDDY_ENABLED) ? "" : buddyForStep(q);
     const badge = `<div class="area-badge">${icon} ${areaName(q.area_label, q.area_key)}</div>`;
     let html = `<div class="card">`
       + (buddy ? `<div class="buddy-row">${buddy}${badge}</div>` : badge)
@@ -8109,7 +8131,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.18</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.19</footer>
 
 
 </body>
