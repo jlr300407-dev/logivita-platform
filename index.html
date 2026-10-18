@@ -747,6 +747,13 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.22 (18.10.2026): Versorgungs-Check freigeschaltet (gehoert zu Edge edge-2026-10-18.3 und
+       versorgung.html 1.0.0). SUPPLY_MODULE_URL = "versorgung.html": Knopf "Versorgungs-Check
+       starten" in "Deine Versorgung". Etikett je Praeparat "Anlass erkennbar" statt
+       "nachvollziehbar" (wie im Modul, nach externem Review). Stufe 2 nennt als neuen Punkt
+       "Zugang zu den Zusatzmodulen" (Ernaehrungs-Check und Versorgungs-Check mit derselben
+       Pilot-ID und PIN; Versorgungs-Check nicht bei "Zuerst klaeren").
+
        v2.8.21 (18.10.2026): Versorgung — Formulierungspruefung "nur Tipps, keine Befunde"
        (gehoert zu Edge edge-2026-10-18.2, wortgleich zum Mail-Kasten). Kein "Bedarf, den du
        nicht abdeckst", kein "versorgt dich gut", kein "Abklaeren" als Etikett mehr: Faelle,
@@ -6258,6 +6265,10 @@
     rows += row(ICO("chart"), "Alle Bereiche", "mit Wert, Einordnung für dein Alter und konkreten Schritten");
     rows += row(ICO("chat"), "Deine persönliche Einordnung", "geschrieben auf deine Antworten, per Mail");
     rows += row(ICO("key"), "Pilot-ID und PIN", "für deinen Vergleich in 8–12 Wochen");
+    // v2.8.22 — Hinweis auf die Zusatzmodule (Jörg 18.10.2026); Versorgungs-Check nicht bei "Zuerst klären"
+    rows += row(ICO("leaf"), "Zugang zu den Zusatzmodulen", (SUPPLY_MODULE_URL && !window._doctorFirst)
+      ? "Ernährungs-Check und Versorgungs-Check — mit derselben Pilot-ID und PIN"
+      : "Ernährungs-Check — mit derselben Pilot-ID und PIN");
     const box = S.buildAiBox(rows, {
       badge: "✦ Kostenlos",
       title: "Was du konkret tust – sofort hier und per Mail",
@@ -7029,7 +7040,7 @@
      sind wortgleich zum Mail-Kasten der Edge edge-2026-10-18.1.
   ══════════════════════════════════════════════════════ */
   const SUPPLY_SELECTION_URL = "https://le-vita.com/mikronaehrstoff-versorgung";
-  const SUPPLY_MODULE_URL = "";   // versorgung.html — leer = noch kein Modul-Link
+  const SUPPLY_MODULE_URL = "versorgung.html";   // v2.8.22: Versorgungs-Check freigeschaltet (relativ wie ernaehrung.html)
   const SUPPLY_CASE_TEXT = {
     kein_bedarf: "Aus deinen Angaben ergibt sich kein Anlass für Nahrungsergänzung. Tipp: Eine abwechslungsreiche Ernährung ist die beste Grundlage.",
     gezielt: "Du nimmst Nahrungsergänzung gezielt nach Bluttest oder ärztlicher Empfehlung. Tipp: Kontrollen in den Abständen, die deine Praxis vorschlägt.",
@@ -7053,7 +7064,7 @@
     ohne_anlass_3plus: "Mehrere Präparate ohne erkennbaren Anlass — Tipp: Einnahme einmal durchsehen lassen.",
     kritisch_ohne_test: "Hier lohnt sich ein genauerer Blick. Die Tipps dazu findest du in deinem Vital-Plan."
   };
-  const SUPPLY_VERDICT_TEXT = { passt: "nachvollziehbar", passt_einmal_pruefen: "nachvollziehbar — Wert einmal prüfen lassen", passt_ernaehrung_zuerst: "möglich — Ernährung zuerst", nutzen_pruefen: "Nutzen prüfen", abklaeren: "in der Praxis ansprechen" };
+  const SUPPLY_VERDICT_TEXT = { passt: "Anlass erkennbar", passt_einmal_pruefen: "Anlass erkennbar — Wert einmal prüfen lassen", passt_ernaehrung_zuerst: "möglich — Ernährung zuerst", nutzen_pruefen: "Nutzen prüfen", abklaeren: "in der Praxis ansprechen" };
   const SUPPLY_NUTRIENT = { vitd: "Vitamin D", b12: "Vitamin B12", iodine: "Jod", iron: "Eisen", omega3: "Omega-3", zinc: "Zink", selenium: "Selen", calcium: "Calcium", mag: "Magnesium", multi: "Multivitaminpräparat", other: "Andere" };
 
   function supplyOf(score) {
@@ -7102,7 +7113,7 @@
       || personalData.goal_key === "goal_supplements";
   }
   function supplyUtm(url, medium) {
-    try { const u = new URL(url); u.searchParams.set("utm_source", "vital-check"); u.searchParams.set("utm_medium", medium); u.searchParams.set("utm_campaign", "versorgung"); return u.toString(); }
+    try { const u = new URL(url, location.href); u.searchParams.set("utm_source", "vital-check"); u.searchParams.set("utm_medium", medium); u.searchParams.set("utm_campaign", "versorgung"); return u.toString(); }
     catch (e) { return url; }
   }
   // Übersicht: Bereichskarte (Stufe 1)
@@ -8302,7 +8313,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.21</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.22</footer>
 
 
 </body>
