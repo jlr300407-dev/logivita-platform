@@ -747,6 +747,18 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.8.20 (18.10.2026): Versorgung & Nahrungsergaenzung, Phase A (gehoert zu
+       03_Versorgung_Phase-A_v1.sql und Edge edge-2026-10-18.1). Der Fall kommt aus
+       score.supply_payload (Wiederaufruf) bzw. score.supply (direkt nach dem Absenden).
+       Uebersicht: Karte "Versorgung & Nahrungsergaenzung" mit Wert, Stufenwort und einem
+       Satz, deutlich als "nicht im Index" markiert, ohne Stoffnamen bei kritischen
+       Faellen. Mein Plan: Einordnung je Praeparat und offene Bedarfe (wie der Kasten in der
+       Mail) erst nach dem Mailversand bzw. im Wiederaufruf; vorher ein Satz mit Verweis auf
+       den Vital-Plan. Hinweis auf die Auswahl-Seite le-vita.com/mikronaehrstoff-versorgung
+       nach denselben Regeln wie in der Mail (nie bei Abklaerung, nie bei Einnahme ohne
+       Anlass). Bei "Zuerst klaeren" und unter 18 erscheint nichts. Die Spinne bleibt
+       bewusst bei den 8 Index-Bereichen: Sie zeigt den Index, und eine Achse ohne
+       Gewicht wuerde den Vergleich mit aelteren Checks verzerren. Keine Inhalte entfernt.
        v2.8.19 (18.10.2026): Zwei Korrekturen nach Joergs Handy-Durchlauf.
          (1) Scheinbar vorbelegte Antworten (Fisch, niedergeschlagen, Freude):
          Es war keine Vorbelegung, sondern iOS-"Sticky Hover". Nach dem Tippen
@@ -1722,6 +1734,23 @@
     .hebel-title { font-size: 11px; font-weight: 700; color: var(--accent-blue-text); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; }
     .hebel-text { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
     .hebel-text strong { color: var(--text-primary); }
+    /* v2.8.20 — Versorgung & Nahrungsergaenzung (nicht im Index) */
+    .supply-card { background: var(--brand-card); border: 1px dashed var(--border-hover); border-radius: var(--radius-sm); padding: 14px 16px; margin: 12px 0 16px; }
+    .supply-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .supply-name { font-size: 13px; font-weight: 700; color: var(--text-primary); display: inline-flex; align-items: center; gap: 6px; }
+    .supply-chip { font-size: 10.5px; font-weight: 700; letter-spacing: .3px; color: var(--text-secondary); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; }
+    .supply-val { margin-left: auto; font-size: 15px; font-weight: 800; }
+    .supply-word { font-size: 12.5px; font-weight: 700; margin: 6px 0 2px; }
+    .supply-text { font-size: 13px; line-height: 1.55; color: var(--text-secondary); }
+    .supply-plan { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+    .supply-plan h3 { font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 2px 0 8px; }
+    .supply-row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); font-size: 14px; color: var(--text-primary); }
+    .supply-row span { white-space: nowrap; }
+    .supply-row b { font-size: 13px; text-align: right; }
+    .supply-need { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); margin-top: 8px; }
+    .supply-need strong { color: var(--text-primary); }
+    .supply-sel { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px; line-height: 1.55; color: var(--text-secondary); }
+    .supply-sel a { color: var(--accent-blue); font-weight: 700; }
     .support-box { background: var(--accent-green-dim); border: 1px solid rgba(var(--accent-green-rgb),0.2); border-radius: var(--radius); padding: 22px 20px; margin-bottom: 16px; }
     .support-box h3 { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 14px; }
     .support-hints { list-style: none; padding: 0; margin: 0 0 12px; }
@@ -3289,7 +3318,7 @@
       { type:"wellbeing" },
       { type:"personal" },
       ...tierFiltered(questions).filter(q => !fishQuestionKeys.some(fk => q.question_key?.includes(fk))),
-      
+
       { type:"consent" }
     ].filter(Boolean);
   }
@@ -3322,7 +3351,7 @@
       { type:"wellbeing" },
       { type:"personal" },
       ...filtered,
-      
+
       { type:"consent" }
     ].filter(Boolean);
   }
@@ -5208,6 +5237,7 @@
       html += `</div>`;
     }
     S.areasAll = html.slice(_markAreas);
+    html += S.supplyCard = supplyCardHtml(score);   // v2.8.20
 
     html += S.redFlag = renderRedFlagBox(score, totalScore);
 
@@ -5401,6 +5431,7 @@
     // Ernährungsweise-Hinweise (BfR-konform) als Teil von Kategorie 1
     const { html: supportHtml, bloodtestShown } = renderVitalitySupportBox(areas, result, suppFocus);
     html += S.support = supportHtml;
+    html += S.supplyPlan = supplyPlanHtml(score);   // v2.8.20
 
     // Kategorie 2 — Mit uns im Studio (genau EINE Empfehlung, genau EIN Button)
     const studioRec = {
@@ -6334,6 +6365,7 @@
     html += S.radar || "";
     html += S.radarExplain || "";
     html += S.areasAll || "";
+    html += S.supplyCard || "";   // v2.8.20
     html += S.answers || "";
     html += `</div>`;
 
@@ -6352,6 +6384,7 @@
       });
     }
     html += S.support || "";
+    html += S.supplyPlan || "";   // v2.8.20
     html += S.watch || "";
     const review = !window._unlockInfo && window._isReviewMode && window._accessPin;
     if (review) html += S.recheckLater || "";   // Re-Check machst du selbst – mit Termin im Kalender
@@ -6979,6 +7012,135 @@
       return "";
     }
     return "";
+  }
+
+  /* ══════════════════════════════════════════════════════
+     v2.8.20 — Versorgung & Nahrungsergaenzung (Phase A, NICHT im Index)
+     Quelle: score.supply_payload / score.supply (SQL supply_evaluate). Die Texte
+     sind wortgleich zum Mail-Kasten der Edge edge-2026-10-18.1.
+  ══════════════════════════════════════════════════════ */
+  const SUPPLY_SELECTION_URL = "https://le-vita.com/mikronaehrstoff-versorgung";
+  const SUPPLY_MODULE_URL = "";   // versorgung.html — leer = noch kein Modul-Link
+  const SUPPLY_CASE_TEXT = {
+    kein_bedarf: "Aus deinen Angaben ergibt sich kein erkennbarer Bedarf für Nahrungsergänzung. Eine ausgewogene Ernährung versorgt dich gut.",
+    gezielt: "Du nimmst Nahrungsergänzung gezielt nach Bluttest oder ärztlicher Empfehlung — genau so ist es sinnvoll. Lass die Werte in Abständen kontrollieren.",
+    einnahme_mit_anlass: "Deine Einnahme hat einen nachvollziehbaren Anlass. Die Ernährung bleibt dabei die erste Quelle.",
+    bedarf_gedeckt_getestet: "Deine Einnahme passt zu deinem Bedarf und ist geprüft — gut so. Eine Kontrolle in Abständen genügt.",
+    bedarf_gedeckt: "Deine Einnahme passt gut zu deinem Bedarf. Lass deinen Status einmal prüfen, dann weißt du, dass die Menge stimmt.",
+    bedarf_offen_vitd: "Für Vitamin D gibt es bei dir einen erkennbaren Bedarf, den du bisher nicht abdeckst.",
+    bedarf_offen: "Aus deinen Angaben ergibt sich ein Bedarf, den du bisher nicht abdeckst.",
+    ohne_anlass: "Du nimmst Präparate, für die sich aus deinen Angaben kein Anlass ergibt. Das ist kein Fehler, aber ein guter Moment, den Nutzen zu prüfen — Ernährung zuerst.",
+    ohne_anlass_3plus: "Du nimmst mehrere Präparate ohne erkennbaren Anlass. Je mehr Produkte, desto eher summieren sich einzelne Stoffe über die empfohlenen Höchstmengen — lass deine Einnahme einmal prüfen.",
+    kritisch_ohne_test: "Mindestens ein Präparat solltest du nicht ohne Laborwert oder ärztliche Rücksprache nehmen. Lass das bitte abklären, bevor du es weiter einnimmst."
+  };
+  // Stufe 1 (Übersicht): kurz, bei kritischen Fällen ohne Stoffnamen
+  const SUPPLY_SHORT = {
+    kein_bedarf: "Kein erkennbarer Bedarf für Nahrungsergänzung — eine ausgewogene Ernährung versorgt dich gut.",
+    gezielt: "Du nimmst gezielt nach Bluttest oder ärztlicher Empfehlung ein — genau so ist es sinnvoll.",
+    einnahme_mit_anlass: "Deine Einnahme hat einen nachvollziehbaren Anlass — Ernährung bleibt die erste Quelle.",
+    bedarf_gedeckt_getestet: "Deine Einnahme passt zu deinem Bedarf und ist geprüft.",
+    bedarf_gedeckt: "Deine Einnahme passt gut zu deinem Bedarf — lass den Status einmal prüfen.",
+    ohne_anlass: "Du nimmst Präparate ohne erkennbaren Anlass — ein guter Moment, den Nutzen zu prüfen.",
+    ohne_anlass_3plus: "Mehrere Präparate ohne erkennbaren Anlass — lass deine Einnahme einmal prüfen.",
+    kritisch_ohne_test: "Hier lohnt sich ein genauerer Blick. Die Einordnung findest du in deinem Vital-Plan."
+  };
+  const SUPPLY_VERDICT_TEXT = { passt: "passt", passt_einmal_pruefen: "passt — Status einmal prüfen lassen", passt_ernaehrung_zuerst: "kann passen — Ernährung zuerst", nutzen_pruefen: "Nutzen prüfen", abklaeren: "ärztlich abklären" };
+  const SUPPLY_NUTRIENT = { vitd: "Vitamin D", b12: "Vitamin B12", iodine: "Jod", iron: "Eisen", omega3: "Omega-3", zinc: "Zink", selenium: "Selen", calcium: "Calcium", mag: "Magnesium", multi: "Multivitaminpräparat", other: "Andere" };
+
+  function supplyOf(score) {
+    const s = score && (score.supply_payload || score.supply);
+    return s && s.status === "ok" ? s : null;
+  }
+  function supplyHasRule(s, rule) { return Array.isArray(s.signals) && s.signals.some(x => x.rule === rule); }
+  function supplyWord(v) {
+    if (v >= 95) return ["Gut aufgestellt", "var(--accent-green-text)"];
+    if (v >= 80) return ["Passend — einmal prüfen", "var(--score-ok-text)"];
+    if (v >= 60) return ["Prüfen lohnt sich", "var(--accent-amber-text)"];
+    if (v >= 35) return ["Genauer hinschauen", "var(--accent-amber-text)"];
+    return ["Abklären", "var(--accent-red-text)"];
+  }
+  function supplyHidden() { return !!window._doctorFirst; }   // gleiche Sperre wie der Mail-Kasten (Edge: _bDoctorFirst)
+  function supplyNeedLines(s) {
+    const out = [];
+    const taken = new Set((s.products || []).map(p => p.substance));
+    (s.open_needs || []).forEach(n => {
+      if (n === "b12") out.push(supplyHasRule(s, "vegan_b12")
+        ? ["Vitamin B12", "Bei veganer Ernährung gehört ein B12-Präparat laut DGE fest dazu."]
+        : ["Vitamin B12", "Ab etwa 65 Jahren nimmt der Körper B12 aus der Nahrung oft schlechter auf — lass deinen Status in deiner Hausarztpraxis prüfen."]);
+      else if (n === "vitd") out.push(["Vitamin D", "Von Oktober bis März reicht die Sonne in Deutschland für die Eigenbildung nicht aus. Ob eine Ergänzung für dich sinnvoll ist, klärst du am besten mit deiner Hausarztpraxis."]);
+      else if (n === "iodine") out.push(["Jod", "Verwende konsequent jodiertes Speisesalz. Algenprodukte sind als Jodquelle ungeeignet."]);
+      else out.push([SUPPLY_NUTRIENT[n] || n, "erkennbarer Bedarf."]);
+    });
+    (s.clarify || []).filter(n => !taken.has(n)).forEach(n => {
+      if (n === "iron") out.push(["Eisen", "Deine Angaben sprechen dafür, den Eisenstatus ärztlich abklären zu lassen. Eisen bitte nie ohne Laborwert einnehmen."]);
+      else if (n === "b12") out.push(["Vitamin B12", "Bei vegetarischer Ernährung lohnt es sich, den B12-Status einmal prüfen zu lassen."]);
+      else out.push([SUPPLY_NUTRIENT[n] || n, "einmal ärztlich abklären lassen."]);
+    });
+    (s.food_hints || []).forEach(n => {
+      if (n === "omega3") out.push(["Omega-3", (supplyHasRule(s, "vegan_b12") || supplyHasRule(s, "veg_b12"))
+        ? "Bei pflanzlicher Ernährung ist Algenöl eine gute Quelle für EPA und DHA."
+        : "Ein bis zwei Portionen fetter Seefisch pro Woche sind die einfachste Quelle."]);
+    });
+    return out;
+  }
+  function supplySelectionAllowed(s) {
+    if (!s || supplyHidden()) return false;
+    if ((s.clarify || []).includes("iron")) return false;
+    if ((s.products || []).some(p => p.verdict === "abklaeren")) return false;
+    if (["kritisch_ohne_test", "ohne_anlass", "ohne_anlass_3plus"].includes(s.case_key)) return false;
+    return (s.open_needs || []).length > 0
+      || ["bedarf_gedeckt", "bedarf_gedeckt_getestet", "gezielt", "einnahme_mit_anlass"].includes(s.case_key)
+      || personalData.goal_key === "goal_supplements";
+  }
+  function supplyUtm(url, medium) {
+    try { const u = new URL(url); u.searchParams.set("utm_source", "vital-check"); u.searchParams.set("utm_medium", medium); u.searchParams.set("utm_campaign", "versorgung"); return u.toString(); }
+    catch (e) { return url; }
+  }
+  // Übersicht: Bereichskarte (Stufe 1)
+  function supplyCardHtml(score) {
+    const s = supplyOf(score);
+    if (!s || supplyHidden()) return "";
+    const v = Number(s.score);
+    const [word, col] = supplyWord(v);
+    let text = SUPPLY_SHORT[s.case_key];
+    if (!text) {   // offene Bedarfe: hier dürfen die Stoffe genannt werden
+      const names = (s.open_needs || []).map(n => SUPPLY_NUTRIENT[n] || n);
+      text = names.length ? `Bei ${names.join(" und ")} gibt es einen erkennbaren Bedarf, den du bisher nicht abdeckst.` : (SUPPLY_CASE_TEXT[s.case_key] || "");
+    }
+    return `<div class="supply-card">
+        <div class="supply-head"><span class="supply-name">${ICO("pill")} Versorgung &amp; Nahrungsergänzung</span><span class="supply-chip">nicht im Index</span><span class="supply-val" style="color:${col};">${Math.round(v)}</span></div>
+        <div class="supply-word" style="color:${col};">${word}</div>
+        <div class="supply-text">${escHtml(text)}</div>
+      </div>`;
+  }
+  // Mein Plan: Einordnung je Präparat (Stufe 2 — nach dem Mailversand bzw. im Wiederaufruf)
+  function supplyPlanHtml(score) {
+    const s = supplyOf(score);
+    if (!s || supplyHidden()) return "";
+    const lines = supplyNeedLines(s);
+    const products = s.products || [];
+    if (s.case_key === "kein_bedarf" && !products.length && !lines.length && personalData.goal_key !== "goal_supplements") return "";
+    const full = !!(window._stageUnlocked || (window._isReviewMode && window._accessPin) || !RESULT_STAGES_ENABLED);
+    if (!full) {
+      return `<div class="supply-plan"><h3>Deine Versorgung</h3>
+        <div class="supply-text">${escHtml(SUPPLY_SHORT[s.case_key] || SUPPLY_CASE_TEXT[s.case_key] || "")} Die Einordnung je Präparat steht in deinem Vital-Plan per E-Mail.</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">Dieser Bereich zählt nicht zum Vitalitäts-Index.</div></div>`;
+    }
+    const rows = products.map(p => {
+      const warn = p.verdict === "abklaeren", ok = p.verdict === "passt" || p.verdict === "passt_einmal_pruefen";
+      const col = warn ? "var(--accent-amber-text)" : ok ? "var(--accent-green-text)" : "var(--text-secondary)";
+      return `<div class="supply-row"><span>${escHtml(p.label)}</span><b style="color:${col};">${escHtml(SUPPLY_VERDICT_TEXT[p.verdict] || p.verdict)}</b></div>`;
+    }).join("");
+    const needs = lines.map(([n, t]) => `<div class="supply-need"><strong>${escHtml(n)}:</strong> ${escHtml(t)}</div>`).join("");
+    const sel = supplySelectionAllowed(s) ? `<div class="supply-sel">Wenn du dich zu Nahrungsergänzung orientieren möchtest: Auf le-vita.com findest du eine kleine, sorgfältig ausgewählte Übersicht mit Erklärungen.
+        <a href="${escHtml(supplyUtm(SUPPLY_SELECTION_URL, "ergebnis"))}" target="_blank" rel="noopener" onclick="try{trackEvent('supply_selection_click',{case_key:'${escHtml(s.case_key)}'})}catch(e){}">Zur Übersicht Mikronährstoff-Versorgung →</a></div>` : "";
+    const mod = SUPPLY_MODULE_URL ? `<a class="stage-btn-blue" href="${escHtml(supplyUtm(SUPPLY_MODULE_URL + (SUPPLY_MODULE_URL.includes("?") ? "&" : "?") + "code=" + encodeURIComponent(latestResult?.public_code || ""), "ergebnis"))}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;margin-top:14px;">Versorgungs-Check starten →</a>` : "";
+    return `<div class="supply-plan">
+        <div style="font-size:11px;color:var(--text-secondary);font-weight:700;letter-spacing:1px;text-transform:uppercase;">Versorgung &amp; Nahrungsergänzung · nicht im Index</div>
+        <h3>Deine Versorgung</h3>
+        <div class="supply-text" style="margin-bottom:${rows ? 8 : 0}px;">${escHtml(SUPPLY_CASE_TEXT[s.case_key] || "")}</div>
+        ${rows}${needs}${sel}${mod}
+      </div>`;
   }
 
   function renderVitalitySupportBox(areas, result, suppFocus) {
@@ -8131,7 +8293,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.19</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.8.20</footer>
 
 
 </body>
