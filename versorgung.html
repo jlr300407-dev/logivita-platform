@@ -19,10 +19,16 @@
   (Pilot-ID + PIN oder Konto, wie der Ernährungs-Check). Präparate mit festen
   Mengenstufen, Anlass je Präparat, Dauer, Erwartung; Kombipräparate mit Inhalt.
   Bewertung nur in der Datenbank (supply_plan_evaluate, feste Regeln, keine KI):
-  behalten, weglassen, abklären, ergänzen. Konto-Schritt Pflicht im Ergebnis.
+  behalten, weglassen, abklären, ergänzen. Konto-Schritt im Ergebnis (seit Review freiwillig).
   Lebensmittel als Alternative je Stoff und Ernaehrungsform ("Ueber die Ernaehrung").
   Funnel: page='versorgung', Ereignisse supply_*. Gestaltung und Hell/Dunkel wie
   ernaehrung.html 0.6.4 (CSS übernommen).
+  Nach externem Review (18.10.2026): Etikett "Anlass erkennbar" statt "Nachvollziehbar",
+  Karte "Was dieser Check kann — und was nicht", Kosten ohne errechnete Ersparnis (11),
+  Kombipräparate mit Hinweis "Gesamtmenge nicht beurteilbar" (11), Hilfetext Wirkstoffmenge,
+  "Nach Bluttest mit auffälligem Wert", Hinweis zu verordneten Präparaten, Transparenzsatz
+  bei der Produktübersicht, Rückmeldung "hilfreich?" (Funnel supply_feedback),
+  Konto freiwillig wie beim Ernährungs-Check (Rückkehr per PIN bleibt).
   Sprache: nur Tipps, keine Befunde. Sichtbare Bezeichnungen der Gruppen sind
   „In der Praxis ansprechen / Ein Blick lohnt sich / Über die Ernährung /
   Kein Anlass erkennbar / Nachvollziehbar“ (interne Schlüssel unverändert).
@@ -544,7 +550,7 @@
 
   // ── Texte ──
   const SINCE = [["unter_3m", "unter 3 Monaten"], ["3_12m", "3–12 Monate"], ["laenger", "länger"]];
-  const REASON = [["test", "Nach Bluttest"], ["arzt", "Ärztliche Empfehlung"], ["empfehlung", "Empfehlung (Apotheke, Studio, Bekannte)"], ["eigene", "Eigene Entscheidung"], ["weiss_nicht", "Weiß ich nicht mehr"]];
+  const REASON = [["test", "Nach Bluttest mit auffälligem Wert"], ["arzt", "Ärztliche Empfehlung"], ["empfehlung", "Empfehlung (Apotheke, Studio, Bekannte)"], ["eigene", "Eigene Entscheidung"], ["weiss_nicht", "Weiß ich nicht mehr"]];
   const HOPE = [["energie", "Energie"], ["immunsystem", "Immunsystem"], ["muskeln", "Muskeln"], ["schlaf", "Schlaf"], ["haut_haare", "Haut/Haare"], ["vorsorge", "Vorsorge"], ["anderes", "Anderes"]];
   const LAST_TEST = [["unter_1_jahr", "im letzten Jahr"], ["1_2_jahre", "vor 1–2 Jahren"], ["aelter", "länger her"], ["nie", "noch nie"], ["weiss_nicht", "weiß ich nicht"]];
   const ACID = [["nein", "Nein"], ["ja", "Ja"], ["weiss_nicht", "Weiß ich nicht"]];
@@ -555,15 +561,15 @@
   // Sichtbare Bezeichnungen sind Tipps, keine Befunde (Formulierungsprüfung 18.10.2026)
   const VERDICT = {
     abklaeren: ["In der Praxis ansprechen", "v-red"], ergaenzen: ["Ein Blick lohnt sich", "v-blue"], ernaehrung: ["Über die Ernährung", "v-blue"],
-    weglassen: ["Kein Anlass erkennbar", "v-gray"], behalten_pruefen: ["Nachvollziehbar — Wert einmal prüfen lassen", "v-green"], behalten: ["Nachvollziehbar", "v-green"],
+    weglassen: ["Kein Anlass erkennbar", "v-gray"], behalten_pruefen: ["Anlass erkennbar — Wert einmal prüfen lassen", "v-green"], behalten: ["Anlass erkennbar", "v-green"],
   };
   const GROUPS = [
     ["abklaeren", "In der Praxis ansprechen", "Hier raten BfR oder Fachgesellschaften zu ärztlicher Rücksprache. Tipp: Nimm diese Punkte zu deinem nächsten Termin in der Hausarztpraxis mit — am besten, bevor du das Präparat weiter nimmst."],
     ["ergaenzen", "Ein Blick lohnt sich", "Aus deinen Angaben ergibt sich hier ein Anhaltspunkt. Tipp: Ernährung zuerst — und ob eine Ergänzung für dich sinnvoll ist, klärst du am besten in deiner Praxis."],
     ["ernaehrung", "Über die Ernährung", "Tipp: Hier ist die Ernährung der einfachste Weg."],
-    ["weglassen", "Kein Anlass erkennbar", "Laut BfR sind Nahrungsergänzungsmittel für die überwiegend gut versorgte Bevölkerung nicht notwendig."],
-    ["behalten_pruefen", "Nachvollziehbar — Wert einmal prüfen lassen", ""],
-    ["behalten", "Nachvollziehbar", ""],
+    ["weglassen", "Kein Anlass erkennbar", "Laut BfR sind Nahrungsergänzungsmittel für die überwiegend gut versorgte Bevölkerung nicht notwendig. Was dir ärztlich verordnet wurde, änderst du bitte nur in Absprache mit deiner Praxis."],
+    ["behalten_pruefen", "Anlass erkennbar — Wert einmal prüfen lassen", "Aus deinen Angaben ist ein Einnahmegrund erkennbar. Ob Menge und Präparat zu dir passen, zeigt erst ein Laborwert."],
+    ["behalten", "Anlass erkennbar", "Aus deinen Angaben ist ein Einnahmegrund erkennbar. Tipp: Überprüf die Einnahme von Zeit zu Zeit."],
   ];
   const label = (k) => (st.data?.catalog || []).find((s) => s.substance_key === k)?.label || k;
 
@@ -572,7 +578,7 @@
     h(`
       <h1>Dein Versorgungs-Check</h1>
       <p class="lead">Welche Nahrungsergänzung passt zu dir — und welche kannst du dir sparen? Du trägst ein, was du nimmst,
-        und bekommst Tipps: was zu deinen Angaben passt, wofür sich kein Anlass erkennen lässt und was du in deiner Praxis ansprechen kannst. Ernährung zuerst.</p>
+        und bekommst eine Orientierung: wofür sich aus deinen Angaben ein Anlass erkennen lässt, wofür nicht und was du in deiner Praxis ansprechen kannst. Ernährung zuerst. Der Check misst nicht, wie gut du versorgt bist.</p>
       <div class="card">
         <div class="field"><label for="f-code">Pilot-ID aus deinem Vital-Check</label>
           <input type="text" id="f-code" autocomplete="off" placeholder="LEV-2026-000123" value="${esc(st.code)}"></div>
@@ -649,7 +655,7 @@
     return `<div class="card item" data-idx="${idx}">
       <div class="item-head"><h3>${esc(s.label || it.substance_key)}</h3><button type="button" class="rm" data-rm="${idx}" aria-label="Entfernen">Entfernen</button></div>
       ${s.ignore_in_score ? `<p class="small">Sporternährung — dazu gibt dieser Check keine Tipps.</p>` : `
-      ${s.asks_amount && lv.length ? `<div class="q${miss("amount_level")}"><div class="q-label">Menge pro Tag</div><div class="q-help">Steht auf der Packung, meist „pro Tagesdosis“.</div>${chips("amount_level", lv, it.amount_level)}</div>` : ""}
+      ${s.asks_amount && lv.length ? `<div class="q${miss("amount_level")}"><div class="q-label">Menge pro Tag</div><div class="q-help">Gemeint ist die Wirkstoffmenge pro Tag laut Packung (z. B. „20 µg“ oder „800 IE“), nicht das Gewicht der Tablette.</div>${chips("amount_level", lv, it.amount_level)}</div>` : ""}
       ${s.is_combination ? `<div class="q"><div class="q-label">Was steht drauf?</div><div class="q-help">Mehrfachauswahl — leer lassen, wenn du es nicht weißt.</div>
         <div class="chips" data-multi="combo_contents">${COMBO.map((k) => `<button type="button" data-v="${k}" class="${(it.combo_contents || []).includes(k) ? "on" : ""}">${esc(label(k))}</button>`).join("")}</div></div>` : ""}
       <div class="q${miss("reason")}"><div class="q-label">Warum nimmst du es?</div>${chips("reason", REASON, it.reason)}</div>
@@ -744,7 +750,8 @@
     h(`
       <h1>Dein Versorgungsplan</h1>
       <div class="card top"><h2 style="margin-bottom:4px">${esc(res.headline || "")}</h2>
-        <p class="muted">${done ? "Stand " + esc(done) + " · " : ""}Ernährung zuerst — Ergänzung nur, wo es einen Anlass gibt.</p></div>
+        <p class="muted">${done ? "Stand " + esc(done) + " · " : ""}Ernährung zuerst — und gezielte Ergänzung dort, wo es einen Anlass gibt.</p></div>
+      <div class="card info"><p><strong>Was dieser Check kann — und was nicht:</strong> Er ordnet deine Angaben zu Präparaten, Ernährung und Lebensstil nach den Empfehlungen von DGE und BfR ein. Wie gut du tatsächlich versorgt bist, kann er nicht messen — einen Mangel weder feststellen noch ausschließen. Das kann nur ein Laborwert in deiner Praxis.</p></div>
       ${(res.items || []).length || (res.add || []).length ? sec : `<div class="card"><p>Du nimmst keine Nahrungsergänzung, und aus deinen Angaben ergibt sich kein Anlass dafür. Tipp: Eine abwechslungsreiche Ernährung ist die beste Grundlage.</p></div>`}
       ${(res.notes || []).length ? `<div class="card info">${res.notes.map((n) => `<p>${esc(n)}</p>`).join("")}</div>` : ""}
       ${res.doctor_sheet ? `<div class="card"><h3>Für deinen Praxistermin</h3>
@@ -753,7 +760,7 @@
       ${res.nutrition_check ? `<div class="card"><h3>Ernährung zuerst</h3>
         <p class="muted">Dein Vital-Check zeigt bei der Ernährung noch Luft nach oben. Der Ernährungs-Check gibt dir in wenigen Minuten Tipps, wo du ansetzen kannst — Ernährung zuerst, dann Ergänzung.</p>
         <a id="nut" class="btn block" style="margin-top:10px" href="ernaehrung.html?code=${encodeURIComponent(st.code)}&utm_source=versorgung&utm_medium=versorgung&utm_campaign=versorgung${INTERNAL ? "&internal=1" : ""}">Zum Ernährungs-Check</a></div>` : ""}
-      ${sel ? `<div class="card"><p class="muted">Wenn du dich zu Nahrungsergänzung orientieren möchtest: Auf le-vita.com findest du eine kleine, sorgfältig ausgewählte Übersicht mit Erklärungen.</p>
+      ${sel ? `<div class="card"><p class="muted">Wenn du dich zu Nahrungsergänzung orientieren möchtest: Auf le-vita.com findest du eine kleine, sorgfältig ausgewählte Übersicht mit Erklärungen. Sie ist ein Angebot von LeVITA; die Tipps oben entstehen unabhängig davon.</p>
         <a id="sel" href="${esc(SELECTION_URL)}?utm_source=vital-check&utm_medium=versorgung&utm_campaign=versorgung" target="_blank" rel="noopener" style="color:var(--accent-blue-text);font-weight:700">Zur Übersicht Mikronährstoff-Versorgung →</a></div>` : ""}
       <div id="konto-step"></div>
       <div class="row" style="margin:6px 0 16px">
@@ -761,6 +768,8 @@
         <button class="btn ghost" id="b-print">Plan drucken</button>
       </div>
       ${r.mail_sent ? `<p class="small">Wir haben dir eine kurze Mail mit dem Link zu diesem Plan geschickt — ohne Gesundheitsdaten.</p>` : ""}
+      <div class="card" id="fb"><h3>War diese Orientierung hilfreich?</h3>
+        <div class="chips" style="margin-top:8px">${[["ja", "Ja"], ["teils", "Teils"], ["nein", "Nein"]].map(([k, t]) => `<button type="button" data-fb="${k}">${t}</button>`).join("")}</div></div>
       <div class="card"><h3>Wie geht es weiter?</h3>
         <p class="muted">Mach den Versorgungs-Check zusammen mit deinem Re-Check in 8–12 Wochen noch einmal — dann siehst du, was sich verändert hat.
           Für ein Gespräch im Studio sprich uns einfach an.</p></div>
@@ -768,16 +777,21 @@
         nennen bewusst keine Dosierungen. Wenn du dauerhaft Medikamente nimmst oder eine Vorerkrankung hast, sprich vor jeder Einnahme mit deiner Ärztin oder deinem Arzt.</p>
       ${INTERNAL ? `<p class="small">${esc(r.version || "")} · Fall im Vital-Check: ${esc(res.vital_check_case || "–")}</p>` : ""}`);
     document.getElementById("b-edit").onclick = () => screenForm();
+    $app.querySelectorAll("[data-fb]").forEach((b) => b.onclick = () => {
+      track("supply_feedback", { value: b.dataset.fb }, true);
+      document.getElementById("fb").innerHTML = `<p class="muted">Danke für deine Rückmeldung!</p>`;
+    });
     document.getElementById("b-print").onclick = () => { track("supply_print"); window.print(); };
     const sl = document.getElementById("sel"); if (sl) sl.onclick = () => track("supply_selection_click");
     const nu = document.getElementById("nut"); if (nu) nu.onclick = () => track("supply_nutrition_click");
     const bd = document.getElementById("b-doc"); if (bd) bd.onclick = () => printDoctorSheet(r);
     if (window.LeVitaKonto && st.pin && !r.account?.in_account) {
       window.LeVitaKonto.mountStep(document.getElementById("konto-step"), {
-        publicCode: st.code, pin: st.pin, context: "nutrition", required: true,
+        publicCode: st.code, pin: st.pin, context: "nutrition", required: false,   // freiwillig (Jörg 18.10.2026 nach Review)
         lead: "Mit Konto bleibt dein Versorgungsplan gespeichert, und du öffnest ihn beim Re-Check ohne PIN, mit einem Link per E-Mail.",
         onRequested: () => track("supply_account", { action: "requested" }),
       });
+      document.getElementById("konto-step").addEventListener("click", (ev) => { if (ev.target && ev.target.id === "lk-skip") track("supply_account", { action: "skipped" }); });
     }
   }
 
