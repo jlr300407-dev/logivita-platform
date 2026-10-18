@@ -747,6 +747,17 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.12.1 (19.10.2026): Paket G (Prüflauf Zusatzmodule). Die Modulkarte und die Zeile "Zugang zu den
+       Zusatzmodulen" lesen module_access aus der Edge-Antwort (SQL 07, edge-2026-10-18.10) — dieselbe Regel wie
+       Mail, Mein Bereich und die Modul-Eingänge: ärztlicher Vorrang und Essverhalten sperren beide Module, der
+       Ernährungs-Check gilt erst ab BMI 20 (ab 65 Jahren 22) und unter 35. Ohne module_access: gleiche Regel lokal.
+       Schwangerschaftsfrage wird Männern nicht mehr gestellt (gilt als "nein"; Jörg 19.10.2026).
+       Dritte Testrunde (R3): Ernährungs-Hinweisbox bei ärztlichem Vorrang/Essverhalten zurückgestellt, sonst bei
+       Hinweisstatus als "nach dem Praxisgespräch" gekennzeichnet (F01); Re-Check-Termin bei Hinweisstatus an das
+       Praxisgespräch gebunden, ohne Datum (F02); kein "Behalte das bei" fürs Training bei Essverhalten oder BMI < 18,5
+       (F04); Fortsetzen-Banner verschwindet mit dem Ergebnis (F05); Eisen-Schritt nennt nur die tatsächlich
+       angegebenen Punkte, Sammelfrage als Sammelfrage (M04); "Krafttraining oder körperlich schwere Arbeit" (M04).
+
        v2.12.0 (18.10.2026): Paket E (Regelversion 2026-10-R1, Nachtest R2). EINE zentrale
        Ergebnis-Entscheidung (resultDecision → window._decision): Hinweisstatus, erster Schritt,
        gesperrte Themen. Alle nachgelagerten Bausteine lesen nur noch sie: "Wir vermuten" ohne
@@ -2626,7 +2637,17 @@
     const combos = (sc.combos || []).filter(c => c && (c.question_keys || []).length && c.question_keys.every(k => ok.has(k)));
     return Object.assign({}, sc, { levers, combos });
   }
-  function resultDecision(care, worst, bmi) {
+  // v2.12.1 (R3-M04): Eisen-Schritt nennt nur, was angegeben wurde — die Sammelfrage bleibt Sammelfrage
+  function eisenFirstStep(care, answers) {
+    const d = (care && care.details) || {};
+    const parts = [];
+    if (["d", "e", "f"].includes(String(d.period || "")) || careRiskOf(answers, "period_bleeding") >= 3) parts.push("deiner Regelblutung");
+    if (["d", "e"].includes(String(d.dizziness || "")) || careRiskOf(answers, "dizziness_pale_nails") >= 3) parts.push("Schwindel, Blässe oder brüchigen Nägeln");
+    return parts.length
+      ? `Sprich deine Angaben zu ${parts.join(" und zu ")} in deiner Hausarztpraxis an – dort lässt sich klären, ob ein Blick auf den Eisenwert sinnvoll ist.`
+      : "Sprich deine Angaben in deiner Hausarztpraxis an – dort lässt sich klären, ob ein Blick auf den Eisenwert sinnvoll ist.";
+  }
+  function resultDecision(care, worst, bmi, answers) {
     const st = (care && care.status) || "none";
     const r = (care && care.reasons) || [];
     const doctor = st === "doctor_first";
@@ -2637,7 +2658,7 @@
     return {
       status: st, doctor, praxis,
       calm: !(care && care.active),                       // beruhigende Standardsätze nur ohne Hinweisstatus
-      firstStep: praxis ? CARE_FIRST_STEP[key] : null,   // Sofort-Schritt
+      firstStep: praxis ? (key === "eisen" ? eisenFirstStep(care, answers || []) : CARE_FIRST_STEP[key]) : null,   // Sofort-Schritt
       fixedPlan: praxis,                                  // feste Schritte statt KI-Fahrplan (Mail: Vorlage)
       noOptimize: doctor,                                 // keine Punkte, kein Simulator-Hebel
       noSupply: doctor || r.includes("essverhalten"),     // Versorgungs-Check zurückhalten
@@ -3733,7 +3754,7 @@
 
           <div class="form-field"><label>Alter *</label><input type="number" id="age" placeholder="z.B. 38" min="18" max="100" value="${pre ? v(pre.age) : ''}" /></div>
           <div class="form-field"><label>Geschlecht *</label>
-            <select id="gender">
+            <select id="gender" onchange="togglePregnancyField()">
               <option value="">Bitte wählen</option>
               <option value="weiblich"${sel('weiblich')}>Weiblich</option>
               <option value="männlich"${sel('männlich')}>Männlich</option>
@@ -3741,7 +3762,7 @@
               <option value="keine_angabe"${sel('keine_angabe')}>Keine Angabe</option>
             </select>
           </div>
-          <div class="form-field"><label>Bist du schwanger oder stillst du? *</label>
+          <div class="form-field" id="pregnancyField"${pre && pre.gender === 'männlich' ? ' style="display:none;"' : ''}><label>Bist du schwanger oder stillst du? *</label>
             <select id="pregnancy_status">
               <option value="">Bitte wählen</option>
               <option value="nein"${personalData.pregnancy_status === 'nein' ? ' selected' : ''}>Nein</option>
@@ -4040,6 +4061,12 @@
     }, 200);
   }
 
+  // v2.12.1: Frage zu Schwangerschaft/Stillzeit nur, wenn das Geschlecht nicht "männlich" ist
+  function togglePregnancyField() {
+    const g = (document.getElementById("gender") || {}).value || "";
+    const f = document.getElementById("pregnancyField");
+    if (f) f.style.display = g === "männlich" ? "none" : "";
+  }
   function savePersonalData() {
     const age = Number(document.getElementById("age").value);
     const gender = document.getElementById("gender").value;
@@ -4051,8 +4078,9 @@
       return;
     }
     if (!gender) return alert("Bitte Geschlecht auswählen.");
-    // v2.9.0 (G1/G2): Pflichtfeld für alle; "ja" beendet den Check, ohne etwas zu speichern
-    const pregnancy = (document.getElementById("pregnancy_status") || {}).value || "";
+    // v2.9.0 (G1/G2): "ja" beendet den Check, ohne etwas zu speichern.
+    // v2.12.1 (Jörg 19.10.2026): Männern wird die Frage nicht gestellt — dort gilt "nein".
+    const pregnancy = gender === "männlich" ? "nein" : ((document.getElementById("pregnancy_status") || {}).value || "");
     if (!pregnancy) return alert("Bitte beantworte die Frage zu Schwangerschaft oder Stillzeit.");
     if (pregnancy === "ja") { showPregnancyStop(); return; }
     if (!height_cm || height_cm < 120 || height_cm > 230) return alert("Bitte eine gültige Größe eingeben.");
@@ -4855,6 +4883,7 @@
 
   function showResult(result, opts) {
     opts = opts || {};
+    try { dismissResume(); } catch (e) { /* v2.12.1 (R3-F05): Fortsetzen-Banner gehört nicht zum Ergebnis */ }
     // v2.0.0 — Re-Render nach der Freischaltung zählt nicht als neuer Aufruf
     if (!opts.rerender) trackEvent('result_view');
     // v2.0.0 — Stufe: 2 nach Mailversand, beim Wiederaufruf mit PIN und beim
@@ -5059,7 +5088,7 @@
       : _singleSignal ? "single"
       : null;
     // v2.12.0 (Paket E): die eine Entscheidung, die alle folgenden Bausteine lesen
-    window._decision = resultDecision(window._care, worst, result.bmi);
+    window._decision = resultDecision(window._care, worst, result.bmi, result.answers || []);
 
     // ── V2: Re-Check-Einstieg aus der PIN-Ansicht ──
     // Nur im Wiederaufruf (PIN bereits serverseitig verifiziert): von hier aus
@@ -5804,8 +5833,11 @@
       cat1.unshift(["Viel Schlaf und trotzdem müde", "Wer mehr als 9 Stunden schläft und sich tagsüber trotzdem häufig müde fühlt, spricht das am besten in der Hausarztpraxis an.", "sleep_long"]);
       if (cat1.length > 3) cat1.pop();
     }
-    if (_trainsFully && cat1.length < 3) {
-      cat1.push(["Beibehalten und gut erholen", `Mit 5–7 aktiven Tagen und Krafttraining 3-mal oder häufiger pro Woche bist du sehr gut unterwegs. Behalte das bei und plane bewusst Erholung ein.${(isFinite(Number(result.bmi)) && Number(result.bmi) < 18.5) || (window._decision && window._decision.praxis) ? "" : " Wenn du gezielt mehr willst, plant ein Trainer im Studio das gern mit dir."}`, "activity_keep"]);
+    const _trainVorbehalt = (isFinite(Number(result.bmi)) && Number(result.bmi) < 18.5) || ((window._care && window._care.reasons) || []).includes("essverhalten");   // v2.12.1 (R3-F04)
+    if (_trainsFully && cat1.length < 3 && _trainVorbehalt) {
+      cat1.push(["Bewegung mit der Praxis abstimmen", "Wie viel Training gerade zu dir passt, besprichst du am besten beim Gespräch in deiner Hausarztpraxis – Umfang und Verträglichkeit gehören dazu.", "activity_keep"]);
+    } else if (_trainsFully && cat1.length < 3) {
+      cat1.push(["Beibehalten und gut erholen", `Mit 5–7 aktiven Tagen und Krafttraining oder körperlich schwerer Arbeit 3-mal oder häufiger pro Woche bist du sehr gut unterwegs. Behalte das bei und plane bewusst Erholung ein.${(isFinite(Number(result.bmi)) && Number(result.bmi) < 18.5) || (window._decision && window._decision.praxis) ? "" : " Wenn du gezielt mehr willst, plant ein Trainer im Studio das gern mit dir."}`, "activity_keep"]);
     }
     // v2.11.0 (M3/S5): Bei ärztlichem Vorrang ersetzt die Abklärung alle Selbst-Tipps (keine Belastungssteigerung)
     if (_careT.status === "doctor_first") {
@@ -5824,7 +5856,12 @@
 
     // Ernährungsweise-Hinweise (BfR-konform) als Teil von Kategorie 1
     const { html: supportHtml, bloodtestShown } = renderVitalitySupportBox(areas, result, suppFocus);
-    html += S.support = supportHtml;
+    // v2.12.1 (R3-F01): bei ärztlichem Vorrang/Essverhalten keine Ernährungs-Hinweisbox; sonst bei Hinweisstatus gekennzeichnet
+    const _DS1 = window._decision || {};
+    const _essS = ((window._care && window._care.reasons) || []).includes("essverhalten");
+    html += S.support = (_DS1.doctor || _essS) ? ""
+      : _DS1.praxis ? supportHtml.replace('<div class="support-box">', '<div class="support-box"><div style="font-size:12px;font-weight:700;color:var(--warn-text);margin-bottom:6px;">Orientierung für die Zeit nach dem Gespräch in deiner Praxis</div>')
+      : supportHtml;
     html += S.supplyPlan = supplyPlanHtml(score);   // v2.8.20
 
     // Kategorie 2 — Mit uns im Studio (genau EINE Empfehlung, genau EIN Button)
@@ -6624,8 +6661,27 @@
   // ── v2.10.0 (W1): feste Karte "Deine Zusatzmodule" — jede Ankündigung hat einen Weg ──
   // Zustand je Modul: verfügbar / empfohlen / begonnen / zuerst ärztlich abklären / nicht passend (mit Grund).
   // Die Empfehlungslogik bleibt unverändert (nutrition_offer aus der Edge); neu ist, dass der Weg immer sichtbar ist.
+  // v2.12.1 (Paket G): Zugang zu den Zusatzmodulen — aus der Datenbank (module_access), sonst gleiche Regel lokal
+  function moduleAccessLocal() {
+    if (latestResult && latestResult.module_access && latestResult.module_access.nutrition && latestResult.module_access.supply) return latestResult.module_access;
+    const care = window._care || {};
+    const doctor = !!window._doctorFirst || care.status === "doctor_first";
+    const ess = (care.reasons || []).includes("essverhalten");
+    const bmi = Number(latestResult && latestResult.bmi), age = Number(personalData.age || (latestResult && latestResult.submission && latestResult.submission.age) || 0);
+    const min = age >= 65 ? 22 : 20;
+    const nut = doctor ? { ok: false, reason: "doctor_first", state: "Zuerst ärztlich abklären – danach ist der Ernährungs-Check für dich da." }
+      : ess ? { ok: false, reason: "essverhalten", state: "Gerade nicht passend: Deine Angaben zu Essen und Gewicht gehören zuerst in die Hausarztpraxis." }
+      : (isFinite(bmi) && bmi > 0 && bmi < min) ? { ok: false, reason: "bmi_low", state: "Gerade nicht passend: Für dein Gewicht ist dieses Programm nicht gebaut. Wenn du an Kraft, Energie oder Ernährungsqualität arbeiten möchtest, sprich uns gern an." }
+      : (isFinite(bmi) && bmi >= 35) ? { ok: false, reason: "bmi_high", state: "Gerade nicht passend: In deinem Gewichtsbereich ist eine ärztliche Begleitung der richtige Rahmen." }
+      : { ok: true };
+    const sup = doctor ? { ok: false, reason: "doctor_first", state: "Zuerst ärztlich abklären – Nahrungsergänzung besprichst du am besten in der Praxis." }
+      : ess ? { ok: false, reason: "essverhalten", state: "Gerade nicht passend: Nahrungsergänzung besprichst du am besten zusammen mit deinen Angaben zu Essen und Gewicht in deiner Hausarztpraxis." }
+      : { ok: true };
+    return { nutrition: nut, supply: sup };
+  }
   function stageModulesCardHtml() {
     if (!latestResult || !latestResult.public_code) return "";
+    const acc = moduleAccessLocal();
     const code = encodeURIComponent(latestResult.public_code);
     const care = window._care || {};
     const doctor = !!window._doctorFirst || care.status === "doctor_first";
@@ -6633,8 +6689,7 @@
     const rowsDef = [];
     // Ernährungs-Check
     let nState, nBtn = true;
-    if (doctor) { nState = "Zuerst ärztlich abklären – danach ist der Ernährungs-Check für dich da."; nBtn = false; }
-    else if ((care.reasons || []).includes("essverhalten")) { nState = "Gerade nicht passend: Deine Angaben zu Essen und Gewicht gehören zuerst in die Hausarztpraxis."; nBtn = false; }
+    if (!acc.nutrition.ok) { nState = acc.nutrition.state; nBtn = false; }   // v2.12.1 (Paket G)
     else if (offer && offer.enrollment_status) nState = "Begonnen – mit Pilot-ID und PIN machst du weiter.";
     else if (offer && offer.eligible === true) nState = "Empfohlen – passt zu deinem Ergebnis.";
     else nState = "Verfügbar – wo beim Essen das meiste Potenzial liegt, ohne Diät und ohne Verbote.";
@@ -6642,12 +6697,9 @@
       href: nBtn ? `${(offer && offer.url) || "ernaehrung.html"}?code=${code}&utm_source=vital-check&utm_medium=modulkarte` : "", ev: "nutrition" });
     // Versorgungs-Check
     if (SUPPLY_MODULE_URL) {
-      const _ess = (care.reasons || []).includes("essverhalten");   // v2.12.0 (Paket E)
-      const sState = doctor ? "Zuerst ärztlich abklären – Nahrungsergänzung besprichst du am besten in der Praxis."
-        : _ess ? "Gerade nicht passend: Nahrungsergänzung besprichst du am besten zusammen mit deinen Angaben zu Essen und Gewicht in deiner Hausarztpraxis."
-        : "Verfügbar – ordnet ein, ob deine Nahrungsergänzung zu deinen Angaben passt.";
+      const sState = acc.supply.ok ? "Verfügbar – ordnet ein, ob deine Nahrungsergänzung zu deinen Angaben passt." : acc.supply.state;   // v2.12.1 (Paket G)
       rowsDef.push({ ico: ICO("leaf"), name: "Versorgungs-Check", state: sState,
-        href: (doctor || _ess) ? "" : supplyUtm(SUPPLY_MODULE_URL + (SUPPLY_MODULE_URL.includes("?") ? "&" : "?") + "code=" + code, "modulkarte"), ev: "supply" });
+        href: !acc.supply.ok ? "" : supplyUtm(SUPPLY_MODULE_URL + (SUPPLY_MODULE_URL.includes("?") ? "&" : "?") + "code=" + code, "modulkarte"), ev: "supply" });
     }
     const rows = rowsDef.map(r => `
         <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--border);">
@@ -6718,9 +6770,11 @@
       : row(ICO("chat"), "Deine persönliche Einordnung", "geschrieben auf deine Antworten, per Mail");
     rows += row(ICO("key"), "Pilot-ID und PIN", "für deinen Vergleich in 8–12 Wochen");
     // v2.8.22 — Hinweis auf die Zusatzmodule (Jörg 18.10.2026); Versorgungs-Check nicht bei "Zuerst klären"
-    rows += row(ICO("leaf"), "Zugang zu den Zusatzmodulen", (SUPPLY_MODULE_URL && !window._doctorFirst && !(window._decision && window._decision.noSupply))
-      ? "Ernährungs-Check und Versorgungs-Check — mit derselben Pilot-ID und PIN"
-      : "Ernährungs-Check — mit derselben Pilot-ID und PIN");
+    {   // v2.12.1 (Paket G): nur Module nennen, die offen sind
+      const acc = moduleAccessLocal();
+      const open = [acc.nutrition.ok ? "Ernährungs-Check" : null, (SUPPLY_MODULE_URL && acc.supply.ok) ? "Versorgungs-Check" : null].filter(Boolean);
+      if (open.length) rows += row(ICO("leaf"), "Zugang zu den Zusatzmodulen", `${open.join(" und ")} — mit derselben Pilot-ID und PIN`);
+    }
     const box = S.buildAiBox(rows, {
       badge: "✦ Kostenlos",
       title: "Was du konkret tust – sofort hier und per Mail",
@@ -8172,6 +8226,12 @@
   }
 
   function recheckReminderHtml() {
+    // v2.12.1 (R3-F02): bei Hinweisstatus kein Datum und kein Kalendereintrag — der nächste Check folgt dem Praxisgespräch
+    const _DR = window._decision || {};
+    if (_DR.praxis) return `
+      <div style="margin-top:12px;padding:12px 14px;background:rgba(var(--ink-rgb),0.04);border:1px solid var(--border);border-radius:var(--radius-sm);text-align:left;font-size:12.5px;color:var(--text-secondary);line-height:1.55;">
+        <strong style="color:var(--text-primary);">Dein nächster Check:</strong> ${_DR.doctor ? "wenn die ärztliche Abklärung erfolgt ist." : "nach dem Gespräch in deiner Hausarztpraxis."} Mit Pilot-ID und PIN kommst du jederzeit zu dieser Auswertung zurück.
+      </div>`;
     const rd = recheckDates();
     return `
       <div style="margin-top:12px;padding:12px 14px;background:rgba(var(--ink-rgb),0.04);border:1px solid var(--border);border-radius:var(--radius-sm);text-align:left;">
@@ -8783,7 +8843,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.12.0</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.12.1</footer>
 
 
 </body>
