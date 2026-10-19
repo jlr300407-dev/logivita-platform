@@ -747,6 +747,13 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.14.0 (20.10.2026): Paket K, Punkte 1 und 3 (Revisionsbericht 19.10.2026). (1) Karte "So entsteht deine
+       Auswertung" in Stufe 1 und im Reiter "Übersicht" (feste Regeln, KI nur für die Mail, Prüfung, Quellen) mit
+       Link auf die neue Seite so-entsteht-deine-auswertung.html (Gewichte, Abzug, Vitalitäts-Alter, Hebel, Quellen);
+       derselbe Link unter der Mail-Box. (2) Nach dem Mailversand nummeriert der Freischalt-Kasten die nächsten
+       Schritte: 1 Mail (erledigt), 2 Zusatzmodule (nur wenn mindestens eins offen ist), 2/3 Re-Check mit Termin
+       oder "nach dem Praxisgespräch". Inhalte bleiben gleich; die Werbe-Einwilligung steht jetzt unter den Schritten.
+
        v2.13.0 (20.10.2026): Paket I (Revisionsbericht 19.10.2026). Indexzahl steht im Markup, nie "0 von 100"
        (Nr. 3); "keine Weitergabe an Dritte" ersetzt durch "kein Verkauf deiner Daten" mit Nennung der Dienstleister
        (Nr. 5); Fahrplan-Hinweis nur, wenn die Mail einen Fahrplan enthält (Nr. 2c); Versorgungs-Überschrift aus den
@@ -5378,7 +5385,7 @@
         </div>
         <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">${o.btn || 'Meinen kostenlosen Vital-Plan anfordern →'}</button>
         <div id="ai-status"></div>
-        <div style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center;"><span style="color:var(--accent-green-text);">✓</span> Keine Werbung, kein Verkauf deiner Daten, jederzeit löschbar. Für Auswertung und Versand nutzen wir Anthropic und Resend (USA) – nur mit deiner Einwilligung.</div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center;"><span style="color:var(--accent-green-text);">✓</span> Keine Werbung, kein Verkauf deiner Daten, jederzeit löschbar. Für Auswertung und Versand nutzen wir Anthropic und Resend (USA) – nur mit deiner Einwilligung. <a href="so-entsteht-deine-auswertung.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;" onclick="try{trackEvent('howitworks_open',{from:'mailbox'})}catch(e){}">So entsteht deine Auswertung</a></div>
       </div>`;
     let mailBoxHtml = (window._isReviewMode && window._accessPin) ? renderMailAlreadySentHtml(result) : buildAiBox(teaserRows);
     S.buildAiBox = buildAiBox;
@@ -6766,7 +6773,7 @@
             ${r.href ? `<a class="stage-btn-blue" href="${escHtml(r.href)}" target="_blank" rel="noopener" onclick="try{trackEvent('module_card_click',{module:'${r.ev}'})}catch(e){}" style="display:inline-block;text-decoration:none;padding:8px 14px;font-size:13px;">Öffnen →</a>` : ""}
           </div>
         </div>`).join("");
-    return `<div class="stage-fahrplan" style="margin-top:14px;">
+    return `<div class="stage-fahrplan modules-card" style="margin-top:14px;">
         <div class="stage-kicker">Deine Zusatzmodule</div>
         <div style="font-size:13px;color:var(--text-secondary);line-height:1.55;margin-bottom:4px;">Mit derselben Pilot-ID und deinem PIN${viaAccount() ? " – oder direkt über dein Konto" : ""}.</div>
         ${rows}
@@ -6856,6 +6863,46 @@
       ${stageStudioCardHtml(S)}`;
   }
 
+  // v2.14.0 (Paket K, Nr. 1): Vertrauen sichtbar machen — kurz hier, ausführlich auf der eigenen Seite
+  function howItWorksCardHtml(from) {
+    return `<div class="stage-fahrplan how-it-works" style="margin-top:14px;">
+        <div class="stage-kicker">So entsteht deine Auswertung</div>
+        <ul style="margin:6px 0 10px 18px;padding:0;font-size:13px;color:var(--text-secondary);line-height:1.6;">
+          <li><strong style="color:var(--text-primary);">Feste Regeln statt KI:</strong> Jede Antwort hat feste Punkte. Daraus entstehen deine Bereichswerte und der Index – für alle gleich gerechnet.</li>
+          <li><strong style="color:var(--text-primary);">Die KI schreibt nur die Mail:</strong> und nur mit deiner Einwilligung. Deinen Namen und deine Mail-Adresse bekommt sie nicht. Jeder Text wird vor dem Versand geprüft.</li>
+          <li><strong style="color:var(--text-primary);">Bei einem Praxishinweis</strong> schreibt keine KI – dann gelten feste, geprüfte Texte.</li>
+          <li><strong style="color:var(--text-primary);">Die Tipps</strong> stützen sich auf Empfehlungen von WHO, DGE und BfR. Die Auswertung ist keine Diagnose.</li>
+        </ul>
+        <a href="so-entsteht-deine-auswertung.html" target="_blank" rel="noopener" onclick="try{trackEvent('howitworks_open',{from:'${from}'})}catch(e){}" style="font-size:13px;font-weight:600;color:var(--accent-green-text);text-decoration:none;">Alles im Detail – mit Gewichten und Quellen →</a>
+      </div>`;
+  }
+
+  // v2.14.0 (Paket K, Nr. 3): "Was passiert als Nächstes" — die nächsten Schritte nummeriert im Freischalt-Kasten
+  function nextStepsHtml() {
+    let acc = null;
+    try { acc = moduleAccessLocal(); } catch (e) { acc = null; }
+    const anyModule = !!(latestResult && latestResult.public_code && acc && ((acc.nutrition && acc.nutrition.ok) || (SUPPLY_MODULE_URL && acc.supply && acc.supply.ok)));
+    let n = 1, html = "";
+    if (anyModule) {
+      n++;
+      html += `
+        <div class="stage-step" style="margin:14px 0 0;align-items:flex-start;">
+          <div class="stage-step-num">${n}</div>
+          <div><div class="stage-step-title">Wenn du magst: die Zusatzmodule</div>
+          <div class="stage-step-sub">Ernährungs-Check und Versorgungs-Check, mit derselben Pilot-ID und deinem PIN. Freiwillig und kostenlos.</div>
+          <button type="button" onclick="switchResultTab('plan');try{const el=document.querySelector('.modules-card');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});trackEvent('nextsteps_modules_click',{})}catch(e){}" style="margin-top:8px;padding:8px 14px;border-radius:var(--radius-sm);border:1px solid rgba(var(--accent-green-rgb),0.5);background:transparent;color:var(--accent-green-text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Zu den Zusatzmodulen →</button></div>
+        </div>`;
+    }
+    n++;
+    html += `
+        <div class="stage-step" style="margin:14px 0 0;align-items:flex-start;">
+          <div class="stage-step-num">${n}</div>
+          <div style="flex:1 1 auto;min-width:0;"><div class="stage-step-title">Dein Re-Check</div>
+          ${recheckReminderHtml()}</div>
+        </div>`;
+    return html;
+  }
+
   function stageUnlockBannerHtml(S) {
     const info = window._unlockInfo || {};
     const pin = info.pin || window._accessPin || null;
@@ -6866,8 +6913,8 @@
           <div class="stage-step-sub">Alles ist ab sofort hier sichtbar.${info.email ? ` Die Mail mit deiner persönlichen Einordnung ist unterwegs an <strong>${escHtml(info.email)}</strong> – schau ggf. auch im Spam-Ordner.` : ""}</div></div>
         </div>
         ${pin ? accessPinBlockHtml(pin, S.result.public_code) : ""}
+        ${nextStepsHtml()}
         ${marketingOptinHtml('after_mail')}
-        ${recheckReminderHtml()}
       </div>`;
   }
 
@@ -6925,6 +6972,7 @@
       html += stageAreasHtml(S);
       html += stageLadderHtml(S);
       if (!window._studioRequest) html += referralBoxHtml('stufe1');  // sonst steht "Bring jemanden mit" in der Studio-Karte
+      html += howItWorksCardHtml('stufe1');   // v2.14.0 (Paket K, Nr. 1)
       html += stageFooterHtml(S);
       return html;
     }
@@ -6958,6 +7006,7 @@
     html += S.areasAll || "";
     html += S.supplyCard || "";   // v2.8.20
     html += S.answers || "";
+    html += howItWorksCardHtml('uebersicht');   // v2.14.0 (Paket K, Nr. 1)
     html += `</div>`;
 
     html += `<div class="result-tab-content" id="rtc-plan">`;
