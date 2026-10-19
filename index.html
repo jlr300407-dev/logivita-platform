@@ -747,6 +747,11 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.12.2 (19.10.2026): Paket H (Tiefenprüfung Versorgungs-Check). Bereichskarte "Versorgung": bei
+       "kein Anlass" und offenem Praxispunkt (z. B. Eisen) nicht mehr "Gut aufgestellt" mit 100 Punkten,
+       sondern "Ein Punkt für die Praxis" ohne Punktzahl und mit dem Stoff im Text. Jod-Satz wie DGE 2024
+       ("reicht allein nicht aus" statt "oft nicht aus").
+
        v2.12.1 (19.10.2026): Paket G (Prüflauf Zusatzmodule). Die Modulkarte und die Zeile "Zugang zu den
        Zusatzmodulen" lesen module_access aus der Edge-Antwort (SQL 07, edge-2026-10-18.10) — dieselbe Regel wie
        Mail, Mein Bereich und die Modul-Eingänge: ärztlicher Vorrang und Essverhalten sperren beide Module, der
@@ -7609,7 +7614,7 @@
         ? ["Vitamin B12", "Die DGE empfiehlt bei veganer Ernährung, regelmäßig ein Vitamin-B12-Präparat zu verwenden und den B12-Wert regelmäßig prüfen zu lassen."]
         : ["Vitamin B12", "Mit zunehmendem Alter wird B12 aus der Nahrung oft schlechter aufgenommen. Tipp: Sprich deinen B12-Wert beim nächsten Praxisbesuch an."]);
       else if (n === "vitd") out.push(["Vitamin D", "Von Oktober bis März reicht die Sonne in Deutschland laut BfR nicht für eine ausreichende Vitamin-D-Bildung. Tipp: Ob eine Ergänzung für dich sinnvoll ist, klärst du am besten in deiner Praxis."]);
-      else if (n === "iodine") out.push(["Jod", "Laut DGE reicht jodiertes Speisesalz allein bei veganer Ernährung oft nicht aus. Tipp: Jodsalz konsequent verwenden, dazu jodangereicherte Lebensmittel; Algen nur mit angegebenem Jodgehalt."]);
+      else if (n === "iodine") out.push(["Jod", "Laut DGE reicht jodiertes Speisesalz allein bei veganer Ernährung nicht aus. Tipp: Jodsalz konsequent verwenden, dazu jodangereicherte Lebensmittel; Algen nur mit angegebenem Jodgehalt."]);
       else out.push([SUPPLY_NUTRIENT[n] || n, "Anhaltspunkt aus deinen Angaben."]);
     });
     (s.clarify || []).filter(n => !taken.has(n)).forEach(n => {
@@ -7643,14 +7648,21 @@
     const s = supplyOf(score);
     if (!s || supplyHidden()) return "";
     const v = Number(s.score);
-    const [word, col] = supplyWord(v);
+    let [word, col] = supplyWord(v);
     let text = SUPPLY_SHORT[s.case_key];
+    // v2.12.2 (Paket H): offener Praxispunkt ohne Präparat (z. B. Eisen) zählt nicht in die Punktzahl — dann kein "Gut aufgestellt"
+    const openClarify = (s.clarify || []).filter(n => !(s.products || []).some(p => p.substance === n));
+    let showVal = true;
+    if (s.case_key === "kein_bedarf" && openClarify.length) {
+      word = "Ein Punkt für die Praxis"; col = "var(--accent-amber-text)"; showVal = false;
+      text = `Kein Anlass, etwas einzunehmen. ${openClarify.map(n => SUPPLY_NUTRIENT[n] || n).join(" und ")}: Das sprichst du am besten in deiner Hausarztpraxis an.`;
+    }
     if (!text) {   // offene Bedarfe: hier dürfen die Stoffe genannt werden
       const names = (s.open_needs || []).map(n => SUPPLY_NUTRIENT[n] || n);
       text = names.length ? `Bei ${names.join(" und ")} ergibt sich aus deinen Angaben ein Anhaltspunkt — die Tipps dazu stehen in deinem Vital-Plan.` : (SUPPLY_CASE_TEXT[s.case_key] || "");
     }
     return `<div class="supply-card">
-        <div class="supply-head"><span class="supply-name">${ICO("pill")} Versorgung &amp; Nahrungsergänzung</span><span class="supply-chip">nicht im Index</span><span class="supply-val" style="color:${col};">${Math.round(v)}</span></div>
+        <div class="supply-head"><span class="supply-name">${ICO("pill")} Versorgung &amp; Nahrungsergänzung</span><span class="supply-chip">nicht im Index</span>${showVal ? `<span class="supply-val" style="color:${col};">${Math.round(v)}</span>` : ""}</div>
         <div class="supply-word" style="color:${col};">${word}</div>
         <div class="supply-text">${escHtml(text)}</div>
       </div>`;
@@ -8843,7 +8855,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.12.1</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.12.2</footer>
 
 
 </body>
