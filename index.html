@@ -747,6 +747,11 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.15.0 (20.10.2026): Paket K3 (Revisionsbericht: "Verlauf statt Einzelbild"). Die Verlaufs-Karte beim
+       verknüpften Re-Check zeigt jetzt jeden Bereich mit vorher → jetzt und Veränderung (nach Gewicht sortiert).
+       Bereiche, die es nur in einer Fassung gibt, entfallen; ein unverändert übernommenes Gewicht steht als
+       "übernommen" ohne Pfeil. Ältere Vorchecks rechnet die Edge schon in Version 3 nach (loadPreviousBlock).
+
        v2.14.0 (20.10.2026): Paket K, Punkte 1 und 3 (Revisionsbericht 19.10.2026). (1) Karte "So entsteht deine
        Auswertung" in Stufe 1 und im Reiter "Übersicht" (feste Regeln, KI nur für die Mail, Prüfung, Quellen) mit
        Link auf die neue Seite so-entsteht-deine-auswertung.html (Gewichte, Abzug, Vitalitäts-Alter, Hebel, Quellen);
@@ -5499,7 +5504,7 @@
       const pm = {};
       Object.entries(window._previousData.score_payload).forEach(([k, v]) => { if (k !== 'general' && v && isFinite(Number(v.score))) pm[k] = Number(v.score); });
       window._prevAreaMap = Object.keys(pm).length > 0 ? pm : null;
-      html += S.verlauf = renderVerlaufCard(window._previousData, totalScore, bioAge);
+      html += S.verlauf = renderVerlaufCard(window._previousData, totalScore, bioAge, areas);   // v2.15.0: Bereiche dazu
     }
 
     // Basisdaten — aufklappbar
@@ -7938,7 +7943,32 @@
   };
 
   // ── Verlaufs-Karte (Tab 1): Vorher → Heute, Rausch-Regel |Delta| < 2 = stabil ──
-  function renderVerlaufCard(prev, totalScore, bioAge) {
+  // v2.15.0 (Paket K3): Veränderung je Bereich — vorher → jetzt, nach Gewicht sortiert
+  function verlaufAreasHtml(prevMap, areas) {
+    if (!prevMap || !Array.isArray(areas) || !areas.length) return "";
+    const order = ["activity", "nutrition", "sleep", "smoking", "bmi", "mental", "alcohol", "vitamin_d"];
+    const rows = areas.filter(a => a && isFinite(Number(a.score)) && prevMap[a.key] !== undefined)
+      .sort((x, y) => (Number(y.weight) || 0) - (Number(x.weight) || 0) || order.indexOf(x.key) - order.indexOf(y.key))
+      .map(a => {
+        const before = Math.round(Number(prevMap[a.key])), now = Math.round(Number(a.score)), d = now - before;
+        const carried = a.key === "bmi" && window._weightCarried;
+        const dHtml = carried ? `<span style="color:var(--text-muted);">übernommen</span>`
+          : d === 0 ? `<span style="color:var(--text-muted);">gleich</span>`
+          : `<span class="${d > 0 ? "verlauf-delta-up" : "verlauf-delta-down"}">${d > 0 ? "▲ +" : "▼ "}${d}</span>`;
+        return `<div style="display:flex;align-items:baseline;gap:8px;padding:5px 0;border-top:1px solid var(--border);font-size:13px;">
+            <span style="flex:1 1 auto;min-width:0;color:var(--text-secondary);">${escHtml(areaName(a.label, a.key))}</span>
+            <span style="flex:0 0 auto;color:var(--text-secondary);font-variant-numeric:tabular-nums;">${before} → <strong style="color:var(--text-primary);">${now}</strong></span>
+            <span style="flex:0 0 64px;text-align:right;font-variant-numeric:tabular-nums;">${dHtml}</span>
+          </div>`;
+      });
+    if (!rows.length) return "";
+    return `<div class="verlauf-areas" style="margin-top:10px;">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:2px;">Deine Bereiche: vorher → jetzt</div>
+        ${rows.join("")}
+      </div>`;
+  }
+
+  function renderVerlaufCard(prev, totalScore, bioAge, areas) {
     const prevTotal = Math.round(Number(prev.total_score));
     const curTotal = Math.round(Number(totalScore));
     const delta = Math.round((Number(totalScore) - Number(prev.total_score)) * 10) / 10;
@@ -7987,9 +8017,10 @@
         <div class="verlauf-row" style="font-size:15px;">Vitalitäts-Index: ${prevTotal} → <strong style="color:var(--text-primary);font-size:17px;">${curTotal}</strong> ${deltaHtml}</div>
         ${bioHtml}
         ${wbHtml}
+        ${verlaufAreasHtml(window._prevAreaMap, areas)}
         ${(!prev.questionnaire_revision && ((latestResult && latestResult.submission && latestResult.submission.questionnaire_revision) || personalData.pregnancy_status)) ? `<div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">Frage geändert: Die Fragen zu Interesse und Stimmung sind seit 18.10.2026 anders gestellt (letzte 2 Wochen, neue Antwortstufen). Sie zählen nicht zum Index – der Vergleich oben bleibt gültig.</div>` : ""}
         ${window._weightCarried ? `<div style="font-size:11.5px;color:var(--accent-amber-text);line-height:1.5;margin-top:8px;">Dein Gewicht ist unverändert vom letzten Check übernommen. Der BMI-Vergleich sagt deshalb nichts über eine echte Veränderung — trag beim nächsten Check dein aktuelles Gewicht ein.</div>` : ''}
-        <div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">${RESULT_STAGES_ENABLED ? 'Die Bereichs-Entwicklung siehst du in der Spinne – dort kannst du die Vorher-Ebene einblenden.' : 'Die Bereichs-Entwicklung siehst du unter „Meine Bereiche“ — dort kannst du in der Spinne die Vorher-Ebene einblenden.'}</div>
+        <div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">${RESULT_STAGES_ENABLED ? 'In der Spinne kannst du die Vorher-Ebene zusätzlich einblenden.' : 'Die Bereichs-Entwicklung siehst du unter „Meine Bereiche“ — dort kannst du in der Spinne die Vorher-Ebene einblenden.'}</div>
       </div>`;
   }
 

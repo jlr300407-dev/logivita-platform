@@ -39,6 +39,8 @@
   BfR-Höchstmengenvorschlag" in jeder Gruppe (aus dem festen Notiztext der Bewertung).
   W2 Link "Quellen und Regeln" (quellen-versorgung.html) statt "auf Nachfrage im Studio".
   W3 Link "Mikronährstoff-Versorgung" ausgeblendet, bis die Seite existiert.
+  1.3.0 (20.10.2026, Paket K3): Beim Re-Check übernimmt der Check Menge, Anlass und Erwartung aus dem letzten
+  Versorgungs-Check (supply-edge .3, Antwort prefilled_previous); der Einleitungssatz sagt das und bittet um "seit wann".
   1.2.0 (19.10.2026, Paket H, Tiefenprüfung Versorgungs-Check): Karte "Nicht eingeordnet"
   (Sporternährung, "Anderes Präparat") statt "Du nimmst keine Nahrungsergänzung"; Gruppensatz
   "In der Praxis ansprechen" ohne "bevor du das Präparat weiter nimmst"; "Ein Blick lohnt sich"
@@ -486,7 +488,7 @@
 <script src="assets/konto.js?v=1.4.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.2.0";
+  const FE_VERSION = "1.3.0";
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/supply-check";
   const SUPABASE_URL = "https://koctweetotpqaazeicwj.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
@@ -696,7 +698,9 @@
     h(`
       <h1>Deine Präparate</h1>
       <p class="lead">${st.items.length ? (st.prefillKey && itemsKey(st.items) === st.prefillKey && !st.data?.session?.completed_at
-          ? "Aus deinem Vital-Check übernommen: Hier stehen deine Präparate. Ergänze Menge und Anlass – und füg hinzu, was fehlt."
+          ? (Number(st.data?.prefilled_previous) > 0
+            ? "Aus deinem Vital-Check übernommen, Menge und Anlass aus deinem letzten Versorgungs-Check. Prüf, ob alles noch stimmt, ergänze, seit wann du sie nimmst – und füg hinzu, was fehlt."
+            : "Aus deinem Vital-Check übernommen: Hier stehen deine Präparate. Ergänze Menge und Anlass – und füg hinzu, was fehlt.")
           : "Hier stehen deine Präparate. Ergänze Menge und Anlass – und füg hinzu, was fehlt.") : "Trag ein, welche Nahrungsergänzung du regelmäßig nimmst. Nimmst du nichts, geht es direkt weiter."}</p>
       ${st.items.map((it, i) => itemCard(it, i, missing)).join("")}
       ${cat.length ? `<div class="card"><div class="field" style="margin:0"><label for="add">Präparat hinzufügen</label>
