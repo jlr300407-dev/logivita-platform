@@ -747,6 +747,16 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.13.0 (20.10.2026): Paket I (Revisionsbericht 19.10.2026). Indexzahl steht im Markup, nie "0 von 100"
+       (Nr. 3); "keine Weitergabe an Dritte" ersetzt durch "kein Verkauf deiner Daten" mit Nennung der Dienstleister
+       (Nr. 5); Fahrplan-Hinweis nur, wenn die Mail einen Fahrplan enthält (Nr. 2c); Versorgungs-Überschrift aus den
+       Einzelurteilen ("Bei 1 von 3 …", Nr. 10); Satz "Kleine Verbesserungen hier wirken sich auf alle anderen
+       Bereiche aus" gestrichen (ohne Beleg); ein B12-Satz für vegetarische Ernährung auf Seite, Mail und im
+       Versorgungs-Check; Laborkontrolle neutral ("in deiner Hausarztpraxis" statt "sprich uns im Studio an");
+       Hinweis bei nicht berechnetem Hinweisstatus (care_fehler, fail-closed); Meldungen als Hinweisleiste statt
+       Browser-Dialog; Fortschritt als "Abschnitt X von Y"; Fragenzahl im Abschnitt ohne noch offene Zusatzfrage;
+       Basisdaten-Satz nennt die Felder; Zähler "Über 360 Menschen" statt "Über 360+".
+
        v2.12.2 (19.10.2026): Paket H (Tiefenprüfung Versorgungs-Check). Bereichskarte "Versorgung": bei
        "kein Anlass" und offenem Praxispunkt (z. B. Eisen) nicht mehr "Gut aufgestellt" mit 100 Punkten,
        sondern "Ein Punkt für die Praxis" ohne Punktzahl und mit dem Stoff im Text. Jod-Satz wie DGE 2024
@@ -2295,7 +2305,7 @@
     <button id="hero-cta" onclick="startDirectCheck();" style="display:block;width:100%;max-width:340px;margin:0 auto 12px;padding:16px 24px;background:var(--cta-green);color:var(--on-cta);font-size:17px;font-weight:800;border:none;border-radius:12px;cursor:pointer;">Jetzt kostenlos starten →</button>
     <p style="margin:0 0 12px;font-size:11.5px;color:rgba(var(--ink-rgb),0.5);">Ergebnis sofort · kostenlos · ohne Anmeldung · ohne App</p>
     <div id="hero-social-proof" style="font-size:12px;color:rgba(var(--ink-rgb),0.55);">
-      Über <span id="hero-count" style="font-weight:700;color:rgba(var(--ink-rgb),0.85);">100+</span> Menschen haben ihren LeVITA Vital-Check gemacht
+      Über <span id="hero-count" style="font-weight:700;color:rgba(var(--ink-rgb),0.85);">100</span> Menschen haben ihren LeVITA Vital-Check gemacht
     </div>
   </div>
   <button type="button" class="theme-btn theme-btn-hero" onclick="toggleTheme()" aria-label="Helles Design einschalten"></button>
@@ -2438,7 +2448,7 @@
   <div class="lp-block">
     <div class="lp-trust">
       <div class="lp-titem"><div class="lp-titem-i"><svg class="ic" aria-hidden="true"><use href="#ic-pin"/></svg></div><div class="lp-titem-t">Menschen vor Ort</div><div class="lp-titem-d">LeVITA in Gemünden (Wohra) — Training, Kurse und Physiotherapie unter einem Dach.</div></div>
-      <div class="lp-titem"><div class="lp-titem-i"><svg class="ic" aria-hidden="true"><use href="#ic-lock"/></svg></div><div class="lp-titem-t">Datenschutz ernst genommen</div><div class="lp-titem-d">Gespeichert in der EU, keine Weitergabe, jederzeit löschbar.</div></div>
+      <div class="lp-titem"><div class="lp-titem-i"><svg class="ic" aria-hidden="true"><use href="#ic-lock"/></svg></div><div class="lp-titem-t">Datenschutz ernst genommen</div><div class="lp-titem-d">Gespeichert in der EU, kein Verkauf deiner Daten, jederzeit löschbar.</div></div>
       <div class="lp-titem"><div class="lp-titem-i"><svg class="ic" aria-hidden="true"><use href="#ic-compass"/></svg></div><div class="lp-titem-t">Ehrliche Orientierung</div><div class="lp-titem-d">Auf Basis von WHO, DGE und BfR — keine Diagnose, kein Versprechen.</div></div>
       <div class="lp-titem"><div class="lp-titem-i"><svg class="ic" aria-hidden="true"><use href="#ic-heart"/></svg></div><div class="lp-titem-t">Deine Gesundheit im Mittelpunkt</div><div class="lp-titem-d">Vitalität und Fitness sind unser Beruf — wir begleiten dich vom ersten Check an.</div></div>
     </div>
@@ -2611,7 +2621,8 @@
     phq2: "Vereinbare in den nächsten Tagen einen Termin in deiner Hausarztpraxis und sprich an, wie es dir mit Interesse und Stimmung geht.",
     essverhalten: "Vereinbare einen Termin in deiner Hausarztpraxis und sprich deine Angaben zu Essen und Gewicht an.",
     eisen: "Sprich deine Angaben zu Regelblutung, Schwindel oder Blässe in deiner Hausarztpraxis an – dort lässt sich klären, ob ein Blick auf den Eisenwert sinnvoll ist.",
-    beschwerden: "Sprich deine Angaben zu Schwindel, Blässe oder brüchigen Nägeln in deiner Hausarztpraxis an."
+    beschwerden: "Sprich deine Angaben zu Schwindel, Blässe oder brüchigen Nägeln in deiner Hausarztpraxis an.",
+    care_fehler: "Wenn du gesundheitliche Beschwerden hast, sprich sie in deiner Hausarztpraxis an, bevor du Training oder Ernährung umstellst."   // v2.13.0
   };
   const DECISION_TOPIC = {
     activity_days: "aktiven Tagen pro Woche", strength_training: "Krafttraining", sitting_hours: "Sitzzeit",
@@ -2656,8 +2667,9 @@
     const st = (care && care.status) || "none";
     const r = (care && care.reasons) || [];
     const doctor = st === "doctor_first";
-    const praxis = doctor || st === "care_note";
-    const key = doctor ? "doctor" : (["phq2", "essverhalten", "eisen", "beschwerden"].find(k => r.includes(k)) || "beschwerden");
+    const fail = r.includes("care_fehler");   // v2.13.0 (Paket I): Hinweisstatus nicht berechnet → wie Praxishinweis (Edge .12)
+    const praxis = doctor || st === "care_note" || fail;
+    const key = doctor ? "doctor" : fail ? "care_fehler" : (["phq2", "essverhalten", "eisen", "beschwerden"].find(k => r.includes(k)) || "beschwerden");
     const lever = (!doctor && worst && simScenarios && simScenarios.levers)
       ? (simScenarios.levers.find(l => l.area_key === worst.key) || null) : null;
     return {
@@ -2666,7 +2678,7 @@
       firstStep: praxis ? (key === "eisen" ? eisenFirstStep(care, answers || []) : CARE_FIRST_STEP[key]) : null,   // Sofort-Schritt
       fixedPlan: praxis,                                  // feste Schritte statt KI-Fahrplan (Mail: Vorlage)
       noOptimize: doctor,                                 // keine Punkte, kein Simulator-Hebel
-      noSupply: doctor || r.includes("essverhalten"),     // Versorgungs-Check zurückhalten
+      noSupply: doctor || r.includes("essverhalten") || fail,     // Versorgungs-Check zurückhalten
       blocked: careBlockedAreas(care, bmi),
       worstKey: worst ? worst.key : null,
       lever,                                              // ergänzender Schritt (nur Text, keine Wirkungszusage)
@@ -2722,7 +2734,9 @@
       out.push(`Du hast bei der Frage nach Schwindel, Blässe oder brüchigen Nägeln ${careAnswer(answers, "dizziness_pale_nails") || "„häufig“"} angegeben. Das ist ein Anlass, es in deiner Hausarztpraxis anzusprechen.`);
     }
     if (has("essverhalten")) out.push("Deine Angaben zu Essen und Gewicht sind ein Anlass, das in deiner Hausarztpraxis anzusprechen.");
-    if ((care.status === "incomplete" || has("unvollstaendig") || care.missing.length) && care.status !== "doctor_first") {
+    if (has("care_fehler")) {   // v2.13.0 (Paket I): Hinweisstatus nicht berechnet — fail-closed, wortgleich zur Mail
+      out.push("Ein Teil deiner Auswertung konnte gerade nicht vollständig berechnet werden. Deshalb zeigen wir keine Gesamteinordnung. Wenn du gesundheitliche Beschwerden hast, sprich sie in deiner Hausarztpraxis an.");
+    } else if ((care.status === "incomplete" || has("unvollstaendig") || care.missing.length) && care.status !== "doctor_first") {
       out.push("Einige wichtige Fragen sind nicht beantwortet – deshalb zeigen wir keine Gesamteinordnung. Du kannst sie jederzeit ergänzen.");
     }
     if (care.pregnancyUnknown) out.push(CARE_PREGNANCY_UNKNOWN);
@@ -2735,7 +2749,7 @@
     if (!paras.length) return "";
     const title = care.status === "doctor_first" ? "Zuerst ärztlich abklären"
       : care.status === "care_note" ? "Bitte in der Praxis ansprechen"
-      : care.status === "incomplete" ? "Einige Fragen fehlen" : "Hinweis";
+      : care.status === "incomplete" ? ((care.reasons || []).includes("care_fehler") ? "Hinweis" : "Einige Fragen fehlen") : "Hinweis";
     return `<div class="care-box" role="note" style="background:rgba(var(--accent-amber-rgb),0.08);border:1px solid rgba(var(--accent-amber-rgb),0.3);border-left:4px solid var(--accent-amber);border-radius:14px;padding:15px 17px;margin-bottom:14px;">
         <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warn-text);margin-bottom:6px;">${escHtml(title)}</div>
         ${paras.map(p => `<p style="margin:0 0 8px;font-size:14px;line-height:1.6;color:var(--text-primary);">${escHtml(p)}</p>`).join("")}
@@ -2841,6 +2855,31 @@
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
   });
+  // v2.13.0 (Paket I): Hinweisleiste statt Browser-Dialog (alert) — blockiert nichts, wird vorgelesen (role=alert)
+  function uiAlert(msg) {
+    try {
+      let bar = document.getElementById("ui-alert");
+      if (!bar) {
+        bar = document.createElement("div");
+        bar.id = "ui-alert";
+        bar.setAttribute("role", "alert");
+        bar.style.cssText = "position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:9999;width:max-content;max-width:min(520px,calc(100vw - 32px));box-sizing:border-box;background:var(--brand-card,#fff);color:var(--text-primary,#111);border:1px solid var(--border,#ddd);border-left:4px solid var(--accent-amber,#f5a623);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:12px 40px 12px 14px;font-size:14px;line-height:1.5;white-space:pre-line;";
+        const x = document.createElement("button");
+        x.type = "button"; x.setAttribute("aria-label", "Hinweis schließen"); x.textContent = "×";
+        x.style.cssText = "position:absolute;top:6px;right:8px;border:0;background:none;font-size:20px;line-height:1;cursor:pointer;color:inherit;";
+        x.onclick = () => { bar.style.display = "none"; };
+        bar.appendChild(document.createElement("span"));
+        bar.appendChild(x);
+        document.body.appendChild(bar);
+      }
+      bar.firstChild.textContent = "";
+      bar.style.display = "block";
+      const txt = String(msg || "");
+      setTimeout(() => { bar.firstChild.textContent = txt; }, 30);   // neu setzen, damit auch eine gleiche Meldung vorgelesen wird
+      clearTimeout(window._uiAlertT);
+      if (txt.length <= 60) window._uiAlertT = setTimeout(() => { bar.style.display = "none"; }, 8000);   // kurze Feldhinweise; längere bleiben bis zum Schließen
+    } catch (e) { try { window.alert(msg); } catch (_e) {} }
+  }
   let questions = [], groupedQuestions = [], currentStep = 0, selectedAnswers = [], latestResult = null, radarChart = null, showComparison = false;
 
   // ── V2-Einstieg (v1.31.0): Zustand für Simulator, Verlauf & Re-Check ──
@@ -3560,7 +3599,7 @@
       const n = Number(data);
       if (n >= 100) {
         const el = document.getElementById("hero-count");
-        if (el) el.textContent = n + "+";
+        if (el) el.textContent = String(Math.floor(n / 10) * 10);   // v2.13.0: "Über 360" statt "Über 360+"
       }
     } catch(e) { /* silent — statischer Fallback bleibt */ }
   }
@@ -3754,7 +3793,7 @@
         <div class="question-text">Deine persönlichen Angaben</div>
         <div class="help-text">${pre
           ? 'Deine Angaben vom letzten Check sind übernommen. Bitte prüfe besonders <strong style="color:var(--text-primary);">Alter und Gewicht</strong> — die beiden ändern sich, und der Vergleich wird nur so genau wie diese Zahlen.'
-          : 'Für deinen persönlichen Vitalitäts-Index brauchen wir noch drei Angaben — mehr nicht. Name ist optional.'}</div>
+          : 'Für deinen persönlichen Vitalitäts-Index brauchen wir noch ein paar Angaben zu dir, etwa Alter, Größe und Gewicht. Name ist optional.'}</div>
         <div class="form-grid">
 
           <div class="form-field"><label>Alter *</label><input type="number" id="age" placeholder="z.B. 38" min="18" max="100" value="${pre ? v(pre.age) : ''}" /></div>
@@ -3804,21 +3843,29 @@
   // Zaehlt die Bereiche in der Reihenfolge ihres ersten Auftretens und die Fragen
   // des gesuchten Bereichs. Grundlage ist immer das AKTUELLE groupedQuestions,
   // also nach dem Zu- und Abschalten der bedingten Fragen.
+  // v2.13.0 (Paket I): Zusatzfragen, deren Auslöser noch nicht beantwortet ist, zählen nicht mit
+  // ("Mentale Balance · 4 Fragen" zeigte drei).
+  const AREA_COND_TRIGGER = { muscle_cramps: "strength_training", social_connection: "low_interest",
+    omega3_fish: "diet_type", alcohol_amount: "alcohol_frequency" };
   function areaMeta(key) {
     const seq = [];
-    let count = 0;
+    let count = 0, cond = 0;
     groupedQuestions.forEach(s => {
       if (!s || !s.area_key) return;
       if (seq.indexOf(s.area_key) < 0) seq.push(s.area_key);
-      if (s.area_key === key) count++;
+      if (s.area_key === key) {
+        const trig = AREA_COND_TRIGGER[s.question_key];
+        const trigOpen = trig && !selectedAnswers.some(x => x && (x.question_key === trig || (trig === "diet_type" && x.question_key === "nutrition_type")));
+        if (!trigOpen) count++; else cond++;
+      }
     });
-    return { pos: seq.indexOf(key) + 1, total: seq.length, count: count };
+    return { pos: seq.indexOf(key) + 1, total: seq.length, count: count, cond: cond };
   }
 
   function areaGateHtml(q, body) {
     const m = areaMeta(q.area_key);
     const min = Math.max(1, Math.round((m.count * (STEP_SECONDS.question || 11)) / 60));
-    const sub = `${m.count} ${m.count === 1 ? "Frage" : "Fragen"} · etwa ${min} ${min === 1 ? "Minute" : "Minuten"}`;
+    const sub = `${m.cond ? `${m.count}–${m.count + m.cond} Fragen` : `${m.count} ${m.count === 1 ? "Frage" : "Fragen"}`} · etwa ${min} ${min === 1 ? "Minute" : "Minuten"}`;
     const buddy = buddyForStep(q, { size: "lg", force: true });
     return `<div class="area-gate" data-area="${q.area_key}">
         <div class="area-intro">
@@ -3886,7 +3933,7 @@
     const activeStep = document.getElementById(`step-${currentStep}`);
     if (!activeStep) return;
     const checked = Array.from(activeStep.querySelectorAll('input[type="checkbox"]:checked'));
-    if (checked.length === 0) { alert("Bitte wähle mindestens eine Option aus."); return; }
+    if (checked.length === 0) { uiAlert("Bitte wähle mindestens eine Option aus."); return; }
     const currentQ = groupedQuestions[currentStep];
     const optionIds = checked.map(c => c.value);
     optionIds.forEach(id => selectedAnswers.push({ option_id: id, question_key: currentQ?.question_key || null }));
@@ -4078,18 +4125,18 @@
     const height_cm = Number(document.getElementById("height_cm").value);
     const weight_kg = Number(document.getElementById("weight_kg").value);
     if (!age || age < 18 || age > 100) {
-      if (age >= 1 && age < 18) { alert("Der LeVITA Vital-Check richtet sich in der aktuellen Pilotphase an Personen ab 18 Jahren. Deine Angaben wurden nicht gespeichert. Bei Fragen: info@le-vita.com"); }
-      else { alert("Bitte ein gültiges Alter eingeben."); }
+      if (age >= 1 && age < 18) { uiAlert("Der LeVITA Vital-Check richtet sich in der aktuellen Pilotphase an Personen ab 18 Jahren. Deine Angaben wurden nicht gespeichert. Bei Fragen: info@le-vita.com"); }
+      else { uiAlert("Bitte ein gültiges Alter eingeben."); }
       return;
     }
-    if (!gender) return alert("Bitte Geschlecht auswählen.");
+    if (!gender) return uiAlert("Bitte Geschlecht auswählen.");
     // v2.9.0 (G1/G2): "ja" beendet den Check, ohne etwas zu speichern.
     // v2.12.1 (Jörg 19.10.2026): Männern wird die Frage nicht gestellt — dort gilt "nein".
     const pregnancy = gender === "männlich" ? "nein" : ((document.getElementById("pregnancy_status") || {}).value || "");
-    if (!pregnancy) return alert("Bitte beantworte die Frage zu Schwangerschaft oder Stillzeit.");
+    if (!pregnancy) return uiAlert("Bitte beantworte die Frage zu Schwangerschaft oder Stillzeit.");
     if (pregnancy === "ja") { showPregnancyStop(); return; }
-    if (!height_cm || height_cm < 120 || height_cm > 230) return alert("Bitte eine gültige Größe eingeben.");
-    if (!weight_kg || weight_kg < 35 || weight_kg > 250) return alert("Bitte ein gültiges Gewicht eingeben.");
+    if (!height_cm || height_cm < 120 || height_cm > 230) return uiAlert("Bitte eine gültige Größe eingeben.");
+    if (!weight_kg || weight_kg < 35 || weight_kg > 250) return uiAlert("Bitte ein gültiges Gewicht eingeben.");
     personalData.age = age; personalData.gender = gender; personalData.height_cm = height_cm; personalData.weight_kg = weight_kg;
     personalData.pregnancy_status = pregnancy;   // v2.9.0: "nein" oder "keine_angabe"
     // v1.33.0: Beim Re-Check ist das Gewicht vorbelegt. Bleibt der Wert unverändert,
@@ -4119,7 +4166,7 @@
     selectedAnswers = [];
     Object.assign(personalData, { age:null, gender:"", height_cm:null, weight_kg:null, pregnancy_status:"" });
     const step = document.getElementById(`step-${currentStep}`);
-    if (!step) { alert(CARE_PREGNANCY_STOP); return; }
+    if (!step) { uiAlert(CARE_PREGNANCY_STOP); return; }
     step.innerHTML = `<div class="card">
         <div class="area-badge">${ICO("user")} Basisdaten</div>
         <div class="question-text">Danke für deine Offenheit</div>
@@ -4627,7 +4674,10 @@
         return tIdx === -1 || tIdx < curIdx;
       }).length;
       setAreaHead(AREA_ICONS[q.area_key] || "dot", areaName(q.area_label, q.area_key));
-      document.getElementById("progressCount").textContent = qPos > 0 ? `Frage ${qPos} von ${Math.max(qTotal, qPos)}` : "";
+      // v2.13.0 (Paket I): feste Zählung nach Abschnitten — die Fragenzahl wuchs mit den Zusatzfragen ("21/22/23/25")
+      void qTotal;
+      const _am = areaMeta(q.area_key);
+      document.getElementById("progressCount").textContent = _am.pos > 0 ? `Abschnitt ${_am.pos} von ${_am.total}` : "";
     }
     // v2.8.8: Die Restzeit haengt sich an das an, was oben gesetzt wurde — auf
     // Fragen also hinter "Frage 7 von 24", auf Ziel/Befinden/Basisdaten/
@@ -4643,7 +4693,7 @@
   async function submitInitialCheck() {
     const cp = document.getElementById("consent_privacy").checked;
     const cs = document.getElementById("consent_storage").checked;
-    if (!cp || !cs) return alert("Bitte Datenschutz und Speicherung bestätigen.");
+    if (!cp || !cs) return uiAlert("Bitte Datenschutz und Speicherung bestätigen.");
     personalData.consent_privacy = true; personalData.consent_storage = true;
     // v1.55.0 — freiwillige Trainer-Einwilligung; fehlt der Haken, wird false gesendet
     // v2.0.0 — die Trainer-Einwilligung kommt mit der Studio-Anfrage
@@ -4697,7 +4747,7 @@
       showResult(result);
       setTimeout(initStickyCta, 800);
     } catch (error) {
-      alert("Fehler: " + error.message);
+      uiAlert("Fehler: " + error.message);
       btn.disabled = false; btn.innerText = "Auswertung erstellen →";
     }
   }
@@ -4778,10 +4828,10 @@
     const cm = document.getElementById("consent_email_delivery").checked;
     const btn = document.getElementById("aiBtn");
     const statusEl = document.getElementById("ai-status");
-    if (!email) return alert("Bitte E-Mail-Adresse eingeben.");
+    if (!email) return uiAlert("Bitte E-Mail-Adresse eingeben.");
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return alert("Bitte eine gültige E-Mail-Adresse eingeben — z.B. name@beispiel.de");
-    if (!ca || !cm) return alert("Bitte beide Einwilligungen bestätigen.");
+    if (!emailRegex.test(email)) return uiAlert("Bitte eine gültige E-Mail-Adresse eingeben — z.B. name@beispiel.de");
+    if (!ca || !cm) return uiAlert("Bitte beide Einwilligungen bestätigen.");
     if (typeof fbq !== 'undefined') fbq('track', 'Subscribe', { content_name: 'ai_mail_requested' });
     btn.disabled = true; btn.innerText = "Auswertung wird erstellt…";
     const hintTimer = setTimeout(() => {
@@ -5328,7 +5378,7 @@
         </div>
         <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">${o.btn || 'Meinen kostenlosen Vital-Plan anfordern →'}</button>
         <div id="ai-status"></div>
-        <div style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center;"><span style="color:var(--accent-green-text);">✓</span> Keine Werbung, keine Weitergabe an Dritte, jederzeit löschbar</div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center;"><span style="color:var(--accent-green-text);">✓</span> Keine Werbung, kein Verkauf deiner Daten, jederzeit löschbar. Für Auswertung und Versand nutzen wir Anthropic und Resend (USA) – nur mit deiner Einwilligung.</div>
       </div>`;
     let mailBoxHtml = (window._isReviewMode && window._accessPin) ? renderMailAlreadySentHtml(result) : buildAiBox(teaserRows);
     S.buildAiBox = buildAiBox;
@@ -5393,7 +5443,7 @@
             <circle cx="55" cy="55" r="47" fill="none" stroke-width="9" style="stroke:rgba(var(--ink-rgb),0.06)"/>
             <circle cx="55" cy="55" r="47" fill="none" id="scoreRingFill"
               stroke-width="9" stroke-linecap="round"
-              stroke-dasharray="295" stroke-dashoffset="295"/>
+              stroke-dasharray="295" stroke-dashoffset="${(295 - 295 * Math.max(0, Math.min(100, Number(totalScore) || 0)) / 100).toFixed(1)}"/>
             <defs><linearGradient id="ringGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" style="stop-color:var(--accent-green)"/><stop offset="100%" style="stop-color:var(--accent-blue)"/>
             </linearGradient></defs>
@@ -5401,7 +5451,7 @@
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;
                align-items:center;justify-content:center;text-align:center;">
             <div id="scoreDisplayNum" style="font-family:'DM Serif Display',serif;
-                 font-size:32px;line-height:1;color:${sc};">0</div>
+                 font-size:32px;line-height:1;color:${sc};">${Math.round(Number(totalScore) || 0)}</div>
             <div style="font-size:11px;color:var(--text-muted);">von 100</div>
           </div>
         </div>
@@ -5669,7 +5719,7 @@
     // v1.34.2: Der Bereich steht jetzt als Ueberschrift darueber — der Satz
     // nennt ihn nicht noch einmal, sondern begruendet nur noch den Zusammenhang.
     const heroDesc3 = worst
-      ? `${heroGoalShort ? `Um ${heroGoalShort}, führt der kürzeste Weg über diesen Bereich. ` : ""}Kleine Verbesserungen hier wirken sich auf alle anderen Bereiche aus.`
+      ? `${heroGoalShort ? `Um ${heroGoalShort}, führt der kürzeste Weg über diesen Bereich. ` : ""}Hier setzt dein erster Schritt an.`
       : (window._care && window._care.active)
         ? (window._care.status === "doctor_first"
             ? `Zuerst steht die Abklärung in deiner Hausarztpraxis – der Hinweis oben. Steigere deine Belastung bis dahin nicht.`
@@ -5947,7 +5997,8 @@
       cat3.push(["Ärztliche Abklärung zuerst", "Deine Angaben zu Gewicht und Appetit gehören vor jede weitere Messung in die Hausarztpraxis. Welche Blutwerte sinnvoll sind, entscheidet sich dort — wir unterstützen dich danach gern."]);
     } else if (bloodtestShown || score.bloodtest_hint === true) {
       const mL = window._snips.measurement.labor || {};
-      cat3.push([mL.title || "Fachlich begleitete Laborkontrolle", mL.body || "Kann je nach Situation sinnvoll sein — sprich uns im Studio darauf an, wir beraten dich, was für dich passt."]);
+      void mL;   // v2.13.0 (Paket I/J): fester, neutraler Satz statt Studio-Laborangebot (bis zur Rechtsklärung)
+      cat3.push(["Laborwerte", "Ob und welche Blutwerte für dich sinnvoll sind, klärst du am besten in deiner Hausarztpraxis."]);
     }
     S.cat3Items = cat3;
     if (cat3.length > 0) {
@@ -6158,9 +6209,9 @@
           <div class="res-hero-ring">
             <svg style="width:110px;height:110px;transform:rotate(-90deg);" viewBox="0 0 110 110" aria-hidden="true">
               <circle cx="55" cy="55" r="47" fill="none" stroke-width="9" style="stroke:rgba(var(--ink-rgb),0.08)"/>
-              <circle cx="55" cy="55" r="47" fill="none" id="scoreRingFill" stroke-width="9" stroke-linecap="round" stroke-dasharray="295" stroke-dashoffset="295" style="stroke:${S.sc}"/>
+              <circle cx="55" cy="55" r="47" fill="none" id="scoreRingFill" stroke-width="9" stroke-linecap="round" stroke-dasharray="295" stroke-dashoffset="${(295 - 295 * Math.max(0, Math.min(100, Number(S.totalScore) || 0)) / 100).toFixed(1)}" style="stroke:${S.sc}"/>
             </svg>
-            <div class="res-hero-num"><div id="scoreDisplayNum">0</div><div>von 100</div></div>
+            <div class="res-hero-num"><div id="scoreDisplayNum">${Math.round(Number(S.totalScore) || 0)}</div><div>von 100</div></div>
           </div>
           <div class="res-hero-meaning">
             ${window._care && window._care.active
@@ -6753,6 +6804,11 @@
             </div>`).join("")}
         </div>`;
     }
+    // v2.13.0 (Paket I, Nr. 2c): Die Mail ist hier schon erzeugt. Enthält sie keinen Fahrplan (fahrplan leer),
+    // wird er auch nicht angekündigt.
+    if (S.planPromised && window._unlockInfo && Array.isArray(window._unlockInfo.fahrplan)) {
+      return `<div class="stage-plan-note"><strong>Deine nächsten Schritte</strong> stehen in deiner Mail.</div>`;
+    }
     if (S.planPromised) {
       return `<div class="stage-plan-note"><strong>Dein 6-Wochen-Fahrplan für „${S.goalTeaser}“</strong> steht in deiner Mail – Woche für Woche, mit Ausblick bis zu deinem Re-Check.</div>`;
     }
@@ -7004,7 +7060,7 @@
       const prog = Math.min((now - start) / dur, 1);
       const ease = 1 - Math.pow(1 - prog, 3);
       current = Math.round(target * ease);
-      if (el) { el.textContent = current; }   // v2.8.16: Farbe tragen Ring und Plakette
+      if (el) { el.textContent = Math.round(Number(target) || 0); }   // v2.13.0 (Paket I): Zahl steht fest, nur der Ring läuft
       if (ring) ring.style.strokeDashoffset = C - (current / 100) * C;
       if (prog < 1) requestAnimationFrame(step);
     }
@@ -7534,7 +7590,7 @@
       const dizzy = getRisk("dizziness_pale_nails"); const nutType = getText("nutrition_type") || getText("diet_type");
       const isPlant = nutType.includes("vegan") || nutType.includes("vegetar");
       if (l === "low") { if (window._redFlagNoBloodtest) return "Klärung gehört hier zuerst in die Hausarztpraxis — dort werden auch die passenden Blutwerte veranlasst."; if (dizzy >= 2 && isPlant) return "Ein Bluttest für Eisen, B12 und Vitamin D gibt dir konkrete Werte statt Vermutungen."; return "Gezielte Blutwerte geben dir Orientierung — sinnvoller als blindes Supplementieren."; }
-      if (l === "medium") { if (isPlant) return window._redFlagNoBloodtest ? "B12, Jod und Eisen bei pflanzlicher Ernährung gezielt im Blick behalten — die Hausarztpraxis ist hier die erste Adresse." : "B12, Jod und Eisen bei pflanzlicher Ernährung gezielt im Blick behalten — eine fachlich begleitete Laborkontrolle kann Klarheit geben."; return "Bei anhaltender Müdigkeit gezielte Abklärung vor Supplement-Kauf prüfen."; }
+      if (l === "medium") { if (isPlant) return window._redFlagNoBloodtest ? "B12, Jod und Eisen bei pflanzlicher Ernährung gezielt im Blick behalten — die Hausarztpraxis ist hier die erste Adresse." : "B12, Jod und Eisen bei pflanzlicher Ernährung gezielt im Blick behalten — ob Blutwerte sinnvoll sind, klärst du am besten in deiner Hausarztpraxis."; return "Bei anhaltender Müdigkeit gezielte Abklärung vor Supplement-Kauf prüfen."; }
       return "Supplemente nur gezielt, sinnvoll und nach Bedarf einsetzen.";
     }
     if (key === "metabolic") {
@@ -7593,6 +7649,18 @@
   const SUPPLY_VERDICT_TEXT = { passt: "Anlass erkennbar", passt_einmal_pruefen: "Anlass erkennbar — Wert einmal prüfen lassen", passt_ernaehrung_zuerst: "möglich — Ernährung zuerst", nutzen_pruefen: "Nutzen prüfen", abklaeren: "in der Praxis ansprechen" };
   const SUPPLY_NUTRIENT = { vitd: "Vitamin D", b12: "Vitamin B12", iodine: "Jod", iron: "Eisen", omega3: "Omega-3", zinc: "Zink", selenium: "Selen", calcium: "Calcium", mag: "Magnesium", multi: "Multivitaminpräparat", other: "Andere" };
 
+  // v2.13.0 (Paket I, Nr. 10): Überschrift aus den Einzelurteilen — wortgleich zur Mail (edge .12, supplyMixedText)
+  function supplyMixedText(s) {
+    const pr = Array.isArray(s && s.products) ? s.products : [];
+    if (!s || !["ohne_anlass", "ohne_anlass_3plus"].includes(s.case_key) || !pr.length) return "";
+    const n = pr.filter(p => p.verdict === "nutzen_pruefen").length;
+    if (!n || n === pr.length) return "";
+    if (s.case_key === "ohne_anlass_3plus") {   // BfR-Tipp zur Summe über mehrere Produkte bleibt erhalten
+      const rest = String(SUPPLY_CASE_TEXT.ohne_anlass_3plus || "").replace(/^[^.]*\.\s*/, "");
+      return `Bei ${n} von ${pr.length} deiner Präparate ergibt sich aus deinen Angaben kein Anlass. ${rest}`.trim();
+    }
+    return `Bei ${n} von ${pr.length} deiner Präparate ergibt sich aus deinen Angaben kein Anlass. Tipp: Ein guter Moment, bei ${n === 1 ? "diesem" : "diesen"} den Nutzen zu prüfen — Ernährung zuerst.`;
+  }
   function supplyOf(score) {
     const s = score && (score.supply_payload || score.supply);
     return s && s.status === "ok" ? s : null;
@@ -7649,7 +7717,7 @@
     if (!s || supplyHidden()) return "";
     const v = Number(s.score);
     let [word, col] = supplyWord(v);
-    let text = SUPPLY_SHORT[s.case_key];
+    let text = supplyMixedText(s) || SUPPLY_SHORT[s.case_key];
     // v2.12.2 (Paket H): offener Praxispunkt ohne Präparat (z. B. Eisen) zählt nicht in die Punktzahl — dann kein "Gut aufgestellt"
     const openClarify = (s.clarify || []).filter(n => !(s.products || []).some(p => p.substance === n));
     let showVal = true;
@@ -7677,7 +7745,7 @@
     const full = !!(window._stageUnlocked || (window._isReviewMode && window._accessPin) || !RESULT_STAGES_ENABLED);
     if (!full) {
       return `<div class="supply-plan"><h3>Deine Versorgung</h3>
-        <div class="supply-text">${escHtml(SUPPLY_SHORT[s.case_key] || SUPPLY_CASE_TEXT[s.case_key] || "")} Die Tipps je Präparat stehen in deinem Vital-Plan per E-Mail.</div>
+        <div class="supply-text">${escHtml(supplyMixedText(s) || SUPPLY_SHORT[s.case_key] || SUPPLY_CASE_TEXT[s.case_key] || "")} Die Tipps je Präparat stehen in deinem Vital-Plan per E-Mail.</div>
         <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">Dieser Bereich zählt nicht zum Vitalitäts-Index.</div></div>`;
     }
     const rows = products.map(p => {
@@ -7692,7 +7760,7 @@
     return `<div class="supply-plan">
         <div style="font-size:11px;color:var(--text-secondary);font-weight:700;letter-spacing:1px;text-transform:uppercase;">Versorgung &amp; Nahrungsergänzung · nicht im Index</div>
         <h3>Deine Versorgung</h3>
-        <div class="supply-text" style="margin-bottom:${rows ? 8 : 0}px;">${escHtml((s.case_key === "kein_bedarf" && lines.length) ? SUPPLY_KEIN_BEDARF_MIT_ANLASS : (SUPPLY_CASE_TEXT[s.case_key] || ""))}</div>
+        <div class="supply-text" style="margin-bottom:${rows ? 8 : 0}px;">${escHtml(supplyMixedText(s) || ((s.case_key === "kein_bedarf" && lines.length) ? SUPPLY_KEIN_BEDARF_MIT_ANLASS : (SUPPLY_CASE_TEXT[s.case_key] || "")))}</div>
         ${rows}${needs}${sel}${mod}
       </div>`;
   }
@@ -7718,10 +7786,10 @@
       const key = (item.rule_key || item.label || "").toLowerCase();
       if (key.includes("jod") || key.includes("iod")) { hints.push(`<strong>Jod</strong> — bei vegetarischer Ernährung ohne Fisch oft unterschätzt. Jodiertes Speisesalz konsequent verwenden ist die einfachste Lösung.`); }
       else if (key.includes("b12") && isVeganFinal) { hints.push(`<strong>Vitamin B12</strong> — bei veganer Ernährung empfiehlt die DGE eine zuverlässige Ergänzung, da pflanzliche Lebensmittel kein verwertbares B12 liefern.`); }
-      else if (key.includes("b12") && isVegetarianFinal) { hints.push(`<strong>Vitamin B12</strong> — bei vegetarischer Ernährung meist über Milchprodukte gedeckt. Bei Müdigkeit oder Konzentrationsproblemen lohnt eine Kontrolle.`); }
+      else if (key.includes("b12") && isVegetarianFinal) { hints.push(`<strong>Vitamin B12</strong> — steckt vor allem in tierischen Lebensmitteln. Tipp: Lass deinen B12-Wert einmal in deiner Praxis prüfen.`); /* v2.13.0: wie Mail und Versorgungs-Check */ }
       else if (key.includes("omega")) { if (noFishFinal || isPlantBasedFinal) { hints.push(`<strong>Omega-3</strong> — kein Fisch in der Ernährung. Gute pflanzliche Quellen: Leinöl, Walnüsse, Chiasamen. ${isVeganFinal ? "Algenöl liefert direkt EPA und DHA." : "Bei Bedarf Algenöl als Alternative."} Wer gerinnungshemmende Medikamente einnimmt, bespricht ein Präparat vorher ärztlich.`); } }
       else if (key.includes("eisen") || key.includes("iron")) { hints.push(`<strong>Eisen</strong> — pflanzliches Eisen wird schlechter aufgenommen. Tipp: Eisenreiche Lebensmittel immer mit Vitamin C kombinieren.`); }
-      else if (key.includes("vitamin_d") || key.includes("vitamin d")) { hints.push(`<strong>Vitamin D</strong> — bei wenig Tageslicht besonders relevant. ${isVeganFinal ? "Auf pflanzliches D3 aus Flechten achten." : "Eine fachlich begleitete Laborkontrolle zeigt den tatsächlichen Wert."}`); }
+      else if (key.includes("vitamin_d") || key.includes("vitamin d")) { hints.push(`<strong>Vitamin D</strong> — bei wenig Tageslicht besonders relevant. ${isVeganFinal ? "Auf pflanzliches D3 aus Flechten achten." : "Ob ein Blick auf den Wert sinnvoll ist, klärst du am besten in deiner Hausarztpraxis."}`); }
       else if (key.includes("protein")) {
         if (isVeganFinal) { hints.push(`<strong>Protein</strong> — pflanzliches Protein ist vollwertig wenn die Quellen kombiniert werden: Hülsenfrüchte, Nüsse, Tofu und Vollkornprodukte.`); }
         else if (isVegetarianFinal) { hints.push(`<strong>Protein</strong> — eine Eiweißquelle zu jeder Mahlzeit einplanen: Eier, Quark, Hüttenkäse, Hülsenfrüchte.`); }
@@ -8742,7 +8810,7 @@
   // Gleicher Schutz wie beim Loeschen: mit PIN, falls einer existiert. Der
   // Widerruf wirkt sofort — die Policy im Dashboard filtert auf trainer_access.
   async function revokeTrainerAccess() {
-    if (!latestResult?.public_code) { alert("Keine aktive Auswertung gefunden. Bitte wende dich an info@le-vita.com mit deiner Pilot-ID."); return; }
+    if (!latestResult?.public_code) { uiAlert("Keine aktive Auswertung gefunden. Bitte wende dich an info@le-vita.com mit deiner Pilot-ID."); return; }
     if (!confirm("Möchtest du die Einsicht durch die Trainerinnen und Trainer zurücknehmen?\n\nDeine Auswertung bleibt dir vollständig erhalten. Im Studio könnt ihr sie weiterhin gemeinsam ansehen, wenn du Pilot-ID und PIN zeigst.")) return;
     const btn = document.getElementById('trainerRevokeBtn');
     if (btn) { btn.disabled = true; btn.textContent = "Wird widerrufen…"; }
@@ -8763,17 +8831,17 @@
         const box = btn && btn.parentElement;
         if (box) box.innerHTML = '<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;">✓ Widerrufen. Die Trainerinnen und Trainer sehen deine Angaben nicht mehr.</div>';
       } else {
-        alert("Der Widerruf konnte nicht gespeichert werden. Bitte wende dich an datenschutz@le-vita.com mit deiner Pilot-ID: " + latestResult.public_code);
+        uiAlert("Der Widerruf konnte nicht gespeichert werden. Bitte wende dich an datenschutz@le-vita.com mit deiner Pilot-ID: " + latestResult.public_code);
         if (btn) { btn.disabled = false; btn.textContent = "Einsicht durch Trainer widerrufen"; }
       }
     } catch (err) {
-      alert(err.message && err.message.length > 30 ? err.message : "Verbindungsfehler. Bitte versuche es erneut oder kontaktiere uns: datenschutz@le-vita.com");
+      uiAlert(err.message && err.message.length > 30 ? err.message : "Verbindungsfehler. Bitte versuche es erneut oder kontaktiere uns: datenschutz@le-vita.com");
       if (btn) { btn.disabled = false; btn.textContent = "Einsicht durch Trainer widerrufen"; }
     }
   }
 
   async function deleteMyData() {
-    if (!latestResult?.public_code) { alert("Keine aktive Auswertung gefunden. Bitte wende dich an info@le-vita.com mit deiner Pilot-ID."); return; }
+    if (!latestResult?.public_code) { uiAlert("Keine aktive Auswertung gefunden. Bitte wende dich an info@le-vita.com mit deiner Pilot-ID."); return; }
     const confirmed = confirm(`Möchtest du wirklich alle gespeicherten Daten zu Pilot-ID ${latestResult.public_code} löschen?\n\nFolgende Daten werden sofort gelöscht:\n- Deine Antworten und Angaben\n- Dein Score und alle Bereichswerte\n- Deine Kontaktdaten\n- Deine KI-Auswertung\n\nDas E-Mail-Protokoll wird innerhalb von 30 Tagen entfernt.\n\nDiese Aktion kann nicht rückgängig gemacht werden.`);
     if (!confirmed) return;
     try {
@@ -8796,13 +8864,13 @@
           throw innerErr;
         }
       }
-      if (result?.success) { alert(`✓ Deine Daten wurden erfolgreich gelöscht.\n\nDu wirst jetzt zur Startseite weitergeleitet.`); resetVitalCheck(true); }
-      else { alert("Beim Löschen ist ein Fehler aufgetreten. Bitte wende dich an info@le-vita.com mit deiner Pilot-ID: " + latestResult.public_code); if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.innerHTML = `${ICO("trash")} Daten löschen`; } }
+      if (result?.success) { uiAlert(`✓ Deine Daten wurden erfolgreich gelöscht.\n\nDu wirst jetzt zur Startseite weitergeleitet.`); resetVitalCheck(true); }
+      else { uiAlert("Beim Löschen ist ein Fehler aufgetreten. Bitte wende dich an info@le-vita.com mit deiner Pilot-ID: " + latestResult.public_code); if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.innerHTML = `${ICO("trash")} Daten löschen`; } }
     } catch (err) {
       console.error("Löschfehler:", err);
       const deleteBtn = document.querySelector('[onclick="deleteMyData()"]');
       if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.innerHTML = `${ICO("trash")} Daten löschen`; }
-      alert(err.message && err.message.length > 30 ? err.message : "Verbindungsfehler. Bitte versuche es erneut oder kontaktiere uns: info@le-vita.com");
+      uiAlert(err.message && err.message.length > 30 ? err.message : "Verbindungsfehler. Bitte versuche es erneut oder kontaktiere uns: info@le-vita.com");
     }
   }
 
@@ -8855,7 +8923,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.12.2</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.13.0</footer>
 
 
 </body>
