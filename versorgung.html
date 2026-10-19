@@ -39,6 +39,13 @@
   BfR-Höchstmengenvorschlag" in jeder Gruppe (aus dem festen Notiztext der Bewertung).
   W2 Link "Quellen und Regeln" (quellen-versorgung.html) statt "auf Nachfrage im Studio".
   W3 Link "Mikronährstoff-Versorgung" ausgeblendet, bis die Seite existiert.
+  1.2.0 (19.10.2026, Paket H, Tiefenprüfung Versorgungs-Check): Karte "Nicht eingeordnet"
+  (Sporternährung, "Anderes Präparat") statt "Du nimmst keine Nahrungsergänzung"; Gruppensatz
+  "In der Praxis ansprechen" ohne "bevor du das Präparat weiter nimmst"; "Ein Blick lohnt sich"
+  ohne "Ernährung zuerst" (passt nicht zu B12 vegan); Laborfrage auf der Seite in Alltagssprache
+  (Fachbegriffe bleiben auf dem Zettel); "Wie geht es weiter?" ohne Vergleichsversprechen und
+  ohne festen Re-Check-Zeitraum; Konto-Satz ohne "beim Re-Check"; Zettel mit Grund je Präparat
+  und mit nicht eingeordneten Präparaten. Gehört zu 08_Paket-H_Versorgung.sql.
 -->
 <style>
   @font-face { font-family: 'DM Sans'; font-weight: 400; font-display: swap; src: url('assets/dm-sans-v17-latin-regular.woff2') format('woff2'); }
@@ -479,7 +486,7 @@
 <script src="assets/konto.js?v=1.4.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.1.0";
+  const FE_VERSION = "1.2.0";
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/supply-check";
   const SUPABASE_URL = "https://koctweetotpqaazeicwj.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
@@ -573,14 +580,17 @@
     weglassen: ["Kein Anlass erkennbar", "v-gray"], behalten_pruefen: ["Anlass erkennbar — Wert einmal prüfen lassen", "v-green"], behalten: ["Anlass erkennbar", "v-green"],
   };
   const GROUPS = [
-    ["abklaeren", "In der Praxis ansprechen", "Hier raten BfR oder Fachgesellschaften zu ärztlicher Rücksprache. Tipp: Nimm diese Punkte zu deinem nächsten Termin in der Hausarztpraxis mit — am besten, bevor du das Präparat weiter nimmst."],
-    ["ergaenzen", "Ein Blick lohnt sich", "Aus deinen Angaben ergibt sich hier ein Anhaltspunkt. Tipp: Ernährung zuerst — und ob eine Ergänzung für dich sinnvoll ist, klärst du am besten in deiner Praxis."],
+    ["abklaeren", "In der Praxis ansprechen", "Hier raten BfR oder Fachgesellschaften zu ärztlicher Rücksprache. Tipp: Nimm diese Punkte zu deinem nächsten Termin in der Hausarztpraxis mit — der Zettel unten hilft dir dabei."],
+    ["ergaenzen", "Ein Blick lohnt sich", "Aus deinen Angaben ergibt sich hier ein Anhaltspunkt, den bisher kein Präparat abdeckt. Was du tun kannst, steht beim jeweiligen Stoff."],
     ["ernaehrung", "Über die Ernährung", "Tipp: Hier ist die Ernährung der einfachste Weg."],
     ["weglassen", "Kein Anlass erkennbar", "Laut BfR sind Nahrungsergänzungsmittel für die überwiegend gut versorgte Bevölkerung nicht notwendig. Was dir ärztlich verordnet wurde, änderst du bitte nur in Absprache mit deiner Praxis."],
     ["behalten_pruefen", "Anlass erkennbar — Wert einmal prüfen lassen", "Aus deinen Angaben ist ein Einnahmegrund erkennbar. Ob Menge und Präparat zu dir passen, zeigt erst ein Laborwert."],
     ["behalten", "Anlass erkennbar", "Aus deinen Angaben ist ein Einnahmegrund erkennbar. Tipp: Überprüf die Einnahme von Zeit zu Zeit."],
   ];
   const label = (k) => (st.data?.catalog || []).find((s) => s.substance_key === k)?.label || k;
+  // 1.2.0: Laborfrage in Alltagssprache; die Fachbegriffe (lab_hint) stehen auf dem Zettel für die Praxis
+  const LAB_PLAIN = { vitd: "meinen Vitamin-D-Wert", b12: "meinen Vitamin-B12-Wert", iron: "meinen Eisenwert" };
+  const labPlain = (x) => LAB_PLAIN[x.substance] || ("meinen " + (x.label || label(x.substance)) + "-Wert");
 
   // ── Anmeldung ──
   function screenLogin(msg = "") {
@@ -761,7 +771,7 @@
           ${(x.notes || []).map((n) => `<p class="pl-note">${esc(n)}</p>`).join("")}
           ${x.hope_text ? `<p class="pl-hope"><strong>Zu deiner Erwartung:</strong> ${esc(x.hope_text)}</p>` : ""}
           ${x.food ? `<p class="pl-food"><strong>Über die Ernährung:</strong> ${esc(x.food)}</p>` : ""}
-          ${x.lab_hint ? `<p class="pl-lab"><strong>Mögliche Frage an die Praxis:</strong> Ist ${esc(x.lab_hint)} für mich sinnvoll?</p>` : ""}
+          ${x.lab_hint ? `<p class="pl-lab"><strong>Mögliche Frage an die Praxis:</strong> Ist es sinnvoll, ${esc(labPlain(x))} prüfen zu lassen?</p>` : ""}
           ${x.intake_tip && k !== "weglassen" ? `<p class="pl-tip"><strong>Einnahme:</strong> ${esc(x.intake_tip)}</p>` : ""}</div>`).join("")}</div>`;
     }).join("");
     const done = r.session?.completed_at ? new Date(r.session.completed_at).toLocaleDateString("de-DE") : "";
@@ -770,7 +780,9 @@
       <div class="card top"><h2 style="margin-bottom:4px">${esc(res.headline || "")}</h2>
         <p class="muted">${done ? "Stand " + esc(done) + " · " : ""}Ernährung zuerst — und gezielte Ergänzung dort, wo es einen Anlass gibt.</p></div>
       <div class="card info"><p><strong>Was dieser Check kann — und was nicht:</strong> Er ordnet deine Angaben zu Präparaten, Ernährung und Lebensstil nach den Empfehlungen von DGE und BfR ein. Wie gut du tatsächlich versorgt bist, kann er nicht messen — einen Mangel weder feststellen noch ausschließen. Das kann nur ein Laborwert in deiner Praxis.</p></div>
-      ${(res.items || []).length || (res.add || []).length ? sec : `<div class="card"><p>Du nimmst keine Nahrungsergänzung, und aus deinen Angaben ergibt sich kein Anlass dafür. Tipp: Eine abwechslungsreiche Ernährung ist die beste Grundlage.</p></div>`}
+      ${(res.items || []).length || (res.add || []).length ? sec : (res.unrated || []).length ? "" : `<div class="card"><p>Du nimmst keine Nahrungsergänzung, und aus deinen Angaben ergibt sich kein Anlass dafür. Tipp: Eine abwechslungsreiche Ernährung ist die beste Grundlage.</p></div>`}
+      ${(res.unrated || []).length ? `<div class="card grp v-gray"><h3>Nicht eingeordnet</h3>
+        ${res.unrated.map((x) => `<div class="pl-item"><div class="pl-head"><strong>${esc(x.label)}</strong></div><p class="pl-note">${esc(x.note || "")}</p></div>`).join("")}</div>` : ""}
       ${(res.notes || []).length ? `<div class="card info">${res.notes.map((n) => `<p>${esc(n)}</p>`).join("")}</div>` : ""}
       ${res.doctor_sheet ? `<div class="card"><h3>Für deinen Praxistermin</h3>
         <p class="muted">Ein Zettel mit deinen Präparaten, den offenen Punkten und möglichen Fragen — zum Mitnehmen in deine Hausarztpraxis.</p>
@@ -789,8 +801,9 @@
       <div class="card" id="fb"><h3>War diese Orientierung hilfreich?</h3>
         <div class="chips" style="margin-top:8px">${[["ja", "Ja"], ["teils", "Teils"], ["nein", "Nein"]].map(([k, t]) => `<button type="button" data-fb="${k}">${t}</button>`).join("")}</div></div>
       <div class="card"><h3>Wie geht es weiter?</h3>
-        <p class="muted">Mach den Versorgungs-Check zusammen mit deinem Re-Check in 8–12 Wochen noch einmal — dann siehst du, was sich verändert hat.
-          Für ein Gespräch im Studio sprich uns einfach an.</p></div>
+        ${res.doctor_sheet ? `<p class="muted"><strong>Zuerst:</strong> Nimm den Zettel für die Praxis zu deinem nächsten Termin in der Hausarztpraxis mit.</p>` : ""}
+        <p class="muted">Ändert sich etwas an deinen Präparaten — zum Beispiel nach einem Praxisgespräch —, pass deine Angaben über „Angaben ändern“ an. Der Plan wird dann neu berechnet.</p>
+        <p class="muted">Nach deinem nächsten Vital-Check (Re-Check) kannst du den Versorgungs-Check auf dieser Grundlage noch einmal machen. Für ein Gespräch im Studio sprich uns einfach an.</p></div>
       <p class="small">Diese Tipps folgen festen Regeln aus den Empfehlungen von DGE und BfR (<a href="quellen-versorgung.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Quellen und Regeln, Stand 18.10.2026</a>). Sie sind keine Diagnose, ersetzen keine ärztliche Beratung und
         nennen bewusst keine Dosierungen. Wenn du dauerhaft Medikamente nimmst oder eine Vorerkrankung hast, sprich vor jeder Einnahme mit deiner Ärztin oder deinem Arzt.</p>
       ${INTERNAL ? `<p class="small">${esc(r.version || "")} · Fall im Vital-Check: ${esc(res.vital_check_case || "–")}</p>` : ""}`);
@@ -806,7 +819,7 @@
     if (window.LeVitaKonto && st.pin && !r.account?.in_account) {
       window.LeVitaKonto.mountStep(document.getElementById("konto-step"), {
         publicCode: st.code, pin: st.pin, context: "nutrition", required: false,   // freiwillig (Jörg 18.10.2026 nach Review)
-        lead: "Mit Konto bleibt dein Versorgungsplan gespeichert, und du öffnest ihn beim Re-Check ohne PIN, mit einem Link per E-Mail.",
+        lead: "Mit Konto findest du deinen Versorgungsplan in „Mein Bereich“ und öffnest ihn ohne PIN, mit einem Link per E-Mail.",
         onRequested: () => track("supply_account", { action: "requested" }),
       });
       document.getElementById("konto-step").addEventListener("click", (ev) => { if (ev.target && ev.target.id === "lk-skip") track("supply_account", { action: "skipped" }); });
@@ -832,12 +845,19 @@
     const rows = [...(res.items || []), ...(res.add || [])].filter((x) => x.verdict !== "ernaehrung");
     const open = rows.filter((x) => ["abklaeren", "ergaenzen", "behalten_pruefen"].includes(x.verdict));
     const labs = [...new Set(open.map((x) => x.lab_hint).filter(Boolean))];
+    // 1.2.0: Grund je Präparat (aus den festen Notiztexten der Bewertung), damit die Praxis sieht, warum es auf dem Zettel steht
+    const why = (x) => [VERDICT[x.verdict]?.[0] || x.verdict,
+      (x.notes || []).some((n) => /über dem Höchstmengenvorschlag/.test(n)) ? "über BfR-Höchstmengenvorschlag" : "",
+      (x.notes || []).some((n) => /Liegt die Tagesmenge über/.test(n)) ? "Menge unbekannt" : "",
+      (x.notes || []).some((n) => /addieren sich/.test(n)) ? "Doppelung mit Kombipräparat" : "",
+      (x.notes || []).some((n) => /^Enthält Eisen/.test(n)) ? "enthält Eisen" : ""].filter(Boolean).join(" · ");
     document.getElementById("doc-sheet").innerHTML = `
       <h2>Versorgungs-Check — Notiz für den Praxistermin</h2>
       <p>Pilot-ID ${esc(st.code)} · Stand ${esc(new Date(r.session?.completed_at || Date.now()).toLocaleDateString("de-DE"))}</p>
       <table class="ds-table"><thead><tr><th>Präparat</th><th>Menge/Tag</th><th>Seit</th><th>Anlass</th><th>Hinweis im Check</th></tr></thead><tbody>
         ${rows.map((x) => `<tr><td>${esc(x.label)}</td><td>${esc(x.amount || "–")}</td><td>${esc(x.since ? label2(SINCE, x.since) : "–")}</td>
-          <td>${esc(x.reason ? label2(REASON, x.reason) : (x.substance && !(res.items || []).includes(x) ? "nimmt es nicht" : "–"))}</td><td>${esc(VERDICT[x.verdict]?.[0] || x.verdict)}</td></tr>`).join("")}
+          <td>${esc(x.reason ? label2(REASON, x.reason) : (x.substance && !(res.items || []).includes(x) ? "nimmt es nicht" : "–"))}</td><td>${esc(why(x))}</td></tr>`).join("")}
+        ${(res.unrated || []).map((x) => `<tr><td>${esc(x.label)}</td><td>–</td><td>–</td><td>${esc(x.reason ? label2(REASON, x.reason) : "–")}</td><td>nicht eingeordnet</td></tr>`).join("")}
       </tbody></table>
       <p><strong>Letzte Blutwerte:</strong> ${esc(label2(LAST_TEST, r.session?.last_test))} · <strong>Magensäureblocker/Metformin:</strong> ${esc(label2(ACID, r.session?.acid_metformin))}</p>
       ${labs.length ? `<p><strong>Mögliche Fragen an die Praxis:</strong> Sind diese Werte für mich sinnvoll? ${labs.map(esc).join(" · ")}</p>` : ""}
