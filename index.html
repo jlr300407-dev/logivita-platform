@@ -747,6 +747,13 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.16.0 (20.10.2026): Paket S1 (Jörg: "experimentell geht gar nicht und nimmt jedes Vertrauen").
+       Vitalitäts-Alter abgeschaltet über VITAL_AGE_ENABLED = false; displayBioAge() liefert dann null, damit
+       entfallen Alter neben dem Score, Alterszeile im Hero, Satz in der Einordnung, Verlauf und Kennzahl.
+       Die Kennzahl-Reihe hat ohne Alter zwei statt drei Kacheln. Startseiten-Beispiel ohne Alterszeile.
+       Footer von v2.13.0 auf v2.16.0 (v2.14.0 und v2.15.0 hatten ihn nicht hochgezählt).
+       Nachfolger: Fitness-Alter auf veröffentlichter Grundlage (eigenes Vorhaben).
+
        v2.15.0 (20.10.2026): Paket K3 (Revisionsbericht: "Verlauf statt Einzelbild"). Die Verlaufs-Karte beim
        verknüpften Re-Check zeigt jetzt jeden Bereich mit vorher → jetzt und Veränderung (nach Gewicht sortiert).
        Bereiche, die es nur in einer Fassung gibt, entfallen; ein unverändert übernommenes Gewicht steht als
@@ -2425,7 +2432,7 @@
       <div class="lp-ex-body">
         <div>
           <div class="lp-ex-head">
-            <div class="lp-ex-who"><strong>Sandra, 46</strong><br>Ziel: mehr Energie<br><span style="font-size:12.5px;">Vitalitäts-Alter <strong style="color:var(--text-primary);">46</strong> · im Takt ihres Kalenders</span></div>
+            <div class="lp-ex-who"><strong>Sandra, 46</strong><br>Ziel: mehr Energie</div>
             <div class="lp-ex-score"><div class="lp-ex-num">71</div><div class="lp-ex-lbl">Vitalitäts-Index</div></div>
           </div>
           <svg viewBox="-34 0 368 266" width="100%" style="max-width:360px;display:block;margin:0 auto;" role="img" aria-label="Beispiel einer Vitalitäts-Spinne, heute und mit Potenzial"><polygon points="150.0,106.5 165.2,112.8 171.5,128.0 165.2,143.2 150.0,149.5 134.8,143.2 128.5,128.0 134.8,112.8" fill="none" stroke-width="1" style="stroke:rgba(var(--ink-rgb),0.08)"/><polygon points="150.0,85.0 180.4,97.6 193.0,128.0 180.4,158.4 150.0,171.0 119.6,158.4 107.0,128.0 119.6,97.6" fill="none" stroke-width="1" style="stroke:rgba(var(--ink-rgb),0.08)"/><polygon points="150.0,63.5 195.6,82.4 214.5,128.0 195.6,173.6 150.0,192.5 104.4,173.6 85.5,128.0 104.4,82.4" fill="none" stroke-width="1" style="stroke:rgba(var(--ink-rgb),0.08)"/><polygon points="150.0,42.0 210.8,67.2 236.0,128.0 210.8,188.8 150.0,214.0 89.2,188.8 64.0,128.0 89.2,67.2" fill="none" stroke-width="1" style="stroke:rgba(var(--ink-rgb),0.08)"/><line x1="150" y1="128" x2="150.0" y2="42.0" style="stroke:rgba(var(--ink-rgb),0.08)"/><line x1="150" y1="128" x2="210.8" y2="67.2" style="stroke:rgba(var(--ink-rgb),0.08)"/><line x1="150" y1="128" x2="236.0" y2="128.0" style="stroke:rgba(var(--ink-rgb),0.08)"/><line x1="150" y1="128" x2="210.8" y2="188.8" style="stroke:rgba(var(--ink-rgb),0.08)"/><line x1="150" y1="128" x2="150.0" y2="214.0" style="stroke:rgba(var(--ink-rgb),0.08)"/><line x1="150" y1="128" x2="89.2" y2="188.8" style="stroke:rgba(var(--ink-rgb),0.08)"/><line x1="150" y1="128" x2="64.0" y2="128.0" style="stroke:rgba(var(--ink-rgb),0.08)"/><line x1="150" y1="128" x2="89.2" y2="67.2" style="stroke:rgba(var(--ink-rgb),0.08)"/><polygon points="150.0,60.1 180.4,97.6 211.9,128.0 190.1,168.1 150.0,192.5 106.2,171.8 64.0,128.0 97.7,75.7" stroke-width="2" stroke-linejoin="round" style="fill:rgba(var(--accent-green-rgb),0.22);stroke:var(--accent-green)"/><polygon points="150.0,60.1 196.2,81.8 211.9,128.0 190.1,168.1 150.0,192.5 106.2,171.8 64.0,128.0 97.7,75.7" fill="none" stroke-width="2" stroke-dasharray="6 4" stroke-linejoin="round" style="stroke:var(--accent-blue)"/><circle cx="196.2" cy="81.8" r="3" style="fill:var(--accent-blue)"/><circle cx="150.0" cy="60.1" r="2.6" style="fill:var(--accent-green)"/><text x="150.0" y="22.8" text-anchor="middle" font-size="10.5" font-family="DM Sans, sans-serif" style="fill:var(--text-secondary)">Schlaf</text><circle cx="180.4" cy="97.6" r="4" style="fill:var(--accent-amber)"/><text x="223.0" y="53.0" text-anchor="start" font-size="10.5" font-family="DM Sans, sans-serif" font-weight="700" style="fill:var(--accent-amber-text)">Bewegung</text><circle cx="211.9" cy="128.0" r="2.6" style="fill:var(--accent-green)"/><text x="253.2" y="132.0" text-anchor="start" font-size="10.5" font-family="DM Sans, sans-serif" style="fill:var(--text-secondary)">Ernährung</text><circle cx="190.1" cy="168.1" r="2.6" style="fill:var(--accent-green)"/><text x="223.0" y="211.0" text-anchor="start" font-size="10.5" font-family="DM Sans, sans-serif" style="fill:var(--text-secondary)">Tageslicht</text><circle cx="150.0" cy="192.5" r="2.6" style="fill:var(--accent-green)"/><text x="150.0" y="241.2" text-anchor="middle" font-size="10.5" font-family="DM Sans, sans-serif" style="fill:var(--text-secondary)">BMI</text><circle cx="106.2" cy="171.8" r="2.6" style="fill:var(--accent-green)"/><text x="77.0" y="211.0" text-anchor="end" font-size="10.5" font-family="DM Sans, sans-serif" style="fill:var(--text-secondary)">Balance</text><circle cx="64.0" cy="128.0" r="2.6" style="fill:var(--accent-green)"/><text x="46.8" y="132.0" text-anchor="end" font-size="10.5" font-family="DM Sans, sans-serif" style="fill:var(--text-secondary)">Rauchen</text><circle cx="97.7" cy="75.7" r="2.6" style="fill:var(--accent-green)"/><text x="77.0" y="53.0" text-anchor="end" font-size="10.5" font-family="DM Sans, sans-serif" style="fill:var(--text-secondary)">Alkohol</text><g font-family="DM Sans, sans-serif" font-size="10.5"><line x1="62" y1="252" x2="80" y2="252" stroke-width="2.5" style="stroke:var(--accent-green)"/><text x="85" y="255.5" style="fill:var(--text-secondary)">heute</text><line x1="132" y1="252" x2="150" y2="252" stroke-width="2" stroke-dasharray="6 4" style="stroke:var(--accent-blue)"/><text x="155" y="255.5" style="fill:var(--text-secondary)">Potenzial mit dem Simulator</text></g></svg>
@@ -2598,6 +2605,9 @@
   // ══════════════════════════════════════════════════════════════
   const FORM_REVISION = "2026-10-R1";
   const CARE_ACTIVE = ["doctor_first", "care_note", "incomplete"];
+  // v2.16.0 (Paket S1, 20.10.2026, Jörg): Vitalitäts-Alter abgeschaltet, bis ein belastbares Fitness-Alter steht.
+  // Alle Anzeigen hängen an displayBioAge(); false = nirgends ein Alter (Ergebnis, Verlauf, Kennzahlen, Simulator).
+  const VITAL_AGE_ENABLED = false;
   const VITAL_AGE_NOTE = "Dein Vitalitäts-Alter ist eine experimentelle Umrechnung deines Lebensstil-Index in ein Alter – kein biologisches oder medizinisches Alter und nicht wissenschaftlich geprüft.";
   const CARE_HEADLINE = "Dein Lebensstilprofil";
   const CARE_SUBLINE = "Einige Angaben solltest du ärztlich besprechen";
@@ -2700,6 +2710,7 @@
 
   // V2–V4: ganze Jahre, nie unter 18, bei Hinweisstatus gar nicht
   function displayBioAge(raw) {
+    if (!VITAL_AGE_ENABLED) return null;
     if (window._care && window._care.active) return null;
     const b = Number(raw);
     if (!isFinite(b) || b <= 0) return null;
@@ -5209,9 +5220,9 @@
 
     // ── KPI-Bar ──
     html += S.kpi = `
-      <div class="kpi-row" style="margin-bottom:10px;">
+      <div class="kpi-row" style="margin-bottom:10px;${bioAge ? "" : "grid-template-columns:repeat(2,1fr);"}">
         <div class="kpi-card"><span class="kpi-icon">${ICO("bolt")}</span><div class="kpi-val" style="color:${sc}">${Math.round(totalScore)}</div><div class="kpi-label">Vitalitäts-Index</div></div>
-        <div class="kpi-card"><span class="kpi-icon">${ICO("dna")}</span><div class="kpi-val" style="color:${bioColor}">${bioAge||"–"}</div><div class="kpi-label">Vitalitäts-Alter</div></div>
+        ${bioAge ? `<div class="kpi-card"><span class="kpi-icon">${ICO("dna")}</span><div class="kpi-val" style="color:${bioColor}">${bioAge}</div><div class="kpi-label">Vitalitäts-Alter</div></div>` : ""}
         <div class="kpi-card" onclick="switchResultTab('bereiche')" style="cursor:pointer;border-color:rgba(var(--accent-amber-rgb),${weakCount>0?'0.3':'0.1'});">
           <span class="kpi-icon">${ICO("chart")}</span>
           <div class="kpi-val" style="color:var(--accent-amber-text)">${weakCount > 0 ? weakCount : growthCount}</div>
@@ -9003,7 +9014,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.13.0</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.16.0</footer>
 
 
 </body>
