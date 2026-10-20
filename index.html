@@ -747,6 +747,11 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.17.0 (20.10.2026): Paket S3 ("nur anzeigen", Teil Seite). Level und Haupthebel kommen aus der Datenbank:
+       das Level aus score.score_label (levelOf nur Rückfall), der Haupthebel aus score_main_lever (SQL 08), den die
+       Edge ab .18 als scenarios.main_lever mitliefert. Unter Score-Version 3 ergebnisgleich; mit Version 4 wird
+       nur die Datenbank umgestellt.
+
        v2.16.0 (20.10.2026): Paket S1 (Jörg: "experimentell geht gar nicht und nimmt jedes Vertrauen").
        Vitalitäts-Alter abgeschaltet über VITAL_AGE_ENABLED = false; displayBioAge() liefert dann null, damit
        entfallen Alter neben dem Score, Alterszeile im Hero, Satz in der Einordnung, Verlauf und Kennzahl.
@@ -4990,7 +4995,9 @@
       personalData.weight_kg = result.submission.weight_kg || personalData.weight_kg;
       personalData.goal_key = result.submission.goal_key || personalData.goal_key;
     }
-    const correctedScoreLabel = window._care.active ? CARE_HEADLINE : levelOf(totalScore);   // v2.8.0: 85 / 65 / 50 / 35 · v2.9.0: bei Hinweisstatus keine Stufe
+    // v2.17.0 (Paket S3): Level kommt aus der Datenbank (score_label); levelOf() nur noch als Rückfall
+    const _dbLabel = String((result.score && result.score.score_label) || "").trim();
+    const correctedScoreLabel = window._care.active ? CARE_HEADLINE : (_dbLabel || levelOf(totalScore));   // v2.8.0: 85 / 65 / 50 / 35 · v2.9.0: bei Hinweisstatus keine Stufe
     window._lastResultData = { areas }; // V2: Radar-Ebenen brauchen die Bereiche bei jedem Re-Render
     // v2.9.0 (S5): Hinweis-Kasten als erster Block der Seite, in beiden Stufen
     document.getElementById("result-content").innerHTML = careBoxHtml(result.answers || []) + buildResultHtml(result, areas, totalScore, bioAge, suppFocus, correctedScoreLabel);
@@ -5105,7 +5112,11 @@
     // v2.11.0 (R2): EIN Haupthebel für Seite, Simulator, Mail und Dashboard — der erste Hebel aus
     // calculate_score_scenarios (Server, nach Punktgewinn sortiert; dieselbe Liste nutzt die Edge als
     // "Hebel 1"). top_priorities nur noch als Rückfall, wenn der Server keinen Hebel liefert.
-    const leverPrio = ((simScenarios && simScenarios.levers) || [])
+    // v2.17.0 (Paket S3): Der Haupthebel kommt zentral aus der Datenbank (score_main_lever, über die Edge .18).
+    // Die bisherige Auswahl bleibt nur als Rückfall, wenn die Antwort ihn nicht enthält.
+    const _ml = (result.scenarios && result.scenarios.main_lever) || result.main_lever || null;
+    const _mlArea = _ml && _ml.area_key ? areas.find(a => a.key === _ml.area_key) : null;
+    const leverPrio = (_mlArea && areasForHebel.includes(_mlArea)) ? _mlArea : ((simScenarios && simScenarios.levers) || [])
       .map(l => areas.find(a => a.key === l.area_key))
       .filter(a => a && areasForHebel.includes(a))[0] || null;
     window._mainLeverKey = leverPrio ? leverPrio.key : (serverPrio ? serverPrio.key : null);
@@ -9014,7 +9025,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.16.0</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.17.0</footer>
 
 
 </body>
