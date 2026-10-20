@@ -747,6 +747,12 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.18.0 (20.10.2026): Paket S4 – Anzeige zu Score-Version 4. Level-Grenzen 85/67/54/45 (Rückfall und Tabelle),
+       Farbe, Tabelle und "dein Level" folgen dem Level der Datenbank (mit Raucher-Obergrenze und Hinweis dazu).
+       Hinweis "niedriger Wert" hängt an "Neustart" statt an Index unter 25 (kein Malus mehr), "Feinschliff" an
+       "Vital & Stabil". Mentale Balance: soziale Kontakte zählen nicht mehr. "Günstigste Antwort" nach Teilaspekten.
+       Neu: Hinweis "Vorläufiges Ergebnis" bei unbeantworteten Fragen (score_preliminary).
+
        v2.17.0 (20.10.2026): Paket S3 ("nur anzeigen", Teil Seite). Level und Haupthebel kommen aus der Datenbank:
        das Level aus score.score_label (levelOf nur Rückfall), der Haupthebel aus score_main_lever (SQL 08), den die
        Edge ab .18 als scenarios.main_lever mitliefert. Unter Score-Version 3 ergebnisgleich; mit Version 4 wird
@@ -2597,7 +2603,16 @@
   // v2.8.0 — Score-Karte Version 3: Level-Grenzen (score_settings.level_thresholds) und
   // Themenwerte für Signale, die keine Score-Bereiche mehr sind (Stoffwechsel, Mikronährstoffe,
   // Alkohol/Nikotin) — gleiche Rechnung wie die Bereichswerte bis Version 2.
-  const LEVEL_MIN = { vital: 85, momentum: 65, weg: 50, aufbau: 35 };
+  // v2.18.0 (Paket S4): Level-Grenzen Score-Version 4 (kalibriert 20.10.2026). Maßgeblich ist das Level der
+  // Datenbank (score_label, mit Raucher-Obergrenze); diese Grenzen sind nur noch Rückfall und Anzeige der Tabelle.
+  const LEVEL_MIN = { vital: 85, momentum: 67, weg: 54, aufbau: 45 };
+  const LEVEL_RANK = { "Vital & Stabil": 5, "Aktiv mit Momentum": 4, "Auf dem Weg": 3, "Im Aufbau": 2, "Neustart": 1 };
+  function levelRank(label, t) {
+    const r = LEVEL_RANK[String(label || "").trim()];
+    if (r) return r;
+    t = Number(t);
+    return t >= LEVEL_MIN.vital ? 5 : t >= LEVEL_MIN.momentum ? 4 : t >= LEVEL_MIN.weg ? 3 : t >= LEVEL_MIN.aufbau ? 2 : 1;
+  }
   function levelOf(t) {
     t = Number(t);
     return t >= LEVEL_MIN.vital ? "Vital & Stabil" : t >= LEVEL_MIN.momentum ? "Aktiv mit Momentum"
@@ -2785,9 +2800,8 @@
       </div>`;
   }
 
-  function indexColor(t) {
-    t = Number(t);
-    return t >= LEVEL_MIN.vital ? "var(--accent-green-text)" : t >= LEVEL_MIN.momentum ? "var(--score-ok-text)" : t >= LEVEL_MIN.weg ? "var(--accent-amber-text)" : t >= LEVEL_MIN.aufbau ? "var(--score-focus-text)" : "var(--accent-red-text)";
+  function indexColor(t, label) {   // v2.18.0: Farbe folgt dem Level (Datenbank), nicht nur der Zahl
+    return ["var(--accent-red-text)", "var(--score-focus-text)", "var(--accent-amber-text)", "var(--score-ok-text)", "var(--accent-green-text)"][levelRank(label, t) - 1];
   }
   const THEME_QMAX = { muscle_cramps: 2, social_connection: 2, alcohol_amount: 3, hormonal_transition: 2, supplement_usage: 2, supplement_types: 0 };
   function themeScore(answers, theme) {
@@ -5000,7 +5014,10 @@
     const correctedScoreLabel = window._care.active ? CARE_HEADLINE : (_dbLabel || levelOf(totalScore));   // v2.8.0: 85 / 65 / 50 / 35 · v2.9.0: bei Hinweisstatus keine Stufe
     window._lastResultData = { areas }; // V2: Radar-Ebenen brauchen die Bereiche bei jedem Re-Render
     // v2.9.0 (S5): Hinweis-Kasten als erster Block der Seite, in beiden Stufen
-    document.getElementById("result-content").innerHTML = careBoxHtml(result.answers || []) + buildResultHtml(result, areas, totalScore, bioAge, suppFocus, correctedScoreLabel);
+    // v2.18.0 (Score-Version 4): unbeantwortete Fragen werden neutral gewertet – das Ergebnis ist dann vorläufig
+    const _prelim = result.score && result.score.score_preliminary === true && !window._care.active
+      ? `<div class="info-box box-info" style="margin-bottom:14px;font-size:13px;"><strong>Vorläufiges Ergebnis:</strong> Mindestens eine Frage ist unbeantwortet geblieben und wurde neutral gewertet. Beim nächsten Check mit allen Antworten wird dein Ergebnis genauer.</div>` : "";
+    document.getElementById("result-content").innerHTML = careBoxHtml(result.answers || []) + _prelim + buildResultHtml(result, areas, totalScore, bioAge, suppFocus, correctedScoreLabel);
     setTimeout(() => animateScoreRing(totalScore), 100);
     setTimeout(() => renderRadarChart(areas), 200);
     setTimeout(() => { updateSimulatorUI(); syncRadarToggleButtons(); }, 120); // V2: Startzustand Simulator + Radar-Schalter
@@ -5067,7 +5084,7 @@
     // So gibt es jeden Text und jede Regel nur einmal.
     const S = {};
 
-    const sc = indexColor(totalScore);   // v2.8.0: Index-Level, nicht Bereichsskala
+    const sc = indexColor(totalScore, scoreLabel);   // v2.8.0: Index-Level, nicht Bereichsskala
     // v1.32.2 — Die Kachel zeigte bisher ALLE Bereiche unter 75. Bei einem
     // niedrigen Gesamtscore standen dort schnell 8 oder 9 — das liest sich wie
     // ein Befund und ist als Handlungsliste unbrauchbar. Gezählt werden jetzt
@@ -5261,7 +5278,8 @@
     // genau das misst der Check nicht. Die Formel bleibt unberührt (sonst bräche
     // die Vergleichbarkeit zu allen bisherigen Checks), nur die Einordnung kommt
     // dazu. Schwelle 25: in 318 Checks lag genau einer darunter.
-    if (Number(totalScore) < 25) {
+    // v2.18.0 (Paket S4): Version 4 hat keinen Malus mehr; der Hinweis hängt jetzt an der Stufe "Neustart".
+    if (scoreLabel === "Neustart") {
       html += S.lowIndex = `
       <div class="info-box box-info" style="margin-bottom:14px;">
         Dein Wert liegt niedrig, weil gleich mehrere Bereiche Luft nach oben haben — sie verstärken sich gegenseitig. Das ist eine Momentaufnahme deines Alltags, kein Urteil über deine Gesundheit. Und es heißt nicht, dass du an neun Stellen gleichzeitig ansetzen musst: Der erste Schritt liegt in einem Bereich, und von dort bewegt sich meist auch der Rest.
@@ -5573,7 +5591,7 @@
         <div class="hebel-text">${escHtml(_DH.firstStep)}</div>
         <div style="margin-top:8px;font-size:12.5px;color:var(--accent-green-text);font-weight:600;">Was das konkret heißt → Nächste Schritte</div>
       </div></div>`;
-    } else if (totalScore >= 85 && _DH.calm) {
+    } else if (scoreLabel === "Vital & Stabil" && _DH.calm) {   // v2.18.0: Level der Datenbank
       if (worst && worst.score < 90) {
         html += S.hebel = `<div class="hebel-box"><div class="hebel-icon">${ICO("spark")}</div><div>
           <div class="hebel-title">Dein einziger kleiner Feinschliff</div>
@@ -6287,6 +6305,12 @@
   // Sonst liefert die Rechnung für einen einzelnen Schritt nur keinen Punktgewinn (z. B. bei Index 0).
   const AREA_QKEYS = { alcohol: ["alcohol_frequency", "alcohol_amount"], smoking: ["nicotine_use"], lifestyle: ["alcohol_frequency", "alcohol_amount", "nicotine_use"] };
   function areaAllZeroRisk(key) {
+    // v2.18.0 (Score-Version 4): maßgeblich sind die Teilaspekte des Bereichs (alle beantworteten bei 100 Punkten)
+    const _sp = latestResult && latestResult.score && latestResult.score.score_payload && latestResult.score.score_payload[key];
+    if (_sp && _sp.teile && typeof _sp.teile === "object") {
+      const t = Object.values(_sp.teile).filter(x => x && x.status === "ok");
+      return t.length > 0 && t.every(x => Number(x.punkte) === 100);
+    }
     const ans = (latestResult && latestResult.answers) || [];
     const ks = AREA_QKEYS[key];
     const rel = ks ? ans.filter(a => ks.includes(a.question_key)) : ans.filter(a => a.area_key === key);
@@ -7144,23 +7168,27 @@
   }
 
   function renderVitalIndexBox(score, label) {
+    const L = LEVEL_MIN;   // v2.18.0: Grenzen aus LEVEL_MIN (Score-Version 4), markiert wird das Level der Datenbank
     const ranges = [
-      { min:85, max:100, value:"85–100", lbl:"Vital & Stabil", txt:"Sehr stabile Basis. Fokus auf Erhalt und Feinschliff." },
-      { min:65, max:84.99, value:"65–84", lbl:"Aktiv mit Momentum", txt:"Gute Grundlage. Einzelne Stellschrauben können das Energielevel weiter verbessern." },
-      { min:50, max:64.99, value:"50–64", lbl:"Auf dem Weg", txt:"Erkennbare Entwicklungsbereiche. Kleine Schritte bringen sichtbare Verbesserungen." },
-      { min:35, max:49.99, value:"35–49", lbl:"Im Aufbau", txt:"Mehrere Faktoren beeinflussen das Energielevel. Starte mit 1–2 konkreten Hebeln." },
-      { min:0, max:34.99, value:"unter 35", lbl:"Neustart", txt:"Regeneration und Alltag verdienen besondere Aufmerksamkeit. Starte niedrigschwellig." }
+      { rank:5, value:`${L.vital}–100`, lbl:"Vital & Stabil", txt:"Sehr stabile Basis. Fokus auf Erhalt und Feinschliff." },
+      { rank:4, value:`${L.momentum}–${L.vital - 1}`, lbl:"Aktiv mit Momentum", txt:"Gute Grundlage. Einzelne Stellschrauben können das Energielevel weiter verbessern." },
+      { rank:3, value:`${L.weg}–${L.momentum - 1}`, lbl:"Auf dem Weg", txt:"Erkennbare Entwicklungsbereiche. Kleine Schritte bringen sichtbare Verbesserungen." },
+      { rank:2, value:`${L.aufbau}–${L.weg - 1}`, lbl:"Im Aufbau", txt:"Mehrere Faktoren beeinflussen das Energielevel. Starte mit 1–2 konkreten Hebeln." },
+      { rank:1, value:`unter ${L.aufbau}`, lbl:"Neustart", txt:"Regeneration und Alltag verdienen besondere Aufmerksamkeit. Starte niedrigschwellig." }
     ];
+    const myRank = levelRank(label, score);
     const mots = { 85:"Deine Basis wirkt sehr stabil. Erhalte diese Routinen und nutze Feinschliff für weiteres Wachstum.", 70:"Du bist auf einem guten Level. Einzelne Hebel können deinen Index in den nächsten Wochen weiter stabilisieren.", 55:"Schon kleine regelmäßige Veränderungen können helfen, deinen Vitalitäts-Index spürbar zu verbessern.", 40:"Starte mit 1–2 einfachen Schritten und vergleiche den Index in 4–8 Wochen erneut.", 0:"Starte besonders niedrigschwellig. Bei anhaltenden Beschwerden kann zusätzliche Orientierung sinnvoll sein." };
-    const mk = score>=85?85:score>=65?70:score>=50?55:score>=35?40:0;   // v2.8.0: Grenzen 85/65/50/35, Texte unverändert
+    const mk = [0, 40, 55, 70, 85][myRank - 1];   // v2.18.0: nach Level (Datenbank), Texte unverändert
     const rows = ranges.map(r => {
-      const active = score >= r.min && score <= r.max;
+      const active = r.rank === myRank;
       return `<div class="vital-index-row ${active?"active-level":""}">
         <span class="vital-index-value">${r.value}</span>
         <span class="vital-index-label"><strong>${r.lbl}</strong>${active?" ← dein Level":""}<br><small style="color:var(--text-muted);">${r.txt}</small></span>
       </div>`;
     }).join("");
-    return `<div class="vital-index-box"><div class="section-title" style="margin-bottom:14px;">LeVITA Vitalitäts-Index</div>${rows}<div class="vital-index-note"><strong>Dein nächstes Ziel:</strong> ${mots[mk]}</div></div>`;
+    const capped = levelRank(null, score) > myRank && LEVEL_RANK[String(label || "").trim()];
+    const capNote = capped ? `<div style="font-size:12.5px;color:var(--text-secondary);margin:8px 0 0;">Dein Index allein läge eine Stufe höher. Bei täglichem Rauchen bleibt die Stufe bei „${escHtml(String(label))}“ – Rauchen ist einer der größten vermeidbaren Risikofaktoren.</div>` : "";
+    return `<div class="vital-index-box"><div class="section-title" style="margin-bottom:14px;">LeVITA Vitalitäts-Index</div>${rows}${capNote}<div class="vital-index-note"><strong>Dein nächstes Ziel:</strong> ${mots[mk]}</div></div>`;
   }
 
   function renderRadarExplanation(areas) {
@@ -7321,7 +7349,7 @@
       src: []
     },
     mental: {
-      what: "Wie gestresst du dich fühlst und wie gut du sozial eingebunden bist. Deine Antworten zur Stimmung zählen bewusst nicht in die Punkte — wenn sie auffallen, stehen sie als eigener Hinweis oben.",
+      what: "Wie gestresst du dich im Alltag fühlst. Deine Antworten zur Stimmung und zu sozialen Kontakten zählen bewusst nicht in die Punkte — wenn sie auffallen, stehen sie als eigener Hinweis oben.",
       why: "Dauerhafte Anspannung wirkt auf Schlaf, Energie und Erholung. Gute Kontakte schützen: Einsamkeit ist laut WHO mit einem höheren Risiko für Herzerkrankungen, Typ-2-Diabetes, Depression und Angst verbunden.",
       age: () => "",
       src: ["who_soc"]
@@ -9025,7 +9053,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.17.0</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.18.0</footer>
 
 
 </body>
