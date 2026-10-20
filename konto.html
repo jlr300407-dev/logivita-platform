@@ -376,7 +376,7 @@
 <script src="assets/konto.js?v=1.4.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.5.0";
+  const FE_VERSION = "1.5.1";
   const K = window.LeVitaKonto;
   const esc = K.esc;
   const params = new URLSearchParams(location.search);
@@ -503,11 +503,13 @@
   // 1.4.0 (S1/V1–V4, Regelversion 2026-10-R1): Bei Hinweisstatus keine Stufe und kein Vitalitäts-Alter;
   // sonst das Alter nie unter 18 und als experimentelle Umrechnung gekennzeichnet.
   const CARE_ACTIVE = ["doctor_first", "care_note", "incomplete"];
+  const VITAL_AGE_ENABLED = false;
   function checkLabel(c) {
     if (c.care_status && CARE_ACTIVE.includes(c.care_status)) {
       return c.care_status === "incomplete" ? "Lebensstilprofil · einige Fragen fehlen" : "Lebensstilprofil · bitte ärztlich besprechen";
     }
-    const age = c.bio_age != null && isFinite(Number(c.bio_age)) ? Math.max(18, Math.round(Number(c.bio_age))) : null;
+    // 1.5.1 (Paket S1, 20.10.2026): Vitalitäts-Alter abgeschaltet – auch für ältere Checks
+    const age = VITAL_AGE_ENABLED && c.bio_age != null && isFinite(Number(c.bio_age)) ? Math.max(18, Math.round(Number(c.bio_age))) : null;
     return esc(c.score_label || "") + (age ? ` · Vitalitäts-Alter ${num(age)} <span class="note" style="display:inline">(experimentelle Umrechnung)</span>` : "");
   }
   // 1.4.0 (W1): feste Karte "Deine Zusatzmodule" zum neuesten Check
