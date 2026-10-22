@@ -747,6 +747,16 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.19.0 (22.10.2026): Paket T (externer Nachtest R4, 20.10.2026). R4-01: Der Bereich mental heißt im
+       Ergebnis "Stressbalance" (er bildet nur den Stress ab); Bereiche, zu denen ein Hinweis besteht (PHQ-2 → Stress,
+       Essverhalten/ärztlicher Vorrang → Ernährung/BMI, ärztlicher Vorrang → Bewegung, Schlaf-Kombination → Schlaf),
+       erscheinen nie als Stärke und tragen statt des Stufenworts "Siehe Hinweis oben" (careAffectedAreas, gleiche Regel
+       wie Edge .19). Neu: Hinweis bei sehr kurzem Schlaf + sehr langem Einschlafen + täglicher Müdigkeit (Jörg 22.10.2026).
+       R4-02/R4-05: Bewegungs-Tipp nennt "einen zusätzlichen aktiven Tag" und das spätere Ziel aus dem Simulator.
+       R4-03: Re-Check-Satz bei Praxisfällen als ganzer Satz. R4-04: Simulator-Erklärung an Version 4 angepasst
+       (rechnerische Änderung, keine Gesundheitsvorhersage). Studio-Karte bei Praxishinweis: "nach dem Gespräch in
+       deiner Hausarztpraxis".
+
        v2.18.0 (20.10.2026): Paket S4 – Anzeige zu Score-Version 4. Level-Grenzen 85/67/54/45 (Rückfall und Tabelle),
        Farbe, Tabelle und "dein Level" folgen dem Level der Datenbank (mit Raucher-Obergrenze und Hinweis dazu).
        Hinweis "niedriger Wert" hängt an "Neustart" statt an Index unter 25 (kein Malus mehr), "Feinschliff" an
@@ -2589,7 +2599,7 @@
   // eigentliche Korrektur gehoert in die Bereichstabelle — bis dahin faengt die
   // Anwendung es hier ab. Ein vorhandenes area_label hat immer Vorrang.
   const AREA_LABELS_DE = { sleep:"Schlaf", activity:"Bewegung", nutrition:"Ernährung",
-    vitamin_d:"Tageslicht", bmi:"Körpergewicht", mental:"Mentale Balance",
+    vitamin_d:"Tageslicht", bmi:"Körpergewicht", mental:"Stressbalance",
     smoking:"Rauchen", alcohol:"Alkohol", lifestyle:"Lebensstil",
     micronutrients:"Mikronährstoffe", metabolic:"Stoffwechsel" };
   // v2.10.0 (A3): Der Bereich heißt in allen Kanälen "Tageslicht" — er hat genau eine Frage (Zeit draußen im
@@ -2653,6 +2663,25 @@
     return { status, active: !!status && CARE_ACTIVE.includes(status), reasons: arr(c.care_reasons),
              missing: arr(c.missing_items), details, pregnancyUnknown: preg === "keine_angabe" || details.pregnancy_unknown === true };
   }
+  // v2.19.0 (Paket T, R4-01): Bereiche, zu denen ein Hinweis besteht – nie als Stärke, kein Stufenwort.
+  // Gleiche Regel wie careAffectedAreas in der Edge (.19).
+  function sleepFlagOf(answers) {
+    const r = k => { const a = (answers || []).find(x => x && x.question_key === k); return Number(a && a.risk_points); };
+    return r("sleep_duration") >= 4 && r("sleep_latency") >= 4 && r("daytime_sleepiness") >= 4;
+  }
+  function careAffectedAreas(care, answers) {
+    const r = (care && care.reasons) || [];
+    const out = new Set();
+    if (r.includes("phq2")) out.add("mental");
+    if (r.includes("essverhalten")) { out.add("nutrition"); out.add("bmi"); }
+    if (care && care.status === "doctor_first") { out.add("nutrition"); out.add("bmi"); out.add("activity"); }
+    if (sleepFlagOf(answers)) out.add("sleep");
+    return [...out];
+  }
+  function isCareAffected(key) {
+    return careAffectedAreas(window._care, (latestResult && latestResult.answers) || []).includes(key);
+  }
+  const SLEEP_HINT = "Sehr kurzer Schlaf, sehr langes Einschlafen und Müdigkeit an jedem Tag – diese Kombination solltest du in deiner Hausarztpraxis ansprechen. Feste Schlafenszeiten helfen, ersetzen die Abklärung aber nicht.";
   // ══ v2.12.0 (Paket E) — ZENTRALE ERGEBNIS-ENTSCHEIDUNG ═══════════════════
   // Einmal pro Ergebnis berechnet (window._decision). Jeder nachgelagerte Baustein
   // (Hero, Sofort, Fahrplan, "Wir vermuten", Simulator, Studio, Module) liest NUR
@@ -4996,7 +5025,7 @@
     const sp = result.score?.score_payload || {};
     const areas = Object.entries(sp)
       .filter(([key]) => key !== "general")
-      .map(([key, value]) => ({ key, label: key === "vitamin_d" ? "Tageslicht" : value.label, score: Number(value.score), weight: value.weight }));   // v2.10.0 (A3)
+      .map(([key, value]) => ({ key, label: key === "vitamin_d" ? "Tageslicht" : key === "mental" ? "Stressbalance" : value.label, score: Number(value.score), weight: value.weight }));   // v2.19.0 (R4-01)   // v2.10.0 (A3)
     const totalScore = Number(result.score?.total_score || 0);
     // v2.9.0: Hinweisstatus zuerst — er bestimmt Alter, Stufe und den ersten Block (S1/S5, V2–V4)
     window._care = careFromResult(result);
@@ -5669,7 +5698,8 @@
     const fokusAreas = sortedAreas.filter(a => a.score < 55);
     const optimierAreas = sortedAreas.filter(a => a.score >= 55 && a.score < 70);
     const wachstumAreas = sortedAreas.filter(a => a.score < 70);
-    const staerkenAreas = sortedAreas.filter(a => a.score >= 70);
+    const hinweisAreas = sortedAreas.filter(a => a.score >= 70 && isCareAffected(a.key));   // v2.19.0 (R4-01)
+    const staerkenAreas = sortedAreas.filter(a => a.score >= 70 && !isCareAffected(a.key));
 
     const _markAreas = html.length;
     if (fokusAreas.length > 0) {
@@ -5692,6 +5722,15 @@
       html += `</div>`;
     }
 
+    if (hinweisAreas.length > 0) {   // v2.19.0 (R4-01): eigener Abschnitt, nicht unter "Stärken"
+      html += `<div class="bereiche-header">
+        <div class="bereiche-header-label">Bereiche mit Hinweis</div>
+      </div>`;
+      html += `<div class="areas-grid">`;
+      hinweisAreas.forEach(area => { html += renderAreaCard(area, result); });
+      html += `</div>`;
+    }
+
     if (staerkenAreas.length > 0) {
       html += `<div class="bereiche-staerken-sep">✓ Deine Stärken</div>`;
       html += `<div class="areas-grid">`;
@@ -5704,7 +5743,7 @@
     html += S.redFlag = renderRedFlagBox(score, totalScore);
 
     if (answersData && answersData.length > 0) {
-      const areaLabels = { activity:"Bewegung & Kraft", sleep:"Schlaf & Regeneration", nutrition:"Ernährung", mental:"Mentale Balance & Stress", vitamin_d:"Tageslicht", bmi:"BMI", lifestyle:"Alkohol / Nikotin", micronutrients:"Mikronährstoffe", metabolic:"Energie & Stoffwechsel", general:"Allgemein" };
+      const areaLabels = { activity:"Bewegung & Kraft", sleep:"Schlaf & Regeneration", nutrition:"Ernährung", mental:"Stressbalance", vitamin_d:"Tageslicht", bmi:"BMI", lifestyle:"Alkohol / Nikotin", micronutrients:"Mikronährstoffe", metabolic:"Energie & Stoffwechsel", general:"Allgemein" };
       const questionLabels = { activity_days:"Wie viele Tage pro Woche bist du körperlich aktiv?",activity_intensity:"Wie intensiv ist deine Bewegung?",strength_training:"Wie oft trainierst du gezielt Kraft?",muscle_cramps:"Hast du beim Sport Muskelkrämpfe?",sitting_hours:"Wie viele Stunden sitzt du täglich?",sleep_duration:"Wie viele Stunden schläfst du pro Nacht?",sleep_quality:"Wie erholsam ist dein Schlaf?",sleep_problems:"Hast du Einschlaf- oder Durchschlafschwierigkeiten?",sleep_latency:"Wie lange brauchst du zum Einschlafen?",daytime_sleepiness:"Bist du tagsüber müde oder schläfrig?",nutrition_type:"Wie ernährst du dich?",diet_type:"Wie ernährst du dich?",omega3_fish:"Wie oft isst du fettreichen Seefisch?",vegetable_fruit:"Wie oft isst du Gemüse und Obst?",protein_frequency:"Wie oft isst du bewusst eiweißreiche Lebensmittel?",meal_regularity:"Isst du regelmäßig zu festen Zeiten?",water_intake:"Wie viel trinkst du täglich?",sunlight_exposure:"Wie viel Zeit verbringst du täglich im Freien?",alcohol_frequency:"Wie häufig trinkst du Alkohol?",alcohol_amount:"Wie viele alkoholische Getränke pro Monat?",smoking:"Rauchst du?",nicotine_use:"Rauchst du oder nutzt du Nikotin?",stress_level:"Wie gestresst fühlst du dich im Alltag?",low_mood:"Wie oft fühlst du dich niedergeschlagen?",low_interest:"Wie oft verlierst du die Freude an Dingen?",social_connection:"Wie gut bist du sozial eingebunden?",energy_level:"Wie ist dein Energielevel im Alltag?",appetite_change:"Hast du Veränderungen beim Appetit?",weight_changes:"Hast du ungewollte Gewichtsveränderungen?",supplement_usage:"Nimmst du Nahrungsergänzungsmittel?",supplement_types:"Welche Supplements nimmst du?",vital_goal:"Was ist dein wichtigstes Ziel?",unintentional_weight_loss:"Hast du ungewollt an Gewicht verloren?",dizziness_pale_nails:"Hast du Schwindel oder blasse Nägel bemerkt?",vegetables_fruit:"Wie oft isst du Gemüse und Obst?",protein_intake:"Wie oft isst du bewusst eiweißreiche Lebensmittel?",sun_exposure_winter:"Wie viel Tageslicht bekommst du im Winter?",period_bleeding:"Wie stark ist deine Monatsblutung?",hormonal_transition:"Befindest du dich in den Wechseljahren?" };
       // v1.41.2 — Der Fragetext kommt jetzt ZUERST aus den geladenen Fragen.
       // Die Liste questionLabels war eine handgepflegte Kopie und im Laufe der
@@ -5855,10 +5894,22 @@
       </div>`;
     }
 
+    // v2.19.0 (Paket T): Schlaf-Kombination als ruhiger Praxis-Hinweis (Jörg 22.10.2026), kein Vorrang
+    if (sleepFlagOf(result.answers || [])) {
+      html += S.sleepHint = `<div class="hint-box" style="background:rgba(var(--accent-amber-rgb),0.08);border-left:3px solid var(--accent-amber);border-radius:0;padding:14px 16px;margin-bottom:16px;">
+        <strong style="color:var(--warn-text);">${ICO("moon")} Schlaf ansprechen</strong><br>
+        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${escHtml(SLEEP_HINT)}</span>
+      </div>`;
+    }
+
     // Kategorie 1 — Das kannst du selbst tun (2–3 Anleitungen, Haupthebel zuerst)
     const selfTips = {
       nutrition: ["Ein Eiweißbaustein zu jeder Mahlzeit", "Eier, Quark, Hülsenfrüchte oder Fisch — Protein sättigt, unterstützt Muskeln und Regeneration. Starte heute mit einer Mahlzeit."],
-      activity: ["Bewegung fest in die Woche bauen", "Plane zwei feste Termine für zügiges Gehen, Radfahren oder Training — Termine halten besser als Vorsätze. Mit Uhr oder Handy: 30 Minuten zügiges Gehen sind rund 3.000 Schritte."],
+      activity: ["Einen aktiven Tag dazunehmen", (() => {   // v2.19.0 (R4-02): dasselbe Ziel wie Fahrplan und Simulator
+        const lv = (simScenarios && simScenarios.levers || []).find(l => l && l.question_key === "activity_days");
+        const later = lv && lv.to_text ? ` Dein Ziel im Simulator ist „${lv.to_text}“ – dahin kommst du Schritt für Schritt, ein Tag nach dem anderen.` : "";
+        return "Starte mit einem zusätzlichen aktiven Tag pro Woche: ein fester Termin für zügiges Gehen, Radfahren oder Training, 30 Minuten. Termine halten besser als Vorsätze; mit Uhr oder Handy sind 30 Minuten zügiges Gehen rund 3.000 Schritte." + later;
+      })()],
       sleep: ["Abendroutine für besseren Schlaf", "30 Minuten vor dem Schlafen: Bildschirm aus, Licht dimmen, gleiche Zubettgehzeit. Eine Woche testen — der Unterschied ist meist spürbar."],
       vitamin_d: ["Täglich Tageslicht tanken", "15–25 Minuten im Freien, ideal vormittags — auch bei bewölktem Himmel wirksam."],
       mental: ["Kleine Entlastungs-Pausen einbauen", "Zwei, drei bewusste Kurzpausen am Tag — atmen, kurz gehen, Fenster auf — senken die Grundspannung spürbar."],
@@ -6287,7 +6338,7 @@
   }
 
   function stageStrengths(areas) {
-    return areas.filter(a => a.key !== "bmi" && Number(a.score) >= 70)
+    return areas.filter(a => a.key !== "bmi" && Number(a.score) >= 70 && !isCareAffected(a.key))   // v2.19.0 (R4-01)
       .sort((a, b) => b.score - a.score).slice(0, 2);
   }
 
@@ -6333,7 +6384,7 @@
     const strengths = stageStrengths(S.areas);
     // Bereichsnamen als Satzglied: "Alkohol / Nikotin trägt dich" liest sich falsch.
     const N = { activity: "deine Bewegung", sleep: "dein Schlaf", nutrition: "deine Ernährung", vitamin_d: "dein Tageslicht",
-      mental: "deine mentale Balance", smoking: "dein rauchfreier Alltag", alcohol: "dein Umgang mit Alkohol", lifestyle: "dein Umgang mit Alkohol und Nikotin", micronutrients: "deine Nährstoffversorgung", metabolic: "deine Energie" };
+      mental: "deine Stressbalance", smoking: "dein rauchfreier Alltag", alcohol: "dein Umgang mit Alkohol", lifestyle: "dein Umgang mit Alkohol und Nikotin", micronutrients: "deine Nährstoffversorgung", metabolic: "deine Energie" };
     const nm = (a, first) => { const t = N[a.key] || a.label; return `<strong>${first ? t.charAt(0).toUpperCase() + t.slice(1) : t}</strong>`; };
     let s1;
     if (strengths.length === 2) s1 = `${nm(strengths[0], true)} und ${nm(strengths[1], false)} tragen dich – darauf kannst du bauen.`;
@@ -6474,7 +6525,7 @@
         body += `<div class="sim-note">${simNoAnswerGainHtml(worst, false)}</div>`;   // v2.10.0 (A2)
       }
       body += goalWeightNoteHtml(S);   // v2.7.2
-      body += `<div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin:4px 0 10px;">Berechnet aus deinen Antworten, mit derselben Formel wie dein Ergebnis. Hebel addieren sich nicht einfach – die Kombination ist exakt gerechnet.</div>
+      body += `<div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin:4px 0 10px;">Berechnet aus deinen Antworten, mit derselben Formel wie dein Ergebnis (Score-Version 4). Das ist eine rechnerische Änderung im Index, keine Vorhersage deiner Gesundheit.</div>
         <button type="button" class="stage-btn-go" onclick="scrollToAiBox()">Meinen Vital-Plan anfordern →</button>
         <div class="res-cta-note">Kostenlos &nbsp;·&nbsp; sofort hier sichtbar &nbsp;·&nbsp; die Mail kommt in wenigen Minuten</div>`;
     }
@@ -6578,6 +6629,7 @@
           <div><div class="stage-step-title">Dein Gespräch im Studio</div><div class="stage-step-sub">15 Minuten, kostenlos</div></div>
         </div>
         <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">Unsere Trainer und Sportwissenschaftler ordnen dein Ergebnis ein und messen, was der Fragebogen nur schätzen kann.</div>
+        ${(_DS.praxis && !_DS.doctor) ? `<div style="font-size:12.5px;color:var(--warn-text);line-height:1.55;margin-bottom:12px;">Training und Ernährungsangebote startest du nach dem Gespräch in deiner Hausarztpraxis. Das Ergebnisgespräch bei uns kannst du schon vorher führen.</div>` : ""}
         <div style="font-size:11px;color:var(--text-secondary);">Für dich passt besonders</div>
         <div style="font-size:15px;font-weight:700;margin:2px 0 4px;">${rec[0]}</div>
         <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:10px;">${rec[1]}</div>
@@ -7009,6 +7061,7 @@
       html += S.levelInfo || "";
       html += S.lowIndex || "";
       html += S.mental || "";
+      html += S.sleepHint || "";   // v2.19.0
       html += S.redFlag || "";
       const doctorItem = (S.cat3Items || []).find(([t]) => t === "Ärztliche Abklärung zuerst");
       if (doctorItem) {
@@ -7048,6 +7101,7 @@
     html += S.levelInfo || "";
     html += S.lowIndex || "";
     html += S.mental || "";
+    html += S.sleepHint || "";   // v2.19.0
     html += S.redFlag || "";
     html += S.verlauf || "";
     html += stageSummaryHtml(S, { compact: true });
@@ -7349,7 +7403,7 @@
       src: []
     },
     mental: {
-      what: "Wie gestresst du dich im Alltag fühlst. Deine Antworten zur Stimmung und zu sozialen Kontakten zählen bewusst nicht in die Punkte — wenn sie auffallen, stehen sie als eigener Hinweis oben.",
+      what: "Stressbalance bildet nur ab, wie gestresst du dich im Alltag fühlst. Deine Antworten zur Stimmung und zum Interesse zählen bewusst nicht in die Punkte — wenn sie auffallen, stehen sie als eigener Hinweis oben.",
       why: "Dauerhafte Anspannung wirkt auf Schlaf, Energie und Erholung. Gute Kontakte schützen: Einsamkeit ist laut WHO mit einem höheren Risiko für Herzerkrankungen, Typ-2-Diabetes, Depression und Angst verbunden.",
       age: () => "",
       src: ["who_soc"]
@@ -7464,6 +7518,7 @@
     // v1.32.4 — Karte folgt jetzt derselben Skala wie Legende und Mail.
     const band = scoreBand(area.score);
     let cls = band.cls, statusTxt = `${band.badge} ${band.label}`;
+    if (isCareAffected(area.key)) { cls = "area-medium"; statusTxt = "△ Siehe Hinweis oben"; }   // v2.19.0 (R4-01)
     const bmi = area.key === "bmi" ? Number(result?.bmi) : null;
     if (area.key === "bmi" && bmi !== null) {
       // BMI behält seine eigene Einordnung: der Bereichswert ist hier eine
@@ -7914,7 +7969,7 @@
 
     const fb = [
       { key:"sleep", max:75, bmiLowSafe:true, text:"Schlaf und Abendroutine könnten deine Regeneration spürbar unterstützen. Schon ein stabiler Rhythmus kann ein guter erster Hebel sein." },
-      { key:"mental", max:75, bmiLowSafe:true, text:"Mentale Balance und Erholung könnten deine Vitalität unterstützen. Oft hilft ein kleiner fester Pausenanker mehr als alles gleichzeitig zu verändern." },
+      { key:"mental", max:75, bmiLowSafe:true, text:"Weniger Stress und mehr Erholung könnten deine Vitalität unterstützen. Oft hilft ein kleiner fester Pausenanker mehr als alles gleichzeitig zu verändern." },
       { key:"nutrition", max:75, bmiLowSafe:true, text:"Ernährung und Nährstoffqualität könnten ein guter Ansatzpunkt sein — besonders Eiweiß, Gemüse, Flüssigkeit und hochwertige Fettquellen." },
       { key:"micronutrients", max:75, bmiLowSafe:true, text:"Bestimmte Nährstoff-Themen könnten eine bewusste Einordnung verdienen. Sinnvoll ist zuerst Ernährung — bei Bedarf ein Blutwert-Check." },
       { key:"vitamin_d", max:75, bmiLowSafe:true, text:"Regelmäßiges Tageslicht ist bei dir aktuell ein besonders sinnvoller Hebel für Energie, Schlafrhythmus und Vitamin-D-Orientierung." },
@@ -8440,7 +8495,7 @@
     const _DR = window._decision || {};
     if (_DR.praxis) return `
       <div style="margin-top:12px;padding:12px 14px;background:rgba(var(--ink-rgb),0.04);border:1px solid var(--border);border-radius:var(--radius-sm);text-align:left;font-size:12.5px;color:var(--text-secondary);line-height:1.55;">
-        <strong style="color:var(--text-primary);">Dein nächster Check:</strong> ${_DR.doctor ? "wenn die ärztliche Abklärung erfolgt ist." : "nach dem Gespräch in deiner Hausarztpraxis."} Mit Pilot-ID und PIN kommst du jederzeit zu dieser Auswertung zurück.
+        <strong style="color:var(--text-primary);">${_DR.doctor ? "Deinen nächsten Check machst du, wenn die ärztliche Abklärung erfolgt ist." : "Deinen nächsten Check machst du nach dem Gespräch in deiner Hausarztpraxis."}</strong> Mit Pilot-ID und PIN kommst du jederzeit zu dieser Auswertung zurück.
       </div>`;
     const rd = recheckDates();
     return `
@@ -8514,7 +8569,7 @@
             : ' <span style="color:var(--text-muted);">(rechnerisch unter einem Jahr)</span>';
           bioTxt = ` · Vitalitäts-Alter ~<strong>${proj.bio_age} J.</strong>${dTxt}`;
         }
-        const comboNote = simActiveKeys.length >= 2 ? ' <span style="color:var(--text-muted);">(Kombination exakt berechnet — Hebel addieren sich nicht einfach)</span>' : '';
+        const comboNote = simActiveKeys.length >= 2 ? ' <span style="color:var(--text-muted);">(gemeinsam berechnet, rechnerische Änderung im Index)</span>' : '';
         meta.innerHTML = `<strong>+${fmtGain(proj.gain)} Punkte</strong> gegenüber heute${bioTxt}${comboNote}`;
       }
     } else {
@@ -9053,7 +9108,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.18.0</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.19.0</footer>
 
 
 </body>
