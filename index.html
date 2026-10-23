@@ -747,6 +747,15 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.20.0 (23.10.2026): Paket V (Sporttest S01–S05). Gemeinsame Hinweisquelle profileHintsOf (Schlaf-Kombination
+       oder häufige Tagesmüdigkeit, wortgleich Edge .22) – Hinweise stehen in Stufe 2 über den Reitern, also in Übersicht
+       und Plan; der betroffene Bereich zählt nicht als Stärke. F01: Bewegungs-Tipp folgt der Hebelfrage (Kraft in
+       vorhandene Tage einbauen / Sitzen unterbrechen / zusätzlicher Tag nur bei wenigen aktiven Tagen). F06: bei
+       auffälliger Erholung "Erholung vor Training" statt "Beibehalten". F07: Stresshinweis ohne Bewegungs-Einstieg für
+       bereits Aktive. F08: kein "kein weiterer Schritt" neben vorhandenen Hebeln. F09: Hinweis bei 100 Punkten. F11:
+       BMI-Karte bei hohem altersbezogenem Wert ohne Warnzeichen. F12/M06: keine Defizit-/Lückensprache ohne Anlass.
+       Simulator heißt "Rechnerische Veränderung im Index".
+
        v2.19.2 (23.10.2026): Zurück-Navigation (Rückmeldung von Nutzern). Nach "Zurück" blieb die grüne Markierung der
        alten Antwort stehen und eine neue Wahl kam dazu; bei Mehrfachauswahl ließ sich ein Haken (v. a. am Handy) nicht
        sicher entfernen. Jetzt: showPreviousAnswer zeigt beim Zurückgehen genau die bisherige Antwort, jede neue Wahl
@@ -2698,13 +2707,22 @@
     if (r.includes("phq2")) out.add("mental");
     if (r.includes("essverhalten")) { out.add("nutrition"); out.add("bmi"); }
     if (care && care.status === "doctor_first") { out.add("nutrition"); out.add("bmi"); out.add("activity"); }
-    if (sleepFlagOf(answers)) out.add("sleep");
+    profileHintsOf(answers).forEach(h => out.add(h.area));   // v2.20.0: gleiche Quelle wie die Hinweisbox
     return [...out];
   }
   function isCareAffected(key) {
     return careAffectedAreas(window._care, (latestResult && latestResult.answers) || []).includes(key);
   }
   const SLEEP_HINT = "Sehr kurzer Schlaf, sehr langes Einschlafen und Müdigkeit an jedem Tag – diese Kombination solltest du in deiner Hausarztpraxis ansprechen. Feste Schlafenszeiten helfen, ersetzen die Abklärung aber nicht.";
+  // v2.20.0 (Paket V, gemeinsame Hinweisquelle): EINE Regel für Übersicht, Plan und Mail (wortgleich in der Edge,
+  // profileHintsOf ab edge-2026-10-23.22). Die Schlaf-Kombination schließt den Einzelhinweis Tagesmüdigkeit ein.
+  const DAYTIME_HINT = "Du fühlst dich häufig tagsüber müde. Wenn das anhält, sprich es in deiner Hausarztpraxis an – auch dann, wenn du viel trainierst oder wenig schläfst; eine Ursache lässt sich aus dem Check nicht ablesen.";
+  function profileHintsOf(answers) {
+    const r = k => { const a = (answers || []).find(x => x && x.question_key === k); return Number(a && a.risk_points); };
+    if (sleepFlagOf(answers)) return [{ key: "sleep_combo", area: "sleep", title: "Schlaf ansprechen", text: SLEEP_HINT }];
+    if (r("daytime_sleepiness") >= 3) return [{ key: "daytime", area: "sleep", title: "Tagesmüdigkeit ansprechen", text: DAYTIME_HINT }];
+    return [];
+  }
   // ══ v2.12.0 (Paket E) — ZENTRALE ERGEBNIS-ENTSCHEIDUNG ═══════════════════
   // Einmal pro Ergebnis berechnet (window._decision). Jeder nachgelagerte Baustein
   // (Hero, Sofort, Fahrplan, "Wir vermuten", Simulator, Studio, Module) liest NUR
@@ -5658,6 +5676,11 @@
           ${renderVitalIndexBox(totalScore, scoreLabel)}
         </div>
       </div>`;
+    // v2.20.0 (Paket V, F09): 100 Punkte heißen gute Gewohnheiten, nicht maximale Fitness
+    if (Math.round(Number(totalScore)) >= 100) {
+      const _h100 = `<div class="info-box box-info" style="font-size:13px;margin-bottom:12px;">100 Punkte bedeuten: Deine Gewohnheiten sind in allen acht Bereichen günstig. Das ist keine Aussage über deine Fitness oder Leistung – die kann sich weiter verbessern, auch wenn der Index gleich bleibt.</div>`;
+      html += _h100; S.levelInfo = (S.levelInfo || "") + _h100;
+    }
 
 
 
@@ -5946,21 +5969,31 @@
     }
 
     // v2.19.0 (Paket T): Schlaf-Kombination als ruhiger Praxis-Hinweis (Jörg 22.10.2026), kein Vorrang
-    if (sleepFlagOf(result.answers || [])) {
-      html += S.sleepHint = `<div class="hint-box" style="background:rgba(var(--accent-amber-rgb),0.08);border-left:3px solid var(--accent-amber);border-radius:0;padding:14px 16px;margin-bottom:16px;">
-        <strong style="color:var(--warn-text);">${ICO("moon")} Schlaf ansprechen</strong><br>
-        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${escHtml(SLEEP_HINT)}</span>
-      </div>`;
+    // v2.20.0 (Paket V): gemeinsame Hinweisquelle – steht in Stufe 2 über den Reitern, also in Übersicht UND Plan
+    const _pHints = profileHintsOf(result.answers || []);
+    if (_pHints.length) {
+      html += S.sleepHint = _pHints.map(h => `<div class="hint-box" style="background:rgba(var(--accent-amber-rgb),0.08);border-left:3px solid var(--accent-amber);border-radius:0;padding:14px 16px;margin-bottom:16px;">
+        <strong style="color:var(--warn-text);">${ICO("moon")} ${escHtml(h.title)}</strong><br>
+        <span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${escHtml(h.text)}</span>
+      </div>`).join("");
     }
 
     // Kategorie 1 — Das kannst du selbst tun (2–3 Anleitungen, Haupthebel zuerst)
     const selfTips = {
       nutrition: ["Ein Eiweißbaustein zu jeder Mahlzeit", "Eier, Quark, Hülsenfrüchte oder Fisch — Protein sättigt, unterstützt Muskeln und Regeneration. Starte heute mit einer Mahlzeit."],
-      activity: ["Einen aktiven Tag dazunehmen", (() => {   // v2.19.0 (R4-02): dasselbe Ziel wie Fahrplan und Simulator
+      activity: (() => {   // v2.20.0 (Paket V, F01): Text folgt der Hebelfrage – aktive Tage, Krafttraining oder Sitzen
+        const _lvK = (simScenarios && simScenarios.levers || []).find(l => l && l.area_key === "activity");
+        const _days = Number(((result.answers || []).find(a => a.question_key === "activity_days") || {}).risk_points || 0);
+        if ((_lvK && _lvK.question_key === "strength_training") || (_days <= 1 && !(_lvK && _lvK.question_key === "activity_days") && !(_lvK && _lvK.question_key === "sitting_hours")))
+          return ["Kraft in deine Woche einbauen", "Du bist schon an mehreren Tagen aktiv – dafür brauchst du keinen zusätzlichen Tag. Ergänze eine deiner bestehenden Einheiten um 20 Minuten Kraftübungen für die großen Muskelgruppen (z. B. Kniebeugen, Liegestütze an der Wand, Rudern mit Band)."];
+        if (_lvK && _lvK.question_key === "sitting_hours")
+          return ["Sitzen unterbrechen", "Steh etwa jede halbe Stunde kurz auf – ein paar Schritte, Telefonate im Stehen, Treppe statt Aufzug. Es geht um häufige kurze Unterbrechungen, nicht um ein zusätzliches Training."];
+        return ["Einen aktiven Tag dazunehmen", (() => {
         const lv = (simScenarios && simScenarios.levers || []).find(l => l && l.question_key === "activity_days");
         const later = lv && lv.to_text ? ` Dein Ziel im Simulator ist „${lv.to_text}“ – dahin kommst du Schritt für Schritt, ein Tag nach dem anderen.` : "";
         return "Starte mit einem zusätzlichen aktiven Tag pro Woche: ein fester Termin für zügiges Gehen, Radfahren oder Training, 30 Minuten. Termine halten besser als Vorsätze; mit Uhr oder Handy sind 30 Minuten zügiges Gehen rund 3.000 Schritte." + later;
-      })()],
+      })()];
+      })(),
       sleep: ["Abendroutine für besseren Schlaf", "30 Minuten vor dem Schlafen: Bildschirm aus, Licht dimmen, gleiche Zubettgehzeit. Eine Woche testen — der Unterschied ist meist spürbar."],
       vitamin_d: ["Täglich Tageslicht tanken", "15–25 Minuten im Freien, ideal vormittags — auch bei bewölktem Himmel wirksam."],
       mental: ["Kleine Entlastungs-Pausen einbauen", "Zwei, drei bewusste Kurzpausen am Tag — atmen, kurz gehen, Fenster auf — senken die Grundspannung spürbar."],
@@ -6046,14 +6079,19 @@
     if (_trainsFully && cat1.length < 3 && _trainVorbehalt) {
       cat1.push(["Bewegung mit der Praxis abstimmen", "Wie viel Training gerade zu dir passt, besprichst du am besten beim Gespräch in deiner Hausarztpraxis – Umfang und Verträglichkeit gehören dazu.", "activity_keep"]);
     } else if (_trainsFully && cat1.length < 3) {
-      cat1.push(["Beibehalten und gut erholen", `Mit 5–7 aktiven Tagen und Krafttraining oder körperlich schwerer Arbeit 3-mal oder häufiger pro Woche bist du sehr gut unterwegs. Behalte das bei und plane bewusst Erholung ein.${(isFinite(Number(result.bmi)) && Number(result.bmi) < 18.5) || (window._decision && window._decision.praxis) ? "" : " Wenn du gezielt mehr willst, plant ein Trainer im Studio das gern mit dir."}`, "activity_keep"]);
+      // v2.20.0 (Paket V, F06): Bei auffälliger Erholung (Schlafwert unter 50 oder häufige Tagesmüdigkeit) kein „Beibehalten“ des vollen Pensums
+      const _recoveryWeak = (Number(result?.score?.score_payload?.sleep?.score ?? 100) < 50) || riskOf('daytime_sleepiness') >= 3;
+      if (_recoveryWeak) cat1.push(["Erholung vor Training", "Du trainierst viel – und gleichzeitig sind Schlaf oder Tagesmüdigkeit auffällig. Steigere dein Training gerade nicht. Halte dein Pensum oder nimm es etwas zurück, bis du dich wieder erholter fühlst; mehr Schlaf hat jetzt Vorrang.", "activity_keep"]);
+      else cat1.push(["Beibehalten und gut erholen", `Mit 5–7 aktiven Tagen und Krafttraining oder körperlich schwerer Arbeit 3-mal oder häufiger pro Woche bist du sehr gut unterwegs. Behalte das bei und plane bewusst Erholung ein.${(isFinite(Number(result.bmi)) && Number(result.bmi) < 18.5) || (window._decision && window._decision.praxis) ? "" : " Wenn du gezielt mehr willst, plant ein Trainer im Studio das gern mit dir."}`, "activity_keep"]);
     }
     // v2.11.0 (M3/S5): Bei ärztlichem Vorrang ersetzt die Abklärung alle Selbst-Tipps (keine Belastungssteigerung)
     if (_careT.status === "doctor_first") {
       cat1.length = 0;
       cat1.push(["Zuerst die Abklärung", "Bevor du an Training oder Ernährung etwas veränderst, sprich mit deiner Hausarztpraxis. Bis dahin: Belastung nicht steigern, gewohnte Bewegung beibehalten.", "doctor_first"]);
     }
-    if (cat1.length === 0) cat1.push(["Halten, was gut läuft", "Deine Angaben zeigen keinen Bereich, in dem ein zusätzlicher Schritt gerade mehr bringt. Halte deine Routinen bei und beobachte, was dir Energie gibt."]);
+    if (cat1.length === 0) cat1.push(["Halten, was gut läuft", ((simScenarios && simScenarios.levers || []).length)   // v2.20.0 (F08)
+      ? "Neben deinem Hebel oben braucht es gerade keinen weiteren Schritt. Halte deine Routinen bei und beobachte, was dir Energie gibt."
+      : "Deine Angaben zeigen keinen Bereich, in dem ein zusätzlicher Schritt gerade mehr bringt. Halte deine Routinen bei und beobachte, was dir Energie gibt."]);
 
     S.cat1Items = cat1;
     html += `<div class="t3-zone-title">${ICO("home")} 1 · Das kannst du selbst tun</div>`;
@@ -6581,7 +6619,7 @@
         <div class="res-cta-note">Kostenlos &nbsp;·&nbsp; sofort hier sichtbar &nbsp;·&nbsp; die Mail kommt in wenigen Minuten</div>`;
     }
     return `<div class="stage-potential" id="stagePotential">
-        <div class="stage-kicker blue">Dein Potenzial</div>
+        <div class="stage-kicker blue">Rechnerische Veränderung im Index</div>
         ${body}
       </div>`;
   }
@@ -7141,6 +7179,8 @@
     }
     html += S.linkInvalid || "";
     html += S.safetyBand || "";
+    html += S.mental || "";      // v2.20.0 (Paket V): Hinweise über den Reitern – in Übersicht und Plan sichtbar
+    html += S.sleepHint || "";
     html += `<div class="result-tabs">
         <button class="result-tab active" id="rtab-uebersicht" onclick="switchResultTab('uebersicht')">Übersicht</button>
         <button class="result-tab" id="rtab-plan" onclick="switchResultTab('plan')">Mein Plan</button>
@@ -7151,8 +7191,6 @@
     html += S.wellbeing || "";
     html += S.levelInfo || "";
     html += S.lowIndex || "";
-    html += S.mental || "";
-    html += S.sleepHint || "";   // v2.19.0
     html += S.redFlag || "";
     html += S.verlauf || "";
     html += stageSummaryHtml(S, { compact: true });
@@ -7369,7 +7407,12 @@
       if (sig.area !== areaKey) return "";
       const snip = notice["signal_" + sig.q];
       const title = (snip && snip.title) || sig.title;
-      const text = (snip && snip.body) || sig.text;
+      let text = (snip && snip.body) || sig.text;
+      // v2.20.0 (Paket V, F07): Wer schon an 3+ Tagen aktiv ist, bekommt bei Stress keinen Bewegungs-Einstieg vorgeschlagen
+      const _actA = answers.find(x => x.question_key === "activity_days");
+      if (sig.q === "stress_level" && _actA && Number(_actA.risk_points || 0) <= 1) {
+        text = "Du gibst einen hohen Stresslevel an. Dauerhafter Stress wirkt auf Schlaf, Energie und Regeneration. Bewegung hast du bereits viel – hier helfen eher echte Pausen ohne Leistung und ohne Handy und die Frage, welche Stressquelle sich verringern lässt. Wenn die Anspannung über Wochen bleibt oder du kaum noch abschalten kannst, sprich es bei deinem nächsten Hausarztbesuch an.";
+      }
       return `<div class="area-signal"><strong>${title}:</strong> ${text}</div>`;
     }).join("");
   }
@@ -7581,6 +7624,7 @@
       // Orientierungsbereiche, keine Score-Stufen — das sagen die Wörter jetzt.
       if (bmi < 18.5) { cls = "area-medium"; statusTxt = "△ Unter dem Orientierungsbereich"; }
       else if (bmi < 25) { cls = "area-good"; statusTxt = "✓ Im stabilen Orientierungsbereich"; }
+      else if (bmi < 30 && Number(area.score) >= 85) { cls = "area-good"; statusTxt = "✓ Für dein Alter günstig (klassische Grenze 25)"; }   // v2.20.0 (F11): altersbezogene Punkte und klassische Grenze nicht widersprüchlich
       else if (bmi < 30) { cls = "area-medium"; statusTxt = "△ Über dem Orientierungsbereich"; }
       else { cls = "area-focus"; statusTxt = "⚠ Deutlich über dem Orientierungsbereich"; }
     }
@@ -7752,12 +7796,14 @@
     const bmiIsLow = Number(bmiValue) < 18.5;
     if (key === "sleep") {
       const lat = getRisk("sleep_latency"); const dur = getText("sleep_duration");
-      if (l === "low") { if (lat >= 3) return "Koffein nach 14 Uhr konsequent reduzieren und Schlafumgebung optimieren — kühl, dunkel, ruhig."; return "Jeden Morgen möglichst zur gleichen Zeit aufstehen — Rhythmus ist wichtiger als Schlafdauer."; }
+      if (l === "low") { if (lat >= 3) return "Koffein nach 14 Uhr konsequent reduzieren und Schlafumgebung optimieren — kühl, dunkel, ruhig."; return "Jeden Morgen möglichst zur gleichen Zeit aufstehen — ein fester Rhythmus und genug Schlafzeit gehören zusammen."; }   // v2.20.0 (F03)
       if (l === "medium") return "Koffein nach 14 Uhr bewusst reduzieren und Wirkung eine Woche beobachten.";
       return "Erholung auch an stressigen Tagen aktiv einplanen — nicht verschieben.";
     }
     if (key === "activity") {
       const strength = getRisk("strength_training"); const sitting = getRisk("sitting_hours");
+      const _daysS = getRisk("activity_days");   // v2.20.0 (F01): bei 3+ aktiven Tagen keinen zusätzlichen Tag vorschlagen
+      if ((l === "low" || l === "medium") && !bmiIsLow && _daysS <= 1 && strength >= 2) return "Zwei kurze Krafteinheiten pro Woche in deine bestehenden Trainingstage einbauen — kein zusätzlicher Tag nötig.";
       if (l === "low") { if (bmiIsLow) return "Sanfte Routine aufbauen — Spaziergänge, Dehnen, leichte Bewegung. Erst Ernährung stabilisieren."; if (strength >= 3) return "Einen aktiven Tag pro Woche dazunehmen — betreutes Training hilft beim Einstieg."; return "Einen aktiven Tag pro Woche dazunehmen — zum Beispiel 30 Minuten zügig gehen, das sind rund 3.000 Schritte."; }   // v2.19.1 (R5/R4-02): gleiche Stufe wie Fahrplan
       if (l === "medium") { if (bmiIsLow) return "Alltagsbewegung beibehalten — kein intensives Kraft- oder Ausdauertraining bei diesem Gewicht."; if (strength >= 2 && sitting >= 2) return "Krafttraining und Stehpausen kombinieren — 2 Einheiten Kraft + regelmäßige Bewegungspausen."; return "Alltagsbewegung erhöhen — Treppe, kurze Wege zu Fuß, Mittagspause aktiv nutzen. Mit Uhr oder Handy: etwa 1.500 Schritte mehr am Tag als bisher sind ein gutes erstes Ziel; große Studien sehen um 7.000 Schritte am Tag bereits deutliche Vorteile."; }
       return "Regeneration und Belastung bewusst ausbalancieren — Übertraining vermeiden.";
@@ -8010,12 +8056,12 @@
           hints.push(`<span style="color:var(--text-muted);">Bei einer Nierenerkrankung gilt die Eiweißmenge, die deine Praxis vorgibt.</span>`);
         }
       }
-      else if (key.includes("nutrition_first") || key.includes("ernaehrung")) { hints.push(`<strong>Ernährung zuerst</strong> — viele Nährstoffdefizite lassen sich über gezielte Ernährungsoptimierung lösen — Supplements erst wenn wirklich nötig.`); }
+      else if (key.includes("nutrition_first") || key.includes("ernaehrung")) { hints.push(`<strong>Ernährung zuerst</strong> — Nährstoffe kommen am besten aus dem Essen; Nahrungsergänzung lohnt sich erst bei einem konkreten Anlass.`);   /* v2.20.0 (F12): keine Defizit-Sprache ohne Anhaltspunkt */ }
       else if (item.label) { const _r = (item.reason || "").trim(); hints.push(`<strong>${item.label}</strong>${_r ? ` — ${_r}` : ""}${/[.!?]$/.test(_r || item.label) ? "" : "."}`); }
     });
 
     if (hints.length < 3 && isPlantBasedFinal && noFishFinal && !hints.some(h => h.includes("Jod"))) {
-      hints.push(`<strong>Jod</strong> — bei vegetarischer Ernährung ohne Fisch oft die größte Versorgungslücke. Jodiertes Speisesalz konsequent verwenden ist die einfachste und wirksamste Lösung.`);
+      hints.push(`<strong>Jod</strong> — ohne Fisch kann Jod knapp werden. Jodiertes Speisesalz konsequent verwenden ist die einfachste Lösung.`);   /* v2.20.0 (M06): nicht pauschal "größte Lücke" */
     }
 
     const fb = [
@@ -8028,7 +8074,7 @@
       { key:"lifestyle", max:75, bmiLowSafe:true, text:"Alkohol oder Nikotin können Schlaf und Regeneration beeinflussen. Ein bewusster Testtag hilft, den eigenen Zusammenhang besser zu erkennen." }
     ];
 
-    const hasNutritionHint = hints.some(h => h.includes("Ernährung zuerst") || h.includes("Nährstoffdefizite lassen sich über gezielte Ernährung"));
+    const hasNutritionHint = hints.some(h => h.includes("Ernährung zuerst"));
     for (const r of fb) {
       if (hints.length >= 3) break;
       if (bmiIsLow && !r.bmiLowSafe) continue;
@@ -8274,7 +8320,7 @@
       <div class="sim-box" id="simBox">
         <div class="sim-badge">✦ Was wäre wenn</div>
         ${outcomeHtml}
-        <div class="sim-title">${outcomeHtml ? 'Dein nächster Hebel' : 'Dein rechnerisches Potenzial'}</div>
+        <div class="sim-title">${outcomeHtml ? 'Dein nächster Hebel' : 'Rechnerische Veränderung im Index'}</div>
         <div class="sim-sub">${outcomeHtml
           ? 'Und weiter? Das hier sind die Ansatzpunkte, die dir <em>jetzt</em> am meisten bringen — neu berechnet auf Basis deiner heutigen Antworten.'
           : 'Wähle bis zu drei Hebel aus deinen größten Ansatzpunkten — und sieh sofort, was das für deinen Index bedeuten würde. Serverseitig berechnet, mit derselben Formel wie dein Ergebnis.'}</div>
@@ -9159,7 +9205,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.19.2</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.20.0</footer>
 
 
 </body>
