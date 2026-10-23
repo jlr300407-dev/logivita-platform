@@ -747,6 +747,13 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.19.2 (23.10.2026): Zurück-Navigation (Rückmeldung von Nutzern). Nach "Zurück" blieb die grüne Markierung der
+       alten Antwort stehen und eine neue Wahl kam dazu; bei Mehrfachauswahl ließ sich ein Haken (v. a. am Handy) nicht
+       sicher entfernen. Jetzt: showPreviousAnswer zeigt beim Zurückgehen genau die bisherige Antwort, jede neue Wahl
+       ersetzt die Markierung (Antwort, Ziel, Befinden); Mehrfachauswahl schaltet per eigenem Klick-Handler um (Label
+       ohne Doppel-Umschalten, Eingabefeld nicht mehr display:none); Doppeltippen innerhalb der 200 ms und Zurück
+       während einer laufenden Antwort werden abgefangen.
+
        v2.19.1 (23.10.2026): Restpunkte nach Paket T. (1) Startseite, Datenschutz-Schritt und Mail-Box sagen jetzt
        einheitlich, wo was passiert: gespeichert in der EU (Frankfurt); nur für die freiwillige Mail-Auswertung gehen
        die Angaben ohne Name und E-Mail-Adresse an Anthropic (USA), der Versand läuft über Resend (USA); bei einem
@@ -1764,7 +1771,7 @@
     .benchmark-flash.out { opacity: 0; transition: opacity .2s; }
     @keyframes bmIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
     /* Multi-Choice (Sofort-Fix 2): Checkbox-Optik statt Radio-Kreis */
-    .option-btn.multi-option input { display: none; }
+    .option-btn.multi-option input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }   /* v2.19.2: nicht display:none – Tippen steuert jetzt toggleMultiOption selbst */
     .option-btn.multi-option::before { border-radius: 5px; }
     @media (hover: hover) and (pointer: fine) { .option-btn.multi-option:hover::before { background: transparent; } }
     .option-btn.multi-option.checked { border-color: var(--accent-green); background: var(--accent-green-dim); }
@@ -3850,7 +3857,7 @@
     const activeStep = document.getElementById(`step-${currentStep}`);
     if (activeStep) {
       activeStep.querySelectorAll(".option-btn").forEach(btn => {
-        if ((btn.getAttribute("onclick") || "").includes(`saveWellbeing(${v})`)) btn.classList.add("selected-flash");
+        btn.classList.toggle("selected-flash", (btn.getAttribute("onclick") || "").includes(`saveWellbeing(${v})`));   // v2.19.2: nur die neue Wahl markieren
       });
     }
     setTimeout(() => {
@@ -3998,7 +4005,7 @@
       html += `<div class="help-text" style="margin-bottom:10px;">Mehrfachauswahl möglich — wähle alles Zutreffende aus.</div>`;
       html += `<div class="options-grid">`;
       q.options.forEach(opt => {
-        html += `<label class="option-btn multi-option"><input type="checkbox" value="${opt.option_id}" onchange="toggleMultiOption(this)">${opt.option_text}</label>`;
+        html += `<label class="option-btn multi-option" onclick="event.preventDefault(); toggleMultiOption(this.querySelector('input'), true)"><input type="checkbox" value="${opt.option_id}" tabindex="-1">${opt.option_text}</label>`;
       });
       html += `</div><button class="next-btn" style="margin-top:16px;" onclick="saveMultiAnswer()">Weiter →</button></div>`;
       return html;
@@ -4011,9 +4018,29 @@
     return html;
   }
 
-  function toggleMultiOption(input) {
+  // v2.19.2 — Nutzer bekamen einen Haken nicht mehr weg (v. a. nach "Zurück", am Handy). Der Klick auf die
+  // Zeile schaltet jetzt selbst um (preventDefault verhindert das zusätzliche Umschalten durch das Label),
+  // Haken und Optik kommen immer aus demselben Zustand.
+  function toggleMultiOption(input, flip) {
+    if (!input) return;
+    if (flip) input.checked = !input.checked;
     const label = input.closest('label');
     if (label) label.classList.toggle('checked', input.checked);
+  }
+
+  // v2.19.2 — Beim Zurückgehen zeigt die Frage die bisherige Antwort (und nur diese) an. Vorher blieb die
+  // grüne Markierung der alten Antwort stehen, eine neue Wahl kam dazu – es sah aus, als ließe sich nichts ändern.
+  function showPreviousAnswer(stepIndex, optionIds) {
+    const step = document.getElementById(`step-${stepIndex}`);
+    if (!step) return;
+    const ids = (optionIds || []).map(String);
+    step.querySelectorAll(".option-btn").forEach(btn => {
+      btn.classList.remove("selected-flash");
+      const inp = btn.querySelector('input[type="checkbox"]');
+      if (inp) { inp.checked = ids.includes(String(inp.value)); btn.classList.toggle("checked", inp.checked); return; }
+      const oc = btn.getAttribute("onclick") || "";
+      if (ids.some(id => oc.includes(`'${id}'`))) btn.classList.add("selected-flash");
+    });
   }
 
   function saveMultiAnswer() {
@@ -4191,7 +4218,7 @@
     const activeStep = document.getElementById(`step-${currentStep}`);
     if (activeStep) {
       const btns = activeStep.querySelectorAll(".option-btn");
-      btns.forEach(btn => { if (btn.getAttribute("onclick") && btn.getAttribute("onclick").includes(optionId)) btn.classList.add("selected-flash"); });
+      btns.forEach(btn => { btn.classList.toggle("selected-flash", !!(btn.getAttribute("onclick") && btn.getAttribute("onclick").includes(optionId))); });   // v2.19.2: nur die neue Wahl markieren
     }
     setTimeout(() => {
       personalData.goal_key = optionKey;
@@ -4456,12 +4483,15 @@
   }
 
   function saveAnswer(optionId) {
+    if (window._answerPending) return;   // v2.19.2: Doppeltippen innerhalb der 200 ms ergab zwei Antworten
+    window._answerPending = true;
     const activeStep = document.getElementById(`step-${currentStep}`);
     if (activeStep) {
       const btns = activeStep.querySelectorAll(".option-btn");
-      btns.forEach(btn => { if (btn.getAttribute("onclick") && btn.getAttribute("onclick").includes(optionId)) btn.classList.add("selected-flash"); });
+      btns.forEach(btn => { btn.classList.toggle("selected-flash", !!(btn.getAttribute("onclick") && btn.getAttribute("onclick").includes(optionId))); });
     }
     setTimeout(() => {
+      window._answerPending = false;
       selectedAnswers.push({ option_id: optionId, question_key: groupedQuestions[currentStep]?.question_key || null });
       saveProgress();   // v1.41.0
       const optionKey = getOptionKeyById(optionId);
@@ -4557,6 +4587,8 @@
   }
 
   function goBack() {
+    if (window._answerPending) return;   // v2.19.2: keine Rücksprünge mitten in einer gerade gewählten Antwort
+    let _prevIds = [];
     if (currentStep === 0) {
       // Ganz zurück — zur Hero-Seite, nicht in den Fragen-Flow
       const step0 = document.getElementById('step-0');
@@ -4580,6 +4612,7 @@
     if (prevQ && prevQ.type !== "intro" && prevQ.type !== "goal" && prevQ.type !== "personal" && prevQ.type !== "consent") {
       // Multi-Choice-fähig: ALLE Antworten dieser Frage entfernen (bei Single-Choice ist das genau eine)
       if (prevQ.question_key && selectedAnswers.some(a => a.question_key === prevQ.question_key)) {
+        _prevIds = selectedAnswers.filter(a => a.question_key === prevQ.question_key).map(a => a.option_id);
         selectedAnswers = selectedAnswers.filter(a => a.question_key !== prevQ.question_key);
       } else {
         selectedAnswers.pop(); // Fallback für Alt-Einträge ohne question_key
@@ -4617,6 +4650,7 @@
     }
     const prev = document.getElementById(`step-${currentStep}`);
     if (prev) prev.classList.add("active");
+    if (_prevIds.length) showPreviousAnswer(currentStep, _prevIds);   // v2.19.2
     updateProgress();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -9125,7 +9159,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.19.1</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.19.2</footer>
 
 
 </body>
