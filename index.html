@@ -747,6 +747,13 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.20.3 (24.10.2026): Paket V2 nach Prüfung. Simulator und Potenzial erklären die Reihenfolge im Vital-Plan
+       (Handlungspriorität statt Punktgewinn, höchstens zwei Hebel, weitere freiwillig, Trainingshebel bei auffälliger
+       Erholung zurückgestellt) – gleiche Regeln wie Edge .23 (planV3).
+       v2.20.2 (24.10.2026): Paket V2 (Nachtest R2). Der Wochenplan kommt jetzt aus festen Bausteinen der Edge (.23);
+       auf der Seite: Stress-Tipp für bereits Aktive als Pausen-Anleitung statt täglichem Gehen (content_snippets
+       self_tip.mental wird dann nicht verwendet).
+
        v2.20.0 (23.10.2026): Paket V (Sporttest S01–S05). v2.20.1 – Vorgabe Jörg (23.10.2026): Jeder Tipp nennt das Wie (wann, wie lange, wie oft) – 33 allgemeine Tipps in getInsightNow/-Soon entsprechend konkretisiert. Gemeinsame Hinweisquelle profileHintsOf (Schlaf-Kombination
        oder häufige Tagesmüdigkeit, wortgleich Edge .22) – Hinweise stehen in Stufe 2 über den Reitern, also in Übersicht
        und Plan; der betroffene Bereich zählt nicht als Stärke. F01: Bewegungs-Tipp folgt der Hebelfrage (Kraft in
@@ -5718,7 +5725,7 @@
     // v1.50.0 — Uhrenwerte direkt unter dem größten Ansatzpunkt, vor dem Simulator
     html += S.watch = watchBoxHtml(result.submission?.watch, result.submission?.age ?? personalData.age);
 
-    html += S.simulator = renderSimulatorHtml(totalScore, bioAge, worst);
+    html += S.simulator = renderSimulatorHtml(totalScore, bioAge, worst, { result });
 
     // v1.35.0 — Die Vital-Plan-Box steht nicht mehr in Tab 1, sondern als
     // aufklappbare Leiste ueber den Tabs (siehe oben). Sie gehoert damit
@@ -6004,7 +6011,10 @@
       metabolic: ["Regelmäßig essen und trinken", "Feste Mahlzeiten mit einem Glas Wasser dazu stabilisieren deine Energie über den Tag."],
       bmi: ["Kraft statt Waage", "Zweimal pro Woche einfache Kraftübungen (Kniebeugen, Stütz) verändern die Körperzusammensetzung nachhaltiger als jede Diät."]
     };
-    Object.entries(window._snips.self_tip).forEach(([k, s]) => { if (k !== "activity" && s.title && s.body) selfTips[k] = [s.title, s.body]; });   // v2.19.1 (R5): Bewegung nur aus dem Code (ein zusätzlicher Tag, gleiche Stufe wie Fahrplan)
+    Object.entries(window._snips.self_tip).forEach(([k, s]) => { if (k !== "activity" && s.title && s.body) selfTips[k] = [s.title, s.body]; });
+    // v2.20.2 (Paket V2, R2-05): Wer schon an 3+ Tagen aktiv ist, bekommt gegen Stress Pausen statt täglichem Gehen
+    if (Number(((result.answers || []).find(x => x.question_key === "activity_days") || {}).risk_points ?? 9) <= 1)
+      selfTips.mental = ["Echte Pausen statt mehr Bewegung", "Zweimal am Tag 5 Minuten ohne Handy und ohne Leistung: Timer stellen, langsam ausatmen (doppelt so lang wie einatmen) – z. B. vor dem Mittagessen und nach der Arbeit. Bewegung hast du schon genug."];   // v2.19.1 (R5): Bewegung nur aus dem Code (ein zusätzlicher Tag, gleiche Stufe wie Fahrplan)
     // v1.41.3 — Der BMI-Tipp vergleicht mit "jeder Diät". Ab 70 Jahren oder bei
     // einem gesetzten Sicherheitssignal ist jede Reduktions-Erzaehlung falsch:
     // dort geht es um Muskelerhalt, nicht um Gewicht. Die Edge verbietet das
@@ -6572,6 +6582,23 @@
     return `<div class="sim-note"><strong>Für dein Ziel</strong> zählt außerdem, was und wie viel du isst und trinkst — das bildet der Index nur zum Teil ab. Das schauen wir im Studio gemeinsam mit dir an.</div>`;
   }
 
+  // v2.20.3 (Paket V2, Punkt 1/4/6): Der Simulator zeigt Punkte, der Vital-Plan folgt der Handlungspriorität.
+  // Gleiche Regeln wie die Edge (planV3): höchstens zwei Hebel im Plan, weitere freiwillig;
+  // bei auffälliger Erholung (Schlafwert <50 oder Tagesmüdigkeit) sind Trainingshebel zurückgestellt.
+  function simPlanOrderNoteHtml(S) {
+    const res = (S && S.result) || {};
+    const levers = (simScenarios && simScenarios.levers) || [];
+    if (!levers.length) return "";
+    const risk = k => { const a = (res.answers || []).find(x => x && x.question_key === k); return a ? Number(a.risk_points || 0) : 0; };
+    const sleepS = Number(res?.score?.score_payload?.sleep?.score ?? 100);
+    const recoveryWeak = sleepS < 50 || risk("daytime_sleepiness") >= 3;
+    const NAMES = { activity_days: "aktive Tage", strength_training: "Krafttraining" };
+    const def = recoveryWeak ? levers.filter(l => NAMES[l.question_key]).map(l => NAMES[l.question_key]) : [];
+    let t = `<strong>Reihenfolge im Vital-Plan:</strong> Hier siehst du, wie viele Punkte ein Hebel rechnerisch bringt. Dein Vital-Plan beginnt dagegen mit dem Hebel deines größten Ansatzpunkts – also mit dem, was zuerst dran ist, nicht automatisch mit dem größten Punktgewinn. Er greift höchstens zwei Hebel auf; alle weiteren kannst du freiwillig angehen, sie sind kein Teil des Plans.`;
+    if (def.length) t += ` <strong>Zurückgestellt:</strong> ${escHtml(def.join(", "))} – solange Schlaf oder Tagesmüdigkeit auffällig sind, steht Erholung vor mehr Training. Die Punkte bleiben hier sichtbar, im Plan sind diese Hebel bewusst nicht enthalten.`;
+    return `<div class="sim-note">${t}</div>`;
+  }
+
   function stagePotentialHtml(S) {
     const best = stageBestScenario();
     const worst = S.worst;
@@ -6614,6 +6641,7 @@
         body += `<div class="sim-note">${simNoAnswerGainHtml(worst, false)}</div>`;   // v2.10.0 (A2)
       }
       body += goalWeightNoteHtml(S);   // v2.7.2
+      body += simPlanOrderNoteHtml(S);   // v2.20.3
       body += `<div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin:4px 0 10px;">Berechnet aus deinen Antworten, mit derselben Formel wie dein Ergebnis (Score-Version 4). Das ist eine rechnerische Änderung im Index, keine Vorhersage deiner Gesundheit.</div>
         <button type="button" class="stage-btn-go" onclick="scrollToAiBox()">Meinen Vital-Plan anfordern →</button>
         <div class="res-cta-note">Kostenlos &nbsp;·&nbsp; sofort hier sichtbar &nbsp;·&nbsp; die Mail kommt in wenigen Minuten</div>`;
@@ -8284,7 +8312,7 @@
     </div>`;
   }
 
-  function renderSimulatorHtml(totalScore, bioAge, worst) {
+  function renderSimulatorHtml(totalScore, bioAge, worst, S = {}) {
     const outcomeHtml = renderGoalOutcomeHtml();
     if (!simScenarios || !simScenarios.levers.length) {
       // Kein Szenario verfügbar (z.B. bereits alles im Optimum) — Ziel-Auswertung
@@ -8327,6 +8355,7 @@
         <div id="simGoalCard">${renderGoalCardHtml()}</div>
         ${leversHtml}
         ${ansatzNote}
+        ${simPlanOrderNoteHtml(S)}
         <div class="sim-projection">
           <div class="sim-proj-num" id="simProjNum">${Math.round(totalScore)}</div>
           <div class="sim-proj-meta" id="simProjMeta">Schalte oben einen Hebel ein, um dein Potenzial zu sehen.</div>
@@ -9205,7 +9234,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.20.1</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.20.3</footer>
 
 
 </body>
