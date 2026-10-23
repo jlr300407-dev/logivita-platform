@@ -747,7 +747,7 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
-       v2.20.0 (23.10.2026): Paket V (Sporttest S01–S05). Gemeinsame Hinweisquelle profileHintsOf (Schlaf-Kombination
+       v2.20.0 (23.10.2026): Paket V (Sporttest S01–S05). v2.20.1 – Vorgabe Jörg (23.10.2026): Jeder Tipp nennt das Wie (wann, wie lange, wie oft) – 33 allgemeine Tipps in getInsightNow/-Soon entsprechend konkretisiert. Gemeinsame Hinweisquelle profileHintsOf (Schlaf-Kombination
        oder häufige Tagesmüdigkeit, wortgleich Edge .22) – Hinweise stehen in Stufe 2 über den Reitern, also in Übersicht
        und Plan; der betroffene Bereich zählt nicht als Stärke. F01: Bewegungs-Tipp folgt der Hebelfrage (Kraft in
        vorhandene Tage einbauen / Sitzen unterbrechen / zusätzlicher Tag nur bei wenigen aktiven Tagen). F06: bei
@@ -7411,7 +7411,7 @@
       // v2.20.0 (Paket V, F07): Wer schon an 3+ Tagen aktiv ist, bekommt bei Stress keinen Bewegungs-Einstieg vorgeschlagen
       const _actA = answers.find(x => x.question_key === "activity_days");
       if (sig.q === "stress_level" && _actA && Number(_actA.risk_points || 0) <= 1) {
-        text = "Du gibst einen hohen Stresslevel an. Dauerhafter Stress wirkt auf Schlaf, Energie und Regeneration. Bewegung hast du bereits viel – hier helfen eher echte Pausen ohne Leistung und ohne Handy und die Frage, welche Stressquelle sich verringern lässt. Wenn die Anspannung über Wochen bleibt oder du kaum noch abschalten kannst, sprich es bei deinem nächsten Hausarztbesuch an.";
+        text = "Du gibst einen hohen Stresslevel an. Dauerhafter Stress wirkt auf Schlaf, Energie und Regeneration. Bewegung hast du bereits viel – hier helfen eher echte Pausen: zweimal am Tag 5 Minuten ohne Handy und ohne Leistung (Timer stellen, langsam ausatmen) und einmal pro Woche aufschreiben, welche Stressquelle du verringern oder abgeben kannst. Wenn die Anspannung über Wochen bleibt oder du kaum noch abschalten kannst, sprich es bei deinem nächsten Hausarztbesuch an.";
       }
       return `<div class="area-signal"><strong>${title}:</strong> ${text}</div>`;
     }).join("");
@@ -7709,9 +7709,9 @@
     if (key === "bmi" && bmiValue !== undefined) {
       const cat = getBmiCategory(bmiValue);
       if (cat === "low") return "Heute eine zusätzliche eiweißreiche Mahlzeit einplanen — z.B. Joghurt, Eier, Hülsenfrüchte oder Quark.";
-      if (cat === "normal") return "Ernährung, Bewegung und Regeneration ausgewogen beibehalten — du bist in einem stabilen Bereich.";
+      if (cat === "normal") return "Behalte deine Routinen bei: feste Mahlzeiten, deine Bewegungstage und genug Schlaf – wiege dich höchstens einmal pro Woche, immer zur gleichen Zeit.";
       if (cat === "elevated") return "Heute 10 Minuten leichte Bewegung nach einer Mahlzeit einplanen — z.B. ein kurzer Spaziergang.";
-      return "Nicht alles gleichzeitig ändern — eine kleine, realistische Routine wählen und konsequent beibehalten.";
+      return "Wähle eine einzige Routine, z. B. täglich 15 Minuten gehen nach dem Abendessen, und halte sie vier Wochen durch, bevor du etwas Neues dazunimmst.";
     }
     const l = getLevel(score);
     const ans = (result?.answers || latestResult?.answers || []);
@@ -7723,30 +7723,30 @@
       const dur = getText("sleep_duration"); const lat = getRisk("sleep_latency"); const day = getRisk("daytime_sleepiness");
       if (l === "low") { if (dur.includes("Weniger als 5") || dur.includes("5–6")) return "Heute feste Schlafenszeit wählen und 30 Min. vorher Bildschirm aus."; if (lat >= 2) return "Entspannungsroutine vor dem Schlafen einbauen — kein Bildschirm, kein Handy."; return "Heute feste Schlafenszeit wählen und 30 Min. vorher Bildschirm aus."; }
       if (l === "medium") { if (day >= 3 && !dur.includes("Weniger als 5") && !dur.includes("5–6")) return "Tagesmüdigkeit trotz ausreichend Schlaf — Schlafqualität, Stress oder Rhythmus prüfen."; if (lat >= 2) return "Einschlafroutine verbessern: kühl, dunkel, kein Bildschirm 30 Min. vorher."; return "Kurze Abendroutine festlegen — z.B. Tee, Lesen oder ruhiges Dehnen."; }
-      return "Regelmäßige Schlafzeiten aktiv schützen.";
+      return "Halte Zubettgeh- und Aufstehzeit auch am Wochenende innerhalb einer Stunde gleich.";
     }
     if (key === "activity") {
       const actDays = getRisk("activity_days"); const strength = getRisk("strength_training"); const sitting = getRisk("sitting_hours");
       if (l === "low" || l === "medium") { if (bmiIsLow) return "Sanfte Alltagsbewegung wie kurze Spaziergänge — Fokus auf Energie und Regeneration."; if (actDays >= 3 && strength >= 3) return "Einen festen Trainingstag einplanen — 30 Minuten reichen als Einstieg."; if (actDays <= 1 && strength >= 3) return "Kraft ergänzen — 2 kurze Krafteinheiten pro Woche stärken Muskelmasse und Stoffwechsel."; if (sitting >= 3) return "Stehpause alle 60–90 Minuten einbauen — kurz aufstehen und 2 Minuten bewegen."; return "Einen konkreten Bewegungstermin in den Kalender setzen — z. B. 20 Minuten zügig gehen, mit Uhr oder Handy rund 2.000 Schritte."; }
-      return "Mischung aus Alltag, Ausdauer und Kraft beibehalten.";
+      return "Halte deine Woche gemischt: mindestens zwei Einheiten Kraft, dazu Ausdauer und Alltagsbewegung – plane sie wie bisher fest ein.";
     }
     if (key === "nutrition") {
       const veg = getText("vegetable_fruit") || getText("vegetables_fruit"); const water = getText("water_intake"); const protein = getText("protein_intake") || getText("protein_frequency");
       if (l === "low") return "Heute eine Mahlzeit bewusst mit Eiweiß, Gemüse und Flüssigkeit planen.";
-      if (l === "medium") { if (veg.includes("täglich")) { if (water.includes("Unregelmäßig") || water.includes("Wenig")) return "Flüssigkeit gleichmäßiger über den Tag verteilen — Konzentration und Energie profitieren direkt."; if (protein.includes("Selten") || protein.includes("Einige Male")) return "Bei jeder Hauptmahlzeit eine Eiweißquelle einplanen — Hülsenfrüchte, Eier, Quark oder Nüsse."; return "Mahlzeitenqualität und Eiweißanteil bewusster einplanen."; } return "Eine zusätzliche Portion Gemüse oder Obst einbauen."; }
-      return "Regelmäßige Mahlzeiten und Lebensmittelqualität beibehalten.";
+      if (l === "medium") { if (veg.includes("täglich")) { if (water.includes("Unregelmäßig") || water.includes("Wenig")) return "Flüssigkeit gleichmäßiger über den Tag verteilen — Konzentration und Energie profitieren direkt."; if (protein.includes("Selten") || protein.includes("Einige Male")) return "Bei jeder Hauptmahlzeit eine Eiweißquelle einplanen — Hülsenfrüchte, Eier, Quark oder Nüsse."; return "Plane zu jeder Hauptmahlzeit eine Eiweißquelle ein (Eier, Quark, Hülsenfrüchte, Fisch) und füll die Hälfte des Tellers mit Gemüse."; } return "Eine zusätzliche Portion Gemüse oder Obst einbauen."; }
+      return "Behalte deine festen Mahlzeiten bei und plane zu jeder Hauptmahlzeit Gemüse und eine Eiweißquelle ein.";
     }
     if (key === "vitamin_d") {
       const sun = getText("sunlight_exposure") || getText("sun_exposure_winter");
       if (l === "low") return "Heute 10–15 Minuten Tageslicht im Freien einplanen — möglichst am Vormittag.";
       if (l === "medium") { if (sun.includes("täglich") || sun.includes("Täglich")) return "Im Winter auch an bewölkten Tagen kurz raus — diffuses Tageslicht zählt."; return "Tageslicht täglich einplanen — besonders morgens reguliert es den Schlaf-Wach-Rhythmus."; }
-      return "Besonders in Herbst und Winter bewusst rausgehen.";
+      return "Von Oktober bis März jeden Tag 15 Minuten vor die Tür – am besten vormittags, z. B. der Weg zum Bäcker zu Fuß.";
     }
     if (key === "mental") {
       const stress = getRisk("stress_level"); const mood = getRisk("low_mood"); const interest = getRisk("low_interest"); const social = getRisk("social_connection");
-      if (l === "low") { if (stress >= 3) return "Heute eine feste 5-Minuten-Erholungsinsel einplanen — ohne Handy, ohne To-do."; if (mood >= 2 || interest >= 2) return "Ein kurzes Gespräch mit jemandem dem du vertraust kann Erleichterung bringen."; return "Heute eine feste 5-Minuten-Erholungsinsel einplanen — ohne Handy, ohne To-do."; }
-      if (l === "medium") { if (stress >= 3) return "Einen festen Erholungsanker pro Tag setzen — zur gleichen Zeit, ohne Ausnahme."; if (social >= 2) return "Melde dich heute bei einem Menschen, der dir guttut — eine Nachricht oder ein Anruf reicht."; return "10 Minuten ohne Handy — spazieren oder bewusst atmen."; }
-      return "Erholung aktiv schützen und nicht als Luxus betrachten.";
+      if (l === "low") { if (stress >= 3) return "Heute eine feste 5-Minuten-Pause einplanen: Timer stellen, Handy weglegen, ruhig ein- und doppelt so lang ausatmen."; if (mood >= 2 || interest >= 2) return "Ein kurzes Gespräch mit jemandem dem du vertraust kann Erleichterung bringen."; return "Heute eine feste 5-Minuten-Pause einplanen: Timer stellen, Handy weglegen, ruhig ein- und doppelt so lang ausatmen."; }
+      if (l === "medium") { if (stress >= 3) return "Ein fester Erholungsanker pro Tag: z. B. jeden Tag um 13 Uhr 5 Minuten raus oder ans Fenster, Handy bleibt liegen, langsam ausatmen."; if (social >= 2) return "Melde dich heute bei einem Menschen, der dir guttut — eine Nachricht oder ein Anruf reicht."; return "10 Minuten ohne Handy: einmal um den Block gehen oder sitzen und ruhig atmen – 4 Sekunden ein, 6 Sekunden aus."; }
+      return "Trag dir zwei Erholungszeiten pro Woche fest in den Kalender ein (je 30 Minuten, z. B. Spaziergang, Sauna, Lesen) und behandle sie wie einen Termin.";
     }
     if (key === "smoking") {   // v2.8.0
       if (l === "low" || l === "medium") return "Den Rauchstopp planen: ein Datum festlegen und das Rauchfrei-Telefon (0800 8 31 31 31) anrufen — kostenlos.";
@@ -7755,37 +7755,37 @@
     if (key === "alcohol") {   // v2.8.0
       if (l === "low") return "Alkoholfreie Tage bewusst einplanen — unterstützt Schlaf und Regeneration direkt.";
       if (l === "medium") return "Zwei feste alkoholfreie Abende pro Woche einbauen.";
-      return "Diese Routine unterstützt Schlaf und Trainingsfortschritt aktiv.";
+      return "Behalte die Abendroutine bei: 30 Minuten vor dem Schlafen Bildschirm aus und jeden Tag ungefähr zur gleichen Zeit ins Bett.";
     }
     if (key === "lifestyle") {
       const nicotine = getRisk("nicotine_use"); const alcohol = getRisk("alcohol_frequency");
-      if (l === "low") { if (nicotine >= 3) return "Jede Reduktion zählt — auch ein Nichtrauchtag pro Woche ist ein echter Schritt."; if (alcohol >= 3) return "Alkoholfreie Tage bewusst einplanen — unterstützt Schlaf und Regeneration direkt."; return "Den Zusammenhang zwischen Konsum, Schlaf und Energie heute bewusst beobachten."; }
+      if (l === "low") { if (nicotine >= 3) return "Jede Reduktion zählt — auch ein Nichtrauchtag pro Woche ist ein echter Schritt."; if (alcohol >= 3) return "Alkoholfreie Tage bewusst einplanen — unterstützt Schlaf und Regeneration direkt."; return "Notiere eine Woche lang: an welchem Abend Alkohol oder Zigaretten, und am nächsten Morgen mit einer Zahl von 1 bis 5, wie erholt du bist."; }
       if (l === "medium") { if (nicotine >= 2) return "Einen rauchfreien Tag pro Woche als Experiment einplanen."; return "Alkoholfreie Abende bewusst einbauen — Schlaf und Regeneration verbessern sich messbar."; }
-      return "Diese Routine unterstützt Schlaf und Trainingsfortschritt aktiv.";
+      return "Behalte die Abendroutine bei: 30 Minuten vor dem Schlafen Bildschirm aus und jeden Tag ungefähr zur gleichen Zeit ins Bett.";
     }
     if (key === "micronutrients") {
       const dizzy = getRisk("dizziness_pale_nails"); const nutType = getText("nutrition_type") || getText("diet_type"); const gender = latestResult?.submission?.gender || "";
       const isPlant = nutType.includes("vegan") || nutType.includes("vegetar"); const isFemale = gender === "female" || gender === "weiblich";
       if (l === "low") { if (dizzy >= 2 && isPlant && isFemale) return "Eisenreiche Lebensmittel mit Vitamin C kombinieren — Hülsenfrüchte + Paprika oder Orangensaft."; if (dizzy >= 2) return window._redFlagNoBloodtest ? "Schwindel oder blasse Nägel sind Signale, die zusammen mit deinen Angaben zu Gewicht und Appetit in ärztliche Hände gehören — bitte hausärztlich abklären lassen." : "Eisenreiche Lebensmittel mit Vitamin C kombinieren — Hülsenfrüchte oder Vollkorn zusammen mit Paprika, Brokkoli oder einem Glas Orangensaft."; return "Ernährung nicht pauschal supplementieren — zuerst Muster und Qualität der Mahlzeiten prüfen."; }
-      if (l === "medium") { if (dizzy >= 2 && isPlant) return "Eisenreiche Lebensmittel immer mit Vitamin C kombinieren."; return "Eiweiß, Eisenquellen, Omega-3 und B12 im Alltag bewusster einbauen."; }
-      return "Abwechslungsreiche Ernährung bleibt die beste Basis — Supplemente nur gezielt.";
+      if (l === "medium") { if (dizzy >= 2 && isPlant) return "Eisenreiche Lebensmittel immer mit Vitamin C kombinieren."; return "Plane pro Tag eine Eiweißquelle zu jeder Mahlzeit, zweimal pro Woche Hülsenfrüchte und – wenn du ihn isst – einmal Fisch ein."; }
+      return "Iss jeden Tag Gemüse, Obst, Vollkorn und eine Eiweißquelle; Supplemente nur mit konkretem Anlass, z. B. nach einem Blutwert.";
     }
     if (key === "metabolic") {
       const weightLoss = getRisk("unintentional_weight_loss"); const appetite = getRisk("appetite_change");
-      if (l === "low") { if (weightLoss >= 2 || appetite >= 3) return "Regelmäßige Mahlzeiten und ausreichend Eiweiß als Basis sicherstellen."; return "Veränderungen im Alltag bewusst notieren: Appetit, Energie, Gewicht, Schlaf."; }
-      if (l === "medium") return "Regelmäßige Mahlzeiten und ausreichend Trinken als Basis sicherstellen.";
-      return "Energie und Wohlbefinden über die Woche aktiv beobachten.";
+      if (l === "low") { if (weightLoss >= 2 || appetite >= 3) return "Drei feste Mahlzeiten am Tag, jede mit einer Eiweißquelle – z. B. Quark zum Frühstück, Hülsenfrüchte oder Fisch mittags, Eier abends."; return "Veränderungen im Alltag bewusst notieren: Appetit, Energie, Gewicht, Schlaf."; }
+      if (l === "medium") return "Drei feste Mahlzeiten am Tag und zu jeder Mahlzeit ein großes Glas Wasser.";
+      return "Notiere eine Woche lang abends mit einer Zahl von 1 bis 5, wie viel Energie du hattest – so siehst du, was dir guttut.";
     }
-    const m = { sleep:{ low:"Heute feste Schlafenszeit wählen.", medium:"Kurze Abendroutine festlegen.", good:"Regelmäßige Schlafzeiten aktiv schützen." }, activity:{ low:"Heute 10 Minuten zügig gehen — rund 1.000 Schritte.", medium:"Einen konkreten Bewegungstermin setzen.", good:"Mischung aus Alltag, Ausdauer und Kraft beibehalten." } };
+    const m = { sleep:{ low:"Heute feste Schlafenszeit wählen.", medium:"Kurze Abendroutine festlegen.", good:"Halte Zubettgeh- und Aufstehzeit auch am Wochenende innerhalb einer Stunde gleich." }, activity:{ low:"Heute 10 Minuten zügig gehen — rund 1.000 Schritte.", medium:"Einen konkreten Bewegungstermin setzen.", good:"Halte deine Woche gemischt: mindestens zwei Einheiten Kraft, dazu Ausdauer und Alltagsbewegung – plane sie wie bisher fest ein." } };
     return m[key]?.[getLevel(score)] || "Diese Kategorie gibt dir eine erste Orientierung.";
   }
 
   function getInsightSoon(key, score, bmiValue, result) {
     if (key === "bmi" && bmiValue !== undefined) {
       const cat = getBmiCategory(bmiValue);
-      if (cat === "low") return "Regelmäßige Mahlzeiten, ausreichend Eiweiß und bewusste Regeneration als Priorität setzen.";
-      if (cat === "normal") return "Körpergefühl und Leistungsfähigkeit wichtiger nehmen als den Zahlenwert allein.";
-      if (cat === "elevated") return "Eiweiß, Gemüse und Alltagsbewegung bewusster kombinieren — kleine Schritte sind nachhaltiger.";
+      if (cat === "low") return "Drei feste Mahlzeiten mit je einer Eiweißquelle und nach harten Tagen bewusst einen ruhigen Abend einplanen.";
+      if (cat === "normal") return "Achte statt auf die Waage auf Alltagszeichen: Treppen, Tragen, Energie am Nachmittag – notiere sie einmal pro Woche.";
+      if (cat === "elevated") return "Pro Hauptmahlzeit eine Eiweißquelle und eine Handvoll Gemüse, dazu nach dem Essen 10 Minuten gehen – an drei Tagen pro Woche anfangen.";
       return "Betreutes Training und eine Körperanalyse im Studio als strukturierten Einstieg prüfen.";
     }
     const l = getLevel(score);
@@ -7798,7 +7798,7 @@
       const lat = getRisk("sleep_latency"); const dur = getText("sleep_duration");
       if (l === "low") { if (lat >= 3) return "Koffein nach 14 Uhr konsequent reduzieren und Schlafumgebung optimieren — kühl, dunkel, ruhig."; return "Jeden Morgen möglichst zur gleichen Zeit aufstehen — ein fester Rhythmus und genug Schlafzeit gehören zusammen."; }   // v2.20.0 (F03)
       if (l === "medium") return "Koffein nach 14 Uhr bewusst reduzieren und Wirkung eine Woche beobachten.";
-      return "Erholung auch an stressigen Tagen aktiv einplanen — nicht verschieben.";
+      return "Plane an stressigen Tagen eine feste 10-Minuten-Pause ein – Timer stellen, Fenster auf, langsam ausatmen (doppelt so lang wie einatmen).";
     }
     if (key === "activity") {
       const strength = getRisk("strength_training"); const sitting = getRisk("sitting_hours");
@@ -7806,13 +7806,13 @@
       if ((l === "low" || l === "medium") && !bmiIsLow && _daysS <= 1 && strength >= 2) return "Zwei kurze Krafteinheiten pro Woche in deine bestehenden Trainingstage einbauen — kein zusätzlicher Tag nötig.";
       if (l === "low") { if (bmiIsLow) return "Sanfte Routine aufbauen — Spaziergänge, Dehnen, leichte Bewegung. Erst Ernährung stabilisieren."; if (strength >= 3) return "Einen aktiven Tag pro Woche dazunehmen — betreutes Training hilft beim Einstieg."; return "Einen aktiven Tag pro Woche dazunehmen — zum Beispiel 30 Minuten zügig gehen, das sind rund 3.000 Schritte."; }   // v2.19.1 (R5/R4-02): gleiche Stufe wie Fahrplan
       if (l === "medium") { if (bmiIsLow) return "Alltagsbewegung beibehalten — kein intensives Kraft- oder Ausdauertraining bei diesem Gewicht."; if (strength >= 2 && sitting >= 2) return "Krafttraining und Stehpausen kombinieren — 2 Einheiten Kraft + regelmäßige Bewegungspausen."; return "Alltagsbewegung erhöhen — Treppe, kurze Wege zu Fuß, Mittagspause aktiv nutzen. Mit Uhr oder Handy: etwa 1.500 Schritte mehr am Tag als bisher sind ein gutes erstes Ziel; große Studien sehen um 7.000 Schritte am Tag bereits deutliche Vorteile."; }
-      return "Regeneration und Belastung bewusst ausbalancieren — Übertraining vermeiden.";
+      return "Nach jeder harten Einheit mindestens einen lockeren Tag einplanen; wenn du dich mehrere Tage müde fühlst, eine Woche mit weniger Umfang einlegen.";
     }
     if (key === "nutrition") {
       const veg = getText("vegetable_fruit") || getText("vegetables_fruit"); const water = getText("water_intake"); const protein = getText("protein_intake") || getText("protein_frequency");
       if (l === "low") return "Frühstück oder Mittagessen als feste Basis-Mahlzeit stabilisieren — Rhythmus vor Perfektion.";
       if (l === "medium") { if (veg.includes("täglich") && protein.includes("Selten")) return "Eiweißquelle bei jeder Hauptmahlzeit gezielt einplanen — Basis ist bereits gut."; if (water.includes("Unregelmäßig")) return "Trinkroutine aufbauen — morgens ein Glas Wasser als fester Start hilft."; return "Bei jeder Hauptmahlzeit eine Eiweißquelle prüfen und bewusst einbauen."; }
-      return "Omega-3-Quellen und Trinkmenge regelmäßig im Blick behalten.";
+      return "Ein- bis zweimal pro Woche fetten Seefisch (z. B. Lachs, Hering, Makrele) einplanen und eine Wasserflasche sichtbar auf den Tisch stellen.";
     }
     if (key === "vitamin_d") {
       const sun = getText("sunlight_exposure") || getText("sun_exposure_winter");
@@ -7822,32 +7822,32 @@
     }
     if (key === "mental") {
       const stress = getRisk("stress_level"); const mood = getRisk("low_mood"); const social = getRisk("social_connection");
-      if (l === "low") { if (stress >= 3) return "Stressquellen identifizieren — was lässt sich langfristig reduzieren oder delegieren?"; if (mood >= 2) return "Professionelle Unterstützung kann helfen wenn Niedergeschlagenheit anhält."; return "Nur eine Routine wählen und 7 Tage konsequent durchhalten."; }
+      if (l === "low") { if (stress >= 3) return "Schreib eine Woche lang abends auf, was dich am meisten angespannt hat. Am Wochenende eine Sache davon auswählen, die du reduzierst, abgibst oder anders planst."; if (mood >= 2) return "Professionelle Unterstützung kann helfen wenn Niedergeschlagenheit anhält."; return "Wähle eine Routine, z. B. jeden Tag 5 Minuten Pause um dieselbe Uhrzeit, und hake sie sieben Tage lang im Kalender ab."; }
       // v1.56.3 — stand bis auf ein Wort identisch unter "Sofort umsetzen"
-      if (l === "medium") { if (social >= 2) return "Regelmäßige soziale Kontakte einplanen — einmal pro Woche reicht als Anker."; return "Eine Sache in der Woche bewusst streichen, die dich Kraft kostet und nicht sein muss."; }
-      return "Bewegung und Schlaf als aktive Schutzfaktoren für mentale Balance nutzen.";
+      if (l === "medium") { if (social >= 2) return "Regelmäßige soziale Kontakte einplanen — einmal pro Woche reicht als Anker."; return "Schreib sonntags drei Termine oder Aufgaben der kommenden Woche auf und streiche einen davon – absagen, verschieben oder abgeben."; }
+      return "Lege eine feste Pause in deinen Tag, z. B. nach dem Mittagessen 10 Minuten raus ohne Handy, und halte deine Schlafzeiten auch am Wochenende.";
     }
     if (key === "smoking") {   // v2.8.0
       if (l === "low" || l === "medium") return "Mit Begleitung klappt der Rauchstopp häufiger — das BIÖG bietet ein kostenloses Online-Programm auf rauchfrei-info.de.";
-      return "Positive Wirkung auf Atmung und Ausdauer weiter bewusst wahrnehmen.";
+      return "Bleib rauchfrei: Wenn Verlangen kommt, 5 Minuten überbrücken (Wasser trinken, kurz gehen) – die Lust ebbt meist danach ab.";
     }
     if (key === "alcohol") {   // v2.8.0
       if (l === "low") return "Einen alkoholfreien Tag pro Woche als feste Gewohnheit einbauen.";
       if (l === "medium") return "Einen Abend ohne Alkohol als Regenerations-Test nutzen.";
-      return "Positive Wirkung auf Energie und Erholung weiter bewusst wahrnehmen.";
+      return "Behalte es so bei: Plane auch bei Feiern feste Getränke ohne Alkohol ein, z. B. Schorle oder alkoholfreies Bier.";
     }
     if (key === "lifestyle") {
       const nicotine = getRisk("nicotine_use"); const alcohol = getRisk("alcohol_frequency");
-      if (l === "low") { if (nicotine >= 3) return "Professionelle Unterstützung beim Rauchstopp erhöht die Erfolgsquote deutlich."; if (alcohol >= 3) return "Einen alkoholfreien Tag pro Woche als feste Gewohnheit einbauen."; return "Einen alkohol- oder nikotinfreien Tag pro Woche einplanen."; }
-      if (l === "medium") { if (nicotine >= 2) return "Reduktionsplan entwickeln — weniger ist ein gültiger erster Schritt."; return "Einen Abend ohne Alkohol oder Nikotin als Regenerations-Test nutzen."; }
-      return "Positive Wirkung auf Energie und Erholung weiter bewusst wahrnehmen.";
+      if (l === "low") { if (nicotine >= 3) return "Ruf das kostenlose Rauchfrei-Telefon des BIÖG an (0800 8 31 31 31) und vereinbare dort deinen Rauchstopp-Tag."; if (alcohol >= 3) return "Einen alkoholfreien Tag pro Woche als feste Gewohnheit einbauen."; return "Einen alkohol- oder nikotinfreien Tag pro Woche einplanen."; }
+      if (l === "medium") { if (nicotine >= 2) return "Leg einen Plan fest: z. B. jede Woche zwei Zigaretten pro Tag weniger und ein festes Rauchstopp-Datum – Hilfe gibt es beim Rauchfrei-Telefon 0800 8 31 31 31."; return "Einen Abend ohne Alkohol oder Nikotin als Regenerations-Test nutzen."; }
+      return "Behalte es so bei: Plane auch bei Feiern feste Getränke ohne Alkohol ein, z. B. Schorle oder alkoholfreies Bier.";
     }
     if (key === "micronutrients") {
       const dizzy = getRisk("dizziness_pale_nails"); const nutType = getText("nutrition_type") || getText("diet_type");
       const isPlant = nutType.includes("vegan") || nutType.includes("vegetar");
       if (l === "low") { if (window._redFlagNoBloodtest) return "Klärung gehört hier zuerst in die Hausarztpraxis — dort werden auch die passenden Blutwerte veranlasst."; if (dizzy >= 2 && isPlant) return "Ein Bluttest für Eisen, B12 und Vitamin D gibt dir konkrete Werte statt Vermutungen."; return "Gezielte Blutwerte geben dir Orientierung — sinnvoller als blindes Supplementieren."; }
       if (l === "medium") { if (isPlant) return window._redFlagNoBloodtest ? "B12, Jod und Eisen bei pflanzlicher Ernährung gezielt im Blick behalten — die Hausarztpraxis ist hier die erste Adresse." : "B12, Jod und Eisen bei pflanzlicher Ernährung gezielt im Blick behalten — ob Blutwerte sinnvoll sind, klärst du am besten in deiner Hausarztpraxis."; return "Bei anhaltender Müdigkeit gezielte Abklärung vor Supplement-Kauf prüfen."; }
-      return "Supplemente nur gezielt, sinnvoll und nach Bedarf einsetzen.";
+      return "Prüfe bei jedem Präparat: Gibt es einen Anlass (Wert, Ernährungsform, ärztlicher Rat)? Ohne Anlass beim nächsten Kauf weglassen und Ernährung zuerst anpassen.";
     }
     if (key === "metabolic") {
       const weightLoss = getRisk("unintentional_weight_loss");
@@ -9205,7 +9205,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.20.0</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.20.1</footer>
 
 
 </body>
