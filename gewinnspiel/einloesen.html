@@ -113,14 +113,14 @@ td.code a{font-family:'Courier New',monospace;font-weight:700;color:var(--braun)
 
 <script src="/assets/supabase-js@2.js"></script>
 <script>
-/* LeVita Empfang · Gutschein einlösen · 1.3.0 · 24.10.2026 (Reiter Teilnehmer)
+/* LeVita Empfang · Gutschein einlösen · 1.3.1 · 24.10.2026 (Kursmonat)
    Zugriff nur für Konten in trainer_roles (is_trainer()); die RPCs prüfen das in der Datenbank. */
 (function () {
   var URL_ = 'https://koctweetotpqaazeicwj.supabase.co';
   var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0';
   var GEWINNE = { velusjet: '1 Anwendung VELUS JET', milon: '1 Monat milon-Training', vitalpaket: 'Vital-Paket',
     kompression: '1 Anwendung Venen Engel oder REBOOTS', personaltraining: '1 Personaltraining',
-    manuelle_therapie: '1 manuelle Therapie', kurswoche: '1 Kurswoche', five: '1 Monat five' };
+    manuelle_therapie: '1 manuelle Therapie', kurswoche: '1 Monat Kurse', five: '1 Monat five' };
   var sb = window.supabase.createClient(URL_, KEY);
   var $ = function (id) { return document.getElementById(id); };
   var aktuell = null;
@@ -216,7 +216,7 @@ td.code a{font-family:'Courier New',monospace;font-weight:700;color:var(--braun)
   // ── Teilnehmerliste ───────────────────────────────────────────────
   var daten = null;
   var KURZ = { velusjet: 'VELUS JET', milon: 'milon 1 Monat', vitalpaket: 'Vital-Paket', kompression: 'Venen Engel/REBOOTS',
-    personaltraining: 'Personaltraining', manuelle_therapie: 'Manuelle Therapie', kurswoche: 'Kurswoche', five: 'five 1 Monat' };
+    personaltraining: 'Personaltraining', manuelle_therapie: 'Manuelle Therapie', kurswoche: 'Kurse 1 Monat', five: 'five 1 Monat' };
   function tag(s) { return s ? new Date(s).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''; }
 
   async function laden() {
