@@ -756,6 +756,10 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.21.9 (25.10.2026, Jörg): Simulator-Schalter im Reiter „Mein Ergebnis“ direkt unter Spinne und „Das bedeutet dein
+Ergebnis“ (vorher nur im Plan, erreichbar über „Mein Ziel festlegen“). Kein zweiter „Dein erster Schritt“ in der
+Zusammenfassung, wenn die Kernaussage oben steht (bei alten Checks kam er aus dem gespeicherten Fahrplan).
+
 v2.21.8 (25.10.2026, Jörg): Index-Karte ohne „Dein wichtigster Hebel liegt bei …“, wenn die Kernaussage darunter steht;
 Begrüßung beim Wiederkommen ohne „Nimm dir Zeit für die Bereiche und den Simulator“.
 
@@ -6705,7 +6709,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
         ? window._unlockInfo.fahrplan : (Array.isArray(S.result && S.result.fahrplan) ? S.result.fahrplan : []);
       const first = fp.length && fp[0].text ? escHtml(fp[0].text)
         : (S.worst ? getInsightNow(S.worst.key, S.worst.score, S.result && S.result.bmi, S.result) : "");
-      if (first) step = `<div class="stage-first-step"><span>Dein erster Schritt</span>${first}</div>`;
+      if (first && !kernOf(S)) step = `<div class="stage-first-step"><span>Dein erster Schritt</span>${first}</div>`; // v2.21.9: mit Kernaussage steht der erste Schritt schon oben
       if (simScenarios && !simGoalSaved && simHasGoalCandidate()) cta = `<button type="button" class="stage-btn-primary" onclick="goToGoal()">${ICO("target")} Mein Ziel festlegen</button>`;   // v2.21.2: nicht bei nur zurückgestellten Hebeln
     }
     const para = (s0 + s12 + s3).trim();
@@ -6719,7 +6723,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
 
   // v2.4.0 — der eine Hauptschritt in Stufe 2: zum Simulator und Ziel festlegen
   function goToGoal() {
-    switchResultTab('plan');
+    { const _b = document.getElementById('simGoalBtn'); if (!_b || _b.closest('#rtc-plan')) switchResultTab('plan'); } // v2.21.9: Simulator kann im Ergebnis stehen
     setTimeout(() => {
       const b = document.getElementById('simGoalBtn');
       if (b) { b.scrollIntoView({ behavior: 'smooth', block: 'center' }); b.classList.add('pulse-once'); setTimeout(() => b.classList.remove('pulse-once'), 1600); }
@@ -7534,6 +7538,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       html += S.redFlag || "";
       html += S.verlauf || "";
       html += stageSummaryHtml(S, { compact: true });
+      html += S.simulator || ""; // v2.21.9 (Jörg 25.10.): Schalter direkt im Ergebnis, nicht erst nach „Mein Ziel festlegen“ im Plan
       html += S.areasAll || "";
       html += S.supplyCard || "";
       html += moreInfoHtml([S.angaben, S.radarExplain, S.levelInfo, S.answers, howItWorksCardHtml('uebersicht')]);
@@ -7579,7 +7584,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
           <strong>${t}</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${d}</span></div>`;
       });
     }
-    if (hasKern) html += S.simulator || "";   // „Rechnerisch später möglich“ steht nach dem Plan
+    // v2.21.9: Simulator steht mit Kernaussage im Reiter „Mein Ergebnis“ (unter der Spinne)
     html += S.support || "";
     html += S.supplyPlan || "";   // v2.8.20
     if (!hasKern) html += stageModulesCardHtml();   // v2.10.0 (W1)
@@ -9628,7 +9633,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.8</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.9</footer>
 
 
 </body>
