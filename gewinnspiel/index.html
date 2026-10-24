@@ -8,7 +8,8 @@
 <meta name="robots" content="noindex, nofollow">
 <meta property="og:title" content="Dreh am Rad. Jeder Dreh gewinnt. | LeVita">
 <meta property="og:description" content="8 Sofortgewinne plus Hauptpreis: dein Vital-Jahr bei LeVita in Gemünden (Wohra). Kostenlos mitmachen bis 30.11.2026.">
-<meta property="og:image" content="img/foto-empfang.jpg">
+<meta property="og:image" content="https://app.le-vita.com/gewinnspiel/img/foto-empfang.jpg">
+<meta property="og:url" content="https://app.le-vita.com/gewinnspiel/">
 <meta property="og:type" content="website">
 <link rel="icon" href="img/levita-bildmarke.png">
 <style>
@@ -31,7 +32,6 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 </style>
 </head>
 <body>
-<div id="vorschau" style="background: #FFF4CC; color: #482922; text-align: center; padding: 10px 16px; font-size: 15px; font-weight: 600">Vorschau – die Teilnahme ist noch nicht freigeschaltet und wird nicht gespeichert.</div>
 <div style="font-family: 'Barlow', system-ui, sans-serif; color: #482922; background: #FFFFFF; width: 100%">
 
 <header style="background: #FFFFFF; border-bottom: 1px solid #E8E0D0">
@@ -49,7 +49,7 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 <div style="flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
 <div style="align-self: flex-start; background: #A6D71C; color: #482922; font-weight: 700; font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 14px; border-radius: 999px">Herbst-Glücksrad</div>
 <h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 64px; line-height: 1.0; color: #FFFFFF">Dreh am Rad.<br>Jeder Dreh gewinnt.</h1>
-<p style="margin: 0; font-size: 20px; line-height: 1.5; max-width: 560px">Einmal drehen, Gutschein sichern, im Studio einlösen – und automatisch im Lostopf für unseren Hauptpreis landen: <strong style="color: #A6D71C">dein Vital-Jahr bei LeVita</strong>. Kostenlos und ohne Kaufverpflichtung.</p>
+<p style="margin: 0; font-size: 20px; line-height: 1.5; max-width: 560px">Einmal drehen, Gutschein sichern – und automatisch im Lostopf für unseren Hauptpreis landen: <strong style="color: #A6D71C">dein Vital-Jahr bei LeVita</strong>. Kostenlos und ohne Kaufverpflichtung.</p>
 <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center">
 <a href="#rad" style="display: inline-block; background: #A6D71C; color: #482922; font-weight: 700; font-size: 18px; padding: 16px 28px; border-radius: 12px; text-decoration: none">Jetzt Rad drehen</a>
 <a href="#gewinne" style="display: inline-block; border: 2px solid #E8E0D0; color: #E8E0D0; font-weight: 600; font-size: 18px; padding: 14px 24px; border-radius: 12px; text-decoration: none">Gewinne ansehen</a>
@@ -81,7 +81,7 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 </div>
 <h3 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 44px; color: #FFFFFF; line-height: 1">Dein Vital-Jahr</h3>
 <p style="margin: 0; font-size: 18px; line-height: 1.55">Zwölf Monate alles, was LeVita ausmacht – mit einem Trainer-Team, das deinen Weg vom ersten Tag an begleitet und regelmäßig mit dir schaut, wo du stehst.</p>
-<p style="margin: 0; font-size: 15px; line-height: 1.5">Unter allen, die ihren Gutschein bis [EINLÖSEFRIST] im Studio einlösen, verlosen wir am [DATUM] das Vital-Jahr.</p>
+<p style="margin: 0; font-size: 15px; line-height: 1.5">Unter allen Teilnehmerinnen und Teilnehmern verlosen wir am 03.12.2026 das Vital-Jahr.</p>
 </div>
 <div style="flex: 1 1 360px; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
 <div style="background: #5A3A31; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 4px"><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 34px; color: #A6D71C">12</div><div style="font-size: 15px; line-height: 1.4">Monate Mitgliedschaft inklusive milon und five</div></div>
@@ -226,8 +226,8 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 <path d="M160 44 L146 10 L174 10 Z" fill="#A6D71C" stroke="#482922" stroke-width="4" stroke-linejoin="round"></path>
 </svg>
 </div>
-<button type="button" id="spinBtn" style="min-height: 52px; padding: 14px 36px; border: none; border-radius: 12px; background: #482922; color: #FFFFFF; font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 19px; cursor: pointer">Rad drehen</button>
-<div id="landedBox" hidden>
+<button type="button" id="spinBtn" style="min-height: 52px; padding: 14px 36px; border: none; border-radius: 12px; background: #482922; color: #FFFFFF; font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 19px; cursor: pointer">Jetzt eintragen und drehen</button>
+<div id="landedBox" hidden aria-live="polite">
 <div style="background: #FFFFFF; border: 2px solid #A6D71C; border-radius: 14px; padding: 16px 20px; text-align: center; font-size: 18px; line-height: 1.4">Glückwunsch, dein Gewinn:<br><strong style="font-size: 24px" class="js-prize"></strong></div>
 </div>
 </div>
@@ -235,8 +235,8 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 <div style="flex: 1 1 400px; min-width: 0; background: #FFFFFF; border-radius: 20px; padding: 32px; display: flex; flex-direction: column; gap: 18px">
 <div id="formBox">
 <div style="display: flex; flex-direction: column; gap: 18px">
-<h3 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 32px">Gutschein sichern</h3>
-<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #745E3D">Erst drehen, dann eintragen. Wir schicken dir deinen Gutschein per E-Mail. Pro Person gibt es einen Dreh.</p>
+<h3 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 32px">Eintragen und drehen</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #745E3D">Trag dich ein und dreh das Rad. Deinen Gutschein schicken wir dir per E-Mail. Pro Person gibt es einen Dreh.</p>
 <div style="display: flex; flex-wrap: wrap; gap: 14px">
 <div style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 6px">
 <label for="vn" style="font-weight: 600; font-size: 15px">Vorname</label>
@@ -251,6 +251,7 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 <label for="em" style="font-weight: 600; font-size: 15px">E-Mail (dorthin kommt dein Gutschein)</label>
 <input id="em" type="email" autocomplete="email" required style="min-height: 48px; padding: 0 14px; border: 2px solid #E8E0D0; border-radius: 10px; font-size: 17px; font-family: 'Barlow', sans-serif; color: #482922">
 </div>
+<div aria-hidden="true" style="position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden"><label for="firma">Firma (bitte frei lassen)</label><input id="firma" name="firma" type="text" tabindex="-1" autocomplete="off"></div>
 <div style="display: flex; gap: 12px; align-items: flex-start">
 <input id="tnb" type="checkbox" required style="width: 24px; height: 24px; margin: 2px 0 0; accent-color: #482922; flex-shrink: 0">
 <label for="tnb" style="font-size: 15px; line-height: 1.45">Ich bin mindestens 18 Jahre alt und akzeptiere die <a href="#bedingungen">Teilnahmebedingungen</a> sowie die <a href="https://www.le-vita.com/datenschutz">Datenschutzhinweise</a>. (Pflicht)</label>
@@ -262,16 +263,16 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 <div id="errBox" hidden>
 <div role="alert" id="errText" style="background: #FBEDE8; color: #8A2A12; border-radius: 10px; padding: 12px 14px; font-size: 15px"></div>
 </div>
-<button type="button" id="submitBtn" style="min-height: 54px; border: none; border-radius: 12px; background: #A6D71C; color: #482922; font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 19px; cursor: pointer">Gutschein sichern</button>
+<button type="button" id="submitBtn" style="min-height: 54px; border: none; border-radius: 12px; background: #A6D71C; color: #482922; font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 19px; cursor: pointer">Rad drehen und Gutschein sichern</button>
 </div>
 </div>
-<div id="sentBox" hidden>
+<div id="sentBox" hidden aria-live="polite">
 <div style="display: flex; flex-direction: column; gap: 14px; text-align: center; padding: 24px 0">
 <div style="width: 72px; height: 72px; border-radius: 50%; background: #A6D71C; align-self: center; display: flex; align-items: center; justify-content: center">
 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#482922" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>
 </div>
 <h3 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 34px">Geschafft, <span class="js-vn"></span>!</h3>
-<p style="margin: 0; font-size: 17px; line-height: 1.5">Dein Gutschein für <strong class="js-prize"></strong> ist auf dem Weg in dein Postfach. Löse ihn bis [EINLÖSEFRIST] bei uns ein – damit bist du automatisch im Lostopf für <strong>dein Vital-Jahr</strong>.</p>
+<p style="margin: 0; font-size: 17px; line-height: 1.5">Dein Gutschein für <strong class="js-prize"></strong> <span id="mailOk">ist auf dem Weg in dein Postfach.</span><span id="mailFehler" hidden>ist gespeichert – nur die E-Mail kam gerade nicht durch. Ruf uns kurz an, dann nennen wir dir deinen Code.</span> Du kannst ihn bis 31.01.2027 bei uns einlösen. Und du bist jetzt im Lostopf für <strong>dein Vital-Jahr</strong> – verlost wird am 03.12.2026.</p>
 <p style="margin: 0; font-size: 17px; line-height: 1.5">Am besten gleich einen Termin ausmachen:</p>
 <a href="tel:+4964536480009" style="align-self: center; display: inline-block; background: #482922; color: #FFFFFF; font-weight: 700; font-size: 17px; padding: 14px 24px; border-radius: 12px; text-decoration: none">Anrufen: 06453 6480009</a>
 </div>
@@ -287,7 +288,7 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 <h2 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 44px">Dein Studio in Gemünden</h2>
 <p style="margin: 0; font-size: 18px; line-height: 1.55">Seit 2015 trainieren bei uns Menschen, die sich etwas Gutes tun wollen – gesundheitsorientiert, mit Trainern, die dich kennen, und mit der Erfahrung unserer Physiotherapie seit 2005 im Rücken.</p>
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px">
-<div style="display: flex; flex-direction: column; gap: 4px; padding: 16px; border: 2px solid #E8E0D0; border-radius: 14px"><div style="font-weight: 700; font-size: 18px">So geht's</div><div style="font-size: 15px; line-height: 1.45; color: #745E3D">Drehen, eintragen, Gutschein per Mail bekommen, im Studio einlösen – und im Lostopf landen.</div></div>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 16px; border: 2px solid #E8E0D0; border-radius: 14px"><div style="font-weight: 700; font-size: 18px">So geht's</div><div style="font-size: 15px; line-height: 1.45; color: #745E3D">Drehen, eintragen, Gutschein per Mail bekommen und bis 31.01.2027 im Studio einlösen.</div></div>
 <div style="display: flex; flex-direction: column; gap: 4px; padding: 16px; border: 2px solid #E8E0D0; border-radius: 14px"><div style="font-weight: 700; font-size: 18px">Hier findest du uns</div><div style="font-size: 15px; line-height: 1.45; color: #745E3D">Grüsener Str. 14, 35285 Gemünden (Wohra)</div></div>
 </div>
 </div>
@@ -297,7 +298,7 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 <footer id="bedingungen" style="background: #482922; color: #E8E0D0">
 <div style="max-width: 1120px; margin: 0 auto; padding: 56px 24px; display: flex; flex-direction: column; gap: 16px; font-size: 14px; line-height: 1.6">
 <div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 26px; color: #FFFFFF">Teilnahmebedingungen (Kurzfassung)</div>
-<p style="margin: 0">Veranstalter: LeVita, Grüsener Str. 14, Gemünden (Wohra). Teilnahme kostenlos und unabhängig von einem Kauf oder einer Mitgliedschaft, ab 18 Jahren, ein Dreh pro Person. Aktionszeitraum bis 30.11.2026. Jeder gültige Dreh gewinnt einen der acht Gutscheine; welcher, entscheidet der Zufall. Der Gutschein wird per E-Mail zugestellt, ist persönlich, nicht übertragbar und bis [EINLÖSEFRIST] nach Terminvereinbarung im Studio einlösbar. Unter allen bis dahin eingelösten Gutscheinen wird am [DATUM] der Hauptpreis „Vital-Jahr“ verlost; der Gewinner wird per E-Mail benachrichtigt. Keine Barauszahlung. Mitarbeitende von LeVita sind ausgeschlossen. Die Daten werden nur zur Durchführung der Aktion genutzt und danach gelöscht, außer bei freiwilliger Newsletter-Anmeldung.</p>
+<p style="margin: 0">Veranstalter: LeVita, Grüsener Str. 14, Gemünden (Wohra). Teilnahme kostenlos und unabhängig von einem Kauf oder einer Mitgliedschaft, ab 18 Jahren, ein Dreh pro Person. Aktionszeitraum bis 30.11.2026. Jeder gültige Dreh gewinnt einen der acht Gutscheine; welcher, entscheidet der Zufall. Die Gewinnchancen je Dreh: Vital-Paket 30 %, jeder der übrigen sieben Gutscheine 10 %. Der Gutschein wird per E-Mail zugestellt, ist persönlich, nicht übertragbar und bis 31.01.2027 nach Terminvereinbarung im Studio einlösbar. Unter allen gültigen Teilnahmen wird am 03.12.2026 der Hauptpreis „Vital-Jahr“ verlost; der Gewinner wird per E-Mail benachrichtigt. Keine Barauszahlung. Mitarbeitende von LeVita sind ausgeschlossen. Die Daten werden nur zur Durchführung der Aktion genutzt und nach Ablauf der Einlösefrist gelöscht, außer bei freiwilliger Newsletter-Anmeldung.</p>
 <p style="margin: 0">Diese Aktion steht in keiner Verbindung zu Facebook oder Instagram und wird in keiner Weise von Meta gesponsert, unterstützt oder organisiert.</p>
 <div style="display: flex; flex-wrap: wrap; gap: 20px">
 <a href="https://www.le-vita.com/impressum" style="color: #A6D71C">Impressum</a>
@@ -308,67 +309,108 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 </footer>
 
 </div>
+<!-- gewinnspiel-seite 1.1.0 · 24.10.2026 -->
 
 <script>
-/* LeVita Glücksrad-Gewinnspiel · Stand: 24.10.2026
-   VORSCHAU: Solange CONFIG.endpoint leer ist, lost der Browser nur zur Ansicht aus
-   und es wird nichts gespeichert. Für den Livebetrieb lost der Server (Edge-Function)
-   den Gewinn aus und speichert die Teilnahme. */
+/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.1.0 · 24.10.2026
+   Ablauf: eintragen → Server (Edge "gewinnspiel") prüft, lost aus, speichert, schickt die Mail
+   → das Rad läuft auf das Feld aus, das der Server bestimmt hat.
+   Erfolg wird erst nach bestätigter Server-Antwort angezeigt. */
 (function () {
-  var CONFIG = { endpoint: '' };
-  var PREISE = ['1 Anwendung VELUS JET', '1 Monat milon-Training', 'Vital-Paket',
-    '1 Anwendung Venen Engel oder REBOOTS', '1 Personaltraining', '1 manuelle Therapie',
-    '1 Kurswoche', '1 Monat five'];
-  var rad = document.getElementById('radScheibe');
-  var spinBtn = document.getElementById('spinBtn');
-  var landedBox = document.getElementById('landedBox');
-  var formBox = document.getElementById('formBox');
-  var sentBox = document.getElementById('sentBox');
-  var errBox = document.getElementById('errBox');
-  var errText = document.getElementById('errText');
-  var submitBtn = document.getElementById('submitBtn');
-  var phase = 'idle', idx = null;
+  var CONFIG = {
+    vorschau: false,
+    endpoint: 'https://koctweetotpqaazeicwj.supabase.co/functions/v1/gewinnspiel',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0'
+  };
+  var $ = function (id) { return document.getElementById(id); };
+  var rad = $('radScheibe'), spinBtn = $('spinBtn'), submitBtn = $('submitBtn');
+  var landedBox = $('landedBox'), formBox = $('formBox'), sentBox = $('sentBox');
+  var errBox = $('errBox'), errText = $('errText');
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var params = new URLSearchParams(location.search);
+  var intern = params.get('internal') === '1';
+  var utm = {};
+  ['source', 'medium', 'campaign', 'content', 'term'].forEach(function (k) {
+    var v = params.get('utm_' + k); if (v) utm[k] = v;
+  });
 
-  function setPrize(t) {
-    document.querySelectorAll('.js-prize').forEach(function (el) { el.textContent = t; });
+  var winkel = 0, laeuft = false, raf = 0, busy = false;
+  function setzeWinkel(w) { winkel = w; rad.setAttribute('transform', 'rotate(' + (w % 360).toFixed(2) + ' 160 160)'); }
+  function freilauf() {
+    laeuft = true; var t0 = performance.now(), w0 = winkel;
+    function step(t) { if (!laeuft) return; setzeWinkel(w0 + (t - t0) * 0.6); raf = requestAnimationFrame(step); }
+    raf = requestAnimationFrame(step);
   }
-  function showErr(t) {
-    errText.textContent = t; errBox.hidden = !t;
+  function auslaufen(index, fertig) {
+    laeuft = false; cancelAnimationFrame(raf);
+    var start = winkel, basis = start + (reduce ? 0 : 1080);
+    var ziel = basis + ((((-45 * index) - basis) % 360) + 360) % 360;
+    var dur = reduce ? 400 : 3600, t0 = performance.now();
+    function step(t) {
+      var p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      setzeWinkel(start + (ziel - start) * e);
+      if (p < 1) requestAnimationFrame(step); else fertig();
+    }
+    requestAnimationFrame(step);
+  }
+  function anhalten() { laeuft = false; cancelAnimationFrame(raf); }
+
+  function setText(sel, t) { document.querySelectorAll(sel).forEach(function (el) { el.textContent = t; }); }
+  function showErr(t) { errText.textContent = t || ''; errBox.hidden = !t; }
+  function sperren(an) {
+    busy = an; submitBtn.disabled = an;
+    submitBtn.textContent = an ? 'Das Rad dreht …' : 'Rad drehen und Gutschein sichern';
   }
 
   spinBtn.addEventListener('click', function () {
-    if (phase !== 'idle') return;
-    phase = 'spinning'; spinBtn.disabled = true; spinBtn.textContent = 'Das Rad dreht …'; showErr('');
-    var k = Math.floor(Math.random() * 8);
-    var target = 1800 + ((360 - 45 * k) % 360);
-    var dur = reduce ? 600 : 4200, t0 = performance.now();
-    function step(t) {
-      var p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 4);
-      rad.setAttribute('transform', 'rotate(' + (target * e).toFixed(2) + ' 160 160)');
-      if (p < 1) { requestAnimationFrame(step); return; }
-      phase = 'landed'; idx = k; setPrize(PREISE[k]);
-      landedBox.hidden = false; spinBtn.textContent = 'Dein Gewinn steht fest';
-      document.getElementById('vn').focus({ preventScroll: true });
-    }
-    requestAnimationFrame(step);
+    var vn = $('vn'); formBox.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    setTimeout(function () { vn.focus({ preventScroll: true }); }, reduce ? 0 : 400);
   });
 
   submitBtn.addEventListener('click', function () {
-    var vn = document.getElementById('vn').value.trim();
-    var nn = document.getElementById('nn').value.trim();
-    var em = document.getElementById('em').value.trim();
-    var tnb = document.getElementById('tnb').checked;
-    if (phase !== 'landed') return showErr('Bitte zuerst am Rad drehen.');
-    if (!vn || !nn) return showErr('Bitte Vor- und Nachnamen eintragen.');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return showErr('Bitte eine gültige E-Mail-Adresse eintragen.');
-    if (!tnb) return showErr('Bitte die Teilnahmebedingungen bestätigen.');
+    if (busy) return;
+    var daten = {
+      vorname: $('vn').value.trim(), nachname: $('nn').value.trim(), email: $('em').value.trim(),
+      tnb: $('tnb').checked, newsletter: $('nl').checked, firma: $('firma').value,
+      utm: utm, intern: intern
+    };
+    if (!daten.vorname || !daten.nachname) return showErr('Bitte Vor- und Nachnamen eintragen.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(daten.email)) return showErr('Bitte eine gültige E-Mail-Adresse eintragen.');
+    if (!daten.tnb) return showErr('Bitte die Teilnahmebedingungen bestätigen.');
     showErr('');
-    if (!CONFIG.endpoint) {
-      return showErr('Vorschau: Die Teilnahme ist noch nicht freigeschaltet – es wurde nichts gespeichert.');
-    }
-    // Livebetrieb: hier folgt der Aufruf der Edge-Function (Speichern + Gutschein-Mail).
-    // Erst nach bestätigter Server-Antwort wird die Erfolgsmeldung gezeigt.
+    if (CONFIG.vorschau) return showErr('Vorschau: Die Teilnahme ist noch nicht freigeschaltet – es wurde nichts gespeichert.');
+
+    sperren(true);
+    rad.closest('svg').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+    freilauf();
+    var ctrl = new AbortController(); var timer = setTimeout(function () { ctrl.abort(); }, 20000);
+    fetch(CONFIG.endpoint, {
+      method: 'POST', signal: ctrl.signal,
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CONFIG.anonKey, 'apikey': CONFIG.anonKey },
+      body: JSON.stringify(daten)
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, j: j }; });
+    }).then(function (res) {
+      clearTimeout(timer);
+      var j = res.j || {};
+      if (res.status !== 200 || !j.ok || typeof j.index !== 'number') {
+        anhalten(); sperren(false);
+        formBox.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+        return showErr(j.meldung || 'Gerade klappt es technisch nicht. Bitte versuch es gleich noch einmal.');
+      }
+      auslaufen(j.index, function () {
+        setText('.js-prize', j.gewinn); setText('.js-vn', daten.vorname);
+        $('mailOk').hidden = !j.mail; $('mailFehler').hidden = !!j.mail;
+        landedBox.hidden = false; spinBtn.hidden = true;
+        setTimeout(function () {
+          formBox.hidden = true; sentBox.hidden = false;
+          sentBox.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+        }, 1400);
+      });
+    }).catch(function () {
+      clearTimeout(timer); anhalten(); sperren(false);
+      showErr('Die Verbindung hat nicht geklappt. Bitte prüf dein Netz und versuch es noch einmal.');
+    });
   });
 })();
 </script>
