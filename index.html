@@ -747,6 +747,9 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.20.5 (24.10.2026): Paket V2.2 (Nachtest R3). Erholungsvorrang aus den Antworten (Sofortkarte, Selbst-Tipp),
+       Alkohol: Wochenkarte und Bereichstext mit Vorrang, ergänzender Hebel ohne Antwortkategorien, Hinweis in der
+       Bereichskarte nur als Verweis, „1 Punkt“.
        v2.20.4 (24.10.2026): Paket V2.1. Alkohol-Hinweis mit Vorrang (gemeinsame Hinweisquelle mit Edge .24),
        Alkohol-Tipps verweisen dann auf den Hinweis; Bewegungstipp zitiert keine Zielantwort mehr.
        v2.20.3 (24.10.2026): Paket V2 nach Prüfung. Simulator und Potenzial erklären die Reihenfolge im Vital-Plan
@@ -2731,6 +2734,15 @@
   // Quelle: gesundheitsinformation.de (IQWiG), „Alkohol“, Stand 24.01.2023 (Dokumentation Fahrplan-Bausteine_V2.md).
   const ALCOHOL_HINT = "Du trinkst regelmäßig Alkohol, täglich oder in größeren Mengen. Wenn du weniger trinken oder ganz aufhören möchtest, sprich vorher mit deiner Hausarztpraxis: Besteht eine Abhängigkeit, kann ein plötzlicher Verzicht ohne ärztliche Begleitung ernsthafte körperliche Beschwerden auslösen. Ob das bei dir eine Rolle spielt, lässt sich aus dem Check nicht ablesen – die Praxis hilft dir, den Weg sicher zu planen.";
   const ALCOHOL_FIRST_TIP = "Beim Alkohol hat der Hinweis oben Vorrang. Notiere bis zum Gespräch eine Woche lang, an welchen Tagen und wie viele Gläser du trinkst (1 Glas = 0,3 l Bier, 0,125 l Wein oder 4 cl Schnaps).";
+  // v2.20.5 (Paket V2.2, R3-02): Erholungsvorrang aus den Antworten – gleiche Regel wie Edge planCtxOf
+  const RECOVERY_TIP_NOW = "Erholung zuerst: Solange Schlaf oder Tagesmüdigkeit auffällig sind, steigerst du deine Bewegung nicht. Behalte bei, was du jetzt machst, und notiere einmal pro Woche, wie erholt du aufwachst (1 bis 5).";
+  const RECOVERY_TIP_SOON = "Diese Woche: Halte feste Schlafenszeiten, auch am Wochenende, und plane keine zusätzliche Trainingseinheit ein.";
+  const ALCOHOL_WEEK_TIP = "Diese Woche: Vereinbare das Gespräch aus dem Hinweis oben und nimm deine Notizen zum Alkohol mit.";
+  function recoveryWeakOf(answers, score) {
+    const d = (answers || []).find(x => x && x.question_key === "daytime_sleepiness");
+    const sl = score && score.score_payload && score.score_payload.sleep && score.score_payload.sleep.score;
+    return (sl !== null && sl !== undefined && isFinite(Number(sl)) && Number(sl) < 50) || Number(d && d.risk_points) >= 3;
+  }
   function alcoholCautionOf(answers) {
     const t = k => String(((answers || []).find(x => x && x.question_key === k) || {}).answer_text || "").trim().toLowerCase();
     return t("alcohol_frequency").startsWith("täglich oder fast täglich") || t("alcohol_amount").startsWith("mehr als 25 gläser");
@@ -2814,7 +2826,8 @@
       blocked: careBlockedAreas(care, bmi),
       worstKey: worst ? worst.key : null,
       lever,                                              // ergänzender Schritt (nur Text, keine Wirkungszusage)
-      leverText: lever ? `bei ${DECISION_TOPIC[lever.question_key] || lever.area_label || "diesem Thema"} von „${lever.from_text}“ auf „${lever.to_text}“` : ""
+      leverText: (lever && !(String(lever.question_key || "").startsWith("alcohol_") && alcoholCautionOf(answers || [])))   // v2.20.5: keine Antwortkategorien, Alkoholvorrang
+        ? `bei ${DECISION_TOPIC[lever.question_key] || lever.area_label || "diesem Thema"} – die Schritte stehen in deinem Wochenplan` : ""
     };
   }
 
@@ -6081,9 +6094,11 @@
 
     const usedAreas = new Set();
     const cat1 = [];
+    const _recWeakT = recoveryWeakOf(answersT3, result?.score);   // v2.20.5 (R3-02)
     const _pushTip = key => {
       if (cat1.length >= 3 || usedAreas.has(key) || !selfTips[key]) return;
       if (!(tipEligible[key] ? tipEligible[key]() : false)) return;
+      if (key === "activity" && _recWeakT) { usedAreas.add(key); cat1.push(["Erholung zuerst", RECOVERY_TIP_NOW, "activity_recovery"]); return; }
       usedAreas.add(key); cat1.push([...selfTips[key].slice(0, 2), key]);
     };
     (score.top_priorities || []).forEach(p => {
@@ -6519,7 +6534,7 @@
     let s3 = "";
     if (best && Number(best.gain) >= 1) {
       const n = (best.question_keys || []).length || 1;
-      s3 = ` Mit ${STAGE_NUM_WORDS[n] || n} gezielten Veränderung${n > 1 ? "en" : ""} sind bei dir rund <strong style="color:var(--accent-blue-text);">${Math.round(Number(best.gain))} Punkte mehr</strong> rechnerisch möglich – keine Vorhersage deiner Gesundheit.`;
+      s3 = ` Mit ${STAGE_NUM_WORDS[n] || n} gezielten Veränderung${n > 1 ? "en" : ""} sind bei dir rund <strong style="color:var(--accent-blue-text);">${Math.round(Number(best.gain))} ${Math.round(Number(best.gain)) === 1 ? "Punkt" : "Punkte"} mehr</strong> rechnerisch möglich – keine Vorhersage deiner Gesundheit.`;
     }
     // v2.4.0 — Index und Vitalitäts-Alter als ein Satz vor der Einordnung
     const tot = Math.round(Number(S.totalScore));
@@ -7450,6 +7465,11 @@
       const snip = notice["signal_" + sig.q];
       const title = (snip && snip.title) || sig.title;
       let text = (snip && snip.body) || sig.text;
+      // v2.20.5 (R3-03): steht dazu ein fester Hinweis oben, hier nur verweisen – der Warntext erscheint genau einmal
+      const _phK = profileHintsOf(answers).map(h => h.key);
+      if ((sig.q === "daytime_sleepiness" && (_phK.includes("daytime") || _phK.includes("sleep_combo"))) || (sig.q.startsWith("alcohol_") && _phK.includes("alcohol"))) {
+        return `<div class="area-signal"><strong>${title}:</strong> Siehe Hinweis oben.</div>`;
+      }
       // v2.20.0 (Paket V, F07): Wer schon an 3+ Tagen aktiv ist, bekommt bei Stress keinen Bewegungs-Einstieg vorgeschlagen
       const _actA = answers.find(x => x.question_key === "activity_days");
       if (sig.q === "stress_level" && _actA && Number(_actA.risk_points || 0) <= 1) {
@@ -7767,6 +7787,7 @@
       if (l === "medium") { if (day >= 3 && !dur.includes("Weniger als 5") && !dur.includes("5–6")) return "Tagesmüdigkeit trotz ausreichend Schlaf — Schlafqualität, Stress oder Rhythmus prüfen."; if (lat >= 2) return "Einschlafroutine verbessern: kühl, dunkel, kein Bildschirm 30 Min. vorher."; return "Kurze Abendroutine festlegen — z.B. Tee, Lesen oder ruhiges Dehnen."; }
       return "Halte Zubettgeh- und Aufstehzeit auch am Wochenende innerhalb einer Stunde gleich.";
     }
+    if (key === "activity" && recoveryWeakOf(ans, result?.score || latestResult?.score)) return RECOVERY_TIP_NOW;   // v2.20.5
     if (key === "activity") {
       const actDays = getRisk("activity_days"); const strength = getRisk("strength_training"); const sitting = getRisk("sitting_hours");
       if (l === "low" || l === "medium") { if (bmiIsLow) return "Sanfte Alltagsbewegung wie kurze Spaziergänge — Fokus auf Energie und Regeneration."; if (actDays >= 3 && strength >= 3) return "Einen festen Trainingstag einplanen — 30 Minuten reichen als Einstieg."; if (actDays <= 1 && strength >= 3) return "Kraft ergänzen — 2 kurze Krafteinheiten pro Woche stärken Muskelmasse und Stoffwechsel."; if (sitting >= 3) return "Stehpause alle 60–90 Minuten einbauen — kurz aufstehen und 2 Minuten bewegen."; return "Einen konkreten Bewegungstermin in den Kalender setzen — z. B. 20 Minuten zügig gehen, mit Uhr oder Handy rund 2.000 Schritte."; }
@@ -7844,6 +7865,7 @@
       if (l === "medium") return "Koffein nach 14 Uhr bewusst reduzieren und Wirkung eine Woche beobachten.";
       return "Plane an stressigen Tagen eine feste 10-Minuten-Pause ein – Timer stellen, Fenster auf, langsam ausatmen (doppelt so lang wie einatmen).";
     }
+    if (key === "activity" && recoveryWeakOf(ans, result?.score || latestResult?.score)) return RECOVERY_TIP_SOON;   // v2.20.5
     if (key === "activity") {
       const strength = getRisk("strength_training"); const sitting = getRisk("sitting_hours");
       const _daysS = getRisk("activity_days");   // v2.20.0 (F01): bei 3+ aktiven Tagen keinen zusätzlichen Tag vorschlagen
@@ -7876,14 +7898,14 @@
       return "Bleib rauchfrei: Wenn Verlangen kommt, 5 Minuten überbrücken (Wasser trinken, kurz gehen) – die Lust ebbt meist danach ab.";
     }
     if (key === "alcohol") {   // v2.8.0
-      if (alcoholCautionOf([getA("alcohol_frequency"), getA("alcohol_amount")].filter(Boolean))) return ALCOHOL_FIRST_TIP;   // v2.20.4
+      if (alcoholCautionOf([getA("alcohol_frequency"), getA("alcohol_amount")].filter(Boolean))) return ALCOHOL_WEEK_TIP;   // v2.20.5: anders als „Sofort“
       if (l === "low") return "Einen alkoholfreien Tag pro Woche als feste Gewohnheit einbauen.";
       if (l === "medium") return "Einen Abend ohne Alkohol als Regenerations-Test nutzen.";
       return "Behalte es so bei: Plane auch bei Feiern feste Getränke ohne Alkohol ein, z. B. Schorle oder alkoholfreies Bier.";
     }
     if (key === "lifestyle") {
       const nicotine = getRisk("nicotine_use"); const alcohol = getRisk("alcohol_frequency");
-      if (nicotine < 3 && alcoholCautionOf([getA("alcohol_frequency"), getA("alcohol_amount")].filter(Boolean))) return ALCOHOL_FIRST_TIP;   // v2.20.4
+      if (nicotine < 3 && alcoholCautionOf([getA("alcohol_frequency"), getA("alcohol_amount")].filter(Boolean))) return ALCOHOL_WEEK_TIP;   // v2.20.4
       if (l === "low") { if (nicotine >= 3) return "Ruf das kostenlose Rauchfrei-Telefon des BIÖG an (0800 8 31 31 31) und vereinbare dort deinen Rauchstopp-Tag."; if (alcohol >= 3) return "Einen alkoholfreien Tag pro Woche als feste Gewohnheit einbauen."; return "Einen alkohol- oder nikotinfreien Tag pro Woche einplanen."; }
       if (l === "medium") { if (nicotine >= 2) return "Leg einen Plan fest: z. B. jede Woche zwei Zigaretten pro Tag weniger und ein festes Rauchstopp-Datum – Hilfe gibt es beim Rauchfrei-Telefon 0800 8 31 31 31."; return "Einen Abend ohne Alkohol oder Nikotin als Regenerations-Test nutzen."; }
       return "Behalte es so bei: Plane auch bei Feiern feste Getränke ohne Alkohol ein, z. B. Schorle oder alkoholfreies Bier.";
@@ -8117,7 +8139,7 @@
       { key:"micronutrients", max:75, bmiLowSafe:true, text:"Bestimmte Nährstoff-Themen könnten eine bewusste Einordnung verdienen. Sinnvoll ist zuerst Ernährung — bei Bedarf ein Blutwert-Check." },
       { key:"vitamin_d", max:75, bmiLowSafe:true, text:"Regelmäßiges Tageslicht ist bei dir aktuell ein besonders sinnvoller Hebel für Energie, Schlafrhythmus und Vitamin-D-Orientierung." },
       { key:"activity", max:75, bmiLowSafe:false, text:"Bewegung, Kraft und Regeneration können aktuell ein guter Hebel sein. Entscheidend ist ein kleiner, wiederholbarer Schritt." },
-      { key:"lifestyle", max:75, bmiLowSafe:true, text:"Alkohol oder Nikotin können Schlaf und Regeneration beeinflussen. Ein bewusster Testtag hilft, den eigenen Zusammenhang besser zu erkennen." }
+      { key:"lifestyle", max:75, bmiLowSafe:true, text: alcoholCautionOf(result?.answers || []) ? "Beim Alkohol hat der Hinweis oben Vorrang. Notiere bis zum Gespräch, an welchen Tagen und wie viele Gläser du trinkst." : "Alkohol oder Nikotin können Schlaf und Regeneration beeinflussen. Ein bewusster Testtag hilft, den eigenen Zusammenhang besser zu erkennen." }
     ];
 
     const hasNutritionHint = hints.some(h => h.includes("Ernährung zuerst"));
@@ -9252,7 +9274,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.20.4</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.20.5</footer>
 
 
 </body>
