@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Newsletter bestätigen | LeVita</title>
+<link rel="icon" href="img/levita-bildmarke.png">
+<style>
+@font-face{font-family:'Barlow';font-weight:400;font-display:swap;src:url(fonts/barlow-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Barlow';font-weight:700;font-display:swap;src:url(fonts/barlow-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Barlow Condensed';font-weight:800;font-display:swap;src:url(fonts/barlow-condensed-latin-800-normal.woff2) format('woff2')}
+*{box-sizing:border-box}
+body{margin:0;background:#F6F2EA;color:#482922;font-family:'Barlow',system-ui,sans-serif;font-size:17px;line-height:1.5}
+header{background:#fff;border-bottom:1px solid #E8E0D0}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+header .wrap{display:flex;align-items:center;gap:12px;padding-top:14px;padding-bottom:14px}
+header img{height:44px;display:block}
+.karte{background:#fff;border-radius:20px;padding:28px;margin:32px 0;display:flex;flex-direction:column;gap:14px}
+h1{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:36px;line-height:1.05;margin:0}
+p{margin:0}
+button,.knopf{min-height:52px;border:none;border-radius:12px;font:inherit;font-weight:700;font-size:18px;cursor:pointer;padding:0 22px;background:#A6D71C;color:#482922;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;align-self:flex-start}
+.knopf{background:#482922;color:#fff}
+button:disabled{opacity:.55;cursor:default}
+button:focus-visible,a:focus-visible{outline:3px solid #A6D71C;outline-offset:2px}
+.klein{font-size:14px;color:#745E3D}
+.warn{background:#FBEDE8;color:#8A2A12;border-radius:12px;padding:12px 14px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="wrap"><img src="img/levita-bildmarke.png" alt=""><img src="img/levita-schriftzug.svg" alt="LeVita – Therapie, Gesundheit, Fitness"></div></header>
+<main class="wrap">
+  <section class="karte" id="frage">
+    <h1>Newsletter bestätigen</h1>
+    <p>Du hast beim LeVita-Glücksrad angekreuzt, dass du unseren Newsletter mit Angeboten und Tipps bekommen möchtest. Mit einem Klick bestätigst du das. Abmelden kannst du dich jederzeit über den Link in jeder Mail.</p>
+    <button type="button" id="ja">Ja, Newsletter bestätigen</button>
+    <p class="klein">Du möchtest doch keinen Newsletter? Dann schließ diese Seite einfach – ohne Bestätigung bekommst du keinen. Dein Gutschein gilt so oder so.</p>
+    <div class="warn" id="fehler" role="alert" hidden></div>
+  </section>
+  <section class="karte" id="danke" hidden aria-live="polite">
+    <h1 id="dankeTitel">Danke!</h1>
+    <p id="dankeText">Deine Anmeldung ist bestätigt. Du hörst bald von uns.</p>
+    <a class="knopf" href="./">Zurück zum Glücksrad</a>
+  </section>
+  <p class="klein" style="margin-bottom:32px"><a href="https://www.le-vita.com/datenschutz" style="color:#745E3D">Datenschutz</a> · <a href="https://www.le-vita.com/impressum" style="color:#745E3D">Impressum</a></p>
+</main>
+<script>
+/* LeVita · Newsletter-Bestätigung Gewinnspiel · 1.0.0 · 24.10.2026
+   Bestätigt wird nur per Klick (nicht schon beim Öffnen), damit Mail-Scanner nichts auslösen. */
+(function () {
+  var ENDPOINT = 'https://koctweetotpqaazeicwj.supabase.co/functions/v1/gewinnspiel';
+  var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0';
+  var $ = function (id) { return document.getElementById(id); };
+  var token = new URLSearchParams(location.search).get('t') || '';
+  // Code nicht in der Adresszeile stehen lassen
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  function fehler(t) { $('fehler').textContent = t; $('fehler').hidden = false; }
+  if (!/^[0-9a-f]{64}$/.test(token)) {
+    $('ja').disabled = true;
+    fehler('Der Bestätigungslink ist unvollständig. Bitte öffne ihn direkt aus der E-Mail mit deinem Gutschein.');
+    return;
+  }
+  $('ja').addEventListener('click', function () {
+    var btn = this; btn.disabled = true; btn.textContent = 'Wird bestätigt …'; $('fehler').hidden = true;
+    fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + KEY, 'apikey': KEY },
+      body: JSON.stringify({ aktion: 'newsletter_bestaetigen', token: token })
+    }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { s: r.status, j: j }; }); })
+      .then(function (res) {
+        if (res.s === 200 && res.j.ok) {
+          $('frage').hidden = true; $('danke').hidden = false;
+          if (res.j.schon) { $('dankeTitel').textContent = 'Schon erledigt'; $('dankeText').textContent = 'Deine Newsletter-Anmeldung war bereits bestätigt. Alles in Ordnung.'; }
+          else if (res.j.vorname) { $('dankeTitel').textContent = 'Danke, ' + res.j.vorname + '!'; }
+          return;
+        }
+        btn.disabled = false; btn.textContent = 'Ja, Newsletter bestätigen';
+        fehler(res.j.meldung || 'Gerade klappt es technisch nicht. Bitte versuch es später noch einmal.');
+      })
+      .catch(function () { btn.disabled = false; btn.textContent = 'Ja, Newsletter bestätigen'; fehler('Die Verbindung hat nicht geklappt. Bitte versuch es noch einmal.'); });
+  });
+})();
+</script>
+</body>
+</html>
