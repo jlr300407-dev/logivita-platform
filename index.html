@@ -747,6 +747,10 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.21.2 (24.10.2026, R6-01/02): Zurückgestellte Hebel (erst Erholung / erst Gespräch in der Praxis) lassen sich
+       im Simulator weiter rechnen, aber nicht mehr als Re-Check-Ziel speichern. Knopf zeigt "Noch kein Ziel – erst …",
+       Vorbelegung ohne solche Hebel, Hauptknopf "Mein Ziel festlegen" nur, wenn es einen erlaubten Hebel gibt.
+       Edge edge-2026-10-24.35 prüft dieselbe Regel beim Speichern (GOAL_DEFERRED).
        v2.21.1 (24.10.2026, Paket W5 Weg A): Zugang über "Mein Bereich" statt PIN. Mail-Haken neu (konto-v3, freigegeben):
        Plan per Mail + persönlicher Bereich, Anmeldung per Link oder Code. Neuer freiwilliger Haken "Erinnert mich …",
        Zeile unter dem Knopf zum Postfachzugang. Nach email_sent legt silentAccountRequest den Bereich still an
@@ -3145,6 +3149,7 @@
 
   // Zentrale Übernahme der V2-Felder aus jeder Edge-Response (Submit + load_result)
   function absorbV2Result(result) {
+    window._kernForSim = result.kernaussage || null;   // v2.21.2 (R6-01/02)
     simScenarios = normalizeScenarios(result.scenarios);
     // v2.12.0 (Paket E, R2-F05): gesperrte Bereiche liefern keine Hebel und keine Punkte
     try { simScenarios = filterScenariosForCare(simScenarios, careFromResult(result), result.bmi); } catch (e) { /* Szenarien bleiben */ }
@@ -3193,6 +3198,14 @@
         simActiveKeys = _best.question_keys.slice(0, 3);
         if (!getActiveProjection()) simActiveKeys = _prev;
       }
+    }
+
+    // v2.21.2 (R6-01/02): Vorbelegt werden nur Hebel ohne Vorrang – ein zurückgestellter Hebel ist kein Vorschlag fürs Ziel
+    if (!simGoalSaved && simActiveKeys.some(simBlockedReason)) {
+      const _prevK = simActiveKeys.slice();
+      simActiveKeys = simActiveKeys.filter(q => !simBlockedReason(q));
+      if (simActiveKeys.length && !getActiveProjection()) simActiveKeys = _prevK.filter(q => !simBlockedReason(q)).slice(0, 1);
+      if (simActiveKeys.length && !getActiveProjection()) simActiveKeys = [];
     }
 
     // v1.31.1 — Ebenen-Vorgabe: der Nutzer soll die Erkenntnis sehen, nicht
@@ -6641,7 +6654,7 @@
       const first = fp.length && fp[0].text ? escHtml(fp[0].text)
         : (S.worst ? getInsightNow(S.worst.key, S.worst.score, S.result && S.result.bmi, S.result) : "");
       if (first) step = `<div class="stage-first-step"><span>Dein erster Schritt</span>${first}</div>`;
-      if (simScenarios && !simGoalSaved) cta = `<button type="button" class="stage-btn-primary" onclick="goToGoal()">${ICO("target")} Mein Ziel festlegen</button>`;
+      if (simScenarios && !simGoalSaved && simHasGoalCandidate()) cta = `<button type="button" class="stage-btn-primary" onclick="goToGoal()">${ICO("target")} Mein Ziel festlegen</button>`;   // v2.21.2: nicht bei nur zurückgestellten Hebeln
     }
     const para = (s0 + s12 + s3).trim();
     if (!para && !step && !cta) return "";
@@ -7329,6 +7342,18 @@
     try { btn.parentNode.querySelectorAll("button").forEach(b => b.classList.toggle("on", b === btn)); } catch (e) {}
   }
   // Simulator-Etikett je Hebel – aus dem Planstatus der Edge (dieselbe Quelle wie Plan und Mail)
+  // v2.21.2 (R6-01/02): Hebel mit Vorrang (erst Erholung / erst Gespräch in der Praxis) sind kein Re-Check-Ziel.
+  // Dieselbe Regel wie simTagHtml; die Edge (edge-2026-10-24.35, set_goal) prüft sie beim Speichern noch einmal.
+  function simBlockedReason(qk) {
+    const k = window._kernForSim || (latestResult && latestResult.kernaussage);
+    if (!k) return "";
+    if ((k.deferredKeys || []).includes(qk)) return "erholung";
+    if (Number(k.fall) === 2 && /^alcohol_/.test(qk)) return "praxis";
+    return "";
+  }
+  function simBlockedActive() { return (simActiveKeys || []).filter(simBlockedReason); }
+  function simHasGoalCandidate() { return !!(simScenarios && simScenarios.levers.some(l => !simBlockedReason(l.question_key))); }
+
   function simTagHtml(qk) {
     const k = latestResult && latestResult.kernaussage;
     if (!k || !Array.isArray(k.used)) return "";
@@ -8959,6 +8984,13 @@
       if (savedKeys && savedKeys === curKeys && curKeys) {
         btn.disabled = true; btn.classList.add('saved');
         btn.textContent = '✓ Das ist dein gesetztes Ziel';
+      } else if (simBlockedActive().length) {
+        // v2.21.2 (R6-01/02): Auswahl enthält einen Hebel mit Vorrang – rechnen ja, als Ziel speichern nein
+        btn.classList.remove('saved');
+        btn.disabled = true;
+        btn.textContent = simBlockedActive().some(q => simBlockedReason(q) === "praxis")
+          ? 'Noch kein Ziel – erst das Gespräch in der Praxis'
+          : 'Noch kein Ziel – erst Erholung';
       } else {
         btn.classList.remove('saved');
         btn.disabled = !(proj && proj.entry);
@@ -9095,6 +9127,7 @@
   async function setSimulatorGoal() {
     const proj = getActiveProjection();
     if (!proj || !proj.entry || !latestResult?.public_code) return;
+    if (simBlockedActive().length) return;   // v2.21.2 (R6-01/02)
     const btn = document.getElementById('simGoalBtn');
     const activeLevers = simScenarios.levers.filter(l => simActiveKeys.includes(l.question_key));
     const scenario = {
@@ -9134,7 +9167,8 @@
     } catch (e) {
       const msg = e.message || '';
       let userMsg = 'Dein Ziel konnte nicht gespeichert werden — bitte versuche es gleich noch einmal.';
-      if (msg.includes('PIN_LOCKED')) userMsg = 'Zu viele Fehlversuche — bitte in 15 Minuten erneut versuchen.';
+      if (msg.includes('GOAL_DEFERRED')) userMsg = 'Dieser Hebel hat gerade keinen Vorrang – zuerst kommt die Erholung bzw. das Gespräch in deiner Hausarztpraxis. Als Ziel greifen wir ihn danach auf.';
+      else if (msg.includes('PIN_LOCKED')) userMsg = 'Zu viele Fehlversuche — bitte in 15 Minuten erneut versuchen.';
       else if (msg.includes('PIN_REQUIRED') || msg.includes('PIN_INVALID') || msg.includes('aktuellen Sitzung')) userMsg = 'Dein Ziel lässt sich hier nur mit deinem PIN speichern — ruf deine Auswertung über den Link in deiner E-Mail auf und setze das Ziel dort.';
       if (btn) { btn.disabled = false; btn.innerHTML = `${ICO("target")} Mein Ziel festlegen`; }
       const note = document.createElement('div');
@@ -9480,7 +9514,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.1</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.2</footer>
 
 
 </body>
