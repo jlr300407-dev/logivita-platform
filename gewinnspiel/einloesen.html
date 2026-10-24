@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gutschein einlösen | LeVita Empfang</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="img/levita-bildmarke.png">
+<style>
+@font-face{font-family:'Barlow';font-weight:400;font-display:swap;src:url(fonts/barlow-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Barlow';font-weight:600;font-display:swap;src:url(fonts/barlow-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Barlow';font-weight:700;font-display:swap;src:url(fonts/barlow-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Barlow Condensed';font-weight:800;font-display:swap;src:url(fonts/barlow-condensed-latin-800-normal.woff2) format('woff2')}
+:root{--braun:#482922;--braun-hell:#745E3D;--gruen:#A6D71C;--beige:#E8E0D0;--creme:#F6F2EA}
+*{box-sizing:border-box}
+body{margin:0;background:var(--creme);color:var(--braun);font-family:'Barlow',system-ui,sans-serif;font-size:17px}
+header{background:#fff;border-bottom:1px solid var(--beige)}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:14px;padding-bottom:14px}
+header img{height:40px;display:block}
+h1{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:38px;margin:28px 0 6px}
+p.sub{margin:0 0 22px;color:var(--braun-hell)}
+.karte{background:#fff;border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:14px;margin-bottom:18px}
+label{font-weight:600;font-size:15px;display:block;margin-bottom:6px}
+input{width:100%;min-height:50px;padding:0 14px;border:2px solid var(--beige);border-radius:10px;font:inherit;color:var(--braun)}
+input.code{font-size:26px;letter-spacing:3px;text-transform:uppercase;font-family:'Courier New',monospace;font-weight:700}
+input:focus-visible,button:focus-visible{outline:3px solid var(--gruen);outline-offset:2px}
+button{min-height:52px;border:none;border-radius:12px;font:inherit;font-weight:700;font-size:18px;cursor:pointer;padding:0 22px}
+.primaer{background:var(--gruen);color:var(--braun)}
+.sekundaer{background:var(--braun);color:#fff}
+.leise{background:transparent;color:var(--braun-hell);min-height:40px;font-size:15px;text-decoration:underline;padding:0}
+button:disabled{opacity:.55;cursor:default}
+.zeile{display:flex;gap:10px;flex-wrap:wrap}
+.zeile input{flex:1 1 240px}
+.meldung{border-radius:12px;padding:14px 16px;font-size:16px;line-height:1.45}
+.gut{background:#EEF7D4;border:2px solid var(--gruen)}
+.warn{background:#FBEDE8;color:#8A2A12}
+.info{background:var(--creme)}
+.gewinn{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:30px;line-height:1.1}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0}
+dt{color:var(--braun-hell)}dd{margin:0;font-weight:600}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="wrap"><img src="img/levita-bildmarke.png" alt="LeVita"><button class="leise" id="abmelden" hidden>Abmelden</button></div></header>
+<main class="wrap">
+<h1>Gutschein einlösen</h1>
+<p class="sub">Glücksrad Herbst 2026 · einlösbar bis 31.01.2027</p>
+
+<section class="karte" id="login" hidden>
+  <p style="margin:0">Bitte mit deinem Trainer-Zugang anmelden (wie im Trainer-Dashboard).</p>
+  <div><label for="mail">E-Mail</label><input id="mail" type="email" autocomplete="username"></div>
+  <div><label for="pw">Passwort</label><input id="pw" type="password" autocomplete="current-password"></div>
+  <button class="primaer" id="loginBtn">Anmelden</button>
+  <div class="meldung warn" id="loginFehler" hidden></div>
+</section>
+
+<section id="arbeit" hidden>
+  <div class="karte">
+    <div><label for="code">Gutscheincode</label>
+      <div class="zeile"><input id="code" class="code" placeholder="LV-XXXX-XXXX" autocomplete="off" spellcheck="false" maxlength="14"><button class="sekundaer" id="pruefenBtn">Prüfen</button></div>
+    </div>
+    <div class="meldung" id="ergebnis" hidden aria-live="polite"></div>
+    <button class="primaer" id="einloesenBtn" hidden>Jetzt als eingelöst markieren</button>
+  </div>
+  <p class="sub" style="font-size:15px">Bitte vor dem Einlösen den Namen mit der Person abgleichen – der Gutschein ist persönlich.</p>
+</section>
+</main>
+
+<script src="/assets/supabase-js@2.js"></script>
+<script>
+/* LeVita Empfang · Gutschein einlösen · 1.0.0 · 24.10.2026
+   Zugriff nur für Konten in trainer_roles (is_trainer()); die RPCs prüfen das in der Datenbank. */
+(function () {
+  var URL_ = 'https://koctweetotpqaazeicwj.supabase.co';
+  var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0';
+  var GEWINNE = { velusjet: '1 Anwendung VELUS JET', milon: '1 Monat milon-Training', vitalpaket: 'Vital-Paket',
+    kompression: '1 Anwendung Venen Engel oder REBOOTS', personaltraining: '1 Personaltraining',
+    manuelle_therapie: '1 manuelle Therapie', kurswoche: '1 Kurswoche', five: '1 Monat five' };
+  var sb = window.supabase.createClient(URL_, KEY);
+  var $ = function (id) { return document.getElementById(id); };
+  var aktuell = null;
+
+  function zeige(eingeloggt) { $('login').hidden = eingeloggt; $('arbeit').hidden = !eingeloggt; $('abmelden').hidden = !eingeloggt; if (eingeloggt) $('code').focus(); }
+  function datum(s) { return s ? new Date(s).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' }) : ''; }
+  function esc(s) { return String(s || '').replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function ergebnis(klasse, html) { var e = $('ergebnis'); e.className = 'meldung ' + klasse; e.innerHTML = html; e.hidden = false; }
+  function normCode(v) {
+    var s = String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (s.indexOf('LV') === 0) s = s.slice(2);
+    return s.length === 8 ? 'LV-' + s.slice(0, 4) + '-' + s.slice(4) : null;
+  }
+
+  sb.auth.getSession().then(function (r) { zeige(!!(r.data && r.data.session)); });
+
+  $('loginBtn').addEventListener('click', async function () {
+    $('loginFehler').hidden = true; this.disabled = true;
+    var r = await sb.auth.signInWithPassword({ email: $('mail').value.trim(), password: $('pw').value });
+    this.disabled = false;
+    if (r.error) { $('loginFehler').textContent = 'Anmeldung fehlgeschlagen. Bitte E-Mail und Passwort prüfen.'; $('loginFehler').hidden = false; return; }
+    $('pw').value = ''; zeige(true);
+  });
+  $('pw').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('loginBtn').click(); });
+  $('abmelden').addEventListener('click', async function () { await sb.auth.signOut(); aktuell = null; $('ergebnis').hidden = true; $('einloesenBtn').hidden = true; zeige(false); });
+
+  $('pruefenBtn').addEventListener('click', async function () {
+    $('einloesenBtn').hidden = true; aktuell = null;
+    var code = normCode($('code').value);
+    if (!code) return ergebnis('warn', 'Der Code hat das Format <strong>LV-XXXX-XXXX</strong>. Bitte noch einmal prüfen.');
+    $('code').value = code; this.disabled = true;
+    var r = await sb.rpc('gewinnspiel_code_pruefen', { p_code: code });
+    this.disabled = false;
+    if (r.error) return ergebnis('warn', 'Abfrage fehlgeschlagen: ' + esc(r.error.message));
+    var t = (r.data || [])[0];
+    if (!t) return ergebnis('warn', 'Code <strong>' + esc(code) + '</strong> nicht gefunden. Bitte Schreibweise prüfen. Falls du sicher bist: Ist dein Konto als Trainer freigeschaltet?');
+    var kopf = '<div class="gewinn">' + esc(GEWINNE[t.gewinn_key] || t.gewinn_key) + '</div><dl style="margin-top:10px"><dt>Name</dt><dd>' + esc(t.vorname) + ' ' + esc(t.nachname) + '</dd><dt>Teilgenommen</dt><dd>' + datum(t.teilgenommen_am) + '</dd>';
+    if (t.eingeloest_am) return ergebnis('warn', kopf + '<dt>Status</dt><dd>Bereits eingelöst am ' + datum(t.eingeloest_am) + '</dd></dl>');
+    if (Date.now() >= Date.parse('2027-01-31T23:00:00Z')) return ergebnis('warn', kopf + '<dt>Status</dt><dd>Einlösefrist abgelaufen (31.01.2027)</dd></dl>');
+    aktuell = code;
+    ergebnis('info', kopf + '<dt>Status</dt><dd>Gültig, noch nicht eingelöst</dd></dl>');
+    $('einloesenBtn').hidden = false;
+  });
+  $('code').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('pruefenBtn').click(); });
+
+  $('einloesenBtn').addEventListener('click', async function () {
+    if (!aktuell) return; this.disabled = true;
+    var r = await sb.rpc('gewinnspiel_einloesen', { p_code: aktuell });
+    this.disabled = false;
+    if (r.error) return ergebnis('warn', 'Einlösen fehlgeschlagen: ' + esc(r.error.message));
+    var t = (r.data || [])[0] || {};
+    this.hidden = true;
+    if (t.ok) {
+      ergebnis('gut', '<div class="gewinn">Eingelöst ✓</div><dl style="margin-top:10px"><dt>Gewinn</dt><dd>' + esc(GEWINNE[t.gewinn_key] || t.gewinn_key) + '</dd><dt>Name</dt><dd>' + esc(t.vorname) + ' ' + esc(t.nachname) + '</dd><dt>Zeitpunkt</dt><dd>' + datum(t.eingeloest_am) + '</dd></dl>');
+      aktuell = null; $('code').value = ''; $('code').focus();
+    } else {
+      ergebnis('warn', esc(t.meldung || 'Nicht eingelöst.'));
+    }
+  });
+})();
+</script>
+</body>
+</html>
