@@ -747,6 +747,9 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.21.4 (24.10.2026, R6-05/06): Wiederaufnahme-Banner verschwindet, sobald ein neuer Check gespeichert wird
+       (implizit "Neu beginnen"). Eingeklappte Phasen: "Anzeigen"/"Ausblenden". Simulator-Kicker "Simulation" statt
+       doppeltem Titel. Studio-Empfehlung bei Erholungsvorrang: "Erholung zuerst, Training danach".
        v2.21.3 (24.10.2026, R6-03/04): Vor der Freischaltung keine Gleichsetzung von Simulation und Plan: "Dein Plan: X und Y –
        zusätzlich freiwillig: Z" statt "Deine 3 Hebel … +7 Punkte"; Spinne und Potenzialkarte nennen die Summe aller Hebel
        ausdrücklich Simulation, Hebel tragen die Etiketten im Plan / freiwillig / später. "Plan für zwölf Wochen" ->
@@ -2267,6 +2270,7 @@
     .fp-later summary { cursor: pointer; font-size: 13px; color: var(--text-secondary); padding: 6px 0; list-style: none; }
     .fp-later summary::-webkit-details-marker { display: none; }
     .fp-later summary b { color: var(--text-primary); }
+    .fp-later[open] .fp-show, .fp-later:not([open]) .fp-hide { display: none; }   /* v2.21.4 (R6-06) */
     .plan-fb { background: var(--sunken); border-radius: var(--radius-sm); padding: 12px 14px; margin: 4px 0 18px; font-size: 13px; }
     .plan-fb-q { margin: 6px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
     .plan-fb-q span { flex: 1 1 220px; color: var(--text-primary); }
@@ -4462,6 +4466,9 @@
   function saveProgress() {
     if (window._isReviewMode) return;
     if (!selectedAnswers.length && !personalData.age) return;
+    // v2.21.4 (R6-05): Wer trotz Banner einen neuen Check beginnt, hat sich für "Neu beginnen" entschieden –
+    // der alte Zwischenstand wird gleich überschrieben, der Banner verschwindet.
+    if (document.getElementById('resumeBanner')) { dismissResume(); try { trackEvent('progress_discarded', { implicit: true }); } catch (e) {} }
     try {
       localStorage.setItem(PROGRESS_KEY, JSON.stringify({
         fp: questionsFingerprint(),
@@ -6303,7 +6310,12 @@
     } else if (worstAreaT3 === 'nutrition' && areaScoreT3('nutrition') < 45 && !['goal_weight', 'goal_fitness'].includes(goalKeyT3) && studioRec['signal_ernaehrung']) {
       studioKeyT3 = 'signal_ernaehrung';
     }
-    const rec2 = studioRec[studioKeyT3] || studioRec[goalKeyT3] || studioRec['default'] || ["Persönliche Begleitung", "Gemeinsam deine Auswertung einordnen und den passenden Einstieg finden."];
+    let rec2 = studioRec[studioKeyT3] || studioRec[goalKeyT3] || studioRec['default'] || ["Persönliche Begleitung", "Gemeinsam deine Auswertung einordnen und den passenden Einstieg finden."];
+    // v2.21.4 (R6-06): Steht Erholung vor Training (Kernaussage stellt Bewegung zurück), bietet das Studio zuerst
+    // das Gespräch über Erholung an – keine Trainingsrichtung, solange der Plan Training bewusst zurückstellt.
+    if (result.kernaussage && Array.isArray(result.kernaussage.deferredKeys) && result.kernaussage.deferredKeys.length) {
+      rec2 = ["Erholung zuerst, Training danach", "Im Gespräch schauen wir zuerst auf Schlaf und Erholung. Wann und wie du mit Training einsteigst, planen wir danach gemeinsam."];
+    }
     const rec2Benefits = (rec2[2] || []).slice(0, 3).map(b =>
       `<div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-top:6px;"><span style="color:var(--accent-green-text);">✓</span> ${b}</div>`
     ).join('');
@@ -7171,7 +7183,7 @@
             const prev = t => { const x = String(t || "").split(/(?<=[.!?])\s/)[0]; return x.length > 90 ? x.slice(0, 88).replace(/\s\S*$/, "") + " …" : x; };
             return `<div style="font-size:16px;font-weight:700;margin-bottom:12px;">Dein Start für die nächsten zwei Wochen</div>`
               + row(fp[0], 0, fp.length === 1)
-              + (fp.length > 1 ? `<details class="fp-later"><summary>${ICO("calendar")} <b>Danach: Woche 3 bis 12</b> – ${escHtml(prev(fp[1].text))} <span style="color:var(--accent-green-text);">Anzeigen</span></summary>
+              + (fp.length > 1 ? `<details class="fp-later"><summary>${ICO("calendar")} <b>Danach: Woche 3 bis 12</b> – ${escHtml(prev(fp[1].text))} <span class="fp-show" style="color:var(--accent-green-text);">Anzeigen</span><span class="fp-hide" style="color:var(--accent-green-text);">Ausblenden</span></summary>
                   ${fp.slice(1).map((f, j) => row(f, j + 1, j === fp.length - 2)).join("")}</details>` : "");
           })() : `<div style="font-size:16px;font-weight:700;margin-bottom:12px;">${S.goalTeaser ? `Für „${S.goalTeaser}“` : "Woche für Woche"}</div>
           ${fp.map((f, i) => `
@@ -8614,7 +8626,7 @@
     }
     return `
       <div class="sim-box" id="simBox">
-        <div class="sim-badge">✦ ${simKern ? 'Rechnerisch später möglich' : 'Was wäre wenn'}</div>
+        <div class="sim-badge">✦ ${simKern ? 'Simulation' : 'Was wäre wenn'}</div>
         ${outcomeHtml}
         <div class="sim-title">${outcomeHtml ? 'Dein nächster Hebel' : (simKern ? 'Rechnerisch später möglich' : 'Rechnerische Veränderung im Index')}</div>
         <div class="sim-sub">${outcomeHtml
@@ -9541,7 +9553,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.3</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.4</footer>
 
 
 </body>
