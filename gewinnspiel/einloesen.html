@@ -70,7 +70,7 @@ dt{color:var(--braun-hell)}dd{margin:0;font-weight:600}
 
 <script src="/assets/supabase-js@2.js"></script>
 <script>
-/* LeVita Empfang · Gutschein einlösen · 1.1.0 · 24.10.2026 (Hinweis auf Mehrfachteilnahmen)
+/* LeVita Empfang · Gutschein einlösen · 1.2.0 · 24.10.2026 (erster Gutschein gilt)
    Zugriff nur für Konten in trainer_roles (is_trainer()); die RPCs prüfen das in der Datenbank. */
 (function () {
   var URL_ = 'https://koctweetotpqaazeicwj.supabase.co';
@@ -120,15 +120,23 @@ dt{color:var(--braun-hell)}dd{margin:0;font-weight:600}
     aktuell = code;
     var weitere = t.weitere_teilnahmen || 0, weitereEin = t.weitere_eingeloest || 0;
     var btn = $('einloesenBtn');
-    if (weitereEin > 0) {
+    var regel = 'Laut Teilnahmebedingungen gilt bei Mehrfachteilnahme nur der zuerst erhaltene Gutschein – auch bei verschiedenen E-Mail-Adressen.';
+    if (t.ist_erster === false) {
+      var erster = esc(GEWINNE[t.erster_gewinn_key] || t.erster_gewinn_key) + ' vom ' + datum(t.erster_am) +
+        (t.erster_eingeloest_am ? ' (bereits eingelöst am ' + datum(t.erster_eingeloest_am) + ')' : ' (noch nicht eingelöst)');
+      ergebnis('warn', kopf + '<dt>Status</dt><dd>Nicht der erste Gutschein dieser Person</dd></dl>' +
+        '<p style="margin:12px 0 0"><strong>Achtung:</strong> Unter diesem Namen gibt es einen früheren Gutschein: <strong>' + erster + '</strong>. ' + regel +
+        ' Diesen Code bitte nicht einlösen – außer es ist sicher eine andere Person mit gleichem Namen.</p>');
+      btn.textContent = 'Trotzdem einlösen (andere Person)';
+    } else if (weitereEin > 0) {
       ergebnis('warn', kopf + '<dt>Status</dt><dd>Gültig, noch nicht eingelöst</dd></dl>' +
-        '<p style="margin:12px 0 0"><strong>Achtung:</strong> Für diesen Namen wurde bereits ein anderer Gutschein eingelöst. ' +
-        'Pro Person gilt nur ein Gutschein (auch bei verschiedenen E-Mail-Adressen). Nur einlösen, wenn es sicher eine andere Person mit gleichem Namen ist.</p>');
+        '<p style="margin:12px 0 0"><strong>Achtung:</strong> Für diesen Namen wurde bereits ein späterer Gutschein eingelöst. ' + regel +
+        ' Nur einlösen, wenn es sicher eine andere Person mit gleichem Namen ist.</p>');
       btn.textContent = 'Trotzdem einlösen (andere Person)';
     } else if (weitere > 0) {
-      ergebnis('info', kopf + '<dt>Status</dt><dd>Gültig, noch nicht eingelöst</dd></dl>' +
+      ergebnis('info', kopf + '<dt>Status</dt><dd>Gültig – das ist der erste Gutschein dieser Person</dd></dl>' +
         '<p style="margin:12px 0 0"><strong>Hinweis:</strong> Unter diesem Namen gibt es ' + weitere + ' weitere Teilnahme' + (weitere > 1 ? 'n' : '') +
-        '. Pro Person gilt nur ein Gutschein – bitte nur einen davon einlösen.</p>');
+        '. Diese Gutscheine sind ungültig.</p>');
       btn.textContent = 'Jetzt als eingelöst markieren';
     } else {
       ergebnis('info', kopf + '<dt>Status</dt><dd>Gültig, noch nicht eingelöst</dd></dl>');
