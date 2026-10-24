@@ -747,9 +747,11 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
-       v2.20.6 (24.10.2026): Paket V3 (Nachtest R4). Heldenkarte nach Freischaltung aus dem Wochenplan (Sofort/Danach),
-       „Worauf du achten kannst“ statt Wirkversprechen und an Alkohol-/Erholungsvorrang gekoppelt, Schlaf ohne feste Bettzeit,
-       Kraft-Einstieg wie im Plan, Simulator nennt alle zurückgestellten Trainingsarten, „+1 Punkt“.
+       v2.20.6 (24.10.2026): Funnel-Session bleibt beim Neuladen erhalten. Bisher entstand bei JEDEM Laden der Seite
+       eine neue Session-ID (nur im Arbeitsspeicher) – Neuladen, Zurück oder Rückkehr in den Facebook-/Instagram-Browser
+       zählten als neuer Besucher (Dashboard ~1,4× mehr Sessions als Meta-Link-Klicks). Jetzt liegt die ID im
+       sessionStorage des Tabs und gilt bis 30 Minuten ohne Aktivität. Neuer Tab/neuer Klick aus der Anzeige = neue Session.
+       Nur trackEvent/Session-Init geändert, sonst nichts.
        v2.20.5 (24.10.2026): Paket V2.2 (Nachtest R3). Erholungsvorrang aus den Antworten (Sofortkarte, Selbst-Tipp),
        Alkohol: Wochenkarte und Bereichstext mit Vorrang, ergänzender Hebel ohne Antwortkategorien, Hinweis in der
        Bereichskarte nur als Verweis, „1 Punkt“.
@@ -2739,8 +2741,8 @@
   const ALCOHOL_FIRST_TIP = "Beim Alkohol hat der Hinweis oben Vorrang. Notiere bis zum Gespräch eine Woche lang, an welchen Tagen und wie viele Gläser du trinkst (1 Glas = 0,3 l Bier, 0,125 l Wein oder 4 cl Schnaps).";
   // v2.20.5 (Paket V2.2, R3-02): Erholungsvorrang aus den Antworten – gleiche Regel wie Edge planCtxOf
   const RECOVERY_TIP_NOW = "Erholung zuerst: Solange Schlaf oder Tagesmüdigkeit auffällig sind, steigerst du deine Bewegung nicht. Behalte bei, was du jetzt machst, und notiere einmal pro Woche, wie erholt du aufwachst (1 bis 5).";
-  const RECOVERY_TIP_SOON = "Halte feste Schlafenszeiten, auch am Wochenende, und plane keine zusätzliche Trainingseinheit ein.";
-  const ALCOHOL_WEEK_TIP = "Vereinbare das Gespräch aus dem Hinweis oben und nimm deine Notizen zum Alkohol mit.";
+  const RECOVERY_TIP_SOON = "Diese Woche: Halte feste Schlafenszeiten, auch am Wochenende, und plane keine zusätzliche Trainingseinheit ein.";
+  const ALCOHOL_WEEK_TIP = "Diese Woche: Vereinbare das Gespräch aus dem Hinweis oben und nimm deine Notizen zum Alkohol mit.";
   function recoveryWeakOf(answers, score) {
     const d = (answers || []).find(x => x && x.question_key === "daytime_sleepiness");
     const sl = score && score.score_payload && score.score_payload.sleep && score.score_payload.sleep.score;
@@ -3514,8 +3516,9 @@
     try {
       if (window._isReviewMode) return;
       if (!window._funnelSessionId) {
-        window._funnelSessionId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+        window._funnelSessionId = funnelSessionInit();
       }
+      funnelSessionTouch();   // v2.20.6: Aktivität verlängert das 30-Minuten-Fenster
       if (typeof supabaseClient === 'undefined') return;
       const enriched = {
         ...meta,
@@ -3558,10 +3561,34 @@
     } catch(e) { /* silent */ }
   }
 
-  // Session-ID beim Laden generieren
+  // ⚠ NICHT ZURÜCKBAUEN (v2.20.6, 24.10.2026, Freigabe Jörg): funnelSessionInit/funnelSessionTouch
+  // sind die Grundlage der bereinigten Sessionzahlen im Funnel-Dashboard. Wer auf einer älteren
+  // Kopie arbeitet, muss diesen Block übernehmen – sonst zählt jedes Neuladen wieder als Besucher.
+  // v2.20.6: Session-ID überlebt Neuladen/Zurück im selben Tab (sessionStorage),
+  // läuft nach 30 Minuten ohne Aktivität ab. Ohne sessionStorage (z. B. gesperrt)
+  // verhält sich alles wie bisher: neue ID pro Laden.
+  function funnelSessionInit() {
+    const fresh = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    try {
+      const id = sessionStorage.getItem('levita_funnel_sid');
+      const ts = Number(sessionStorage.getItem('levita_funnel_sid_ts')) || 0;
+      if (id && /^[a-z0-9]{6,40}$/.test(id) && (Date.now() - ts) < 30 * 60 * 1000) return id;
+      sessionStorage.setItem('levita_funnel_sid', fresh);
+      sessionStorage.setItem('levita_funnel_sid_ts', String(Date.now()));
+    } catch (e) { /* sessionStorage nicht verfügbar: wie bisher */ }
+    return fresh;
+  }
+  function funnelSessionTouch() {
+    try {
+      if (sessionStorage.getItem('levita_funnel_sid') === window._funnelSessionId) {
+        sessionStorage.setItem('levita_funnel_sid_ts', String(Date.now()));
+      }
+    } catch (e) { /* egal */ }
+  }
+
   // Session-ID sofort beim Laden setzen
   if (!window._funnelSessionId) {
-    window._funnelSessionId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    window._funnelSessionId = funnelSessionInit();
   }
 
   // UTM-Parameter einmalig beim Laden erfassen (persistent für die gesamte Session)
@@ -5946,22 +5973,11 @@
         ${_D3.praxis ? `<div style="margin-top:14px;background:var(--sunken);border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.6;">
             ${ICO("bolt")} <strong style="color:var(--accent-green-text)">Sofort:</strong> ${escHtml(_D3.firstStep)}
             ${(!_D3.doctor && _D3.leverText) ? `<br><br>${ICO("calendar")} <strong style="color:var(--accent-amber-text)">Ergänzend, wenn es für dich passt:</strong> ${escHtml(_D3.leverText.replace(/^./, m => m.toUpperCase()))}.` : ``}
-          </div>` : worst ? (() => {
-            // v2.20.6 (Paket V3, R4-01/02/05): Liegt der Wochenplan vor, kommen „Sofort“ und „Danach“ aus denselben Bausteinen
-            const _fp = (window._unlockInfo && Array.isArray(window._unlockInfo.fahrplan) && window._unlockInfo.fahrplan.length)
-              ? window._unlockInfo.fahrplan : (Array.isArray(result.fahrplan) ? result.fahrplan : []);
-            const _ans = result.answers || [];
-            const _sign = alcoholCautionOf(_ans) ? "Du hast eine Woche lang notiert und das Gespräch in der Praxis vereinbart."
-              : (recoveryWeakOf(_ans, result.score) && ["strength_training", "activity_days"].some(k => Number((_ans.find(a => a.question_key === k) || {}).risk_points) >= 2))
-                ? "Du notierst einmal pro Woche, wie erholt du aufwachst – mehr Training ist gerade nicht das Ziel."
-                : HEBEL_SIGNS[worst.key];
-            const _now = _fp.length && _fp[0].text ? escHtml(_fp[0].text) : getInsightNow(worst.key, worst.score, result.bmi, result);
-            const _soon = _fp.length > 1 && _fp[1].text ? escHtml(_fp[1].text) : getInsightSoon(worst.key, worst.score, result.bmi, result);
-            return `<div style="margin-top:14px;background:var(--sunken);border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.6;">
-            ${ICO("bolt")} <strong style="color:var(--accent-green-text)">${_fp.length ? "Sofort (Woche 1–2):" : "Sofort:"}</strong> ${_now}<br><br>
-            ${ICO("calendar")} <strong style="color:var(--accent-amber-text)">${_fp.length > 1 ? "Danach (Woche 3–4):" : "Diese Woche:"}</strong> ${_soon}
-            ${_sign ? `<br><br>${ICO("search")} <strong style="color:var(--accent-blue-text)">Worauf du achten kannst:</strong> ${_sign}` : ``}
-          </div>`; })() : ``}
+          </div>` : worst ? `<div style="margin-top:14px;background:var(--sunken);border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.6;">
+            ${ICO("bolt")} <strong style="color:var(--accent-green-text)">Sofort:</strong> ${getInsightNow(worst.key, worst.score, result.bmi, result)}<br><br>
+            ${ICO("calendar")} <strong style="color:var(--accent-amber-text)">Diese Woche:</strong> ${getInsightSoon(worst.key, worst.score, result.bmi, result)}
+            ${HEBEL_SIGNS[worst.key] ? `<br><br>${ICO("search")} <strong style="color:var(--accent-blue-text)">Woran du es merkst:</strong> ${HEBEL_SIGNS[worst.key]}` : ``}
+          </div>` : ``}
       </div>`;
     if (window._shown) window._shown.focus = true;   // v1.34.2: der eine Ort für die Kernbotschaft
 
@@ -6636,7 +6652,7 @@
     const sleepS = Number(res?.score?.score_payload?.sleep?.score ?? 100);
     const recoveryWeak = sleepS < 50 || risk("daytime_sleepiness") >= 3;
     const NAMES = { activity_days: "aktive Tage", strength_training: "Krafttraining" };
-    const def = recoveryWeak ? ["strength_training", "activity_days"].filter(k => risk(k) >= 2 || levers.some(l => l.question_key === k)).map(k => NAMES[k]) : [];   // v2.20.6: wie Edge, aus den Antworten
+    const def = recoveryWeak ? levers.filter(l => NAMES[l.question_key]).map(l => NAMES[l.question_key]) : [];
     let t = `<strong>Reihenfolge im Vital-Plan:</strong> Hier siehst du, wie viele Punkte ein Hebel rechnerisch bringt. Dein Vital-Plan beginnt dagegen mit dem Hebel deines größten Ansatzpunkts – also mit dem, was zuerst dran ist, nicht automatisch mit dem größten Punktgewinn. Er greift höchstens zwei Hebel auf; alle weiteren kannst du freiwillig angehen, sie sind kein Teil des Plans.`;
     if (def.length) t += ` <strong>Zurückgestellt:</strong> ${escHtml(def.join(", "))} – solange Schlaf oder Tagesmüdigkeit auffällig sind, steht Erholung vor mehr Training. Die Punkte bleiben hier sichtbar, im Plan sind diese Hebel bewusst nicht enthalten.`;
     return `<div class="sim-note">${t}</div>`;
@@ -7668,18 +7684,17 @@
   // v1.47.0 — Hebel in drei Teilen (Tab 3): warum (Hero-Satz), so fängst du
   // an (Sofort / Diese Woche) und neu: woran du merkst, dass es wirkt. Bewusst
   // vorsichtig formuliert ("oft"), ohne Zahlen — Erfahrungswerte, keine Zusage.
-  // v2.20.6 (Paket V3, R4-02): Beobachtungspunkte statt Wirkversprechen
   const HEBEL_SIGNS = {
-    activity: "Achte darauf, ob dir Treppen und Wege nach einigen Wochen leichter fallen.",
-    sleep: "Achte darauf, wie erholt du morgens aufwachst und wie wach du dich am Nachmittag fühlst.",
-    nutrition: "Achte darauf, wie lange du satt bist und wie gleichmäßig sich deine Energie über den Tag verteilt.",
-    vitamin_d: "Achte darauf, ob dein Tag mehr Rhythmus bekommt.",
-    mental: "Achte darauf, wie schnell du abends zur Ruhe kommst.",
-    smoking: "Achte darauf, wie leicht dir Treppen und Wege fallen.",
-    alcohol: "Achte darauf, wie du schläfst und wie klar du morgens aufwachst.",
-    lifestyle: "Achte darauf, wie du schläfst und wie klar du morgens aufwachst.",
-    micronutrients: "Achte darauf, wie abwechslungsreich dein Teller ist.",
-    metabolic: "Achte darauf, wie gleichmäßig sich deine Energie über den Tag verteilt."
+    activity: "Oft schon nach zwei, drei Wochen fallen Treppen und Wege leichter, und abends bist du angenehm müde statt erschöpft.",
+    sleep: "Oft nach zwei, drei Wochen wachst du erholter auf, und der Nachmittag fühlt sich wacher an.",
+    nutrition: "Du bist länger satt, und deine Energie verteilt sich gleichmäßiger über den Tag.",
+    vitamin_d: "Dein Tag bekommt mehr Rhythmus — viele schlafen abends leichter ein.",
+    mental: "Du kommst abends schneller zur Ruhe, und Kleinigkeiten bringen dich seltener aus dem Takt.",
+    smoking: "Viele merken nach einigen Wochen, dass Treppen und Wege leichter fallen.",
+    alcohol: "Du schläfst tiefer und wachst morgens klarer auf.",
+    lifestyle: "Du schläfst tiefer und wachst morgens klarer auf.",
+    micronutrients: "Dein Teller wird bunter — und du weißt genauer, was du wirklich brauchst.",
+    metabolic: "Deine Energie verteilt sich gleichmäßiger über den Tag."
   };
 
   // v2.0.0 — opts.lockTips: Stufe 1 zeigt die Einordnung, die Schritte stehen
@@ -7798,14 +7813,14 @@
     const bmiIsLow = Number(bmiValue) < 18.5;
     if (key === "sleep") {
       const dur = getText("sleep_duration"); const lat = getRisk("sleep_latency"); const day = getRisk("daytime_sleepiness");
-      if (l === "low") { if (dur.includes("Weniger als 5") || dur.includes("5–6")) return "Heute eine ruhige Abendroutine festlegen und 30 Minuten vorher den Bildschirm ausschalten; morgen zur gleichen Zeit aufstehen und ins Bett gehen, wenn du müde bist."; if (lat >= 2) return "Entspannungsroutine vor dem Schlafen einbauen — kein Bildschirm, kein Handy."; return "Heute eine ruhige Abendroutine festlegen und 30 Minuten vorher den Bildschirm ausschalten; morgen zur gleichen Zeit aufstehen und ins Bett gehen, wenn du müde bist."; }
+      if (l === "low") { if (dur.includes("Weniger als 5") || dur.includes("5–6")) return "Heute feste Schlafenszeit wählen und 30 Min. vorher Bildschirm aus."; if (lat >= 2) return "Entspannungsroutine vor dem Schlafen einbauen — kein Bildschirm, kein Handy."; return "Heute feste Schlafenszeit wählen und 30 Min. vorher Bildschirm aus."; }
       if (l === "medium") { if (day >= 3 && !dur.includes("Weniger als 5") && !dur.includes("5–6")) return "Tagesmüdigkeit trotz ausreichend Schlaf — Schlafqualität, Stress oder Rhythmus prüfen."; if (lat >= 2) return "Einschlafroutine verbessern: kühl, dunkel, kein Bildschirm 30 Min. vorher."; return "Kurze Abendroutine festlegen — z.B. Tee, Lesen oder ruhiges Dehnen."; }
       return "Halte Zubettgeh- und Aufstehzeit auch am Wochenende innerhalb einer Stunde gleich.";
     }
     if (key === "activity" && recoveryWeakOf(ans, result?.score || latestResult?.score)) return RECOVERY_TIP_NOW;   // v2.20.5
     if (key === "activity") {
       const actDays = getRisk("activity_days"); const strength = getRisk("strength_training"); const sitting = getRisk("sitting_hours");
-      if (l === "low" || l === "medium") { if (bmiIsLow) return "Sanfte Alltagsbewegung wie kurze Spaziergänge — Fokus auf Energie und Regeneration."; if (actDays >= 3 && strength >= 3) return "Einen festen Trainingstag einplanen — 30 Minuten reichen als Einstieg."; if (actDays <= 1 && strength >= 3) return "Kraft als Einstieg: in den nächsten zwei Wochen einmal 20 Minuten Kraftübungen – Kniebeugen, Liegestütze (auch an der Wand), Rudern mit Band."; if (sitting >= 3) return "Stehpause alle 60–90 Minuten einbauen — kurz aufstehen und 2 Minuten bewegen."; return "Einen konkreten Bewegungstermin in den Kalender setzen — z. B. 20 Minuten zügig gehen, mit Uhr oder Handy rund 2.000 Schritte."; }
+      if (l === "low" || l === "medium") { if (bmiIsLow) return "Sanfte Alltagsbewegung wie kurze Spaziergänge — Fokus auf Energie und Regeneration."; if (actDays >= 3 && strength >= 3) return "Einen festen Trainingstag einplanen — 30 Minuten reichen als Einstieg."; if (actDays <= 1 && strength >= 3) return "Kraft ergänzen — 2 kurze Krafteinheiten pro Woche stärken Muskelmasse und Stoffwechsel."; if (sitting >= 3) return "Stehpause alle 60–90 Minuten einbauen — kurz aufstehen und 2 Minuten bewegen."; return "Einen konkreten Bewegungstermin in den Kalender setzen — z. B. 20 Minuten zügig gehen, mit Uhr oder Handy rund 2.000 Schritte."; }
       return "Halte deine Woche gemischt: mindestens zwei Einheiten Kraft, dazu Ausdauer und Alltagsbewegung – plane sie wie bisher fest ein.";
     }
     if (key === "nutrition") {
@@ -7856,7 +7871,7 @@
       if (l === "medium") return "Drei feste Mahlzeiten am Tag und zu jeder Mahlzeit ein großes Glas Wasser.";
       return "Notiere eine Woche lang abends mit einer Zahl von 1 bis 5, wie viel Energie du hattest – so siehst du, was dir guttut.";
     }
-    const m = { sleep:{ low:"Heute eine ruhige Abendroutine festlegen; morgens zur gleichen Zeit aufstehen.", medium:"Kurze Abendroutine festlegen.", good:"Halte Zubettgeh- und Aufstehzeit auch am Wochenende innerhalb einer Stunde gleich." }, activity:{ low:"Heute 10 Minuten zügig gehen — rund 1.000 Schritte.", medium:"Einen konkreten Bewegungstermin setzen.", good:"Halte deine Woche gemischt: mindestens zwei Einheiten Kraft, dazu Ausdauer und Alltagsbewegung – plane sie wie bisher fest ein." } };
+    const m = { sleep:{ low:"Heute feste Schlafenszeit wählen.", medium:"Kurze Abendroutine festlegen.", good:"Halte Zubettgeh- und Aufstehzeit auch am Wochenende innerhalb einer Stunde gleich." }, activity:{ low:"Heute 10 Minuten zügig gehen — rund 1.000 Schritte.", medium:"Einen konkreten Bewegungstermin setzen.", good:"Halte deine Woche gemischt: mindestens zwei Einheiten Kraft, dazu Ausdauer und Alltagsbewegung – plane sie wie bisher fest ein." } };
     return m[key]?.[getLevel(score)] || "Diese Kategorie gibt dir eine erste Orientierung.";
   }
 
@@ -8384,9 +8399,9 @@
           <div class="sim-lever-body">
             <div class="sim-lever-title">${icon} ${escHtml(short)}${l.area_label ? ` <span style="font-weight:500;color:var(--text-secondary);">· ${escHtml(l.area_key === "mental" ? "Stressbalance" : l.area_label)}</span>` : ''}${l.reason === 'goal' ? ` <span class="pill-goal">passt zu deinem Ziel</span>` : ''}</div>
             <div class="sim-lever-change">${escHtml(l.from_text)} → <strong style="color:var(--text-primary);">${escHtml(l.to_text)}</strong></div>
-            <div class="sim-lever-gain">+${fmtGain(l.gain)} ${fmtGain(l.gain) === "1" ? "Punkt" : "Punkte"}</div>
+            <div class="sim-lever-gain">+${fmtGain(l.gain)} Punkte</div>
             ${(typeof l.max_gain === 'number' && l.max_gain > l.gain + 0.05 && l.max_to_text)
-              ? `<div class="sim-lever-max">Der ganze Weg bis „${escHtml(l.max_to_text)}“: +${fmtGain(l.max_gain)} ${fmtGain(l.max_gain) === "1" ? "Punkt" : "Punkte"}</div>` : ''}
+              ? `<div class="sim-lever-max">Der ganze Weg bis „${escHtml(l.max_to_text)}“: +${fmtGain(l.max_gain)} Punkte</div>` : ''}
           </div>
           <div class="sim-switch"></div>
         </div>`;
