@@ -70,7 +70,7 @@ dt{color:var(--braun-hell)}dd{margin:0;font-weight:600}
 
 <script src="/assets/supabase-js@2.js"></script>
 <script>
-/* LeVita Empfang · Gutschein einlösen · 1.0.0 · 24.10.2026
+/* LeVita Empfang · Gutschein einlösen · 1.1.0 · 24.10.2026 (Hinweis auf Mehrfachteilnahmen)
    Zugriff nur für Konten in trainer_roles (is_trainer()); die RPCs prüfen das in der Datenbank. */
 (function () {
   var URL_ = 'https://koctweetotpqaazeicwj.supabase.co';
@@ -118,8 +118,23 @@ dt{color:var(--braun-hell)}dd{margin:0;font-weight:600}
     if (t.eingeloest_am) return ergebnis('warn', kopf + '<dt>Status</dt><dd>Bereits eingelöst am ' + datum(t.eingeloest_am) + '</dd></dl>');
     if (Date.now() >= Date.parse('2027-01-31T23:00:00Z')) return ergebnis('warn', kopf + '<dt>Status</dt><dd>Einlösefrist abgelaufen (31.01.2027)</dd></dl>');
     aktuell = code;
-    ergebnis('info', kopf + '<dt>Status</dt><dd>Gültig, noch nicht eingelöst</dd></dl>');
-    $('einloesenBtn').hidden = false;
+    var weitere = t.weitere_teilnahmen || 0, weitereEin = t.weitere_eingeloest || 0;
+    var btn = $('einloesenBtn');
+    if (weitereEin > 0) {
+      ergebnis('warn', kopf + '<dt>Status</dt><dd>Gültig, noch nicht eingelöst</dd></dl>' +
+        '<p style="margin:12px 0 0"><strong>Achtung:</strong> Für diesen Namen wurde bereits ein anderer Gutschein eingelöst. ' +
+        'Pro Person gilt nur ein Gutschein (auch bei verschiedenen E-Mail-Adressen). Nur einlösen, wenn es sicher eine andere Person mit gleichem Namen ist.</p>');
+      btn.textContent = 'Trotzdem einlösen (andere Person)';
+    } else if (weitere > 0) {
+      ergebnis('info', kopf + '<dt>Status</dt><dd>Gültig, noch nicht eingelöst</dd></dl>' +
+        '<p style="margin:12px 0 0"><strong>Hinweis:</strong> Unter diesem Namen gibt es ' + weitere + ' weitere Teilnahme' + (weitere > 1 ? 'n' : '') +
+        '. Pro Person gilt nur ein Gutschein – bitte nur einen davon einlösen.</p>');
+      btn.textContent = 'Jetzt als eingelöst markieren';
+    } else {
+      ergebnis('info', kopf + '<dt>Status</dt><dd>Gültig, noch nicht eingelöst</dd></dl>');
+      btn.textContent = 'Jetzt als eingelöst markieren';
+    }
+    btn.hidden = false;
   });
   $('code').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('pruefenBtn').click(); });
 
