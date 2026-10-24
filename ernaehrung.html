@@ -440,6 +440,8 @@
   #raw { white-space: pre-wrap; font: 11px/1.4 ui-monospace, Menlo, monospace; background: #050c17; padding: 10px; border-radius: 8px; max-height: 320px; overflow: auto; margin-top: 8px; }
   /* Entwickleransichten (Testleiste, Rohdaten): fester dunkler Grund, daher feste helle Schrift. */
   #raw, #testbar { color: #f0f4f8; --accent-amber-text: #f5a623; }
+  /* 1.2.2: Beispieltexte in Eingabefeldern deutlich als Beispiel erkennbar */
+  input::placeholder, textarea::placeholder { opacity: .45; font-style: italic; }
 </style>
 </head>
 <body>
@@ -500,7 +502,7 @@
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.2.1"; // 1.2.1: während des Kurzchecks keine zweiten Bewertungsknöpfe in den Schritt-Karten · // 1.2.0 (25.10.2026): Abschluss-Fenster „Deine nächsten 14 Tage“, Kurzcheck nach 14 Tagen (Link aus der Mail ohne PIN), Erinnerung nur mit Einwilligung
+  const FE_VERSION = "1.2.2"; // 1.2.2: Plan ohne „dann“ wird beim Anpassen ins Wenn-Feld übernommen; Beispieltexte mit „z. B.“ und blasser · // 1.2.1: während des Kurzchecks keine zweiten Bewertungsknöpfe in den Schritt-Karten · // 1.2.0 (25.10.2026): Abschluss-Fenster „Deine nächsten 14 Tage“, Kurzcheck nach 14 Tagen (Link aus der Mail ohne PIN), Erinnerung nur mit Einwilligung
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
@@ -1064,14 +1066,17 @@
   // of effects and processes. Advances in Experimental Social Psychology, 38, 69–119 (94 Studien, d = 0,65).
   function splitIfThen(t) {
     const m = String(t || "").match(/^\s*wenn\s+(.+?),?\s+dann\s+(.+?)\.?\s*$/i);
-    return m ? [m[1], m[2]] : ["", ""];
+    if (m) return [m[1], m[2]];
+  // 1.2.2: alter Plan ohne „dann“ → komplett ins Wenn-Feld, damit nichts verloren geht
+  const rest = String(t || "").trim().replace(/^wenn\s+/i, "").replace(/[.]+$/, "");
+  return [rest, ""];
   }
   function ifThenFields(key, prefill = "") {
     const [w, d] = splitIfThen(prefill);
     return `<div class="field">
         <label>Dein Plan in zwei Teilen</label>
-        <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px"><strong style="min-width:48px">Wenn</strong><input type="text" style="flex:1" id="itw-${esc(key)}" maxlength="140" value="${esc(w)}" placeholder="ich freitags nach der Arbeit nach Hause komme,"></div>
-        <div style="display:flex;gap:10px;align-items:center"><strong style="min-width:48px">dann</strong><input type="text" style="flex:1" id="itd-${esc(key)}" maxlength="140" value="${esc(d)}" placeholder="stelle ich mir eine Schorle kalt statt eines Biers."></div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px"><strong style="min-width:48px">Wenn</strong><input type="text" style="flex:1" id="itw-${esc(key)}" maxlength="140" value="${esc(w)}" placeholder="z. B. ich freitags nach der Arbeit nach Hause komme"></div>
+        <div style="display:flex;gap:10px;align-items:center"><strong style="min-width:48px">dann</strong><input type="text" style="flex:1" id="itd-${esc(key)}" maxlength="140" value="${esc(d)}" placeholder="z. B. stelle ich mir eine Schorle kalt"></div>
       </div>
       <details class="small" style="margin:2px 0 12px"><summary style="cursor:pointer;font-weight:600">So geht's – und warum es hilft</summary>
         <p style="margin:8px 0 6px"><strong>Wenn:</strong> eine Situation, die in deiner Woche sicher vorkommt – mit Zeitpunkt oder Ort, z. B. „Wenn ich mittags in die Kantine gehe“. <strong>Dann:</strong> ein Handgriff, den du genau in diesem Moment tun kannst, z. B. „nehme ich zuerst den Salat“. Kein Vorsatz wie „weniger essen“ oder „fitter werden“, sondern etwas, das man von außen sehen könnte.</p>
