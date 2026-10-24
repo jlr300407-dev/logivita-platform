@@ -29,6 +29,10 @@
   Aufruf mit ?code=LEV-2026-000123 füllt die Pilot-ID vor.
 
   Versionen:
+  1.1.0 (24.10.2026) Wunsch Jörg: Wenn-dann-Plan in zwei Feldern ("Wenn …" / "dann …") mit Anleitung und Begründung
+  (Gollwitzer & Sheeran 2006, Meta-Analyse 94 Studien); "Plan anpassen" bei gestarteten Schritten; neue Karte "Wie es
+  weitergeht" (zwei Wochen umsetzen, über Mein Bereich zurückkommen und einschätzen, dann neue Ziele). Gehört zu
+  nutrition-edge-2026-10-24.5 (Ziel aus dem Vital-Check wird übernommen).
   1.0.1 (18.10.2026) W4 (Systemtest): Link "So funktioniert die Anmeldung" bricht nicht mehr um
         (white-space:nowrap, role=button). Ursache des Befunds: Der zweizeilige Link hatte seine
         Mitte zwischen den beiden Textstücken — ein Klick/Tipp dorthin traf den Absatz, nicht den Link.
@@ -495,7 +499,7 @@
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.0.1";
+  const FE_VERSION = "1.1.0";
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
@@ -605,7 +609,7 @@
       REQUEST_FAILED: "Die Rückrufbitte konnte gerade nicht gespeichert werden. Versuche es gleich noch einmal oder melde dich direkt im Studio.",
       AGE: "Der Ernährungs-Check richtet sich an Erwachsene ab 18 Jahren.",
       MAX_ACTIVE: "Höchstens drei Schritte gleichzeitig. Sobald einer im Alltag angekommen ist, kannst du nachlegen.",
-      IF_THEN: "Schreib deinen Plan als kurzen Satz: „Wenn …, dann …“.",
+      IF_THEN: "Bitte fülle beide Teile aus: wann oder wo (Wenn …) und was du dann genau tust (dann …).",
       DOCTOR_CONFIRM: "Bitte bestätige zuerst, dass du die Tipps mit deiner Ärztin oder deinem Arzt besprochen hast.",
       NO_EMAIL: "Zu deinem Check haben wir keine Mailadresse. Sprich uns gern im Studio an.",
       FEEDBACK_EMPTY: "Gib eine Bewertung oder ein paar Worte an.",
@@ -1054,6 +1058,32 @@
   const HELP = [["gespraech", "Persönliches Gespräch"], ["rueckmeldung", "Regelmäßige Rückmeldung"], ["koerperanalyse", "Körperanalyse"],
     ["plan", "Individueller Plan"], ["erinnerung", "Erinnerung"], ["keine", "Keine zusätzliche Unterstützung"]];
 
+  // 1.1.0 (24.10.2026): Wenn-dann-Plan in zwei Feldern mit Anleitung und Begründung.
+  // Quelle: Gollwitzer, P. M. & Sheeran, P. (2006). Implementation intentions and goal achievement: A meta-analysis
+  // of effects and processes. Advances in Experimental Social Psychology, 38, 69–119 (94 Studien, d = 0,65).
+  function splitIfThen(t) {
+    const m = String(t || "").match(/^\s*wenn\s+(.+?),?\s+dann\s+(.+?)\.?\s*$/i);
+    return m ? [m[1], m[2]] : ["", ""];
+  }
+  function ifThenFields(key, prefill = "") {
+    const [w, d] = splitIfThen(prefill);
+    return `<div class="field">
+        <label>Dein Plan in zwei Teilen</label>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px"><strong style="min-width:48px">Wenn</strong><input type="text" style="flex:1" id="itw-${esc(key)}" maxlength="140" value="${esc(w)}" placeholder="ich freitags nach der Arbeit nach Hause komme,"></div>
+        <div style="display:flex;gap:10px;align-items:center"><strong style="min-width:48px">dann</strong><input type="text" style="flex:1" id="itd-${esc(key)}" maxlength="140" value="${esc(d)}" placeholder="stelle ich mir eine Schorle kalt statt eines Biers."></div>
+      </div>
+      <details class="small" style="margin:2px 0 12px"><summary style="cursor:pointer;font-weight:600">So geht's – und warum es hilft</summary>
+        <p style="margin:8px 0 6px"><strong>Wenn:</strong> eine Situation, die in deiner Woche sicher vorkommt – mit Zeitpunkt oder Ort, z. B. „Wenn ich mittags in die Kantine gehe“. <strong>Dann:</strong> ein Handgriff, den du genau in diesem Moment tun kannst, z. B. „nehme ich zuerst den Salat“. Kein Vorsatz wie „weniger essen“ oder „fitter werden“, sondern etwas, das man von außen sehen könnte.</p>
+        <p style="margin:0"><strong>Warum:</strong> Ein Vorsatz allein muss im entscheidenden Moment erst wieder einfallen und neu entschieden werden – oft dann, wenn man müde oder abgelenkt ist. Mit einem Wenn-dann-Plan triffst du die Entscheidung vorher; die Situation erinnert dich dann von selbst an die Handlung. In einer Auswertung von 94 Studien erreichten Menschen mit solchen Plänen ihre Ziele deutlich häufiger als mit einem Vorsatz allein (Gollwitzer &amp; Sheeran, 2006).</p>
+      </details>`;
+  }
+  function readIfThen(key) {
+    const clean = (s, re) => String(s || "").trim().replace(re, "").replace(/[.,;:]+$/, "").trim();
+    const w = clean(document.getElementById("itw-" + key)?.value, /^wenn\s+/i);
+    const d = clean(document.getElementById("itd-" + key)?.value, /^dann\s+/i);
+    return (w.length >= 3 && d.length >= 3) ? `Wenn ${w}, dann ${d}.` : "";
+  }
+
   function stepCard(r, x) {
     const [lbl, cls] = STATE_LABEL[x.state] || [x.state, "s-v"];
     const needDoc = r.doctor_required && !r.doctor_confirmed_at;
@@ -1065,12 +1095,12 @@
       ${(r.result?.step_hints || r.result?.hints || []).filter((hn) => hn.lever_key === x.lever_key).map((hn) => `<p class="muted" style="border-left:3px solid var(--accent-blue);padding-left:10px;margin:6px 0 10px"><strong>${esc(hn.title)}</strong><br>${esc(hn.body)}</p>`).join("")}
       ${x.state === "vorgemerkt" ? `
         ${needDoc ? `<p class="muted" style="color:var(--accent-amber-text);margin-bottom:8px">Vor Umsetzung ärztlich klären.</p>` : ""}
-        <div class="field"><label for="it-${esc(x.lever_key)}">Dein Plan: „Wenn …, dann …“</label>
-          <textarea id="it-${esc(x.lever_key)}" maxlength="300" placeholder="Wenn ich …, dann …"></textarea>
-          ${ex.length ? `<div class="small" style="margin-top:6px">Zum Beispiel: ${ex.map(esc).join(" · ")}</div>` : ""}</div>
+        ${ifThenFields(x.lever_key)}
+        ${ex.length ? `<div class="small" style="margin:-4px 0 10px">Beispiele zu diesem Schritt: ${ex.map(esc).join(" · ")}</div>` : ""}
         ${needDoc ? `<label class="consent-box"><input type="checkbox" id="dc-${esc(x.lever_key)}"><span>Ich habe die Tipps mit meiner Ärztin oder meinem Arzt besprochen. <span class="small">Das ist meine eigene Angabe, keine medizinische Freigabe.</span></span></label>` : ""}
         <div class="row"><button class="btn" data-act="start">Schritt starten</button><button class="btn ghost" data-act="unmark">Herausnehmen</button></div>`
       : `<div class="ifthen">${esc(x.if_then_text || "")}</div>
+        ${x.state === "gestartet" ? `<details class="small" style="margin:-4px 0 12px"><summary style="cursor:pointer;font-weight:600">Plan anpassen</summary><div style="margin-top:10px">${ifThenFields(x.lever_key, x.if_then_text)}<button class="btn ghost" data-act="start">Plan speichern</button></div></details>` : ""}
         <div class="row">${x.state === "gestartet"
           ? '<button class="btn" data-act="arrive">Klappt inzwischen meistens</button><button class="btn ghost" data-act="unmark">Herausnehmen</button>'
           : '<button class="btn ghost" data-act="back">Klappt doch noch nicht</button>'}</div>`}
@@ -1095,6 +1125,13 @@
       ${msg ? `<div class="card warn"><p>${esc(msg)}</p></div>` : ""}
       ${needDoc && r.clearance_text ? `<div class="card warn"><h3>${esc(r.clearance_text.title)}</h3><p class="muted">${esc(r.clearance_text.body)}</p></div>` : ""}
       ${steps.map((x) => stepCard(r, x)).join("") || '<div class="card"><p class="muted">Noch kein Schritt gewählt.</p></div>'}
+      ${steps.some((x) => x.state !== "vorgemerkt") ? `
+      <div class="card">
+        <h2>Wie es weitergeht</h2>
+        <p class="muted" style="margin-bottom:8px"><strong>Die nächsten zwei Wochen:</strong> Setz deine Pläne im Alltag um. Der Kühlschrank-Zettel weiter unten hilft dir beim Abhaken.</p>
+        <p class="muted" style="margin-bottom:8px"><strong>Danach kommst du zurück</strong> – ${r.account?.in_account || st.acct ? 'über <a href="konto.html">Mein Bereich</a>' : "über Mein Bereich, wenn du unten ein Konto anlegst, sonst auf dieser Seite mit Pilot-ID und PIN"} – und schätzt ein: Klappt ein Schritt meistens, tippst du „Klappt inzwischen meistens“. Klappt er noch nicht, passt du deinen Plan an oder nimmst den Schritt heraus.</p>
+        <p class="muted" style="margin:0"><strong>Dann setzt du neue Ziele:</strong> Für jeden Schritt, der angekommen ist, kannst du einen neuen dazunehmen – höchstens drei gleichzeitig.</p>
+      </div>` : ""}
 
       ${steps.some((x) => x.state !== "vorgemerkt") ? `
       <div class="card">
@@ -1142,7 +1179,8 @@
         const action = b.dataset.act;
         const extra = { lever_key: key, action };
         if (action === "start") {
-          extra.if_then = (document.getElementById("it-" + key)?.value || "").trim();
+          extra.if_then = readIfThen(key); // 1.1.0
+          if (!extra.if_then) { card.querySelector("[data-err]").textContent = errorText("IF_THEN"); return; }
           const dc = document.getElementById("dc-" + key);
           if (dc) extra.doctor_confirmed = dc.checked;
         }
