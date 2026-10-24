@@ -305,6 +305,7 @@
   @media print {
     body { background: #fff !important; color: #111 !important; padding: 0; }
     .wrap > *:not(#fridge) { display: none !important; }
+    #round-modal { display: none !important; }
     /* 0.6.3 — Zettel im LeVITA-Auftritt: Logo, ein Gruen-Akzent, Wochen beschriftet. Tintensparend. */
     #fridge { display: block !important; font-family: 'DM Sans', Arial, sans-serif; color: #13263B; padding: 6mm 9mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     #fridge .f-head { display: flex; align-items: center; justify-content: space-between; gap: 6mm; padding-bottom: 3mm; margin-bottom: 4mm; border-bottom: 0.6mm solid #097240; }
@@ -499,7 +500,7 @@
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.1.0";
+  const FE_VERSION = "1.2.0"; // 1.2.0 (25.10.2026): Abschluss-Fenster „Deine nächsten 14 Tage“, Kurzcheck nach 14 Tagen (Link aus der Mail ohne PIN), Erinnerung nur mit Einwilligung
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
@@ -519,7 +520,7 @@
   document.getElementById("fe-version").textContent = FE_VERSION;
 
   // Zustand — die PIN bleibt nur im Speicher dieser Seite
-  const st = { code: (params.get("code") || "").trim().toUpperCase(), pin: "", acct: null, data: null, answers: {}, partIdx: 0, parts: [], choice: [], canChoose: false };
+  const st = { code: (params.get("code") || "").trim().toUpperCase(), pin: "", acct: null, ctoken: null, fromLink: false, data: null, answers: {}, partIdx: 0, parts: [], choice: [], canChoose: false };
   const isIntroPhase = (r) => (r || st.data || {}).phase === "einfuehrung";
   const INTRO_NOTE = "Kostenlos in der aktuellen Einführungsphase.";
 
@@ -584,7 +585,7 @@
     const res = await fetch(FUNCTION_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${auth}` },
-      body: JSON.stringify({ mode, public_code: st.code, ...(st.pin ? { pin: st.pin } : {}), ...(INTERNAL ? { internal: true } : {}), ...extra }),
+      body: JSON.stringify({ mode, public_code: st.code, ...(st.pin ? { pin: st.pin } : {}), ...(st.ctoken ? { checkin_token: st.ctoken } : {}), ...(INTERNAL ? { internal: true } : {}), ...extra }),
     });
     let json; try { json = await res.json(); } catch { json = { success: false, error: "Keine gültige Antwort vom Server." }; }
     json._http = res.status;
@@ -614,7 +615,7 @@
       NO_EMAIL: "Zu deinem Check haben wir keine Mailadresse. Sprich uns gern im Studio an.",
       FEEDBACK_EMPTY: "Gib eine Bewertung oder ein paar Worte an.",
       STEP_UNKNOWN: "Diesen Schritt gibt es in deinem Ergebnis nicht.",
-      STEP_STATE: "Das geht bei diesem Schritt gerade nicht.",
+      STEP_STATE: "Das geht bei diesem Schritt gerade nicht.", LINK_INVALID: "Der Link aus der Mail ist abgelaufen oder ungültig. Melde dich mit Pilot-ID und PIN an – oder über Mein Bereich.", RATING: "Bitte wähle eine der drei Antworten.",
     })[e] || "Da ist etwas schiefgegangen. Bitte versuche es gleich noch einmal.";
   }
 
@@ -1100,7 +1101,7 @@
         ${needDoc ? `<label class="consent-box"><input type="checkbox" id="dc-${esc(x.lever_key)}"><span>Ich habe die Tipps mit meiner Ärztin oder meinem Arzt besprochen. <span class="small">Das ist meine eigene Angabe, keine medizinische Freigabe.</span></span></label>` : ""}
         <div class="row"><button class="btn" data-act="start">Schritt starten</button><button class="btn ghost" data-act="unmark">Herausnehmen</button></div>`
       : `<div class="ifthen">${esc(x.if_then_text || "")}</div>
-        ${x.state === "gestartet" ? `<details class="small" style="margin:-4px 0 12px"><summary style="cursor:pointer;font-weight:600">Plan anpassen</summary><div style="margin-top:10px">${ifThenFields(x.lever_key, x.if_then_text)}<button class="btn ghost" data-act="start">Plan speichern</button></div></details>` : ""}
+        ${x.state === "gestartet" ? `<details class="small" style="margin:-4px 0 12px" ${needsAdjust(r, x) ? "open" : ""}><summary style="cursor:pointer;font-weight:600">Plan anpassen</summary><div style="margin-top:10px">${ifThenFields(x.lever_key, x.if_then_text)}<button class="btn ghost" data-act="start">Plan speichern</button></div></details>` : ""}
         <div class="row">${x.state === "gestartet"
           ? '<button class="btn" data-act="arrive">Klappt inzwischen meistens</button><button class="btn ghost" data-act="unmark">Herausnehmen</button>'
           : '<button class="btn ghost" data-act="back">Klappt doch noch nicht</button>'}</div>`}
@@ -1124,13 +1125,15 @@
         : "Mach aus deinem Schritt einen kurzen Plan und starte. Ein Schritt, der hält, bringt mehr als drei, die nach zwei Wochen wegbrechen."}</p>
       ${msg ? `<div class="card warn"><p>${esc(msg)}</p></div>` : ""}
       ${needDoc && r.clearance_text ? `<div class="card warn"><h3>${esc(r.clearance_text.title)}</h3><p class="muted">${esc(r.clearance_text.body)}</p></div>` : ""}
-      ${steps.map((x) => stepCard(r, x)).join("") || '<div class="card"><p class="muted">Noch kein Schritt gewählt.</p></div>'}
+      ${kurzcheckHtml(r)}
+    ${steps.map((x) => stepCard(r, x)).join("") || '<div class="card"><p class="muted">Noch kein Schritt gewählt.</p></div>'}
       ${steps.some((x) => x.state !== "vorgemerkt") ? `
       <div class="card">
         <h2>Wie es weitergeht</h2>
         <p class="muted" style="margin-bottom:8px"><strong>Die nächsten zwei Wochen:</strong> Setz deine Pläne im Alltag um. Der Kühlschrank-Zettel weiter unten hilft dir beim Abhaken.</p>
-        <p class="muted" style="margin-bottom:8px"><strong>Danach kommst du zurück</strong> – ${r.account?.in_account || st.acct ? 'über <a href="konto.html">Mein Bereich</a>' : "über Mein Bereich, wenn du unten ein Konto anlegst, sonst auf dieser Seite mit Pilot-ID und PIN"} – und schätzt ein: Klappt ein Schritt meistens, tippst du „Klappt inzwischen meistens“. Klappt er noch nicht, passt du deinen Plan an oder nimmst den Schritt heraus.</p>
+        <p class="muted" style="margin-bottom:8px"><strong>Danach kommst du zurück</strong> – ${r.account?.in_account || st.acct ? 'über <a href="konto.html">Mein Bereich</a>' : "über Mein Bereich, wenn du unten ein Konto anlegst, sonst auf dieser Seite mit Pilot-ID und PIN"} – zum Kurzcheck und schätzt jeden Schritt mit einem Klick ein: klappt meistens, teilweise oder noch nicht. Was noch hakt, passt du an oder nimmst es heraus.</p>
         <p class="muted" style="margin:0"><strong>Dann setzt du neue Ziele:</strong> Für jeden Schritt, der angekommen ist, kannst du einen neuen dazunehmen – höchstens drei gleichzeitig.</p>
+      ${checkinInfoHtml(r)}
       </div>` : ""}
 
       ${steps.some((x) => x.state !== "vorgemerkt") ? `
@@ -1178,6 +1181,7 @@
       card.querySelectorAll("[data-act]").forEach((b) => b.onclick = async () => {
         const action = b.dataset.act;
         const extra = { lever_key: key, action };
+        const wasMarked = (steps.find((s) => s.lever_key === key) || {}).state === "vorgemerkt"; // 1.2.0
         if (action === "start") {
           extra.if_then = readIfThen(key); // 1.1.0
           if (!extra.if_then) { card.querySelector("[data-err]").textContent = errorText("IF_THEN"); return; }
@@ -1190,6 +1194,8 @@
         if (!res.success) { card.querySelector("[data-err]").textContent = errorText(res.error); return; }
         const newState = { start: "gestartet", arrive: "angekommen", back: "gestartet", unmark: "beendet" }[action];
         track("nutri_step_state", { step_key: key, state: newState, doctor_confirmed: action === "start" ? !!extra.doctor_confirmed : undefined });
+        // 1.2.0: letzter vorgemerkter Schritt gestartet → Abschluss-Fenster
+        if (action === "start" && wasMarked && !(res.self_steps || []).some((s) => s.state === "vorgemerkt")) { screenSteps(res); return openRoundModal(res); }
         screenSteps(res);
       });
     });
@@ -1231,6 +1237,7 @@
       };
     }
     bindProgram(r);
+    bindKurzcheck(r); // 1.2.0
     document.getElementById("b-all").onclick = () => screenResult(r);
     // Konto freiwillig (konto.js 1.1.0 ohne required → mit „Ohne Konto weiter“)
     if (window.LeVitaKonto && !isDemo() && st.pin && !r.account?.in_account) {
@@ -1243,7 +1250,174 @@
     }
   }
 
-  function programHtml(r) {
+  // ── 1.2.0 (25.10.2026): Kurzcheck nach 14 Tagen ──────────────────────
+// Abschluss-Fenster „Deine nächsten 14 Tage“ (Pläne, Zettel, Kalender, Erinnerung nur mit Einwilligung),
+// Kurzcheck-Karte mit drei Antworten je Schritt, Link aus der Erinnerungsmail ohne PIN (30 Tage gültig).
+const KURZ_LABEL = { meistens: "Klappt meistens", teilweise: "Klappt teilweise", noch_nicht: "Klappt noch nicht" };
+const KURZ_OUTCOME = {
+  meistens: "Im Alltag angekommen. Du kannst jetzt einen neuen Schritt dazunehmen.",
+  teilweise: "Ein Anfang. Schau dir unten bei „Plan anpassen“ an: Kommt die Wenn-Situation wirklich jede Woche vor? Ist das Dann klein genug?",
+  noch_nicht: "Passiert. Mach den Plan kleiner oder einfacher – oder nimm den Schritt heraus und wähle einen anderen.",
+};
+const fmtDay = (d) => new Date(d).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
+function ratedThisRound(r, x) {
+  if (!x.rated_at || !x.last_rating) return false;
+  const start = r.checkin && r.checkin.started_at ? new Date(r.checkin.started_at).getTime() : 0;
+  return new Date(x.rated_at).getTime() >= start;
+}
+function needsAdjust(r, x) {
+  return x.state === "gestartet" && ["teilweise", "noch_nicht"].includes(x.last_rating) && ratedThisRound(r, x);
+}
+function kurzcheckDue(r) {
+  const c = r.checkin;
+  return st.fromLink || !!(c && new Date(c.due_at).getTime() <= Date.now());
+}
+function kurzcheckHtml(r) {
+  if (!kurzcheckDue(r)) return "";
+  const steps = (r.self_steps || []).filter((x) => x.state === "gestartet" || (x.state === "angekommen" && ratedThisRound(r, x)));
+  if (!steps.length) return "";
+  const allRated = steps.every((x) => ratedThisRound(r, x));
+  return `<div class="card top" id="kurzcheck">
+    <h2>Dein Kurzcheck</h2>
+    <p class="muted" style="margin-bottom:10px">Zwei Wochen sind um. Wie laufen deine Schritte? Ein Klick pro Schritt.</p>
+    ${steps.map((x) => {
+      const done = ratedThisRound(r, x);
+      return `<div style="border-top:1px solid var(--border, rgba(127,127,127,.25));padding:12px 0 4px">
+        <strong>${esc(leverTitle(r, x.lever_key))}</strong>
+        ${x.if_then_text ? `<div class="small" style="margin:2px 0 8px">${esc(x.if_then_text)}</div>` : ""}
+        <div class="row" style="flex-wrap:wrap;gap:8px;margin:0">${Object.keys(KURZ_LABEL).map((k) =>
+          `<button type="button" class="btn ${done && x.last_rating === k ? "" : "ghost"}" style="padding:9px 14px;font-size:14px;white-space:nowrap;width:auto;min-height:0" data-krate="${esc(x.lever_key)}|${k}">${KURZ_LABEL[k]}</button>`).join("")}</div>
+        ${done ? `<p class="muted" style="margin:8px 0 0">${esc(KURZ_OUTCOME[x.last_rating] || "")}</p>` : ""}
+        <div class="error" data-kerr="${esc(x.lever_key)}"></div>
+      </div>`;
+    }).join("")}
+    ${allRated ? `<p class="muted" style="margin:12px 0 8px"><strong>Fertig eingeschätzt.</strong> Nimm bei Bedarf unten einen neuen Schritt dazu, dann starte deine nächsten 14 Tage – mit neuem Zettel.</p>
+    <button class="btn block" id="b-newround">Nächste 14 Tage starten</button>` : ""}
+  </div>`;
+}
+function checkinInfoHtml(r) {
+  const c = r.checkin;
+  const started = (r.self_steps || []).some((x) => x.state === "gestartet");
+  if (c && c.status === "scheduled" && new Date(c.due_at).getTime() > Date.now()) {
+    return `<p class="muted" style="margin:8px 0 0"><strong>Dein Kurzcheck:</strong> ${esc(fmtDay(c.due_at))} – ${c.remind
+      ? "wir erinnern dich per E-Mail. Abbestellen kannst du über den Link in der Mail."
+      : "ohne Erinnerungsmail. Trag ihn dir am besten in den Kalender."}</p>`;
+  }
+  if (!c && started) return `<button class="btn ghost block" id="b-round" style="margin-top:12px">Deine 14 Tage starten</button>`;
+  return "";
+}
+function icsHref(dueDate) {
+  const d = new Date(dueDate);
+  const ymd = (x) => `${x.getFullYear()}${String(x.getMonth() + 1).padStart(2, "0")}${String(x.getDate()).padStart(2, "0")}`;
+  const next = new Date(d.getTime() + 864e5);
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const url = `https://app.le-vita.com/ernaehrung.html?code=${encodeURIComponent(st.code || "")}`;
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//LeVITA//Ernaehrungs-Check//DE", "CALSCALE:GREGORIAN", "BEGIN:VEVENT",
+    `UID:kurzcheck-${ymd(d)}-${(st.code || "x").replace(/[^A-Z0-9-]/gi, "")}@le-vita.com`, `DTSTAMP:${stamp}`,
+    `DTSTART;VALUE=DATE:${ymd(d)}`, `DTEND;VALUE=DATE:${ymd(next)}`,
+    "SUMMARY:Kurzcheck Ernährungs-Check", `DESCRIPTION:Wie laufen deine Schritte? Pro Schritt ein Klick: ${url}`, `URL:${url}`,
+    "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+  return "data:text/calendar;charset=utf-8," + encodeURIComponent(ics);
+}
+function printFridge(r, onDone) {
+  renderFridge(r);
+  call("fridge").catch(() => {});
+  track("nutri_fridge_note", { action: "print", steps_count: (r.self_steps || []).filter((x) => x.state !== "vorgemerkt").length, from: "round" });
+  const imgs = [...document.querySelectorAll("#fridge img")];
+  Promise.all(imgs.map((i) => (i.decode ? i.decode().catch(() => {}) : null))).then(() => setTimeout(() => { window.print(); if (onDone) onDone(); }, 50));
+}
+function openRoundModal(r) {
+  const old = document.getElementById("round-modal"); if (old) old.remove();
+  const steps = (r.self_steps || []).filter((x) => x.state === "gestartet");
+  if (!steps.length) return;
+  const due = new Date(Date.now() + 14 * 864e5);
+  const ov = document.createElement("div");
+  ov.id = "round-modal";
+  ov.style.cssText = "position:fixed;inset:0;background:rgba(8,16,28,.6);z-index:1000;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px";
+  ov.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="rm-h" style="max-width:560px;width:100%;margin:0 0 24px;position:relative">
+    <button type="button" id="rm-x" aria-label="Schließen" style="position:absolute;top:8px;right:12px;background:none;border:0;font-size:26px;line-height:1;cursor:pointer;color:inherit">×</button>
+    <h2 id="rm-h" style="padding-right:28px">Deine nächsten 14 Tage</h2>
+    <p class="muted" style="margin-bottom:10px">${steps.length === 1 ? "Dein Plan steht" : "Deine Pläne stehen"}. Jetzt zählt der Alltag.</p>
+    <ul class="picked">${steps.map((x, i) => `<li><span class="num">${i + 1}</span><span><strong>${esc(leverTitle(r, x.lever_key))}</strong><br><span class="small">${esc(x.if_then_text || "")}</span></span></li>`).join("")}</ul>
+    <h3 style="margin-top:14px">So geht es weiter</h3>
+    <ol class="muted" style="padding-left:20px;margin:6px 0 14px">
+      <li style="margin-bottom:6px"><strong>Zettel an den Kühlschrank:</strong> ein Häkchen für jeden Tag, an dem dein Plan geklappt hat.</li>
+      <li style="margin-bottom:6px"><strong>Kurzcheck am ${esc(fmtDay(due))}:</strong> pro Schritt ein Klick – klappt meistens, teilweise oder noch nicht.</li>
+      <li><strong>Danach:</strong> Was meistens klappt, ist angekommen – dann nimmst du einen neuen Schritt dazu und druckst einen neuen Zettel. Was noch hakt, passt du an.</li>
+    </ol>
+    <div class="row" style="flex-wrap:wrap;gap:8px;margin-bottom:14px">
+      <button type="button" class="btn ghost" id="rm-print" style="flex:1 1 160px">Zettel drucken</button>
+      <a class="btn ghost" id="rm-ics" style="flex:1 1 160px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;text-align:center" href="${icsHref(due)}" download="kurzcheck-ernaehrung.ics">In den Kalender eintragen</a>
+    </div>
+    ${r.email_known
+      ? `<label class="consent-box"><input type="checkbox" id="rm-remind"><span>${esc(r.checkin_consent_text || "Ja, erinnere mich nach 14 Tagen per E-Mail an meinen Kurzcheck.")}</span></label>
+         <p class="small" style="margin:-4px 0 12px">Freiwillig. Ohne Haken kommst du selbst zurück – über Mein Bereich oder diese Seite.</p>`
+      : `<p class="small" style="margin-bottom:12px">Trag dir den Termin am besten in den Kalender – du kommst über Mein Bereich oder diese Seite zurück.</p>`}
+    <div class="error" id="rm-err"></div>
+    <button type="button" class="btn block" id="rm-ok">Fertig</button>
+  </div>`;
+  document.body.appendChild(ov);
+  const close = () => { ov.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  document.addEventListener("keydown", onKey);
+  ov.addEventListener("click", (e) => { if (e.target === ov) close(); });
+  document.getElementById("rm-x").onclick = close;
+  document.getElementById("rm-ics").addEventListener("click", () => track("nutri_checkin_plan", { action: "calendar" }));
+  document.getElementById("rm-print").onclick = () => printFridge(r);
+  const ok = document.getElementById("rm-ok");
+  ok.focus();
+  ok.onclick = async () => {
+    const remind = !!(document.getElementById("rm-remind") || {}).checked;
+    ok.disabled = true;
+    const res = await call("plan_checkin", { remind });
+    ok.disabled = false;
+    if (!res.success) return (document.getElementById("rm-err").textContent = errorText(res.error));
+    track("nutri_checkin_plan", { action: "scheduled", remind, steps_count: steps.length });
+    st.fromLink = false;
+    close();
+    screenSteps(res);
+  };
+  track("nutri_checkin_plan", { action: "shown", steps_count: steps.length });
+}
+function bindKurzcheck(r) {
+  document.querySelectorAll("[data-krate]").forEach((b) => b.onclick = async () => {
+    const [key, rating] = b.dataset.krate.split("|");
+    b.disabled = true;
+    const res = await call("checkin_rate", { lever_key: key, rating });
+    b.disabled = false;
+    if (!res.success) { const el = document.querySelector(`[data-kerr="${key}"]`); if (el) el.textContent = errorText(res.error); return; }
+    track("nutri_checkin_rate", { step_key: key, rating, via: st.ctoken ? "mail" : "page" });
+    screenSteps(res);
+    const k = document.getElementById("kurzcheck"); if (k) k.scrollIntoView({ block: "start" });
+  });
+  ["b-newround", "b-round"].forEach((id) => { const el = document.getElementById(id); if (el) el.onclick = () => openRoundModal(st.data || r); });
+}
+async function screenCheckinOptout(token) {
+  spinner();
+  const res = await call("checkin_optout", { token });
+  track("nutri_checkin_plan", { action: "optout", ok: !!res.success });
+  h(res.success
+    ? `<div class="card top"><h2>Erinnerungen abbestellt</h2><p>Du bekommst keine Kurzcheck-Mails mehr. Deine Schritte bleiben gespeichert – du kannst jederzeit selbst vorbeischauen.</p></div>`
+    : `<div class="card warn"><h2>Das hat nicht geklappt</h2><p class="muted">Der Link ist ungültig. Schreib uns formlos an datenschutz@le-vita.com, dann tragen wir dich aus.</p></div>`);
+}
+async function startFromCheckinLink(token) {
+  st.ctoken = token; st.fromLink = true;
+  spinner();
+  let r = await call("checkin_open");
+  if (!r.success) { st.ctoken = null; st.fromLink = false; return screenLogin(errorText(r.error)); }
+  st.code = String(r.public_code || st.code || "").toUpperCase();
+  const s = params.get("s"), rt = params.get("r");
+  if (s && KURZ_LABEL[rt]) {
+    const r2 = await call("checkin_rate", { lever_key: s, rating: rt });
+    if (r2.success) { r = r2; track("nutri_checkin_rate", { step_key: s, rating: rt, via: "mail" }); }
+  }
+  try { history.replaceState(null, "", location.pathname + (st.code ? "?code=" + encodeURIComponent(st.code) : "")); } catch (e) {}
+  track("nutri_start", { via: "kurzcheck" }, true);
+  route(r);
+  const k = document.getElementById("kurzcheck"); if (k) k.scrollIntoView({ block: "start" });
+}
+
+function programHtml(r) {
     if (r.program_interest === "confirmed") return '<h3>Du bekommst Bescheid</h3><p class="muted">Sobald das 12-Wochen-Programm mit persönlicher Begleitung startet, schreiben wir dir.</p>';
     if (r.program_interest === "pending") return '<h3>Fast geschafft</h3><p class="muted">Bitte bestätige den Link in der Mail, die wir dir geschickt haben. Erst dann melden wir uns.</p><button class="btn ghost" id="b-pi" style="margin-top:8px">Mail noch einmal senden</button><div class="error" id="pi-err"></div>';
     return `<h3>Lust auf mehr Unterstützung?</h3>
@@ -1405,6 +1579,11 @@
   (async () => {
     const prog = params.get("programm");
     if (prog) return screenProgramConfirm(prog);
+    // 1.2.0: Kurzcheck-Link und Abmelden aus der Erinnerungsmail
+    const kab = params.get("kurzcheck_ab");
+    if (kab) return screenCheckinOptout(kab);
+    const kc = params.get("kurzcheck");
+    if (kc) return startFromCheckinLink(kc);
     track("nutri_view", { has_code: !!st.code }, true);   // 0.6.4: Aufruf der Seite (vor Anmeldung)
     if (st.code && window.LeVitaKonto && !isDemo()) {
       try {
