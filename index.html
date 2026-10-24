@@ -747,6 +747,12 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.21.0 (24.10.2026, Paket W2): Ergebnisseite neu geordnet – Erkennen → Hinweis → erster Schritt (Kernaussage aus
+       edge-2026-10-24.29, wortgleich mit der Mail) → Reiter „Mein Plan“ (geöffnet) und „Mein Ergebnis“ → ganz unten Zugang,
+       Re-Check, Zusatzmodule, Newsletter. Erster Schritt schon vor der Mail-Anforderung. Fahrplan: Phase 1 offen, Rest eingeklappt.
+       Simulator „Rechnerisch später möglich“ nach dem Plan, Etiketten im Plan · später – erst Erholung · freiwillig.
+       Zwei Fragen unter dem Plan (plan_feedback). Gestrichen (mit Kernaussage): Handlungskarte S.hero (Dopplung des Fahrplans),
+       Reihenfolge-Erklärtext im Simulator (zeigen jetzt die Etiketten). Ohne Kernaussage (ältere Edge) bleibt der bisherige Aufbau.
        v2.20.7 (24.10.2026): Funnel-Session bleibt beim Neuladen erhalten. Bisher entstand bei JEDEM Laden der Seite
        eine neue Session-ID (nur im Arbeitsspeicher) – Neuladen, Zurück oder Rückkehr in den Facebook-/Instagram-Browser
        zählten als neuer Besucher (Dashboard ~1,4× mehr Sessions als Meta-Link-Klicks). Jetzt liegt die ID im
@@ -2231,6 +2237,30 @@
     .stage-slot input:checked + span { border-color: var(--accent-green); background: var(--accent-green-dim); color: var(--text-primary); font-weight: 700; }
     .stage-slot input:focus-visible + span { outline: 2px solid var(--accent-green); outline-offset: 2px; }
     .stage-fahrplan { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
+    /* v2.21.0 (Paket W2): Kernaussage – Erkennen · (Hinweis) · erster Schritt · Beobachten */
+    .kern-card { background: linear-gradient(135deg,rgba(var(--accent-green-rgb),0.12),rgba(var(--accent-blue-rgb),0.07)); border: 1px solid rgba(var(--accent-green-rgb),0.3); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 12px; }
+    .kern-kicker { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--accent-green-text); margin-bottom: 6px; }
+    .kern-erk { font-size: 16.5px; font-weight: 700; line-height: 1.4; color: var(--text-primary); }
+    .kern-step { background: var(--brand-card); border: 1px solid rgba(var(--accent-green-rgb),0.45); border-left: 4px solid var(--accent-green); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px; }
+    .kern-label { font-size: 12px; font-weight: 700; color: var(--accent-green-text); margin-bottom: 4px; }
+    .kern-jetzt { font-size: 15px; font-weight: 600; line-height: 1.5; color: var(--text-primary); }
+    .kern-beob { font-size: 13px; color: var(--text-secondary); line-height: 1.55; margin-top: 8px; }
+    .kern-note { font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-top: 8px; }
+    .stage-confirm { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.5; color: var(--text-secondary); background: rgba(var(--accent-green-rgb),0.07); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 14px; }
+    .stage-confirm strong { color: var(--text-primary); }
+    .fp-later { border-top: 1px dashed var(--border); margin-top: 6px; padding-top: 6px; }
+    .fp-later summary { cursor: pointer; font-size: 13px; color: var(--text-secondary); padding: 6px 0; list-style: none; }
+    .fp-later summary::-webkit-details-marker { display: none; }
+    .fp-later summary b { color: var(--text-primary); }
+    .plan-fb { background: var(--sunken); border-radius: var(--radius-sm); padding: 12px 14px; margin: 4px 0 18px; font-size: 13px; }
+    .plan-fb-q { margin: 6px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .plan-fb-q span { flex: 1 1 220px; color: var(--text-primary); }
+    .plan-fb button { border: 1px solid var(--border); background: var(--brand-card); color: var(--text-secondary); border-radius: 999px; padding: 5px 12px; font-size: 12.5px; cursor: pointer; font-family: inherit; }
+    .plan-fb button.on { background: var(--accent-green); color: var(--on-accent); border-color: var(--accent-green); }
+    .sim-tag { display: inline-block; font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 1px 8px; margin-left: 6px; vertical-align: 1px; }
+    .sim-tag.plan { background: rgba(var(--accent-green-rgb),0.15); color: var(--accent-green-text); }
+    .sim-tag.later { background: rgba(var(--accent-amber-rgb),0.15); color: var(--accent-amber-text); }
+    .sim-tag.free { background: var(--sunken); color: var(--text-secondary); }
     .stage-fp-row { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 12px; position: relative; padding-bottom: 14px; }
     .stage-fp-row:not(.last)::before { content: ''; position: absolute; left: 6px; top: 16px; bottom: 0; width: 2px; background: rgba(var(--ink-rgb),0.1); }
     .stage-fp-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--accent-green); margin-top: 4px; box-sizing: border-box; }
@@ -6553,7 +6583,11 @@
     return vals.length > 0 && vals.every(v => v >= 70);
   }
   function stageStrengthLine(S) {
-    const strengths = stageStrengths(S.areas);
+    let strengths = stageStrengths(S.areas);
+    // v2.21.0 (Paket W2): Die Stärke aus der Kernaussage steht auch hier vorn – keine konkurrierenden Botschaften
+    const _KS = { "Du bewegst dich bereits viel": "activity", "Du isst bereits bewusst": "nutrition", "Du schläfst bereits ausreichend lange": "sleep", "Du bist im Alltag eher entspannt": "mental", "Du trinkst wenig oder keinen Alkohol": "alcohol", "Du bist regelmäßig draußen": "vitamin_d", "Du rauchst nicht": "smoking" };
+    const _kk = kernOf(S), _ka = _kk && _KS[_kk.staerke];
+    if (_ka) { const a = (S.areas || []).find(x => x.key === _ka); if (a) strengths = [a, ...strengths.filter(x => x.key !== _ka)].slice(0, 2); }
     // Bereichsnamen als Satzglied: "Alkohol / Nikotin trägt dich" liest sich falsch.
     const N = { activity: "deine Bewegung", sleep: "dein Schlaf", nutrition: "deine Ernährung", vitamin_d: "dein Tageslicht",
       mental: "deine Stressbalance", smoking: "dein rauchfreier Alltag", alcohol: "dein Umgang mit Alkohol", lifestyle: "dein Umgang mit Alkohol und Nikotin", micronutrients: "deine Nährstoffversorgung", metabolic: "deine Energie" };
@@ -7096,12 +7130,21 @@
     if (fp.length) {
       return `<div class="stage-fahrplan">
           <div class="stage-kicker" style="color:var(--accent-amber-text);">Dein Fahrplan</div>
-          <div style="font-size:16px;font-weight:700;margin-bottom:12px;">${S.goalTeaser ? `Für „${S.goalTeaser}“` : "Woche für Woche"}</div>
+          ${kernOf(S) ? (() => {
+            // v2.21.0 (Paket W2): Phase 1 offen, Phasen 2–4 eingeklappt mit Vorschau – erst der Start, dann der Weg
+            const row = (f, i, last) => `<div class="stage-fp-row${last ? " last" : ""}"><div class="stage-fp-dot${i === 0 ? " first" : ""}"></div>
+                <div><div class="stage-fp-label">${escHtml(f.label || "")}</div><div class="stage-fp-text">${escHtml(f.text || "")}</div></div></div>`;
+            const prev = t => { const x = String(t || "").split(/(?<=[.!?])\s/)[0]; return x.length > 90 ? x.slice(0, 88).replace(/\s\S*$/, "") + " …" : x; };
+            return `<div style="font-size:16px;font-weight:700;margin-bottom:12px;">Dein Start für die nächsten zwei Wochen</div>`
+              + row(fp[0], 0, fp.length === 1)
+              + (fp.length > 1 ? `<details class="fp-later"><summary>${ICO("calendar")} <b>Danach: Woche 3 bis 12</b> – ${escHtml(prev(fp[1].text))} <span style="color:var(--accent-green-text);">Anzeigen</span></summary>
+                  ${fp.slice(1).map((f, j) => row(f, j + 1, j === fp.length - 2)).join("")}</details>` : "");
+          })() : `<div style="font-size:16px;font-weight:700;margin-bottom:12px;">${S.goalTeaser ? `Für „${S.goalTeaser}“` : "Woche für Woche"}</div>
           ${fp.map((f, i) => `
             <div class="stage-fp-row${i === fp.length - 1 ? " last" : ""}">
               <div class="stage-fp-dot${i === 0 ? " first" : ""}"></div>
               <div><div class="stage-fp-label">${escHtml(f.label || "")}</div><div class="stage-fp-text">${escHtml(f.text || "")}</div></div>
-            </div>`).join("")}
+            </div>`).join("")}`}
         </div>`;
     }
     // v2.13.0 (Paket I, Nr. 2c): Die Mail ist hier schon erzeugt. Enthält sie keinen Fahrplan (fahrplan leer),
@@ -7238,6 +7281,50 @@
     return `<div class="plan-zone-head ${kind}" data-zone="${kind}"><div class="plan-zone-icon">${icon}</div><div><div class="plan-zone-title">${title}</div><div class="plan-zone-sub">${sub}</div></div></div>`;
   }
 
+  // ══ v2.21.0 (Paket W2, freigegeben 24.10.2026): Erkennen → Hinweis → Aufgabe → Plan → Möglichkeiten → Verwaltung ══
+  // Die Kernaussage kommt aus der Edge (edge-2026-10-24.29, kernaussage) – wortgleich mit der Mail. Fehlt sie
+  // (ältere Edge), bleibt die bisherige Darstellung (hasKern === false).
+  function kernOf(S) { const k = S && S.result && S.result.kernaussage; return (k && k.erk && k.jetzt) ? k : null; }
+  function kernCardHtml(S, hintsHtml) {
+    const k = kernOf(S);
+    if (!k) return hintsHtml || "";
+    const locked = window._stage !== 2;
+    return `<div class="kern-card" id="kernCard"><div class="kern-kicker">Auf einen Blick</div><div class="kern-erk">${escHtml(k.erk)}</div></div>`
+      + (hintsHtml || "")
+      + `<div class="kern-step" id="kernStep">
+          <div class="kern-label">${ICO("bolt")} ${escHtml(k.label || "Dein erster Schritt")}</div>
+          <div class="kern-jetzt">${escHtml(k.jetzt)}</div>
+          <div class="kern-beob">${ICO("search")} <strong>Beobachte dabei:</strong> ${escHtml(k.beob)}</div>
+          ${locked ? `<div class="kern-note">Deinen ganzen Plan für zwölf Wochen – Schritt für Schritt – bekommst du mit deinem Vital-Plan per Mail.</div>` : ``}
+        </div>`;
+  }
+  // Eine ruhige Bestätigungszeile statt der Verwaltung oben (Zugang, Newsletter usw. stehen ganz unten)
+  function stageConfirmLineHtml(S) {
+    const info = window._unlockInfo || {};
+    return `<div class="stage-confirm"><div style="color:var(--accent-green-text);font-weight:700;">✓</div><div><strong>Dein Vital-Plan ist freigeschaltet.</strong>${info.email ? ` Die Mail ist unterwegs an <strong>${escHtml(info.email)}</strong> – schau ggf. auch im Spam-Ordner.` : ""} Zugang und Re-Check findest du <a href="#stageAccess" onclick="event.preventDefault();document.getElementById('stageAccess')?.scrollIntoView({behavior:'smooth',block:'start'})">ganz unten</a>.</div></div>`;
+  }
+  // Zwei kurze Fragen unter dem Plan (Messung Paket W): „ja · teils · nein“, anonym als Funnel-Ereignis
+  function planFeedbackHtml() {
+    const qs = [["next", "Weißt du jetzt, was dein nächster Schritt ist?"], ["fit", "Passt dieser Schritt zu deinem Alltag?"]];
+    let done = {}; try { done = JSON.parse(sessionStorage.getItem("plan_fb") || "{}"); } catch (e) { done = {}; }
+    return `<div class="plan-fb" id="planFb">${qs.map(([k, q]) => `<div class="plan-fb-q"><span>${q}</span>${["ja", "teils", "nein"].map(a =>
+      `<button type="button" class="${done[k] === a ? "on" : ""}" onclick="planFeedback('${k}','${a}',this)">${a}</button>`).join("")}</div>`).join("")}</div>`;
+  }
+  function planFeedback(q, a, btn) {
+    try { trackEvent("plan_feedback", { question: q, answer: a }); } catch (e) {}
+    try { const d = JSON.parse(sessionStorage.getItem("plan_fb") || "{}"); d[q] = a; sessionStorage.setItem("plan_fb", JSON.stringify(d)); } catch (e) {}
+    try { btn.parentNode.querySelectorAll("button").forEach(b => b.classList.toggle("on", b === btn)); } catch (e) {}
+  }
+  // Simulator-Etikett je Hebel – aus dem Planstatus der Edge (dieselbe Quelle wie Plan und Mail)
+  function simTagHtml(qk) {
+    const k = latestResult && latestResult.kernaussage;
+    if (!k || !Array.isArray(k.used)) return "";
+    if ((k.deferredKeys || []).includes(qk)) return `<span class="sim-tag later">später – erst Erholung</span>`;
+    if (Number(k.fall) === 2 && /^alcohol_/.test(qk)) return `<span class="sim-tag later">erst Gespräch in der Praxis</span>`;   // Alkoholvorrang: vorher nur notieren
+    if ((k.used || []).includes(qk)) return `<span class="sim-tag plan">im Plan</span>`;
+    return `<span class="sim-tag free">freiwillig</span>`;
+  }
+
   function composeStagedResult(S) {
     const stage = window._stage === 2 ? 2 : 1;
     let html = "";
@@ -7245,18 +7332,26 @@
       // v2.8.16 (Phase C) — Ergebnis, Warnhinweise, groesster Hebel mit Hauptknopf;
       // dann Spinne und Bereiche. Die fruehere "Einschaetzung" steht vollstaendig in
       // Ergebnis-Karte (Zahlen, Staerken, groesster Bereich) und Potenzial-Karte (+Punkte).
-      html += S.safetyBand || "";
-      html += stageHeroHtml(S);
-      html += S.wellbeing || "";
-      html += S.levelInfo || "";
-      html += S.lowIndex || "";
-      html += S.mental || "";
-      html += S.sleepHint || "";   // v2.19.0
-      html += S.redFlag || "";
+      // v2.21.0 (Paket W2): Erkennen → Hinweise → erster Schritt – auch vor der Mail-Anforderung (Entscheidung Jörg 24.10.)
+      let hints1 = (S.mental || "") + (S.sleepHint || "") + (S.redFlag || "");
       const doctorItem = (S.cat3Items || []).find(([t]) => t === "Ärztliche Abklärung zuerst");
       if (doctorItem) {
-        html += `<div class="hint-box" style="background:rgba(var(--accent-purple-rgb),0.07);border-left:3px solid var(--accent-purple);border-radius:0;padding:13px 16px;margin-bottom:16px;">
+        hints1 += `<div class="hint-box" style="background:rgba(var(--accent-purple-rgb),0.07);border-left:3px solid var(--accent-purple);border-radius:0;padding:13px 16px;margin-bottom:16px;">
           <strong>${doctorItem[0]}</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${doctorItem[1]}</span></div>`;
+      }
+      html += S.safetyBand || "";
+      if (kernOf(S)) {
+        html += kernCardHtml(S, hints1);
+        html += stageHeroHtml(S);
+        html += S.wellbeing || "";
+        html += S.levelInfo || "";
+        html += S.lowIndex || "";
+      } else {
+        html += stageHeroHtml(S);
+        html += S.wellbeing || "";
+        html += S.levelInfo || "";
+        html += S.lowIndex || "";
+        html += hints1;
       }
       html += stagePotentialHtml(S);
       html += S.angaben || "";
@@ -7271,23 +7366,27 @@
       return html;
     }
 
-    // ── Stufe 2 ──
-    if (window._unlockInfo) html += stageUnlockBannerHtml(S);
-    else if (window._isReviewMode && window._accessPin) html += S.recheckBanner || "";
+    // ── Stufe 2 ── v2.21.0 (Paket W2): Bestätigungszeile → Erkennen → Hinweise → erster Schritt → Reiter „Mein Plan“
+    // (geöffnet) und „Mein Ergebnis“ → ganz unten Zugang, Re-Check, Zusatzmodule, Newsletter. Ohne Kernaussage (alte Edge): bisheriger Aufbau.
+    const hasKern = !!kernOf(S);
+    const review = !window._unlockInfo && window._isReviewMode && window._accessPin;
+    if (window._unlockInfo) html += hasKern ? stageConfirmLineHtml(S) : stageUnlockBannerHtml(S);
+    else if (window._isReviewMode && window._accessPin) html += hasKern ? "" : (S.recheckBanner || "");
     else if (S.mailBox) {
       // Verknüpfter Re-Check ohne neue Mail: der neue Vital-Plan wird hier angefordert.
       html += `<div style="margin-bottom:14px;">${S.mailBox}</div>`;
     }
     html += S.linkInvalid || "";
-    html += S.safetyBand || "";
-    html += S.mental || "";      // v2.20.0 (Paket V): Hinweise über den Reitern – in Übersicht und Plan sichtbar
-    html += S.sleepHint || "";
-    html += `<div class="result-tabs">
-        <button class="result-tab active" id="rtab-uebersicht" onclick="switchResultTab('uebersicht')">Übersicht</button>
-        <button class="result-tab" id="rtab-plan" onclick="switchResultTab('plan')">Mein Plan</button>
-      </div>`;
+    const hints2 = (S.safetyBand || "") + (S.mental || "") + (S.sleepHint || "");   // v2.20.0 (Paket V): Hinweise über den Reitern
+    html += hasKern ? kernCardHtml(S, hints2) : hints2;
+    const planFirst = hasKern;
+    html += `<div class="result-tabs">` + (planFirst
+      ? `<button class="result-tab active" id="rtab-plan" onclick="switchResultTab('plan')">Mein Plan</button>
+         <button class="result-tab" id="rtab-uebersicht" onclick="switchResultTab('uebersicht')">Mein Ergebnis</button>`
+      : `<button class="result-tab active" id="rtab-uebersicht" onclick="switchResultTab('uebersicht')">Übersicht</button>
+         <button class="result-tab" id="rtab-plan" onclick="switchResultTab('plan')">Mein Plan</button>`) + `</div>`;
 
-    html += `<div class="result-tab-content active" id="rtc-uebersicht">`;
+    html += `<div class="result-tab-content${planFirst ? "" : " active"}" id="rtc-uebersicht">`;
     html += stageHeroHtml(S);
     html += S.wellbeing || "";
     html += S.levelInfo || "";
@@ -7304,41 +7403,59 @@
     html += howItWorksCardHtml('uebersicht');   // v2.14.0 (Paket K, Nr. 1)
     html += `</div>`;
 
-    html += `<div class="result-tab-content" id="rtc-plan">`;
+    html += `<div class="result-tab-content${planFirst ? " active" : ""}" id="rtc-plan">`;
     // v2.7.1 — drei Zonen: allein / im Studio / Zugang (Jörg 14.10.2026)
     html += planZoneHeadHtml("allein", ICO("home"), "Das kannst du allein tun", (window._decision && window._decision.fixedPlan)
       ? "Deine nächsten Schritte – der erste ist das Gespräch in deiner Hausarztpraxis."   // v2.12.0 (Paket E)
       : "Dein Fahrplan für die nächsten Wochen – ohne Termin, im eigenen Alltag.");
-    html += S.hero || "";
-    html += S.simulator || "";
+    // v2.21.0: Die Handlungskarte (S.hero) wiederholte Woche 1–4 aus dem Fahrplan – mit Kernaussage entfällt sie (Paket W, Streichung dokumentiert)
+    if (!hasKern) { html += S.hero || ""; html += S.simulator || ""; }
     html += stageFahrplanHtml(S);
-    const more = (S.cat1Items || []).filter(it => !S.worst || it[2] !== S.worst.key);
+    if (hasKern) html += planFeedbackHtml();
+    // v2.21.0: Mit Kernaussage stehen unter „Freiwillig“ nur echte Möglichkeiten – Erholungs- und Alkoholvorrang sind
+    // keine freiwilligen Tipps, sondern stehen schon in der Kernaussage (Doppelung entfernt, Paket W).
+    // Ebenso entfallen Tipps zu Bereichen, deren Hebel schon im Plan stehen (sie kommen dort als zweiter Schritt).
+    const _QA = { activity_days: "activity", strength_training: "activity", sitting_hours: "activity", sleep_duration: "sleep", sleep_latency: "sleep", stress_level: "mental", social_connection: "mental", protein_intake: "nutrition", vegetables_fruit: "nutrition", water_intake: "nutrition", omega3_fish: "nutrition", sun_exposure_winter: "vitamin_d", alcohol_frequency: "alcohol", alcohol_amount: "alcohol", nicotine_use: "smoking" };
+    const _planAreas = hasKern ? ((kernOf(S).used || []).map(q => _QA[q]).filter(Boolean)) : [];
+    const _dupOfKern = it => hasKern && (it[2] === "activity_recovery" || _planAreas.includes(it[2]) || it[0] === "Erholung vor Training" || it[0] === "Halten, was gut läuft"
+      || [RECOVERY_TIP_NOW, RECOVERY_TIP_SOON, ALCOHOL_FIRST_TIP, ALCOHOL_WEEK_TIP].includes(it[1]));
+    const more = (S.cat1Items || []).filter(it => (!S.worst || it[2] !== S.worst.key) && !_dupOfKern(it));
     if (more.length) {
-      html += `<div class="t3-zone-title">Deine weiteren Hebel</div>`;
+      html += `<div class="t3-zone-title">${hasKern ? "Freiwillig, wenn du magst" : "Deine weiteren Hebel"}</div>`;
       more.forEach(([t, d]) => {
-        html += `<div class="hint-box" style="background:var(--accent-green-dim);border-left:3px solid var(--accent-green);border-radius:0;padding:13px 16px;margin-bottom:8px;">
+        html += `<div class="hint-box" style="background:${hasKern ? "var(--sunken)" : "var(--accent-green-dim)"};border-left:3px solid ${hasKern ? "var(--border)" : "var(--accent-green)"};border-radius:0;padding:13px 16px;margin-bottom:8px;">
           <strong>${t}</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${d}</span></div>`;
       });
     }
+    if (hasKern) html += S.simulator || "";   // „Rechnerisch später möglich“ steht nach dem Plan
     html += S.support || "";
     html += S.supplyPlan || "";   // v2.8.20
-    html += stageModulesCardHtml();   // v2.10.0 (W1)
+    if (!hasKern) html += stageModulesCardHtml();   // v2.10.0 (W1)
     html += S.watch || "";
-    const review = !window._unlockInfo && window._isReviewMode && window._accessPin;
-    if (review) html += S.recheckLater || "";   // Re-Check machst du selbst – mit Termin im Kalender
+    if (review && !hasKern) html += S.recheckLater || "";   // Re-Check machst du selbst – mit Termin im Kalender
 
     html += planZoneHeadHtml("studio", ICO("users"), "Das machen wir im Studio", "Was ein Fragebogen nicht kann: messen, einordnen und dich beim Start begleiten.");
     html += stageWissenHtml(S);
     html += stageStudioCardHtml(S);
     html += stageNutritionOfferHtml();   // v2.7.0 – bleibt aus, bis das Team geschult ist
 
-    if (review && S.mailBox) {
+    if (!hasKern && review && S.mailBox) {
       html += planZoneHeadHtml("zugang", ICO("key"), "Dein Zugang", "Pilot-ID, PIN und dein Vital-Plan per Mail.");
       html += S.mailBox;
     }
     if (!window._studioRequest) html += referralBoxHtml('plan');
     html += S.feedback || "";
     html += `</div>`;
+
+    // Ganz unten: Zugang & Re-Check, Zusatzmodule, Newsletter – erreichbar, aber nicht mehr vor dem Ergebnis
+    if (hasKern) {
+      html += `<div id="stageAccess">`;
+      html += planZoneHeadHtml("zugang", ICO("key"), "Dein Zugang und was es noch gibt", "Wiederkommen, Re-Check, Zusatzmodule.");
+      if (window._unlockInfo) html += stageUnlockBannerHtml(S);
+      else if (review) { html += S.recheckBanner || ""; html += S.recheckLater || ""; if (S.mailBox) html += S.mailBox; }
+      html += stageModulesCardHtml();
+      html += `</div>`;
+    }
     html += stageFooterHtml(S);
     return html;
   }
@@ -8406,13 +8523,14 @@
       return rest ? `<div class="sim-box">${rest}</div>` : "";
     }
     let leversHtml = "";
+    const simKern = !!(latestResult && latestResult.kernaussage && Array.isArray(latestResult.kernaussage.used));   // v2.21.0 (Paket W2)
     simScenarios.levers.forEach(l => {
       const icon = areaIco(l.area_key);
       const short = SIM_SHORT_LABELS[l.question_key] || l.label || l.question_key;
       leversHtml += `
         <div class="sim-lever" id="simLever_${escHtml(l.question_key)}" onclick="toggleSimLever('${escHtml(l.question_key)}')">
           <div class="sim-lever-body">
-            <div class="sim-lever-title">${icon} ${escHtml(short)}${l.area_label ? ` <span style="font-weight:500;color:var(--text-secondary);">· ${escHtml(l.area_key === "mental" ? "Stressbalance" : l.area_label)}</span>` : ''}${l.reason === 'goal' ? ` <span class="pill-goal">passt zu deinem Ziel</span>` : ''}</div>
+            <div class="sim-lever-title">${icon} ${escHtml(short)}${simTagHtml(l.question_key)}${l.area_label ? ` <span style="font-weight:500;color:var(--text-secondary);">· ${escHtml(l.area_key === "mental" ? "Stressbalance" : l.area_label)}</span>` : ''}${l.reason === 'goal' ? ` <span class="pill-goal">passt zu deinem Ziel</span>` : ''}</div>
             <div class="sim-lever-change">${escHtml(l.from_text)} → <strong style="color:var(--text-primary);">${escHtml(l.to_text)}</strong></div>
             <div class="sim-lever-gain">+${fmtGain(l.gain)} ${fmtGain(l.gain) === "1" ? "Punkt" : "Punkte"}</div>
             ${(typeof l.max_gain === 'number' && l.max_gain > l.gain + 0.05 && l.max_to_text)
@@ -8431,16 +8549,18 @@
     }
     return `
       <div class="sim-box" id="simBox">
-        <div class="sim-badge">✦ Was wäre wenn</div>
+        <div class="sim-badge">✦ ${simKern ? 'Rechnerisch später möglich' : 'Was wäre wenn'}</div>
         ${outcomeHtml}
-        <div class="sim-title">${outcomeHtml ? 'Dein nächster Hebel' : 'Rechnerische Veränderung im Index'}</div>
+        <div class="sim-title">${outcomeHtml ? 'Dein nächster Hebel' : (simKern ? 'Rechnerisch später möglich' : 'Rechnerische Veränderung im Index')}</div>
         <div class="sim-sub">${outcomeHtml
           ? 'Und weiter? Das hier sind die Ansatzpunkte, die dir <em>jetzt</em> am meisten bringen — neu berechnet auf Basis deiner heutigen Antworten.'
-          : 'Wähle bis zu drei Hebel aus deinen größten Ansatzpunkten — und sieh sofort, was das für deinen Index bedeuten würde. Serverseitig berechnet, mit derselben Formel wie dein Ergebnis.'}</div>
+          : simKern
+            ? 'Spiel einzelne Hebel durch. Mit derselben Formel wie dein Ergebnis berechnet – keine Vorhersage deiner Gesundheit. Dein Auftrag bleibt der erste Schritt oben.'
+            : 'Wähle bis zu drei Hebel aus deinen größten Ansatzpunkten — und sieh sofort, was das für deinen Index bedeuten würde. Serverseitig berechnet, mit derselben Formel wie dein Ergebnis.'}</div>
         <div id="simGoalCard">${renderGoalCardHtml()}</div>
         ${leversHtml}
         ${ansatzNote}
-        ${simPlanOrderNoteHtml(S)}
+        ${simKern ? "" : simPlanOrderNoteHtml(S)}
         <div class="sim-projection">
           <div class="sim-proj-num" id="simProjNum">${Math.round(totalScore)}</div>
           <div class="sim-proj-meta" id="simProjMeta">Schalte oben einen Hebel ein, um dein Potenzial zu sehen.</div>
@@ -9319,7 +9439,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.20.7</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.0</footer>
 
 
 </body>
