@@ -756,6 +756,12 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.21.7 (25.10.2026, Jörg): Index übergeordnet oben (Stufe 1 und 2), darunter Kernaussage, dann Reiter mit
+„Mein Ergebnis“ links und geöffnet (nach der Anforderung einmal „Mein Plan“). Im Ergebnis zuerst die Spinne,
+dann persönliche Hinweise, Verlauf, Bereiche; Angaben, Antworten, Berechnung, Stufen und Erklärungen gebündelt
+unter „Weitere Infos“ (aufklappbar, vollständig erreichbar). Kernaussage auf der Seite ohne Satz „Dein Index
+liegt bei …“ (steht groß darüber; in der Mail bleibt er).
+
 v2.21.6 (24.10.2026, Jörg: nicht bevormunden): Rauchstopp-Tipps als Angebot („Wenn du aufhören möchtest“),
 „Jede Reduktion zählt“ ersetzt; Alkohol-Tipp „Alkoholfreie Tage“ statt „weniger ist immer besser“; Schlaf-Hinweis
 und Praxis-Unterzeile ohne „solltest“ (wortgleich edge-2026-10-24.44); Raucher-Hinweis: „eine höhere Stufe“
@@ -1894,6 +1900,15 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     /* Potenzial ist die Hypothesen-Ebene — sie trägt durchgehend Blau, nie Markengrün */
     .toggle-btn.on-blue { background: var(--accent-blue-dim); border-color: var(--accent-blue); color: var(--accent-blue-text); }
     .vital-index-box { background: var(--brand-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 20px; margin-bottom: 16px; }
+    /* v2.21.7: „Weitere Infos“ */
+    .more-info { margin: 18px 0 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--brand-card); }
+    .more-info > summary { cursor: pointer; list-style: none; padding: 16px 44px 16px 18px; position: relative; display: flex; flex-direction: column; gap: 2px; }
+    .more-info > summary::-webkit-details-marker { display: none; }
+    .more-info > summary::after { content: "+"; position: absolute; right: 18px; top: 50%; transform: translateY(-50%); font-size: 22px; color: var(--text-secondary); }
+    .more-info[open] > summary::after { content: "–"; }
+    .more-info-title { font-weight: 700; color: var(--text-primary); font-size: 15px; }
+    .more-info-sub { font-size: 12.5px; color: var(--text-secondary); }
+    .more-info-body { padding: 0 12px 12px; }
     .vital-index-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 10px 12px; border-radius: var(--radius-sm); margin-bottom: 6px; font-size: 13px; border: 1px solid transparent; }
     .vital-index-row.active-level { background: var(--accent-green-dim); border-color: rgba(var(--accent-green-rgb),0.2); }
     .vital-index-value { font-weight: 800; white-space: nowrap; color: var(--text-primary); min-width: 52px; }
@@ -7352,11 +7367,20 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
   // Die Kernaussage kommt aus der Edge (edge-2026-10-24.29, kernaussage) – wortgleich mit der Mail. Fehlt sie
   // (ältere Edge), bleibt die bisherige Darstellung (hasKern === false).
   function kernOf(S) { const k = S && S.result && S.result.kernaussage; return (k && k.erk && k.jetzt) ? k : null; }
+  // v2.21.7 (Jörg 25.10.2026): Erklärungen und Nachschlage-Inhalte gebündelt – vollständig erreichbar, aber nicht im Weg
+  function moreInfoHtml(parts) {
+    const inner = (parts || []).filter(Boolean).join("");
+    if (!inner) return "";
+    return `<details class="more-info" ontoggle="try{if(this.open)trackEvent('more_info_open',{})}catch(e){}">
+      <summary><span class="more-info-title">Weitere Infos</span><span class="more-info-sub">Deine Angaben und Antworten, so wird gerechnet, Stufen und Erklärungen</span></summary>
+      <div class="more-info-body">${inner}</div></details>`;
+  }
+
   function kernCardHtml(S, hintsHtml) {
     const k = kernOf(S);
     if (!k) return hintsHtml || "";
     const locked = window._stage !== 2;
-    return `<div class="kern-card" id="kernCard"><div class="kern-kicker">Auf einen Blick</div><div class="kern-erk">${escHtml(k.erk)}</div></div>`
+    return `<div class="kern-card" id="kernCard"><div class="kern-kicker">Auf einen Blick</div><div class="kern-erk">${escHtml(String(k.erk || "").replace(/\s*Dein Index liegt bei [\d.,]+ von 100\.?\s*$/, ""))}</div></div>`
       + (hintsHtml || "")
       + `<div class="kern-step" id="kernStep">
           <div class="kern-label">${ICO("bolt")} ${escHtml(k.label || "Dein erster Schritt")}</div>
@@ -7434,6 +7458,23 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       }
       html += S.safetyBand || "";
       if (kernOf(S)) {
+        // v2.21.7 (Jörg 25.10.2026): Index übergeordnet oben, dann Kernaussage, dann sofort die Spinne;
+        // Erklärungen und Nachschlage-Inhalte gebündelt unter „Weitere Infos“ (vollständig erreichbar).
+        html += stageHeroHtml(S);
+        html += kernCardHtml(S, hints1);
+        html += stageRadarHtml();
+        html += S.wellbeing || "";
+        html += S.lowIndex || "";
+        html += stagePotentialHtml(S);
+        html += stageStrengthsHtml(S);
+        html += stageAreasHtml(S);
+        html += stageLadderHtml(S);
+        if (!window._studioRequest) html += referralBoxHtml('stufe1');
+        html += moreInfoHtml([S.angaben, S.radarExplain, S.levelInfo, howItWorksCardHtml('stufe1')]);
+        html += stageFooterHtml(S);
+        return html;
+      }
+      if (kernOf(S)) {
         html += kernCardHtml(S, hints1);
         html += stageHeroHtml(S);
         html += S.wellbeing || "";
@@ -7471,32 +7512,46 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     }
     html += S.linkInvalid || "";
     const hints2 = (S.safetyBand || "") + (S.mental || "") + (S.sleepHint || "");   // v2.20.0 (Paket V): Hinweise über den Reitern
+    if (hasKern) html += stageHeroHtml(S); // v2.21.7 (Jörg 25.10.2026): Index übergeordnet, über Kernaussage und Reitern
     html += hasKern ? kernCardHtml(S, hints2) : hints2;
-    const planFirst = hasKern;
-    html += `<div class="result-tabs">` + (planFirst
-      ? `<button class="result-tab active" id="rtab-plan" onclick="switchResultTab('plan')">Mein Plan</button>
-         <button class="result-tab" id="rtab-uebersicht" onclick="switchResultTab('uebersicht')">Mein Ergebnis</button>`
+    // v2.21.7: „Mein Ergebnis“ links und geöffnet; direkt nach der Anforderung springt unlockStage2 einmal auf „Mein Plan“.
+    const planFirst = false;
+    html += `<div class="result-tabs">` + (hasKern
+      ? `<button class="result-tab active" id="rtab-uebersicht" onclick="switchResultTab('uebersicht')">Mein Ergebnis</button>
+      <button class="result-tab" id="rtab-plan" onclick="switchResultTab('plan')">Mein Plan</button>`
       : `<button class="result-tab active" id="rtab-uebersicht" onclick="switchResultTab('uebersicht')">Übersicht</button>
-         <button class="result-tab" id="rtab-plan" onclick="switchResultTab('plan')">Mein Plan</button>`) + `</div>`;
-
-    html += `<div class="result-tab-content${planFirst ? "" : " active"}" id="rtc-uebersicht">`;
-    html += stageHeroHtml(S);
-    html += S.wellbeing || "";
-    html += S.levelInfo || "";
-    html += S.lowIndex || "";
-    html += S.redFlag || "";
-    html += S.verlauf || "";
-    html += stageSummaryHtml(S, { compact: true });
-    html += S.angaben || "";
-    html += S.radar || "";
-    html += S.radarExplain || "";
-    html += S.areasAll || "";
-    html += S.supplyCard || "";   // v2.8.20
-    html += S.answers || "";
-    html += howItWorksCardHtml('uebersicht');   // v2.14.0 (Paket K, Nr. 1)
+      <button class="result-tab" id="rtab-plan" onclick="switchResultTab('plan')">Mein Plan</button>`) + `</div>`;
+    html += `<div class="result-tab-content active" id="rtc-uebersicht">`;
+    if (hasKern) {
+      // v2.21.7: Spinne zuerst, dann persönliche Hinweise, Verlauf und Bereiche (schwächster zuerst); Nachschlagen unter „Weitere Infos“
+      html += S.radar || "";
+      html += S.wellbeing || "";
+      html += S.lowIndex || "";
+      html += S.redFlag || "";
+      html += S.verlauf || "";
+      html += stageSummaryHtml(S, { compact: true });
+      html += S.areasAll || "";
+      html += S.supplyCard || "";
+      html += moreInfoHtml([S.angaben, S.radarExplain, S.levelInfo, S.answers, howItWorksCardHtml('uebersicht')]);
+    } else {
+      html += stageHeroHtml(S);
+      html += S.wellbeing || "";
+      html += S.levelInfo || "";
+      html += S.lowIndex || "";
+      html += S.redFlag || "";
+      html += S.verlauf || "";
+      html += stageSummaryHtml(S, { compact: true });
+      html += S.angaben || "";
+      html += S.radar || "";
+      html += S.radarExplain || "";
+      html += S.areasAll || "";
+      html += S.supplyCard || ""; // v2.8.20
+      html += S.answers || "";
+      html += howItWorksCardHtml('uebersicht'); // v2.14.0 (Paket K, Nr. 1)
+    }
     html += `</div>`;
 
-    html += `<div class="result-tab-content${planFirst ? " active" : ""}" id="rtc-plan">`;
+    html += `<div class="result-tab-content" id="rtc-plan">`;
     // v2.7.1 — drei Zonen: allein / im Studio / Zugang (Jörg 14.10.2026)
     html += planZoneHeadHtml("allein", ICO("home"), "Das kannst du allein tun", (window._decision && window._decision.fixedPlan)
       ? "Deine nächsten Schritte – der erste ist das Gespräch in deiner Hausarztpraxis."   // v2.12.0 (Paket E)
@@ -9569,7 +9624,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.6</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.7</footer>
 
 
 </body>
