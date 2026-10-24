@@ -756,6 +756,9 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.21.11 (25.10.2026, Jörg): Simulator erklärt, dass die gestrichelte Linie in der Spinne die Veränderung zeigt.
+Gehört zu edge-2026-10-25.45 und SQL 13 (bis zu drei Schalter, auch zwei im selben Bereich).
+
 v2.21.10 (25.10.2026, Jörg): kein zweiter Knopf „Mein Ziel festlegen“ in „Das bedeutet dein Ergebnis“, wenn die Schalter
 direkt darunter stehen (Kernaussage).
 
@@ -8716,7 +8719,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
         <div class="sim-sub">${outcomeHtml
           ? 'Und weiter? Das hier sind die Ansatzpunkte, die dir <em>jetzt</em> am meisten bringen — neu berechnet auf Basis deiner heutigen Antworten.'
           : simKern
-            ? 'Spiel einzelne Hebel durch. Mit derselben Formel wie dein Ergebnis berechnet – keine Vorhersage deiner Gesundheit. Dein Auftrag bleibt der erste Schritt oben.'
+            ? 'Spiel einzelne Hebel durch. Mit derselben Formel wie dein Ergebnis berechnet – keine Vorhersage deiner Gesundheit. Schalte einen Hebel ein oder aus – die gestrichelte Linie in der Vitalitäts-Spinne oben zeigt dir sofort, wie sich dein Profil verändert. Dein Auftrag bleibt der erste Schritt oben.'
             : 'Wähle bis zu drei Hebel aus deinen größten Ansatzpunkten — und sieh sofort, was das für deinen Index bedeuten würde. Serverseitig berechnet, mit derselben Formel wie dein Ergebnis.'}</div>
         <div id="simGoalCard">${renderGoalCardHtml()}</div>
         ${leversHtml}
@@ -9637,7 +9640,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.10</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.11</footer>
 
 
 </body>
