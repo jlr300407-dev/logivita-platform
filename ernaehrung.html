@@ -502,7 +502,7 @@
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.2.2"; // 1.2.2: Plan ohne „dann“ wird beim Anpassen ins Wenn-Feld übernommen; Beispieltexte mit „z. B.“ und blasser · // 1.2.1: während des Kurzchecks keine zweiten Bewertungsknöpfe in den Schritt-Karten · // 1.2.0 (25.10.2026): Abschluss-Fenster „Deine nächsten 14 Tage“, Kurzcheck nach 14 Tagen (Link aus der Mail ohne PIN), Erinnerung nur mit Einwilligung
+  const FE_VERSION = "1.2.3"; // 1.2.3: Einleitungszeile während des Kurzchecks · // 1.2.2: Plan ohne „dann“ wird beim Anpassen ins Wenn-Feld übernommen; Beispieltexte mit „z. B.“ und blasser · // 1.2.1: während des Kurzchecks keine zweiten Bewertungsknöpfe in den Schritt-Karten · // 1.2.0 (25.10.2026): Abschluss-Fenster „Deine nächsten 14 Tage“, Kurzcheck nach 14 Tagen (Link aus der Mail ohne PIN), Erinnerung nur mit Einwilligung
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
@@ -1126,7 +1126,7 @@
     h(`
       <h1>Deine Schritte</h1>
       <p class="lead">${steps.some((x) => x.state !== "vorgemerkt")
-        ? "Hake ab, was im Alltag angekommen ist — dann kannst du nachlegen."
+        ? (kurzcheckHtml(r) /* 1.2.3 */ ? "Schätz oben ein, wie deine Schritte laufen – danach geht es mit neuem Zettel weiter." : "Hake ab, was im Alltag angekommen ist — dann kannst du nachlegen.")
         : "Mach aus deinem Schritt einen kurzen Plan und starte. Ein Schritt, der hält, bringt mehr als drei, die nach zwei Wochen wegbrechen."}</p>
       ${msg ? `<div class="card warn"><p>${esc(msg)}</p></div>` : ""}
       ${needDoc && r.clearance_text ? `<div class="card warn"><h3>${esc(r.clearance_text.title)}</h3><p class="muted">${esc(r.clearance_text.body)}</p></div>` : ""}
