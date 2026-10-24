@@ -36,6 +36,9 @@
   Testmodus: ?internal=1 zeigt die letzte Server-Antwort.
 
   Versionen:
+1.6.0 (24.10.2026) Gewichtung nach Zeitpunkt (Wunsch Jörg): beim neuesten Check ist "Ergebnis ansehen" der
+Hauptknopf; "Neuen Vital-Check starten" ist bis 8 Wochen nach dem letzten Check nur ein kleiner Link mit Datum,
+ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks behalten den Textlink.
   1.5.0 (19.10.2026) Paket G: Modulkarte liest module_access aus my_checks (SQL 07) — dieselbe Zugangsregel wie
   Vital-Check-Seite, Mail und Modul-Eingänge (ärztlicher Vorrang, Essverhalten, BMI-Grenzen des Ernährungs-Checks).
   1.4.0 (18.10.2026) Umsetzungsfassung Systemtest (Regelversion 2026-10-R1): Liste der Checks liest den
@@ -303,6 +306,10 @@
   .open-link { display: inline-block; margin-top: 6px; font-size: 13.5px; font-weight: 600; color: var(--accent-green-text); text-decoration: none; }
   .open-link:hover { text-decoration: underline; }
   .recheck-hint { font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
+    .btn.open-main { margin-top: 12px; padding: 12px 22px; } /* 1.6.0 */
+    .recheck-link { display: inline-block; margin-top: 6px; font-size: 13.5px; font-weight: 600; color: var(--text-secondary); text-decoration: underline; } /* 1.6.0 */
+    .recheck-link:hover { color: var(--text-primary); }
+    .recheck-soon { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); } /* 1.6.0 */
 
   .toggle { display: flex; gap: 14px; align-items: flex-start; padding: 12px 0; cursor: pointer; }
   .toggle + .toggle { border-top: 1px solid var(--border); }
@@ -589,7 +596,7 @@
           <div><div class="date">${esc(dateDe(c.created_at))}</div>
             <div class="label">${checkLabel(c)}</div>
             <div class="code">${esc(c.public_code)}</div>
-            <a class="open-link" href="index.html?code=${encodeURIComponent(c.public_code)}" data-open="${esc(c.public_code)}">Ergebnis ansehen →</a></div>
+            <a class="${i === 0 ? "btn open-main" : "open-link"}" href="index.html?code=${encodeURIComponent(c.public_code)}" data-open="${esc(c.public_code)}">Ergebnis ansehen →</a></div>
           <div><div class="score">${num(c.total_score)}<small> /100</small></div>${delta}</div>
         </div>`;
     }).join("");
@@ -602,10 +609,17 @@
       <div class="card">
         <h2>Deine Vital-Checks</h2>
         ${list.length ? rows : `<p class="muted">Noch kein Check in deinem Konto.</p>`}
-        ${list.length ? `<a class="btn block" style="margin-top:16px" href="index.html?recheck=${encodeURIComponent(list[0].public_code)}">Neuen Vital-Check starten</a>
-          <p class="recheck-hint">${weeksSince(list[0].created_at) < 8
-            ? `Dein letzter Check ist ${weeksSince(list[0].created_at) <= 1 ? "erst wenige Tage" : `${weeksSince(list[0].created_at)} Wochen`} her. Am aussagekräftigsten ist der Vergleich nach 8 bis 12 Wochen.`
-            : "Dein neues Ergebnis wird automatisch mit dem letzten verglichen."}</p>` : ""}
+        ${list.length ? (() => { /* 1.6.0: Re-Check erst nach 8 Wochen als großer Knopf */
+      const wk = weeksSince(list[0].created_at);
+      const href = `index.html?recheck=${encodeURIComponent(list[0].public_code)}`;
+      if (wk < 8) {
+        const due = new Date(new Date(list[0].created_at).getTime() + 56 * 864e5).toISOString();
+        return `<div class="recheck-soon"><p class="recheck-hint" style="margin-top:0">Dein nächster Check ist ab dem ${esc(dateDe(due))} sinnvoll – am aussagekräftigsten ist der Vergleich nach 8 bis 12 Wochen.</p>
+          <a class="recheck-link" href="${href}">Trotzdem schon jetzt einen neuen Check starten</a></div>`;
+      }
+      return `<a class="btn block" style="margin-top:16px" href="${href}">Neuen Vital-Check starten</a>
+        <p class="recheck-hint">Zeit für deinen nächsten Check: Dein neues Ergebnis wird automatisch mit dem letzten verglichen.</p>`;
+    })() : ""}
       </div>
 
       ${list.length ? modulesCard(list[0]) : ""}
