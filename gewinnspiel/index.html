@@ -309,10 +309,10 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 </footer>
 
 </div>
-<!-- gewinnspiel-seite 1.1.4 · 24.10.2026 -->
+<!-- gewinnspiel-seite 1.2.0 · 24.10.2026 (Funnel) -->
 
 <script>
-/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.1.4 · 24.10.2026
+/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.2.0 · 24.10.2026 (Funnel)
    Ablauf: eintragen → Server (Edge "gewinnspiel") prüft, lost aus, speichert, schickt die Mail
    → das Rad läuft auf das Feld aus, das der Server bestimmt hat.
    Erfolg wird erst nach bestätigter Server-Antwort angezeigt. */
@@ -320,6 +320,7 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
   var CONFIG = {
     vorschau: false,
     endpoint: 'https://koctweetotpqaazeicwj.supabase.co/functions/v1/gewinnspiel',
+    restUrl: 'https://koctweetotpqaazeicwj.supabase.co/rest/v1',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0'
   };
   var $ = function (id) { return document.getElementById(id); };
@@ -328,10 +329,61 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
   var errBox = $('errBox'), errText = $('errText');
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var params = new URLSearchParams(location.search);
+  // ?internal=1 markiert die ganze Browser-Session als Test (wie im Vital-Check)
+  try { if (params.get('internal') === '1') sessionStorage.setItem('levita_internal', '1'); } catch (e) {}
   var intern = params.get('internal') === '1';
-  var utm = {};
+  try { intern = intern || sessionStorage.getItem('levita_internal') === '1'; } catch (e) {}
+  var utm = {}, utmRoh = {};
   ['source', 'medium', 'campaign', 'content', 'term'].forEach(function (k) {
-    var v = params.get('utm_' + k); if (v) utm[k] = v;
+    var v = params.get('utm_' + k); if (v) { utm[k] = v.slice(0, 100); utmRoh['utm_' + k] = v.slice(0, 100); }
+  });
+  if (params.get('fbclid')) utmRoh.fbclid = params.get('fbclid').slice(0, 100);
+  try {
+    if (Object.keys(utmRoh).length) sessionStorage.setItem('levita_gw_utm', JSON.stringify(utmRoh));
+    else { utmRoh = JSON.parse(sessionStorage.getItem('levita_gw_utm') || '{}');
+      ['source', 'medium', 'campaign', 'content', 'term'].forEach(function (k) { if (utmRoh['utm_' + k]) utm[k] = utmRoh['utm_' + k]; }); }
+  } catch (e) {}
+
+  // ── Funnel (Tabelle funnel_events, gleiches Format wie der Vital-Check, page: 'gewinnspiel') ──
+  function sessionId() {
+    var neu = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    try {
+      var id = sessionStorage.getItem('levita_funnel_sid'), ts = Number(sessionStorage.getItem('levita_funnel_sid_ts')) || 0;
+      if (!(id && /^[a-z0-9]{6,40}$/.test(id) && (Date.now() - ts) < 30 * 60 * 1000)) { id = neu; sessionStorage.setItem('levita_funnel_sid', id); }
+      sessionStorage.setItem('levita_funnel_sid_ts', String(Date.now()));
+      return id;
+    } catch (e) { return window.__gwSid || (window.__gwSid = neu); }
+  }
+  function quelle() {
+    var r = document.referrer; if (!r) return 'direct';
+    var h = ''; try { h = new URL(r).hostname.toLowerCase(); } catch (e) {}
+    if (h === location.hostname) return 'app';
+    if (/(^|\.)facebook\.com$|(^|\.)fb\.com$/.test(h)) return 'facebook';
+    if (/(^|\.)instagram\.com$/.test(h)) return 'instagram';
+    if (/(^|\.)le-vita\.com$/.test(h)) return 'homepage';
+    if (/(^|\.)logivita\.de$/.test(h)) return 'logivita';
+    if (/(^|\.)google\.[a-z.]+$/.test(h) && /\/maps/.test(r)) return 'gmb';
+    if (/(^|\.)(google|bing|duckduckgo|ecosia|yahoo|startpage|qwant)\.[a-z.]+$/.test(h)) return 'seo';
+    return 'web';
+  }
+  function track(name, extra) {
+    if (CONFIG.vorschau) return;
+    try {
+      var meta = { page: 'gewinnspiel', source: quelle(), host: location.hostname,
+        referrer: document.referrer ? document.referrer.slice(0, 200) : undefined,
+        device: window.innerWidth < 600 ? 'mobile' : 'desktop', is_internal: intern ? true : undefined,
+        env: /le-vita\.com$/.test(location.hostname) ? 'prod' : 'dev' };
+      Object.keys(utmRoh).forEach(function (k) { meta[k] = utmRoh[k]; });
+      Object.keys(extra || {}).forEach(function (k) { meta[k] = extra[k]; });
+      fetch(CONFIG.restUrl + '/funnel_events', { method: 'POST', keepalive: true,
+        headers: { 'Content-Type': 'application/json', 'apikey': CONFIG.anonKey, 'Authorization': 'Bearer ' + CONFIG.anonKey, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ event_name: name, session_id: sessionId(), meta: meta }) }).catch(function () {});
+    } catch (e) {}
+  }
+  track('gw_view');
+  var formBegonnen = false;
+  ['vn', 'nn', 'em'].forEach(function (id) {
+    $(id).addEventListener('input', function () { if (!formBegonnen) { formBegonnen = true; track('gw_form_start'); } });
   });
 
   var winkel = 0, laeuft = false, raf = 0, busy = false;
@@ -374,12 +426,13 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
       tnb: $('tnb').checked, newsletter: $('nl').checked, firma: $('firma').value,
       utm: utm, intern: intern
     };
-    if (!daten.vorname || !daten.nachname) return showErr('Bitte Vor- und Nachnamen eintragen.');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(daten.email)) return showErr('Bitte eine gültige E-Mail-Adresse eintragen.');
-    if (!daten.tnb) return showErr('Bitte die Teilnahmebedingungen bestätigen.');
+    if (!daten.vorname || !daten.nachname) { track('gw_invalid', { feld: 'name' }); return showErr('Bitte Vor- und Nachnamen eintragen.'); }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(daten.email)) { track('gw_invalid', { feld: 'email' }); return showErr('Bitte eine gültige E-Mail-Adresse eintragen.'); }
+    if (!daten.tnb) { track('gw_invalid', { feld: 'tnb' }); return showErr('Bitte die Teilnahmebedingungen bestätigen.'); }
     showErr('');
     if (CONFIG.vorschau) return showErr('Vorschau: Die Teilnahme ist noch nicht freigeschaltet – es wurde nichts gespeichert.');
 
+    track('gw_submit', { newsletter: daten.newsletter });
     sperren(true);
     rad.closest('svg').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
     freilauf();
@@ -395,9 +448,11 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
       var j = res.j || {};
       if (res.status !== 200 || !j.ok || typeof j.index !== 'number') {
         anhalten(); sperren(false);
+        track('gw_error', { fehler: j.fehler || ('http_' + res.status) });
         formBox.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
         return showErr(j.meldung || 'Gerade klappt es technisch nicht. Bitte versuch es gleich noch einmal.');
       }
+      track('gw_success', { feld: j.index, mail: !!j.mail, newsletter: daten.newsletter });
       auslaufen(j.index, function () {
         setText('.js-prize', j.gewinn); setText('.js-vn', daten.vorname);
         $('mailOk').hidden = !j.mail; $('mailFehler').hidden = !!j.mail;
@@ -409,6 +464,7 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
       });
     }).catch(function () {
       clearTimeout(timer); anhalten(); sperren(false);
+      track('gw_error', { fehler: 'netz' });
       showErr('Die Verbindung hat nicht geklappt. Bitte prüf dein Netz und versuch es noch einmal.');
     });
   });

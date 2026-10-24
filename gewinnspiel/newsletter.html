@@ -47,7 +47,7 @@ button:focus-visible,a:focus-visible{outline:3px solid #A6D71C;outline-offset:2p
   <p class="klein" style="margin-bottom:32px"><a href="https://www.le-vita.com/datenschutz" style="color:#745E3D">Datenschutz</a> · <a href="https://www.le-vita.com/impressum" style="color:#745E3D">Impressum</a></p>
 </main>
 <script>
-/* LeVita · Newsletter-Bestätigung Gewinnspiel · 1.0.0 · 24.10.2026
+/* LeVita · Newsletter-Bestätigung Gewinnspiel · 1.1.0 · 24.10.2026 (Funnel-Ereignis)
    Bestätigt wird nur per Klick (nicht schon beim Öffnen), damit Mail-Scanner nichts auslösen. */
 (function () {
   var ENDPOINT = 'https://koctweetotpqaazeicwj.supabase.co/functions/v1/gewinnspiel';
@@ -71,6 +71,14 @@ button:focus-visible,a:focus-visible{outline:3px solid #A6D71C;outline-offset:2p
     }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { s: r.status, j: j }; }); })
       .then(function (res) {
         if (res.s === 200 && res.j.ok) {
+          try {
+            var intern = false; try { intern = sessionStorage.getItem('levita_internal') === '1'; } catch (e) {}
+            var sid = ''; try { sid = sessionStorage.getItem('levita_funnel_sid') || ''; } catch (e) {}
+            if (!sid) sid = Math.random().toString(36).slice(2) + Date.now().toString(36);
+            fetch('https://koctweetotpqaazeicwj.supabase.co/rest/v1/funnel_events', { method: 'POST', keepalive: true,
+              headers: { 'Content-Type': 'application/json', 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Prefer': 'return=minimal' },
+              body: JSON.stringify({ event_name: 'gw_nl_confirm', session_id: sid, meta: { page: 'gewinnspiel', schon: !!res.j.schon, is_internal: intern || undefined, env: 'prod' } }) }).catch(function () {});
+          } catch (e) {}
           $('frage').hidden = true; $('danke').hidden = false;
           if (res.j.schon) { $('dankeTitel').textContent = 'Schon erledigt'; $('dankeText').textContent = 'Deine Newsletter-Anmeldung war bereits bestätigt. Alles in Ordnung.'; }
           else if (res.j.vorname) { $('dankeTitel').textContent = 'Danke, ' + res.j.vorname + '!'; }

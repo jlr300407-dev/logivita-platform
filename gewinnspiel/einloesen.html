@@ -46,6 +46,11 @@ dt{color:var(--braun-hell)}dd{margin:0;font-weight:600}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}
 .kpi{background:#fff;border-radius:14px;padding:14px 16px;font-size:14px;color:var(--braun-hell)}
 .kpi b{display:block;font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:800;color:var(--braun);line-height:1.1}
+.stufen{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:8px 0 12px}
+.stufe{background:var(--creme);border-radius:12px;padding:10px 12px}
+.stufe b{display:block;font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;line-height:1.1}
+.balken{height:6px;background:var(--beige);border-radius:3px;margin-top:6px;overflow:hidden}.balken i{display:block;height:100%;background:var(--gruen)}
+.mini th,.mini td{padding:6px 8px;font-size:13px}
 .verteilung{background:#fff;border-radius:14px;padding:12px 16px;margin-bottom:14px;font-size:14px;line-height:1.9}
 .werkzeug{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 .werkzeug input[type=search]{flex:1 1 260px}
@@ -91,6 +96,7 @@ td.code a{font-family:'Courier New',monospace;font-weight:700;color:var(--braun)
     <p class="sub" style="font-size:15px">Bitte vor dem Einlösen den Namen mit der Person abgleichen – der Gutschein ist persönlich.</p>
   </div>
   <div id="tabL" role="tabpanel" hidden>
+    <div class="verteilung" id="funnel" aria-live="polite"></div>
     <div class="kpis" id="kpis"></div>
     <div class="verteilung" id="verteilung"></div>
     <div class="werkzeug">
@@ -113,7 +119,7 @@ td.code a{font-family:'Courier New',monospace;font-weight:700;color:var(--braun)
 
 <script src="/assets/supabase-js@2.js"></script>
 <script>
-/* LeVita Empfang · Gutschein einlösen · 1.3.1 · 24.10.2026 (Kursmonat)
+/* LeVita Empfang · Gutschein einlösen · 1.4.0 · 24.10.2026 (Funnel)
    Zugriff nur für Konten in trainer_roles (is_trainer()); die RPCs prüfen das in der Datenbank. */
 (function () {
   var URL_ = 'https://koctweetotpqaazeicwj.supabase.co';
@@ -219,10 +225,24 @@ td.code a{font-family:'Courier New',monospace;font-weight:700;color:var(--braun)
     personaltraining: 'Personaltraining', manuelle_therapie: 'Manuelle Therapie', kurswoche: 'Kurse 1 Monat', five: 'five 1 Monat' };
   function tag(s) { return s ? new Date(s).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''; }
 
+  var ereignisse = [];
+  async function ladeEreignisse() {
+    var alle = [], von = 0;
+    while (von < 50000) {
+      var r = await sb.from('funnel_events').select('event_name,session_id,meta,created_at')
+        .like('event_name', 'gw_%').gte('created_at', '2026-10-24T00:00:00Z').order('created_at').range(von, von + 999);
+      if (r.error) throw r.error;
+      alle = alle.concat(r.data || []);
+      if (!r.data || r.data.length < 1000) break;
+      von += 1000;
+    }
+    return alle;
+  }
   async function laden() {
     $('stand').textContent = 'Lade …';
     var r = await sb.rpc('gewinnspiel_teilnehmer');
     if (r.error) { $('stand').textContent = 'Laden fehlgeschlagen: ' + r.error.message; return; }
+    try { ereignisse = await ladeEreignisse(); } catch (e) { ereignisse = []; $('funnel').textContent = 'Funnel konnte nicht geladen werden: ' + (e.message || e); }
     daten = r.data || [];
     $('stand').textContent = 'Stand: ' + new Date().toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' });
     zeichne();
@@ -238,8 +258,35 @@ td.code a{font-family:'Courier New',monospace;font-weight:700;color:var(--braun)
     });
   }
 
+  function herkunft(m) {
+    if (!m) return 'unbekannt';
+    if (m.utm_source) return m.utm_source + (m.utm_medium ? ' / ' + m.utm_medium : '') + (m.utm_content ? ' · ' + m.utm_content : '');
+    return m.source || 'direkt';
+  }
+  function zeichneFunnel(basis) {
+    var mitIntern = $('mitIntern').checked;
+    var ev = ereignisse.filter(function (e) { return mitIntern || !(e.meta && e.meta.is_internal); });
+    var sitz = function (name) { var s = {}; ev.forEach(function (e) { if (e.event_name === name) s[e.session_id] = e; }); return s; };
+    var besuch = sitz('gw_view'), start = sitz('gw_form_start'), abg = sitz('gw_submit'), ok = sitz('gw_success'), nl = sitz('gw_nl_confirm');
+    var n = function (o) { return Object.keys(o).length; };
+    var eingeloest = basis.filter(function (t) { return t.eingeloest_am; }).length;
+    var stufen = [['Besuche', n(besuch)], ['Formular begonnen', n(start)], ['Abgeschickt', n(abg)], ['Teilnahmen', n(ok)], ['Eingelöst', eingeloest], ['Newsletter bestätigt', n(nl)]];
+    var max = Math.max(1, stufen[0][1]);
+    var html = '<strong>Funnel</strong> <span style="color:var(--braun-hell)">(Besucher je Sitzung, ab 24.10.2026)</span><div class="stufen">' +
+      stufen.map(function (st) { var q = Math.round(100 * st[1] / max); return '<div class="stufe">' + esc(st[0]) + '<b>' + st[1] + '</b><span style="font-size:12px;color:var(--braun-hell)">' + (stufen[0][1] ? q + ' % der Besuche' : '–') + '</span><div class="balken"><i style="width:' + Math.min(100, q) + '%"></i></div></div>'; }).join('') + '</div>';
+    var proQ = {};
+    Object.keys(besuch).forEach(function (sid) { var k = herkunft(besuch[sid].meta); proQ[k] = proQ[k] || { b: 0, t: 0 }; proQ[k].b++; });
+    Object.keys(ok).forEach(function (sid) { var k = herkunft((besuch[sid] || ok[sid]).meta); proQ[k] = proQ[k] || { b: 0, t: 0 }; proQ[k].t++; });
+    var keys = Object.keys(proQ).sort(function (a, b) { return proQ[b].b - proQ[a].b; });
+    if (keys.length) {
+      html += '<div class="tabelle"><table class="mini"><thead><tr><th>Herkunft (Quelle / Medium · Anzeige)</th><th>Besuche</th><th>Teilnahmen</th><th>Quote</th></tr></thead><tbody>' +
+        keys.map(function (k) { var x = proQ[k]; return '<tr><td>' + esc(k) + '</td><td>' + x.b + '</td><td>' + x.t + '</td><td>' + (x.b ? Math.round(100 * x.t / x.b) + ' %' : '–') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+    }
+    $('funnel').innerHTML = html;
+  }
   function zeichne() {
     var basis = (daten || []).filter(function (t) { return $('mitIntern').checked || !t.is_internal; });
+    zeichneFunnel(basis);
     var personen = basis.filter(function (t) { return t.ist_erster; }).length;
     var eingeloest = basis.filter(function (t) { return t.eingeloest_am; }).length;
     var nlJa = basis.filter(function (t) { return t.newsletter_bestaetigt_am; }).length;
