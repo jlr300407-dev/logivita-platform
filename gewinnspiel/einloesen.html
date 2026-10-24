@@ -63,6 +63,14 @@ th{background:var(--creme);font-weight:700}
 td.code a{font-family:'Courier New',monospace;font-weight:700;color:var(--braun)}
 .chip{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700;margin:1px 2px 1px 0}
 .ja{background:#EEF7D4}.nein{background:var(--creme);color:var(--braun-hell)}.mehr{background:#FBEDE8;color:#8A2A12}
+.links h2{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:28px;margin:0}
+.links h3{font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--braun-hell);margin:10px 0 0}
+.link{display:grid;grid-template-columns:minmax(150px,220px) 1fr auto;gap:10px;align-items:center}
+.link span{font-weight:600;font-size:15px}
+.link input{min-height:42px;font-family:'Courier New',monospace;font-size:13px;background:var(--creme);border-color:var(--creme)}
+.link button{min-height:42px;font-size:15px;padding:0 16px;min-width:110px}
+.link small{grid-column:1/-1;margin-top:-6px;color:var(--braun-hell);font-size:13px}
+@media (max-width:640px){.link{grid-template-columns:1fr auto}.link span{grid-column:1/-1}}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -114,12 +122,78 @@ td.code a{font-family:'Courier New',monospace;font-weight:700;color:var(--braun)
     </div>
     <p class="sub" id="stand" style="font-size:14px;margin-top:10px"></p>
   </div>
+  <div class="karte links" id="links" style="margin-top:28px">
+    <div class="zeile" style="justify-content:space-between;align-items:center">
+      <h2>Links zum Teilen</h2>
+      <button class="sekundaer" id="alleKopieren" style="min-height:44px;font-size:15px">Alle kopieren</button>
+    </div>
+    <p class="sub" style="margin:0;font-size:15px">Jeder Link ist gekennzeichnet, damit im Reiter „Teilnehmer“ unter „Quelle“ sichtbar wird, woher die Teilnahmen kommen.</p>
+    <div id="linkListe"></div>
+  </div>
 </section>
 </main>
 
+<script>
+/* Links zum Teilen · Kopierfunktion */
+(function () {
+  var BASIS = 'https://app.le-vita.com/gewinnspiel/', K = 'gluecksrad_2026';
+  function u(q, m, c) { return BASIS + '?utm_source=' + q + '&utm_medium=' + m + '&utm_campaign=' + K + '&utm_content=' + c; }
+  var GRUPPEN = [
+    ['Homepage', [
+      ['Startseite (Banner/Button)', u('homepage', 'website', 'startseite')],
+      ['Menüpunkt / Aktionsseite', u('homepage', 'website', 'menue')],
+      ['Vital-Check-Seite', u('homepage', 'website', 'vitalcheck')]]],
+    ['Facebook', [
+      ['Beitrag', u('facebook', 'social', 'fb_beitrag')],
+      ['Story (Link-Sticker)', u('facebook', 'social', 'fb_story')],
+      ['Gruppen / Veranstaltung', u('facebook', 'social', 'fb_gruppe')]]],
+    ['Instagram', [
+      ['Link in Bio', u('instagram', 'social', 'ig_bio')],
+      ['Story (Link-Sticker)', u('instagram', 'social', 'ig_story')]]],
+    ['Werbeanzeigen (Meta)', [
+      ['Ziel-URL der Anzeige', BASIS],
+      ['Feld „URL-Parameter“', 'utm_source=meta&utm_medium=paid_social&utm_campaign=' + K + '&utm_content={{ad.name}}',
+        'Im Werbeanzeigenmanager unter „Tracking → URL-Parameter“ einfügen. Meta setzt den Anzeigennamen automatisch ein.']]],
+    ['WhatsApp & E-Mail', [
+      ['WhatsApp-Status', u('whatsapp', 'messenger', 'wa_status')],
+      ['WhatsApp weiterleiten', u('whatsapp', 'messenger', 'wa_weiterleiten')],
+      ['E-Mail-Signatur', u('email', 'signatur', 'mail_signatur')]]],
+    ['Im Studio', [
+      ['QR-Code Empfang', u('studio', 'qr', 'qr_empfang')],
+      ['QR-Code Flyer / Plakat', u('studio', 'qr', 'qr_flyer')],
+      ['Google-Unternehmensprofil', u('google', 'profil', 'google_beitrag')]]],
+    ['Intern', [
+      ['Testlink (zählt nicht mit)', BASIS + '?internal=1', 'Teilnahmen über diesen Link sind als intern markiert und in den Zahlen ausgeblendet.']]]
+  ];
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var html = '', n = 0;
+  GRUPPEN.forEach(function (g) {
+    html += '<h3>' + esc(g[0]) + '</h3>';
+    g[1].forEach(function (l) {
+      html += '<div class="link"><span>' + esc(l[0]) + '</span><input readonly value="' + esc(l[1]) + '" aria-label="' + esc(l[0]) + '" id="lk' + n + '">' +
+        '<button class="primaer" data-i="lk' + n + '">Kopieren</button>' + (l[2] ? '<small>' + esc(l[2]) + '</small>' : '') + '</div>';
+      n++;
+    });
+  });
+  document.getElementById('linkListe').innerHTML = html;
+  function kopiere(text, btn) {
+    function fertig() { var t = btn.textContent; btn.textContent = 'Kopiert ✓'; setTimeout(function () { btn.textContent = t; }, 1600); }
+    function alt() { var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); fertig(); } catch (e) {} ta.remove(); }
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(fertig, alt); else alt();
+  }
+  document.getElementById('linkListe').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-i]'); if (b) kopiere(document.getElementById(b.getAttribute('data-i')).value, b);
+  });
+  document.getElementById('linkListe').addEventListener('focusin', function (e) { if (e.target.tagName === 'INPUT') e.target.select(); });
+  document.getElementById('alleKopieren').addEventListener('click', function () {
+    kopiere(GRUPPEN.map(function (g) { return g[0] + '\n' + g[1].map(function (l) { return '- ' + l[0] + ': ' + l[1]; }).join('\n'); }).join('\n\n'), this);
+  });
+})();
+</script>
 <script src="/assets/supabase-js@2.js"></script>
 <script>
-/* LeVita Empfang · Gutschein einlösen · 1.4.0 · 24.10.2026 (Funnel)
+/* LeVita Empfang · Gutschein einlösen · 1.5.0 · 25.10.2026 (Links zum Teilen)
    Zugriff nur für Konten in trainer_roles (is_trainer()); die RPCs prüfen das in der Datenbank. */
 (function () {
   var URL_ = 'https://koctweetotpqaazeicwj.supabase.co';
