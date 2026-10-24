@@ -755,6 +755,11 @@ v2.21.5 (24.10.2026, Entscheidung Jörg): Kein Alkoholvorrang mehr. Alkohol ist 
 schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert sachlich über Schlaf/Erholung
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
+
+v2.21.6 (24.10.2026, Jörg: nicht bevormunden): Rauchstopp-Tipps als Angebot („Wenn du aufhören möchtest“),
+„Jede Reduktion zählt“ ersetzt; Alkohol-Tipp „Alkoholfreie Tage“ statt „weniger ist immer besser“; Schlaf-Hinweis
+und Praxis-Unterzeile ohne „solltest“ (wortgleich edge-2026-10-24.44); Raucher-Hinweis: „eine höhere Stufe“
+statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
        v2.21.3 (24.10.2026, R6-03/04): Vor der Freischaltung keine Gleichsetzung von Simulation und Plan: "Dein Plan: X und Y –
        zusätzlich freiwillig: Z" statt "Deine 3 Hebel … +7 Punkte"; Spinne und Potenzialkarte nennen die Summe aller Hebel
        ausdrücklich Simulation, Hebel tragen die Etiketten im Plan / freiwillig / später. "Plan für zwölf Wochen" ->
@@ -2746,7 +2751,7 @@ mit einem Glas Wein am Tag.
   const VITAL_AGE_ENABLED = false;
   const VITAL_AGE_NOTE = "Dein Vitalitäts-Alter ist eine experimentelle Umrechnung deines Lebensstil-Index in ein Alter – kein biologisches oder medizinisches Alter und nicht wissenschaftlich geprüft.";
   const CARE_HEADLINE = "Dein Lebensstilprofil";
-  const CARE_SUBLINE = "Einige Angaben solltest du ärztlich besprechen";
+  const CARE_SUBLINE = "Einige Angaben lohnt es sich, ärztlich zu besprechen"; // v2.21.6
   const CARE_CRISIS = "Wenn es dir gerade sehr schlecht geht: TelefonSeelsorge 0800 111 0 111 oder 0800 111 0 222, rund um die Uhr. In akuter Gefahr: 112.";
   const CARE_PREGNANCY_UNKNOWN = "Falls du schwanger bist oder stillst: Diese Tipps sind dafür nicht gedacht – sprich mit deiner Frauenarztpraxis oder Hebamme.";
   const CARE_PREGNANCY_STOP = "In Schwangerschaft und Stillzeit gelten eigene Empfehlungen – zum Beispiel zu Ernährung, Bewegung und Nahrungsergänzung. Allgemeine Tipps wären hier nicht passend. Sprich deine Fragen am besten mit deiner Frauenarztpraxis oder Hebamme durch. Nach der Stillzeit ist der Vital-Check gern wieder für dich da.";
@@ -2787,7 +2792,7 @@ mit einem Glas Wein am Tag.
   function isCareAffected(key) {
     return careAffectedAreas(window._care, (latestResult && latestResult.answers) || []).includes(key);
   }
-  const SLEEP_HINT = "Sehr kurzer Schlaf, sehr langes Einschlafen und Müdigkeit an jedem Tag – diese Kombination solltest du in deiner Hausarztpraxis ansprechen. Feste Schlafenszeiten helfen, ersetzen die Abklärung aber nicht.";
+  const SLEEP_HINT = "Sehr kurzer Schlaf, sehr langes Einschlafen und Müdigkeit an jedem Tag – wenn das so bleibt, sprich es in deiner Hausarztpraxis an. Feste Schlafenszeiten helfen, ersetzen die Abklärung aber nicht.";
   // v2.20.0 (Paket V, gemeinsame Hinweisquelle): EINE Regel für Übersicht, Plan und Mail (wortgleich in der Edge,
   // profileHintsOf ab edge-2026-10-23.22). Die Schlaf-Kombination schließt den Einzelhinweis Tagesmüdigkeit ein.
   const DAYTIME_HINT = "Du fühlst dich häufig tagsüber müde. Wenn das anhält, sprich es in deiner Hausarztpraxis an – auch dann, wenn du viel trainierst oder wenig schläfst; eine Ursache lässt sich aus dem Check nicht ablesen.";
@@ -6155,7 +6160,7 @@ mit einem Glas Wein am Tag.
       mental: ["Kleine Entlastungs-Pausen einbauen", "Zwei, drei bewusste Kurzpausen am Tag — atmen, kurz gehen, Fenster auf — senken die Grundspannung spürbar."],
       smoking: ["Rauchfrei werden — mit Unterstützung", "Am meisten bringt der Rauchstopp. Kostenlose Begleitung: Rauchfrei-Telefon des BIÖG 0800 8 31 31 31 und rauchfrei-info.de."],
       alcohol: alcoholCautionOf(result.answers || []) ? ["Erst Rücksprache, dann Schritte", ALCOHOL_FIRST_TIP]   // v2.20.4
-        : ["Weniger ist besser", "Laut DGE gibt es keine unbedenkliche Alkoholmenge – weniger ist immer besser. Ein einfacher Anfang: feste Tage in der Woche ganz ohne Alkohol."],
+        : ["Alkoholfreie Tage", "Leg zwei feste Tage pro Woche ohne Alkohol fest und plane für diese Abende ein anderes Getränk ein, z. B. Schorle oder alkoholfreies Bier."] /* v2.21.6: ohne Belehrung; DGE-Einordnung bleibt in der Fragen-Erklärung */,
       lifestyle: ["Ein rauch- bzw. alkoholfreies Zeitfenster", "Lege ein festes Zeitfenster am Tag fest, das bewusst frei bleibt. Klein anfangen, dranbleiben — jede Reduktion zählt."],
       micronutrients: ["Bunt und einfach essen", "Täglich eine Handvoll Gemüse mehr und ein- bis zweimal pro Woche Hülsenfrüchte decken viele Vitalstoffe ab."],
       metabolic: ["Regelmäßig essen und trinken", "Feste Mahlzeiten mit einem Glas Wasser dazu stabilisieren deine Energie über den Tag."],
@@ -7636,7 +7641,7 @@ mit einem Glas Wein am Tag.
       </div>`;
     }).join("");
     const capped = levelRank(null, score) > myRank && LEVEL_RANK[String(label || "").trim()];
-    const capNote = capped ? `<div style="font-size:12.5px;color:var(--text-secondary);margin:8px 0 0;">Dein Index allein läge eine Stufe höher. Bei täglichem Rauchen bleibt die Stufe bei „${escHtml(String(label))}“ – Rauchen ist einer der größten vermeidbaren Risikofaktoren.</div>` : "";
+    const capNote = capped ? `<div style="font-size:12.5px;color:var(--text-secondary);margin:8px 0 0;">Dein Index allein ergäbe eine höhere Stufe. Bei täglichem Rauchen bleibt die Stufe bei „${escHtml(String(label))}“ – Rauchen ist einer der größten vermeidbaren Risikofaktoren.</div>` : "";
     return `<div class="vital-index-box"><div class="section-title" style="margin-bottom:14px;">LeVITA Vitalitäts-Index</div>${rows}${capNote}<div class="vital-index-note"><strong>Dein nächstes Ziel:</strong> ${mots[mk]}</div></div>`;
   }
 
@@ -8062,7 +8067,7 @@ mit einem Glas Wein am Tag.
       return "Trag dir zwei Erholungszeiten pro Woche fest in den Kalender ein (je 30 Minuten, z. B. Spaziergang, Sauna, Lesen) und behandle sie wie einen Termin.";
     }
     if (key === "smoking") {   // v2.8.0
-      if (l === "low" || l === "medium") return "Den Rauchstopp planen: ein Datum festlegen und das Rauchfrei-Telefon (0800 8 31 31 31) anrufen — kostenlos.";
+      if (l === "low" || l === "medium") return "Wenn du aufhören möchtest: ein Datum festlegen und das Rauchfrei-Telefon (0800 8 31 31 31) anrufen — kostenlos."; /* v2.21.6 */
       return "Rauchfrei bleiben — das trägt deine Gesundheit mehr als fast alles andere.";
     }
     if (key === "alcohol") {   // v2.8.0
@@ -8074,7 +8079,7 @@ mit einem Glas Wein am Tag.
     if (key === "lifestyle") {
       const nicotine = getRisk("nicotine_use"); const alcohol = getRisk("alcohol_frequency");
       if (nicotine < 3 && alcoholCautionOf([getA("alcohol_frequency"), getA("alcohol_amount")].filter(Boolean))) return ALCOHOL_FIRST_TIP;   // v2.20.4
-      if (l === "low") { if (nicotine >= 3) return "Jede Reduktion zählt — auch ein Nichtrauchtag pro Woche ist ein echter Schritt."; if (alcohol >= 3) return "Alkoholfreie Tage bewusst einplanen — unterstützt Schlaf und Regeneration direkt."; return "Notiere eine Woche lang: an welchem Abend Alkohol oder Zigaretten, und am nächsten Morgen mit einer Zahl von 1 bis 5, wie erholt du bist."; }
+      if (l === "low") { if (nicotine >= 3) return "Wenn du aufhören möchtest: Leg einen Stopp-Tag fest und ruf das kostenlose Rauchfrei-Telefon an (0800 8 31 31 31)."; /* v2.21.6 */ if (alcohol >= 3) return "Alkoholfreie Tage bewusst einplanen — unterstützt Schlaf und Regeneration direkt."; return "Notiere eine Woche lang: an welchem Abend Alkohol oder Zigaretten, und am nächsten Morgen mit einer Zahl von 1 bis 5, wie erholt du bist."; }
       if (l === "medium") { if (nicotine >= 2) return "Einen rauchfreien Tag pro Woche als Experiment einplanen."; return "Alkoholfreie Abende bewusst einbauen — Schlaf und Regeneration verbessern sich messbar."; }
       return "Behalte die Abendroutine bei: 30 Minuten vor dem Schlafen Bildschirm aus und jeden Tag ungefähr zur gleichen Zeit ins Bett.";
     }
@@ -8156,8 +8161,8 @@ mit einem Glas Wein am Tag.
     if (key === "lifestyle") {
       const nicotine = getRisk("nicotine_use"); const alcohol = getRisk("alcohol_frequency");
       if (nicotine < 3 && alcoholCautionOf([getA("alcohol_frequency"), getA("alcohol_amount")].filter(Boolean))) return ALCOHOL_WEEK_TIP;   // v2.20.4
-      if (l === "low") { if (nicotine >= 3) return "Ruf das kostenlose Rauchfrei-Telefon des BIÖG an (0800 8 31 31 31) und vereinbare dort deinen Rauchstopp-Tag."; if (alcohol >= 3) return "Einen alkoholfreien Tag pro Woche als feste Gewohnheit einbauen."; return "Einen alkohol- oder nikotinfreien Tag pro Woche einplanen."; }
-      if (l === "medium") { if (nicotine >= 2) return "Leg einen Plan fest: z. B. jede Woche zwei Zigaretten pro Tag weniger und ein festes Rauchstopp-Datum – Hilfe gibt es beim Rauchfrei-Telefon 0800 8 31 31 31."; return "Einen Abend ohne Alkohol oder Nikotin als Regenerations-Test nutzen."; }
+      if (l === "low") { if (nicotine >= 3) return "Wenn du aufhören möchtest: Ruf das kostenlose Rauchfrei-Telefon des BIÖG an (0800 8 31 31 31) und vereinbare dort deinen Rauchstopp-Tag."; /* v2.21.6 */ if (alcohol >= 3) return "Einen alkoholfreien Tag pro Woche als feste Gewohnheit einbauen."; return "Einen alkohol- oder nikotinfreien Tag pro Woche einplanen."; }
+      if (l === "medium") { if (nicotine >= 2) return "Wenn du aufhören möchtest: z. B. jede Woche zwei Zigaretten pro Tag weniger und ein festes Rauchstopp-Datum – Hilfe gibt es beim Rauchfrei-Telefon 0800 8 31 31 31."; return "Einen Abend ohne Alkohol oder Nikotin als Regenerations-Test nutzen."; }
       return "Behalte es so bei: Plane auch bei Feiern feste Getränke ohne Alkohol ein, z. B. Schorle oder alkoholfreies Bier.";
     }
     if (key === "micronutrients") {
@@ -9564,7 +9569,7 @@ mit einem Glas Wein am Tag.
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.5</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.6</footer>
 
 
 </body>
