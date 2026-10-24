@@ -750,6 +750,11 @@
        v2.21.4 (24.10.2026, R6-05/06): Wiederaufnahme-Banner verschwindet, sobald ein neuer Check gespeichert wird
        (implizit "Neu beginnen"). Eingeklappte Phasen: "Anzeigen"/"Ausblenden". Simulator-Kicker "Simulation" statt
        doppeltem Titel. Studio-Empfehlung bei Erholungsvorrang: "Erholung zuerst, Training danach".
+
+v2.21.5 (24.10.2026, Entscheidung Jörg): Kein Alkoholvorrang mehr. Alkohol ist ein normales Planthema mit
+schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert sachlich über Schlaf/Erholung
+und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
+mit einem Glas Wein am Tag.
        v2.21.3 (24.10.2026, R6-03/04): Vor der Freischaltung keine Gleichsetzung von Simulation und Plan: "Dein Plan: X und Y –
        zusätzlich freiwillig: Z" statt "Deine 3 Hebel … +7 Punkte"; Spinne und Potenzialkarte nennen die Summe aller Hebel
        ausdrücklich Simulation, Hebel tragen die Etiketten im Plan / freiwillig / später. "Plan für zwölf Wochen" ->
@@ -2789,7 +2794,10 @@
   // v2.20.4 (Paket V2.1, Punkt 6): Beim Alkohol hat die ärztliche Rücksprache Vorrang vor dem Standardplan –
   // wortgleich mit der Edge (edge-2026-10-24.24). Auslöser: täglich/fast täglich ODER mehr als 25 Gläser im Monat.
   // Quelle: gesundheitsinformation.de (IQWiG), „Alkohol“, Stand 24.01.2023 (Dokumentation Fahrplan-Bausteine_V2.md).
-  const ALCOHOL_HINT = "Du trinkst regelmäßig Alkohol, täglich oder in größeren Mengen. Wenn du weniger trinken oder ganz aufhören möchtest, sprich vorher mit deiner Hausarztpraxis: Besteht eine Abhängigkeit, kann ein plötzlicher Verzicht ohne ärztliche Begleitung ernsthafte körperliche Beschwerden auslösen. Ob das bei dir eine Rolle spielt, lässt sich aus dem Check nicht ablesen – die Praxis hilft dir, den Weg sicher zu planen.";
+  // v2.21.5 (24.10.2026, Entscheidung Jörg): kein Alkoholvorrang mehr – Alkohol ist normales Planthema; der Hinweis
+  // informiert sachlich und nennt die Praxis nur bei Problemen. Wortgleich mit der Edge (edge-2026-10-24.43).
+  // Quellen: Pietilä et al. 2018, JMIR Ment Health 5(1):e23; gesundheitsinformation.de (IQWiG), „Alkohol“, Stand 24.01.2023.
+  const ALCOHOL_HINT = "Alkohol wirkt sich auf Schlaf und Erholung aus – messbar schon bei einem Glas, deutlich stärker bei mehreren. Wenn du weniger trinken möchtest, geh schrittweise vor. Fällt dir das schwer oder merkst du dabei Beschwerden, sprich mit deiner Hausarztpraxis.";
   const ALCOHOL_FIRST_TIP = "Beim Alkohol hat der Hinweis oben Vorrang. Notiere bis zum Gespräch eine Woche lang, an welchen Tagen und wie viele Gläser du trinkst (1 Glas = 0,3 l Bier, 0,125 l Wein oder 4 cl Schnaps).";
   // v2.20.5 (Paket V2.2, R3-02): Erholungsvorrang aus den Antworten – gleiche Regel wie Edge planCtxOf
   const RECOVERY_TIP_NOW = "Erholung zuerst: Solange Schlaf oder Tagesmüdigkeit auffällig sind, steigerst du deine Bewegung nicht. Behalte bei, was du jetzt machst, und notiere einmal pro Woche, wie erholt du aufwachst (1 bis 5).";
@@ -2800,16 +2808,19 @@
     const sl = score && score.score_payload && score.score_payload.sleep && score.score_payload.sleep.score;
     return (sl !== null && sl !== undefined && isFinite(Number(sl)) && Number(sl) < 50) || Number(d && d.risk_points) >= 3;
   }
-  function alcoholCautionOf(answers) {
+  // v2.21.5: Auslöser des Hinweises (täglich/fast täglich ODER mehr als 25 Gläser im Monat) – unverändert
+  function alcoholHintOf(answers) {
     const t = k => String(((answers || []).find(x => x && x.question_key === k) || {}).answer_text || "").trim().toLowerCase();
     return t("alcohol_frequency").startsWith("täglich oder fast täglich") || t("alcohol_amount").startsWith("mehr als 25 gläser");
   }
+  // v2.21.5: kein Alkoholvorrang mehr – alle Vorrang-Zweige (Rücksprache zuerst, nur notieren, Simulation gesperrt) sind aus
+  function alcoholCautionOf(answers) { return false; }
   function profileHintsOf(answers) {
     const r = k => { const a = (answers || []).find(x => x && x.question_key === k); return Number(a && a.risk_points); };
     const out = [];
     if (sleepFlagOf(answers)) out.push({ key: "sleep_combo", area: "sleep", title: "Schlaf ansprechen", text: SLEEP_HINT });
     else if (r("daytime_sleepiness") >= 3) out.push({ key: "daytime", area: "sleep", title: "Tagesmüdigkeit ansprechen", text: DAYTIME_HINT });
-    if (alcoholCautionOf(answers)) out.push({ key: "alcohol", area: "alcohol", title: "Alkohol: erst Rücksprache", text: ALCOHOL_HINT });   // v2.20.4
+    if (alcoholHintOf(answers)) out.push({ key: "alcohol", area: "alcohol", title: "Alkohol und Erholung", text: ALCOHOL_HINT });   // v2.21.5
     return out;
   }
   // ══ v2.12.0 (Paket E) — ZENTRALE ERGEBNIS-ENTSCHEIDUNG ═══════════════════
@@ -9553,7 +9564,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.4</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.5</footer>
 
 
 </body>
