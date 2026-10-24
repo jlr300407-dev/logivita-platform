@@ -373,7 +373,7 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply); else apply();
   })();
 </script>
-<script src="assets/konto.js?v=1.4.0"></script>
+<script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
   const FE_VERSION = "1.5.1";
@@ -418,13 +418,13 @@
       <div class="card">
         <div class="field"><label for="f-mail">E-Mail-Adresse</label>
           <input type="email" id="f-mail" autocomplete="email" placeholder="name@beispiel.de"></div>
-        <button class="btn block" id="b-link">Anmeldelink schicken</button>
+        <button class="btn block" id="b-link">Zugangslink per E-Mail erhalten</button>
         <div class="error" id="err">${esc(msg)}</div>
       </div>
       <div class="card">
         <h3>So funktioniert die Anmeldung</h3>
         <ul class="how">
-          <li data-n="1"><b>Link anfordern:</b> Wir schicken dir einen Link an deine E-Mail-Adresse.</li>
+          <li data-n="1"><b>Link anfordern:</b> Wir schicken dir einen Link und einen 6-stelligen Code an deine E-Mail-Adresse.</li>
           <li data-n="2"><b>Innerhalb einer Stunde klicken:</b> Der Link funktioniert nur einmal. Öffne ihn am besten auf diesem Gerät.</li>
           <li data-n="3"><b>Angemeldet bleiben:</b> Danach bist du auf diesem Gerät angemeldet und brauchst keinen neuen Link – bis du dich abmeldest oder die Browserdaten löschst.</li>
         </ul>
@@ -439,7 +439,7 @@
       const b = document.getElementById("b-link"); b.disabled = true; b.textContent = "Wird gesendet …";
       const r = await K.edge("login_link", { email: mail, tenant: TENANT, return_url: K.kontoPageUrl() });
       raw("login_link", r);
-      if (!r.success) { b.disabled = false; b.textContent = "Anmeldelink schicken"; err.textContent = "Das hat gerade nicht geklappt. Bitte versuche es gleich noch einmal."; return; }
+      if (!r.success) { b.disabled = false; b.textContent = "Zugangslink per E-Mail erhalten"; err.textContent = "Das hat gerade nicht geklappt. Bitte versuche es gleich noch einmal."; return; }
       h(`<div class="card ok"><h2>Schau in dein Postfach</h2>
           <p class="muted">Wenn zu <strong>${esc(mail)}</strong> ein Konto bei uns besteht, ist ein Anmeldelink unterwegs.</p>
           <ul class="how" style="margin-top:12px">
@@ -447,8 +447,25 @@
             <li data-n="2">Öffne ihn auf dem Gerät, auf dem du angemeldet sein möchtest. Öffnet er sich in deiner Mail-App, wähle „Im Browser öffnen“.</li>
             <li data-n="3">Keine Mail da? Schau im Spam-Ordner nach. Einen neuen Link kannst du nach einer Minute anfordern.</li>
           </ul></div>
+          <div class="card"><h3>Link funktioniert nicht?</h3>
+            <p class="muted">Gib den 6-stelligen Code aus derselben Mail ein – das klappt auch, wenn sich der Link im falschen Browser öffnet.</p>
+            <div class="field"><label for="f-code">Code aus der Mail</label>
+              <input type="text" id="f-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="123456"></div>
+            <button class="btn block" id="b-code" type="button">Mit Code anmelden</button>
+            <div class="error" id="err-code"></div></div>
           <button class="btn ghost block" id="b-again" type="button">Andere Adresse oder neuen Link anfordern</button>`);
       document.getElementById("b-again").onclick = () => screenLogin();
+      // 1.5.0 (Paket W5): einmaliger Code als Ausweg, wenn der Link vorab verbraucht wurde oder im falschen Browser landet
+      const useCode = async () => {
+        const bc = document.getElementById("b-code"), ec = document.getElementById("err-code");
+        bc.disabled = true; bc.textContent = "Wird geprüft …";
+        const rc = K.verifyCode ? await K.verifyCode(mail, document.getElementById("f-code").value) : { error: "OLD" };
+        if (rc && rc.session) { location.reload(); return; }
+        bc.disabled = false; bc.textContent = "Mit Code anmelden";
+        ec.textContent = rc && rc.error === "CODE_FORMAT" ? "Bitte gib die 6 Ziffern aus der Mail ein." : "Der Code passt nicht oder ist abgelaufen. Nimm den Code aus der neuesten Mail oder fordere einen neuen Link an.";
+      };
+      document.getElementById("b-code").onclick = useCode;
+      document.getElementById("f-code").onkeydown = (e) => { if (e.key === "Enter") useCode(); };
     };
     document.getElementById("b-link").onclick = send;
     document.getElementById("f-mail").onkeydown = (e) => { if (e.key === "Enter") send(); };
@@ -657,6 +674,19 @@
   $logout.onclick = () => { K.logout(); sess = null; screenLogin("Du bist abgemeldet. Für die nächste Anmeldung auf diesem Gerät schicken wir dir einen neuen Link."); };
 
   (async () => {
+    // 1.5.0 (Paket W5): Link aus der Mail – erst der Klick auf "Jetzt anmelden" meldet an
+    const pend = K.pendingLink ? K.pendingLink() : null;
+    if (pend) {
+      h(`<h1>Fast geschafft</h1>
+        <div class="card"><p class="lead" style="margin-top:0">Mit einem Klick bist du auf diesem Gerät angemeldet.</p>
+        <button class="btn block" id="b-go" type="button">Jetzt anmelden</button><div class="error" id="err-go"></div></div>`);
+      document.getElementById("b-go").onclick = async () => {
+        const bg = document.getElementById("b-go"); bg.disabled = true; bg.textContent = "Wird angemeldet …";
+        const rv = await K.verifyLink(pend);
+        if (rv && rv.error) screenLogin("", true);
+      };
+      return;
+    }
     const landed = K.consumeRedirect();
     if (landed && landed.error) {
       const expired = /expired|invalid|otp/i.test(landed.error + " " + landed.description);
