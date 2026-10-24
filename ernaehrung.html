@@ -502,7 +502,7 @@
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.2.3"; // 1.2.3: Einleitungszeile während des Kurzchecks · // 1.2.2: Plan ohne „dann“ wird beim Anpassen ins Wenn-Feld übernommen; Beispieltexte mit „z. B.“ und blasser · // 1.2.1: während des Kurzchecks keine zweiten Bewertungsknöpfe in den Schritt-Karten · // 1.2.0 (25.10.2026): Abschluss-Fenster „Deine nächsten 14 Tage“, Kurzcheck nach 14 Tagen (Link aus der Mail ohne PIN), Erinnerung nur mit Einwilligung
+  const FE_VERSION = "1.2.4"; // 1.2.4: Zettel-Karte direkt unter den Schritten; Kurzcheck ohne frisch dazugenommene Schritte · // 1.2.3: Einleitungszeile während des Kurzchecks · // 1.2.2: Plan ohne „dann“ wird beim Anpassen ins Wenn-Feld übernommen; Beispieltexte mit „z. B.“ und blasser · // 1.2.1: während des Kurzchecks keine zweiten Bewertungsknöpfe in den Schritt-Karten · // 1.2.0 (25.10.2026): Abschluss-Fenster „Deine nächsten 14 Tage“, Kurzcheck nach 14 Tagen (Link aus der Mail ohne PIN), Erinnerung nur mit Einwilligung
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
@@ -1134,18 +1134,18 @@
     ${steps.map((x) => stepCard(r, x)).join("") || '<div class="card"><p class="muted">Noch kein Schritt gewählt.</p></div>'}
       ${steps.some((x) => x.state !== "vorgemerkt") ? `
       <div class="card">
-        <h2>Wie es weitergeht</h2>
-        <p class="muted" style="margin-bottom:8px"><strong>Die nächsten zwei Wochen:</strong> Setz deine Pläne im Alltag um. Der Kühlschrank-Zettel weiter unten hilft dir beim Abhaken.</p>
-        <p class="muted" style="margin-bottom:8px"><strong>Danach kommst du zurück</strong> – ${r.account?.in_account || st.acct ? 'über <a href="konto.html">Mein Bereich</a>' : "über Mein Bereich, wenn du unten ein Konto anlegst, sonst auf dieser Seite mit Pilot-ID und PIN"} – zum Kurzcheck und schätzt jeden Schritt mit einem Klick ein: klappt meistens, teilweise oder noch nicht. Was noch hakt, passt du an oder nimmst es heraus.</p>
-        <p class="muted" style="margin:0"><strong>Dann setzt du neue Ziele:</strong> Für jeden Schritt, der angekommen ist, kannst du einen neuen dazunehmen – höchstens drei gleichzeitig.</p>
-      ${checkinInfoHtml(r)}
-      </div>` : ""}
-
-      ${steps.some((x) => x.state !== "vorgemerkt") ? `
-      <div class="card">
         <h2>Zettel für den Kühlschrank</h2>
         <p class="muted">Deine Pläne auf einer Seite, mit Abhakleiste für zwei Wochen. Im Druckdialog kannst du ihn auch als PDF speichern.</p>
         <button class="btn ghost block" id="b-fridge" style="margin-top:10px">Zettel drucken</button>
+      </div>` : ""}
+
+    ${steps.some((x) => x.state !== "vorgemerkt") ? `
+      <div class="card">
+        <h2>Wie es weitergeht</h2>
+        <p class="muted" style="margin-bottom:8px"><strong>Die nächsten zwei Wochen:</strong> Setz deine Pläne im Alltag um. Der Kühlschrank-Zettel oben hilft dir beim Abhaken.</p>
+        <p class="muted" style="margin-bottom:8px"><strong>Danach kommst du zurück</strong> – ${r.account?.in_account || st.acct ? 'über <a href="konto.html">Mein Bereich</a>' : "über Mein Bereich, wenn du unten ein Konto anlegst, sonst auf dieser Seite mit Pilot-ID und PIN"} – zum Kurzcheck und schätzt jeden Schritt mit einem Klick ein: klappt meistens, teilweise oder noch nicht. Was noch hakt, passt du an oder nimmst es heraus.</p>
+        <p class="muted" style="margin:0"><strong>Dann setzt du neue Ziele:</strong> Für jeden Schritt, der angekommen ist, kannst du einen neuen dazunehmen – höchstens drei gleichzeitig.</p>
+      ${checkinInfoHtml(r)}
       </div>` : ""}
 
       ${more.length ? `
@@ -1279,7 +1279,9 @@ function kurzcheckDue(r) {
 }
 function kurzcheckHtml(r) {
   if (!kurzcheckDue(r)) return "";
-  const steps = (r.self_steps || []).filter((x) => x.state === "gestartet" || (x.state === "angekommen" && ratedThisRound(r, x)));
+  const roundStart = r.checkin && r.checkin.started_at ? new Date(r.checkin.started_at).getTime() : Infinity;
+  // 1.2.4: nur Schritte, die schon vor Beginn der Runde liefen (frisch dazugenommene werden erst in der nächsten Runde eingeschätzt)
+  const steps = (r.self_steps || []).filter((x) => (x.state === "gestartet" && (!x.started_at || new Date(x.started_at).getTime() <= roundStart)) || (x.state === "angekommen" && ratedThisRound(r, x)));
   if (!steps.length) return "";
   const allRated = steps.every((x) => ratedThisRound(r, x));
   return `<div class="card top" id="kurzcheck">
