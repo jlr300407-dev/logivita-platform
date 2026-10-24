@@ -63,7 +63,7 @@
   "use strict";
   if (window.LeVitaKonto) return;
 
-  var VERSION = "1.4.0";
+  var VERSION = "1.5.0";
   var LINK_VALID = "eine Stunde";   // Supabase Auth, Email OTP Expiration (Standard 3600 s)
   var GUIDE_KEY = "levita_konto_guide_v1";
   var SUPABASE_URL = "https://koctweetotpqaazeicwj.supabase.co";
@@ -188,6 +188,62 @@
   }
 
   function logout() { storeSet(null); }
+
+  // ── 1.5.0 (Paket W5, 24.10.2026): Anmeldung, die Mailprogramme nicht vorab verbrauchen, und Code als Ausweg ──
+  // Der Link in der Mail öffnet nur "Mein Bereich" (#lk_th=…). Angemeldet wird erst mit dem Klick auf
+  // "Jetzt anmelden" (POST /auth/v1/verify). Danach geht es mit derselben #access_token=…-Rückgabe weiter
+  // wie bei den bisherigen Supabase-Links – alte Links funktionieren unverändert.
+  function pendingLink() {
+    var h = location.hash ? location.hash.slice(1) : "";
+    if (h.indexOf("lk_th=") < 0) return null;
+    var p = new URLSearchParams(h);
+    return { th: p.get("lk_th") || "", vt: p.get("lk_vt") || "magiclink", ret: p.get("lk_ret") || "" };
+  }
+  async function verifyRaw(body) {
+    try {
+      var res = await fetch(SUPABASE_URL + "/auth/v1/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: ANON_KEY },
+        body: JSON.stringify(body),
+      });
+      var j = {}; try { j = await res.json(); } catch (e) { j = {}; }
+      if (!res.ok || !j.access_token) return { error: j.error_code || j.code || j.error || ("HTTP_" + res.status), description: j.msg || j.error_description || j.message || "" };
+      return { json: j };
+    } catch (e) { return { error: "NETWORK", description: "" }; }
+  }
+  function sameOriginPath(ret) {
+    try { var u = new URL(ret, location.href); if (u.origin === location.origin) return u.pathname + u.search; } catch (e) {}
+    return location.pathname + location.search;
+  }
+  async function verifyLink(p) {
+    var r = await verifyRaw({ type: p.vt, token_hash: p.th });
+    if (r.error) { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {} return r; }
+    var j = r.json;
+    var target = sameOriginPath(p.ret);
+    var hash = "#access_token=" + encodeURIComponent(j.access_token) + "&refresh_token=" + encodeURIComponent(j.refresh_token || "") +
+      "&expires_in=" + encodeURIComponent(j.expires_in || 3600) + "&type=" + encodeURIComponent(p.vt);
+    var same = target === location.pathname + location.search;
+    location.replace(target + hash);
+    if (same) location.reload();
+    return { redirecting: true };
+  }
+  async function verifyCode(email, code) {
+    var token = String(code || "").replace(/\D/g, "");
+    if (token.length < 6) return { error: "CODE_FORMAT", description: "" };
+    var types = ["email", "magiclink", "invite"], last = null;
+    for (var i = 0; i < types.length; i++) {
+      var r = await verifyRaw({ type: types[i], email: email, token: token });
+      if (!r.error) {
+        var j = r.json;
+        var sess = { access_token: j.access_token, refresh_token: j.refresh_token,
+          expires_at: j.expires_at || Math.floor(Date.now() / 1000) + Number(j.expires_in || 3600), type: types[i] };
+        storeSet(sess);
+        return { session: sess, fresh: true };
+      }
+      last = r;
+    }
+    return last;
+  }
 
   // ── 1.3.0 Erklärfenster: Anmeldelink, Tipps, Sicherheit ───────────
   function guideSeen() {
@@ -442,6 +498,9 @@
     session: session,
     consumeRedirect: consumeRedirect,
     logout: logout,
+    pendingLink: pendingLink,     // 1.5.0
+    verifyLink: verifyLink,       // 1.5.0
+    verifyCode: verifyCode,       // 1.5.0
     mountStep: mountStep,
     kontoPageUrl: kontoPageUrl,
     showGuide: showGuide,         // 1.3.0
