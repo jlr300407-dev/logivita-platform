@@ -747,6 +747,12 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.21.1 (24.10.2026, Paket W5 Weg A): Zugang über "Mein Bereich" statt PIN. Mail-Haken neu (konto-v3, freigegeben):
+       Plan per Mail + persönlicher Bereich, Anmeldung per Link oder Code. Neuer freiwilliger Haken "Erinnert mich …",
+       Zeile unter dem Knopf zum Postfachzugang. Nach email_sent legt silentAccountRequest den Bereich still an
+       (Edge account-edge-2026-10-24.1, silent: keine zweite Mail, Anfrage 180 Tage offen). request_ai_analysis schickt
+       consent_ui "konto-v3" (Edge .31: Einwilligung levita-privacy-v4, Mail-Button nach "Mein Bereich", PIN klein).
+       Freischalt-Kasten: "Dein persönlicher Bereich" mit Knopf, Pilot-ID und PIN eingeklappt (90 Tage parallel).
        v2.21.0 (24.10.2026, Paket W2): Ergebnisseite neu geordnet – Erkennen → Hinweis → erster Schritt (Kernaussage aus
        edge-2026-10-24.29, wortgleich mit der Mail) → Reiter „Mein Plan“ (geöffnet) und „Mein Ergebnis“ → ganz unten Zugang,
        Re-Check, Zusatzmodule, Newsletter. Erster Schritt schon vor der Mail-Anforderung. Fahrplan: Phase 1 offen, Rest eingeklappt.
@@ -5067,7 +5073,8 @@
     if (!email) return uiAlert("Bitte E-Mail-Adresse eingeben.");
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) return uiAlert("Bitte eine gültige E-Mail-Adresse eingeben — z.B. name@beispiel.de");
-    if (!ca || !cm) return uiAlert("Bitte beide Einwilligungen bestätigen.");
+    if (!ca || !cm) return uiAlert("Bitte die beiden ersten Haken setzen – der dritte ist freiwillig.");
+    const cr = document.getElementById("consent_reminders")?.checked === true;   // v2.21.1 (W5): freiwillig
     if (typeof fbq !== 'undefined') fbq('track', 'Subscribe', { content_name: 'ai_mail_requested' });
     btn.disabled = true; btn.innerText = "Auswertung wird erstellt…";
     const hintTimer = setTimeout(() => {
@@ -5080,7 +5087,7 @@
     }, 8000);
     try {
       const firstName = (document.getElementById("ai_firstname")?.value || "").trim().slice(0, 60);
-      const result = await callFunction({ mode:"request_ai_analysis", public_code:latestResult.public_code, email, first_name: firstName || null, consent_ai_analysis:true, consent_email_delivery:true });
+      const result = await callFunction({ mode:"request_ai_analysis", public_code:latestResult.public_code, email, first_name: firstName || null, consent_ai_analysis:true, consent_email_delivery:true, consent_ui:"konto-v3" });
       clearTimeout(hintTimer);
       // Ehrliches Event-Reporting (v1.28.14, Post-Mortem 11.07.):
       // mail_sent_success NUR bei bestätigtem email_sent:true — nie optimistisch.
@@ -5089,13 +5096,14 @@
         // v1.39.1: Die Edge liefert den PIN jetzt mit — fuer die Sitzung merken,
         // damit Re-Check und Ziel-Speichern ohne erneute Eingabe funktionieren.
         if (result.access_pin) window._accessPin = result.access_pin;
-        const pinBlock = accessPinBlockHtml(result.access_pin, latestResult.public_code);
+        const _acct = silentAccountRequest(email, cr);   // v2.21.1 (W5 Weg A): persönlicher Bereich still, aktiv mit der ersten Anmeldung
+        const pinBlock = _acct ? personalAreaHtml(result.access_pin, latestResult.public_code) : accessPinBlockHtml(result.access_pin, latestResult.public_code);
         statusEl.innerHTML = `<div class="status-msg info-box box-success">✓ Dein Vital-Plan wurde an <strong>${email}</strong> versendet. Schau gleich in dein Postfach — ggf. auch im Spam-Ordner.</div>${pinBlock}${marketingOptinHtml('after_mail')}${recheckReminderHtml()}`;
         btn.disabled = true; btn.innerText = "✓ Vital-Plan wurde versendet";
         showFeedbackBox();
         // v2.0.0 — Stufe 2 sofort freischalten (Konzept: Freischaltung bei email_sent)
         unlockStage2({ email, firstName: firstName || null, pin: result.access_pin || window._accessPin || null, fahrplan: Array.isArray(result.fahrplan) ? result.fahrplan : [],
-          nutrition_offer: result.nutrition_offer || null });   // v2.7.0
+          nutrition_offer: result.nutrition_offer || null, account: _acct });   // v2.7.0 · v2.21.1: account
       } else {
         trackEvent('mail_sent_unconfirmed', { email_sent: false });
         statusEl.innerHTML = `<div class="status-msg info-box box-warning">Deine Auswertung wurde erstellt, aber der E-Mail-Versand konnte nicht bestätigt werden. Bitte prüfe in ein paar Minuten dein Postfach (auch Spam). Falls nichts ankommt: <strong>info@le-vita.com</strong></div>`;
@@ -5619,10 +5627,15 @@
           </div>
           <div class="checkbox-row">
             <input type="checkbox" id="consent_email_delivery" />
-            <label for="consent_email_delivery">Ja, die angeforderte Auswertung (mein Vital-Plan) darf mir einmalig per E-Mail zugesendet werden.</label>
+            <label for="consent_email_delivery">Ja, schickt mir meinen Vital-Plan per E-Mail und legt mir dafür einen persönlichen Bereich an. Dort finde ich meine Auswertung wieder. Angemeldet werde ich mit einem Link oder Code per E-Mail, ein Passwort gibt es nicht. Den Bereich kann ich jederzeit mit allen Daten löschen.</label>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="consent_reminders" />
+            <label for="consent_reminders">Erinnert mich per E-Mail an meinen nächsten Check. Abbestellen geht jederzeit mit einem Klick. <span style="color:var(--text-muted);">(freiwillig)</span></label>
           </div>
         </div>
         <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">${o.btn || 'Meinen kostenlosen Vital-Plan anfordern →'}</button>
+        <div style="margin-top:8px;font-size:11px;color:var(--text-muted);text-align:center;line-height:1.5;">Wer Zugriff auf dein E-Mail-Postfach hat, kann sich mit dem Link oder Code anmelden. Ein Anmeldelink gilt eine Stunde und nur einmal.</div>
         <div id="ai-status"></div>
         <div style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center;"><span style="color:var(--accent-green-text);">✓</span> Keine Werbung, kein Verkauf deiner Daten, jederzeit löschbar. Für Auswertung und Versand nutzen wir Anthropic und Resend (USA) – nur mit deiner Einwilligung. <a href="so-entsteht-deine-auswertung.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;" onclick="try{trackEvent('howitworks_open',{from:'mailbox'})}catch(e){}">So entsteht deine Auswertung</a></div>
       </div>`;
@@ -7248,7 +7261,7 @@
           <div><div class="stage-step-title">Dein Vital-Plan ist freigeschaltet</div>
           <div class="stage-step-sub">Alles ist ab sofort hier sichtbar.${info.email ? ` Die Mail mit deiner persönlichen Einordnung ist unterwegs an <strong>${escHtml(info.email)}</strong> – schau ggf. auch im Spam-Ordner.` : ""}</div></div>
         </div>
-        ${pin ? accessPinBlockHtml(pin, S.result.public_code) : ""}
+        ${info.account ? personalAreaHtml(pin, S.result.public_code) : (pin ? accessPinBlockHtml(pin, S.result.public_code) : "")}
         ${nextStepsHtml()}
         ${marketingOptinHtml('after_mail')}
       </div>`;
@@ -8711,6 +8724,34 @@
   // nicht findet oder loescht, kommt nie wieder an seine Auswertung. Nach dem
   // Versand gibt es auch keinen Grund mehr, ihn zurueckzuhalten — die Adresse
   // liegt vor, der Anreiz hat gewirkt.
+  // ══ v2.21.1 (Paket W5, Weg A, freigegeben 24.10.2026) ══
+  // Nach dem Mailversand legt die Seite still einen persönlichen Bereich an (Edge account, silent: keine zweite Mail).
+  // Aktiv wird er mit der ersten Anmeldung in "Mein Bereich" (Link oder Code per E-Mail). Pilot-ID und PIN bleiben
+  // 90 Tage eingeklappt als Alternative. Gibt true zurück, wenn die Anfrage abgeschickt wurde.
+  function silentAccountRequest(email, reminders) {
+    try {
+      if (!window.LeVitaKonto || !LeVitaKonto.edge || !latestResult || !latestResult.public_code) return false;
+      const pin = window._accessPin;
+      if (!pin || viaAccount()) return false;
+      LeVitaKonto.edge('request_account', {
+        public_code: latestResult.public_code, pin, email,
+        consents: { account: true, plan_mail: false, reminders: !!reminders },
+        silent: true, return_url: LeVitaKonto.kontoPageUrl ? LeVitaKonto.kontoPageUrl() : 'konto.html',
+      }).then(r => { try { trackEvent('account_silent', { ok: !!(r && r.success !== false), reminders: !!reminders }); } catch (e) {} })
+        .catch(() => { try { trackEvent('account_silent', { ok: false }); } catch (e) {} });
+      return true;
+    } catch (e) { return false; }
+  }
+  function personalAreaHtml(pin, publicCode) {
+    return `
+      <div style="background:rgba(var(--accent-green-rgb),0.08);border:1px solid rgba(var(--accent-green-rgb),0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-top:12px;text-align:left;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--accent-green-text);margin-bottom:6px;">${ICO("lock")} Dein persönlicher Bereich</div>
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.6;">Deine Auswertung findest du jederzeit in „Mein Bereich“ wieder. Dort meldest du dich mit deiner E-Mail-Adresse an – per Link oder Code, ohne Passwort. Dein nächster Check wird dort verknüpft.</div>
+        <a href="konto.html" target="_blank" rel="noopener" onclick="try{trackEvent('personal_area_open',{from:'unlock'})}catch(e){}" style="display:inline-block;margin-top:10px;padding:9px 16px;border-radius:var(--radius-sm);background:var(--accent-green);color:var(--on-accent);font-weight:700;font-size:13px;text-decoration:none;">Mein Bereich öffnen →</a>
+        ${pin && publicCode ? `<details style="margin-top:12px;"><summary style="cursor:pointer;font-size:12px;color:var(--text-muted);">Alternativ: Pilot-ID und PIN</summary>${accessPinBlockHtml(pin, publicCode)}</details>` : ""}
+      </div>`;
+  }
+
   function accessPinBlockHtml(pin, publicCode) {
     if (!pin || !publicCode) return "";
     // v2.8.2 — geöffnet über das Konto: kein PIN zu zeigen
@@ -9439,7 +9480,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.0</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.1</footer>
 
 
 </body>
