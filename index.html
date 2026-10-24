@@ -756,6 +756,9 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.21.8 (25.10.2026, Jörg): Index-Karte ohne „Dein wichtigster Hebel liegt bei …“, wenn die Kernaussage darunter steht;
+Begrüßung beim Wiederkommen ohne „Nimm dir Zeit für die Bereiche und den Simulator“.
+
 v2.21.7 (25.10.2026, Jörg): Index übergeordnet oben (Stufe 1 und 2), darunter Kernaussage, dann Reiter mit
 „Mein Ergebnis“ links und geöffnet (nach der Anforderung einmal „Mein Plan“). Im Ergebnis zuerst die Spinne,
 dann persönliche Hinweise, Verlauf, Bereiche; Angaben, Antworten, Berechnung, Stufen und Erklärungen gebündelt
@@ -5314,7 +5317,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     let title, sub;
     if (back) {
       title = hi;
-      sub = "Hier ist deine Auswertung — genau so, wie du sie verlassen hast. Nimm dir Zeit für die Bereiche und den Simulator.";
+      sub = "Hier ist deine Auswertung — genau so, wie du sie verlassen hast.";
     } else if (isRecheck) {
       title = "Geschafft — und diesmal mit Vergleich!";
       sub = "Dein neuer Vitalitäts-Überblick ist fertig. Weiter unten siehst du, was sich seit deinem letzten Check verändert hat.";
@@ -6671,7 +6674,8 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     else if (strengths.length === 1) s1 = `${nm(strengths[0], true)} trägt dich – darauf kannst du bauen.`;
     else s1 = `Dein Ergebnis zeigt mehrere Bereiche mit Luft nach oben – ein klarer Ausgangspunkt.`;
     // v2.4.1 — nur wenn der Bereich wirklich Luft hat (< 70) und nicht zugleich als Stärke genannt wurde
-    const s2 = (S.worst && Number(S.worst.score) < 70 && !strengths.some(a => a.key === S.worst.key))
+    // v2.21.8: Mit Kernaussage nennt die Karte direkt darunter den Ansatzpunkt – hier nur die Stärken (keine Doppelung)
+    const s2 = (!kernOf(S) && S.worst && Number(S.worst.score) < 70 && !strengths.some(a => a.key === S.worst.key))
       ? ` Dein wichtigster Hebel liegt bei <strong>${areaName(S.worst.label, S.worst.key)}</strong>.`
       : ((!S.worst || Number(S.worst.score) >= 70) && !(window._care && window._care.status && window._care.status !== "none") && allAreasAtLeast70() ? ` Alle Bereiche stehen stabil – jetzt geht es ums Halten.` : "");   // v2.9.0/v2.10.0 (A1): nur ohne Hinweisstatus und wenn ALLE Bereiche (auch BMI und Bewegung) mindestens 70 erreichen
     return s1 + s2;
@@ -9624,7 +9628,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.7</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.8</footer>
 
 
 </body>
