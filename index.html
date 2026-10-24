@@ -7,7 +7,7 @@
   <!-- v1.45.4 — Meta-Angaben für Suchmaschinen und geteilte Links.
        Kanonisch ist die Website-Seite /vital-check/start (dort steht der
        indexierbare Text); diese Datei läuft als iFrame darin. -->
-  <meta name="description" content="Was steckt in dir? Der kostenlose LeVITA Vital-Check zeigt dir in 5–7 Minuten deine Stärken in 8 Lebensbereichen, deinen größten Hebel und einen persönlichen Plan. Ergebnis sofort, ohne Anmeldung." />
+  <meta name="description" content="Was steckt in dir? Der kostenlose LeVITA Vital-Check zeigt dir in 5–7 Minuten deine Stärken in 8 Lebensbereichen, deinen größten Hebel und einen persönlichen Plan. Überblick sofort, ohne Anmeldung." />
   <link rel="canonical" href="https://le-vita.com/vital-check" />
   <meta name="theme-color" content="#0a1628" />
   <script>
@@ -747,6 +747,11 @@
        fachlich begleiteten Laborkontrolle spricht. Jetzt ein Ernaehrungsschritt,
        den man heute tun kann.
 
+       v2.21.3 (24.10.2026, R6-03/04): Vor der Freischaltung keine Gleichsetzung von Simulation und Plan: "Dein Plan: X und Y –
+       zusätzlich freiwillig: Z" statt "Deine 3 Hebel … +7 Punkte"; Spinne und Potenzialkarte nennen die Summe aller Hebel
+       ausdrücklich Simulation, Hebel tragen die Etiketten im Plan / freiwillig / später. "Plan für zwölf Wochen" ->
+       "6-Wochen-Plan mit Ausblick bis zum Re-Check". Startseite: "Überblick sofort", Re-Check im persönlichen Bereich.
+       Zugang und Zusatzmodule nennen zuerst den persönlichen Bereich, Pilot-ID und PIN als Alternative.
        v2.21.2 (24.10.2026, R6-01/02): Zurückgestellte Hebel (erst Erholung / erst Gespräch in der Praxis) lassen sich
        im Simulator weiter rechnen, aber nicht mehr als Re-Check-Ziel speichern. Knopf zeigt "Noch kein Ziel – erst …",
        Vorbelegung ohne solche Hebel, Hauptknopf "Mein Ziel festlegen" nur, wenn es einen erlaubten Hebel gibt.
@@ -2435,7 +2440,7 @@
       <svg class="ic" aria-hidden="true"><use href="#ic-radar"/></svg> 8 Lebensbereiche&nbsp;&nbsp;·&nbsp;&nbsp;<svg class="ic" aria-hidden="true"><use href="#ic-report"/></svg> Persönliche Auswertung&nbsp;&nbsp;·&nbsp;&nbsp;<svg class="ic" aria-hidden="true"><use href="#ic-trending"/></svg> Dein Verlauf
     </div>
     <button id="hero-cta" onclick="startDirectCheck();" style="display:block;width:100%;max-width:340px;margin:0 auto 12px;padding:16px 24px;background:var(--cta-green);color:var(--on-cta);font-size:17px;font-weight:800;border:none;border-radius:12px;cursor:pointer;">Jetzt kostenlos starten →</button>
-    <p style="margin:0 0 12px;font-size:11.5px;color:rgba(var(--ink-rgb),0.5);">Ergebnis sofort · kostenlos · ohne Anmeldung · ohne App</p>
+    <p style="margin:0 0 12px;font-size:11.5px;color:rgba(var(--ink-rgb),0.5);">Überblick sofort · kostenlos · ohne Anmeldung · ohne App</p>
     <div id="hero-social-proof" style="font-size:12px;color:rgba(var(--ink-rgb),0.55);">
       Über <span id="hero-count" style="font-weight:700;color:rgba(var(--ink-rgb),0.85);">100</span> Menschen haben ihren LeVITA Vital-Check gemacht
     </div>
@@ -2530,8 +2535,8 @@
       <div class="lp-vrow"><div class="lp-vicon"><svg class="ic" aria-hidden="true"><use href="#ic-radar"/></svg></div><div class="lp-vget">Deine Vitalitäts-Spinne mit allen Bereichen</div><div class="lp-vuse">Du siehst auf einen Blick, wo du stark bist.</div></div>
       <div class="lp-vrow"><div class="lp-vicon"><svg class="ic" aria-hidden="true"><use href="#ic-target"/></svg></div><div class="lp-vget">Dein größter Hebel</div><div class="lp-vuse">Du weißt, wo sich der erste Schritt am meisten lohnt.</div></div>
       <div class="lp-vrow"><div class="lp-vicon"><svg class="ic" aria-hidden="true"><use href="#ic-sliders"/></svg></div><div class="lp-vget">Der Potenzial-Simulator</div><div class="lp-vuse">Du siehst, was eine Veränderung bringt — bevor du sie machst.</div></div>
-      <div class="lp-vrow"><div class="lp-vicon"><svg class="ic" aria-hidden="true"><use href="#ic-envelope"/></svg></div><div class="lp-vget">Dein Vital-Plan per Mail</div><div class="lp-vuse">Persönlich auf deine Antworten geschrieben, mit einem 6-Wochen-Fahrplan.</div></div>
-      <div class="lp-vrow"><div class="lp-vicon"><svg class="ic" aria-hidden="true"><use href="#ic-trending"/></svg></div><div class="lp-vget">Dein Re-Check mit PIN</div><div class="lp-vuse">In 8–12 Wochen siehst du schwarz auf weiß, was sich verändert hat.</div></div>
+      <div class="lp-vrow"><div class="lp-vicon"><svg class="ic" aria-hidden="true"><use href="#ic-envelope"/></svg></div><div class="lp-vget">Dein Vital-Plan per Mail</div><div class="lp-vuse">Persönlich auf deine Antworten geschrieben: 6-Wochen-Plan mit Ausblick bis zum Re-Check – dazu dein persönlicher Bereich, wenn du ihn anforderst.</div></div>
+      <div class="lp-vrow"><div class="lp-vicon"><svg class="ic" aria-hidden="true"><use href="#ic-trending"/></svg></div><div class="lp-vget">Dein Re-Check im persönlichen Bereich</div><div class="lp-vuse">In 8–12 Wochen siehst du schwarz auf weiß, was sich verändert hat.</div></div>
       <div class="lp-vrow"><div class="lp-vicon"><svg class="ic" aria-hidden="true"><use href="#ic-users"/></svg></div><div class="lp-vget">Ein Gespräch im Studio, wenn du magst</div><div class="lp-vuse">Du setzt deinen Plan mit Menschen um, die dich begleiten.</div></div>
     </div>
   </div>
@@ -5602,7 +5607,7 @@
     // Druck aufzubauen.
     teaserRows += isLinkedRecheck
       ? teaserRow(ICO("key"), "Dein neuer persönlicher PIN", "nur damit rufst du diese Auswertung später wieder auf und vergleichst beim nächsten Check erneut")
-      : teaserRow(ICO("key"), "Dein persönlicher PIN", "nur damit kommst du später wieder an diese Auswertung — und vergleichst in 8–12 Wochen, was sich verändert hat");
+      : teaserRow(ICO("key"), "Dein persönlicher Bereich", "dort findest du diese Auswertung wieder und vergleichst in 8–12 Wochen, was sich verändert hat – Anmeldung per Link oder Code, ohne Passwort");   // v2.21.3 (R6-04)
     // v1.31.1 — Beim Wiederaufruf über PIN ist die Mail zwingend schon
     // versendet (der PIN entsteht erst mit ihr). Ein leeres Eingabefeld wäre
     // dort schlicht falsch: ein zweiter Versand wird serverseitig ohnehin
@@ -6679,10 +6684,13 @@
     const best = stageBestScenario();
     const n = best ? ((best.question_keys || []).length || 1) : 0;
     // v2.4.0 — Die Aussage steht ÜBER der Spinne; die Spinne illustriert sie nur.
+    const _kp = kernPlanNames();   // v2.21.3 (R6-03)
     const lead = best && best.score_payload && Number(best.gain) >= 1
-      ? `Mit ${STAGE_NUM_WORDS[n] || n} realistischen Veränderung${n > 1 ? "en" : ""} kommst du rechnerisch auf rund <strong style="color:var(--accent-blue-text);">+${Math.round(Number(best.gain))} Punkte</strong> – die gestrichelte Linie zeigt, wo.`
+      ? (_kp && n > 1
+        ? `Rechnerisch möglich, wenn du alle ${STAGE_NUM_WORDS[n] || n} Hebel angehst: rund <strong style="color:var(--accent-blue-text);">+${Math.round(Number(best.gain))} Punkte</strong> (Simulation) – die gestrichelte Linie zeigt, wo.`
+        : `Mit ${STAGE_NUM_WORDS[n] || n} realistischen Veränderung${n > 1 ? "en" : ""} kommst du rechnerisch auf rund <strong style="color:var(--accent-blue-text);">+${Math.round(Number(best.gain))} Punkte</strong> – die gestrichelte Linie zeigt, wo.`)
       : "";
-    const caption = lead ? `Welche Veränderungen das sind, steht in deinem Vital-Plan.` : `Je weiter außen ein Punkt liegt, desto stabiler wirkt dieser Bereich.`;
+    const caption = lead ? (_kp ? `Was davon in deinen Plan gehört und was freiwillig bleibt, steht in deinem Vital-Plan.` : `Welche Veränderungen das sind, steht in deinem Vital-Plan.`) : `Je weiter außen ein Punkt liegt, desto stabiler wirkt dieser Bereich.`;
     return `<div class="section-card">
         <div class="section-header">
           <div class="section-title">Deine Vitalitäts-Spinne</div>
@@ -6755,7 +6763,7 @@
       body += `<div style="font-size:11.5px;color:var(--text-secondary);margin:0 0 4px;">Dein Vitalitäts-Index</div>
         <div class="sim-projection" style="margin-top:0;">
           <div class="sim-proj-num"><span style="color:var(--text-muted);">${Math.round(baseT)}</span> <span style="font-size:18px;color:var(--text-muted);">→</span> ${isFinite(newT) ? Math.round(newT) : "–"}</div>
-          <div class="sim-proj-meta"><strong>+${fmtGain(best.gain)} Punkte</strong> mit ${STAGE_NUM_WORDS[n] || n} Veränderung${n > 1 ? "en" : ""}${bioTxt}</div>
+          <div class="sim-proj-meta"><strong>+${fmtGain(best.gain)} Punkte</strong> ${kernPlanNames() && n > 1 ? `rechnerisch, wenn du alle ${STAGE_NUM_WORDS[n] || n} Hebel angehst (Simulation)` : `mit ${STAGE_NUM_WORDS[n] || n} Veränderung${n > 1 ? "en" : ""}`}${bioTxt}</div>
         </div>`;
       keys.forEach((k, i) => {
         const l = (simScenarios.levers || []).find(x => x.question_key === k);
@@ -6764,7 +6772,7 @@
         const topic = SIM_SHORT_LABELS[l.question_key] || "";   // v2.7.2: Thema, damit zwei Hebel im selben Bereich unterscheidbar sind
         body += `<div class="stage-lever">
             <div class="stage-lever-body">
-              <div class="stage-lever-title">Hebel ${i + 1} · ${escHtml(topic || area)}${topic && area ? ` <span style="font-weight:500;color:var(--text-muted);">· ${escHtml(area)}</span>` : ""}${l.reason === "goal" ? ` <span class="pill-goal">passt zu deinem Ziel</span>` : ""}</div>
+              <div class="stage-lever-title">Hebel ${i + 1} · ${escHtml(topic || area)}${topic && area ? ` <span style="font-weight:500;color:var(--text-muted);">· ${escHtml(area)}</span>` : ""}${l.reason === "goal" ? ` <span class="pill-goal">passt zu deinem Ziel</span>` : ""} ${simTagHtml(k)}</div>
               <div class="stage-lock-line">Dein konkreter Schritt steht in deinem Vital-Plan</div>
             </div>
             <div class="stage-lever-gain">+${fmtGain(l.gain)}</div>
@@ -7128,7 +7136,7 @@
         </div>`).join("");
     return `<div class="stage-fahrplan modules-card" style="margin-top:14px;">
         <div class="stage-kicker">Deine Zusatzmodule</div>
-        <div style="font-size:13px;color:var(--text-secondary);line-height:1.55;margin-bottom:4px;">Mit derselben Pilot-ID und deinem PIN${viaAccount() ? " – oder direkt über dein Konto" : ""}.</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.55;margin-bottom:4px;">${hasPersonalArea() ? "In deinem persönlichen Bereich – alternativ mit Pilot-ID und PIN." : "Mit derselben Pilot-ID und deinem PIN."}</div>
         ${rows}
       </div>`;
   }
@@ -7187,7 +7195,12 @@
     const best = stageBestScenario();
     const row = S.teaserRow;
     let rows = "";
-    if (best && Number(best.gain) >= 1) {
+    const _kpL = kernPlanNames();   // v2.21.3 (R6-03): Plan und freiwillige Hebel getrennt, keine Gleichsetzung mit der Simulation
+    if (_kpL && _kpL.plan.length) {
+      rows += row(ICO("target"), `Dein Plan: ${joinDe(_kpL.plan)}`, `was du genau änderst, Schritt für Schritt${_kpL.optional.length ? ` – zusätzlich freiwillig: ${joinDe(_kpL.optional)}` : ""}`);
+    } else if (_kpL) {
+      if (best && Number(best.gain) >= 1) rows += row(ICO("target"), "Deine Hebel im Überblick", "was im Plan steht, was freiwillig ist und was später kommt");
+    } else if (best && Number(best.gain) >= 1) {
       const n = (best.question_keys || []).length || 1;
       rows += row(ICO("target"), n > 1 ? `Deine ${n} Hebel` : "Dein Hebel", `was du genau änderst, für +${fmtGain(best.gain)} Punkte`);
     }
@@ -7198,12 +7211,12 @@
     rows += (window._decision && window._decision.fixedPlan)
       ? row(ICO("chat"), "Deine Auswertung per Mail", "mit dem Hinweis, deinen nächsten Schritten und allen Bereichswerten")
       : row(ICO("chat"), "Deine persönliche Einordnung", "geschrieben auf deine Antworten, per Mail");
-    rows += row(ICO("key"), "Pilot-ID und PIN", "für deinen Vergleich in 8–12 Wochen");
+    rows += row(ICO("key"), "Dein persönlicher Bereich", "deine Auswertung wiederfinden und in 8–12 Wochen vergleichen – Anmeldung per Link oder Code");   // v2.21.3 (R6-04)
     // v2.8.22 — Hinweis auf die Zusatzmodule (Jörg 18.10.2026); Versorgungs-Check nicht bei "Zuerst klären"
     {   // v2.12.1 (Paket G): nur Module nennen, die offen sind
       const acc = moduleAccessLocal();
       const open = [acc.nutrition.ok ? "Ernährungs-Check" : null, (SUPPLY_MODULE_URL && acc.supply.ok) ? "Versorgungs-Check" : null].filter(Boolean);
-      if (open.length) rows += row(ICO("leaf"), "Zugang zu den Zusatzmodulen", `${open.join(" und ")} — mit derselben Pilot-ID und PIN`);
+      if (open.length) rows += row(ICO("leaf"), "Zugang zu den Zusatzmodulen", `${open.join(" und ")} — in deinem persönlichen Bereich, alternativ mit Pilot-ID und PIN`);
     }
     const box = S.buildAiBox(rows, {
       badge: "✦ Kostenlos",
@@ -7251,7 +7264,7 @@
         <div class="stage-step" style="margin:14px 0 0;align-items:flex-start;">
           <div class="stage-step-num">${n}</div>
           <div><div class="stage-step-title">Wenn du magst: die Zusatzmodule</div>
-          <div class="stage-step-sub">Ernährungs-Check und Versorgungs-Check, mit derselben Pilot-ID und deinem PIN. Freiwillig und kostenlos.</div>
+          <div class="stage-step-sub">Ernährungs-Check und Versorgungs-Check, ${hasPersonalArea() ? "in deinem persönlichen Bereich (alternativ mit Pilot-ID und PIN)" : "mit derselben Pilot-ID und deinem PIN"}. Freiwillig und kostenlos.</div>
           <button type="button" onclick="switchResultTab('plan');try{const el=document.querySelector('.modules-card');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});trackEvent('nextsteps_modules_click',{})}catch(e){}" style="margin-top:8px;padding:8px 14px;border-radius:var(--radius-sm);border:1px solid rgba(var(--accent-green-rgb),0.5);background:transparent;color:var(--accent-green-text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Zu den Zusatzmodulen →</button></div>
         </div>`;
     }
@@ -7321,7 +7334,7 @@
           <div class="kern-label">${ICO("bolt")} ${escHtml(k.label || "Dein erster Schritt")}</div>
           <div class="kern-jetzt">${escHtml(k.jetzt)}</div>
           <div class="kern-beob">${ICO("search")} <strong>Beobachte dabei:</strong> ${escHtml(k.beob)}</div>
-          ${locked ? `<div class="kern-note">Deinen ganzen Plan für zwölf Wochen – Schritt für Schritt – bekommst du mit deinem Vital-Plan per Mail.</div>` : ``}
+          ${locked ? `<div class="kern-note">Deinen 6-Wochen-Plan mit Ausblick bis zum Re-Check – Schritt für Schritt – bekommst du mit deinem Vital-Plan per Mail.</div>` : ``}
         </div>`;
   }
   // Eine ruhige Bestätigungszeile statt der Verwaltung oben (Zugang, Newsletter usw. stehen ganz unten)
@@ -7353,6 +7366,20 @@
   }
   function simBlockedActive() { return (simActiveKeys || []).filter(simBlockedReason); }
   function simHasGoalCandidate() { return !!(simScenarios && simScenarios.levers.some(l => !simBlockedReason(l.question_key))); }
+
+  // v2.21.3 (R6-03): Plan-Hebel und freiwillige Hebel getrennt benennen – die Summe aller Hebel ist eine Simulation
+  function kernPlanNames() {
+    const k = window._kernForSim || (latestResult && latestResult.kernaussage);
+    if (!k || !Array.isArray(k.used)) return null;
+    const lv = (simScenarios && simScenarios.levers) || [];
+    const nm = q => { const l = lv.find(x => x.question_key === q); return SIM_SHORT_LABELS[q] || (l && l.area_label) || ""; };
+    const plan = [...new Set(k.used.filter(q => !simBlockedReason(q)).map(nm).filter(Boolean))];
+    const optional = [...new Set(lv.map(l => l.question_key).filter(q => !k.used.includes(q) && !simBlockedReason(q)).map(nm).filter(Boolean))].slice(0, 3);
+    return { plan, optional };
+  }
+  function joinDe(a) { return a.length <= 1 ? (a[0] || "") : a.slice(0, -1).join(", ") + " und " + a[a.length - 1]; }
+  // v2.21.3 (R6-04): Mit persönlichem Bereich ist er der erste Weg, Pilot-ID und PIN die Alternative
+  function hasPersonalArea() { return !!((window._unlockInfo && window._unlockInfo.account) || viaAccount()); }
 
   function simTagHtml(qk) {
     const k = latestResult && latestResult.kernaussage;
@@ -9514,7 +9541,7 @@
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.2</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.3</footer>
 
 
 </body>
