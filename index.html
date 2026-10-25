@@ -756,6 +756,7 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.21.16 (25.10.2026, Jörg): Ist der Check nicht mit dem angemeldeten Konto verbunden, erklärt die PIN-Seite das und bietet „Zu Mein Bereich“ und „Abmelden und neu anmelden“ an
 v2.21.15 (25.10.2026, Jörg): sehr Sportliche (5–7 aktive Tage, Kraft 3+, alles stabil) – Kernaussage mit Anerkennung, „So geht es weiter“ ohne „Beobachte dabei“, statt Wochenplan ein Satz (kernaussage.planNote, edge .49); kein Fahrplan-Versprechen im Teaser
 v2.21.14 (25.10.2026, Prüfstand): „Freiwillig, wenn du magst“ zeigt mit Kernaussage dieselben geprüften Schritte wie die Mail (kernaussage.frei, edge .48); die alte Tipp-Liste gilt nur noch für Checks ohne diese Daten
 v2.21.13 (25.10.2026, R7-08): Am breiten Bildschirm (ab 1100 px) steht die Spinne neben Index und Kernaussage; am Handy bleibt die Reihenfolge unverändert
@@ -3453,6 +3454,14 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
 
   // v2.8.2 — Ergebnis über das Konto laden. Gelingt nur, wenn die Person auf diesem
   // Gerät angemeldet ist und der Check zu ihrem Konto gehört; sonst false (→ PIN-Seite).
+  // v2.21.16 (Jörg 25.10.2026): anderes Konto auf diesem Gerät angemeldet → erklären und Wechsel anbieten, statt nur PIN zu verlangen
+  function acctEmailOf(tok) { try { const p = JSON.parse(atob(String(tok).split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))); return p.email || ""; } catch (e) { return ""; } }
+  function acctMismatchHtml(code) {
+    if (window._acctMismatch === undefined || window._acctMismatch === null) return "";
+    const em = window._acctMismatch;
+    return `<div class="card" style="margin-bottom:14px;padding:16px 18px;border-left:3px solid var(--accent-amber-text);text-align:left;"><strong>Dieser Check ist nicht mit dem angemeldeten Konto verbunden${em ? ` (${escHtml(em)})` : ""}.</strong><div style="font-size:14px;color:var(--text-secondary);line-height:1.6;margin:6px 0 12px;">Gehört er zu dir, bestätigst du ihn in Mein Bereich – danach öffnet er sich ohne PIN. Gehört er zu einem anderen Konto, melde dich ab und neu an – oder gib unten Pilot-ID und PIN ein.</div><a class="toggle-btn" href="konto.html" style="text-decoration:none;margin-right:8px;">Zu Mein Bereich</a><button type="button" class="toggle-btn" onclick="acctSwitch()">Abmelden und neu anmelden</button></div>`;
+  }
+  function acctSwitch() { try { if (window.LeVitaKonto && window.LeVitaKonto.logout) window.LeVitaKonto.logout(); } catch (e) {} location.href = "konto.html"; }
   async function tryAccountLoad(publicCode, opts) {
     if (!publicCode || !window.LeVitaKonto) return false;
     let s = null;
@@ -3466,6 +3475,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       try { trackEvent('result_open_via_account', {}); } catch (e) {}
       return true;
     } catch (e) {
+      if (/PIN_|kein Konto-Zugriff/.test(String((e && e.message) || ""))) window._acctMismatch = acctEmailOf(s.access_token); // v2.21.16
       window._acctToken = null;
       return false;
     }
@@ -3601,7 +3611,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       document.getElementById("loading").classList.add("hidden");
       document.getElementById("progressWrap").style.display = "none";
       document.getElementById("quiz-flow").classList.remove("hidden");
-      document.getElementById("quiz-flow").innerHTML = buildPinScreen(codeForPin);
+      document.getElementById("quiz-flow").innerHTML = acctMismatchHtml(codeForPin) + buildPinScreen(codeForPin); // v2.21.16
       return;
     }
 
@@ -9684,7 +9694,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.15</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.16</footer>
 
 
 </body>

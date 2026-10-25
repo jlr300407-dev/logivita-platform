@@ -502,7 +502,7 @@
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.3.2"; // 1.3.2: alter Mail-Link öffnet während einer neuen Runde nicht den Kurzcheck · // 1.3.1: „Plan gespeichert“-Bestätigung an der Karte; Anpassen-Hinweis verschwindet nach dem Anpassen · // 1.3.0 (25.10.2026): „Deine Schritte“ nach Phasen (Statuskarte mit einer Hauptaktion; Bewerten nur im Kurzcheck; Angekommenes kompakt; Rest unter „Mehr“) · // 1.2.4: Zettel-Karte direkt unter den Schritten; Kurzcheck ohne frisch dazugenommene Schritte · // 1.2.3: Einleitungszeile während des Kurzchecks · // 1.2.2: Plan ohne „dann“ wird beim Anpassen ins Wenn-Feld übernommen; Beispieltexte mit „z. B.“ und blasser · // 1.2.1: während des Kurzchecks keine zweiten Bewertungsknöpfe in den Schritt-Karten · // 1.2.0 (25.10.2026): Abschluss-Fenster „Deine nächsten 14 Tage“, Kurzcheck nach 14 Tagen (Link aus der Mail ohne PIN), Erinnerung nur mit Einwilligung
+  const FE_VERSION = "1.3.3"; // 1.3.3 (Jörg 25.10.2026): Erinnerung ab Runde 2 vorbelegt; anderes Konto angemeldet → Hinweis mit „Abmelden und neu anmelden“ · // 1.3.2: alter Mail-Link öffnet während einer neuen Runde nicht den Kurzcheck · // 1.3.1: „Plan gespeichert“-Bestätigung an der Karte; Anpassen-Hinweis verschwindet nach dem Anpassen · // 1.3.0 (25.10.2026): „Deine Schritte“ nach Phasen (Statuskarte mit einer Hauptaktion; Bewerten nur im Kurzcheck; Angekommenes kompakt; Rest unter „Mehr“) · // 1.2.4: Zettel-Karte direkt unter den Schritten; Kurzcheck ohne frisch dazugenommene Schritte · // 1.2.3: Einleitungszeile während des Kurzchecks · // 1.2.2: Plan ohne „dann“ wird beim Anpassen ins Wenn-Feld übernommen; Beispieltexte mit „z. B.“ und blasser · // 1.2.1: während des Kurzchecks keine zweiten Bewertungsknöpfe in den Schritt-Karten · // 1.2.0 (25.10.2026): Abschluss-Fenster „Deine nächsten 14 Tage“, Kurzcheck nach 14 Tagen (Link aus der Mail ohne PIN), Erinnerung nur mit Einwilligung
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
@@ -622,6 +622,13 @@
   }
 
   // ── Start: Pilot-ID + PIN ───────────────────────────────
+  // 1.3.3 (Jörg 25.10.2026): anderes Konto auf diesem Gerät angemeldet → erklären und Wechsel anbieten, statt nur PIN zu verlangen
+  function acctMail(tok) { try { const p = JSON.parse(atob(String(tok).split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))); return p.email || ""; } catch (e) { return ""; } }
+  function mismatchHtml() {
+    if (st.mismatch === undefined || st.mismatch === null) return "";
+    return `<div style="border-left:3px solid var(--accent-amber-text);padding:10px 12px;margin-bottom:16px;line-height:1.55"><strong>Dieser Check ist nicht mit dem angemeldeten Konto verbunden${st.mismatch ? ` (${esc(st.mismatch)})` : ""}.</strong><br><span class="small">Gehört er zu dir, bestätigst du ihn in Mein Bereich – danach öffnet er sich ohne PIN. Gehört er zu einem anderen Konto, melde dich ab und neu an – oder gib unten Pilot-ID und PIN ein.</span><br><a class="btn" href="konto.html" style="margin:10px 8px 0 0;display:inline-block">Zu Mein Bereich</a><button type="button" class="btn" style="margin-top:10px" onclick="window.__acctSwitch()">Abmelden und neu anmelden</button></div>`;
+  }
+  window.__acctSwitch = () => { try { if (window.LeVitaKonto && window.LeVitaKonto.logout) window.LeVitaKonto.logout(); } catch (e) {} location.href = "konto.html"; };
   function screenLogin(msg = "") {
     h(`
       <h1>Dein Ernährungs-Check</h1>
@@ -629,7 +636,7 @@
         und wählst deine ersten Schritte. Ohne Diät, ohne Verbote.</p>
       <p class="phase-note" style="margin:-12px 0 18px">${esc(INTRO_NOTE)}</p>
       <div class="card">
-        <div class="field"><label for="f-code">Pilot-ID aus deinem Vital-Check</label>
+        ${mismatchHtml()}<div class="field"><label for="f-code">Pilot-ID aus deinem Vital-Check</label>
           <input type="text" id="f-code" autocomplete="off" placeholder="LEV-2026-000123" value="${esc(st.code)}"></div>
         <div class="field"><label for="f-pin">PIN aus deiner Mail</label>
           <input type="password" id="f-pin" inputmode="numeric" autocomplete="off" placeholder="8-stellig"></div>
@@ -1425,7 +1432,7 @@ function openRoundModal(r) {
       <a ${BTN_ICS} id="rm-ics" href="${icsHref(due)}" download="kurzcheck-ernaehrung.ics">In den Kalender eintragen</a>
     </div>
     ${r.email_known
-      ? `<label class="consent-box"><input type="checkbox" id="rm-remind"><span>${esc(r.checkin_consent_text || "Ja, erinnere mich nach 14 Tagen per E-Mail an meinen Kurzcheck.")}</span></label>
+      ? `<label class="consent-box"><input type="checkbox" id="rm-remind"${r.checkin && r.checkin.remind ? " checked" : ""}><span>${esc(r.checkin_consent_text || "Ja, erinnere mich nach 14 Tagen per E-Mail an meinen Kurzcheck.")}</span></label>
          <p class="small" style="margin:-4px 0 12px">Freiwillig. Ohne Haken kommst du selbst zurück – über Mein Bereich oder diese Seite.</p>`
       : `<p class="small" style="margin-bottom:12px">Trag dir den Termin am besten in den Kalender – du kommst über Mein Bereich oder diese Seite zurück.</p>`}
     <div class="error" id="rm-err"></div>
@@ -1656,6 +1663,7 @@ function programHtml(r) {
           spinner();
           const r = await call("start");
           if (r.success) { track("nutri_start", { via: "account" }, true); return route(r); }
+          if (/PIN_|NOT_OWN|FORBIDDEN/.test(String(r.error || ""))) st.mismatch = acctMail(ss.access_token); // 1.3.3
           st.acct = null;
         }
       } catch (e) { st.acct = null; }

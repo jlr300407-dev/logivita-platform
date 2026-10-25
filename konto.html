@@ -36,6 +36,7 @@
   Testmodus: ?internal=1 zeigt die letzte Server-Antwort.
 
   Versionen:
+1.7.0 (25.10.2026) Wunsch Jörg: Modulkarte Ernährungs-Check zeigt laufende Runde und Kurzcheck-Termin (nutrition-check Modus „load“, nur lesen).
 1.6.0 (24.10.2026) Gewichtung nach Zeitpunkt (Wunsch Jörg): beim neuesten Check ist "Ergebnis ansehen" der
 Hauptknopf; "Neuen Vital-Check starten" ist bis 8 Wochen nach dem letzten Check nur ein kleiner Link mit Datum,
 ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks behalten den Textlink.
@@ -383,7 +384,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.6.0"; // R7-01: Anzeige an den Stand 1.6.0 angeglichen
+  const FE_VERSION = "1.7.0"; // R7-01: Anzeige an den Stand 1.6.0 angeglichen
   const K = window.LeVitaKonto;
   const esc = K.esc;
   const params = new URLSearchParams(location.search);
@@ -546,20 +547,39 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
     const nOk = acc ? acc.nutrition.ok : !doctor, sOk = acc ? acc.supply.ok : !doctor;
     const nTxt = acc && !acc.nutrition.ok ? acc.nutrition.state : "Zuerst ärztlich abklären – danach ist der Ernährungs-Check für dich da.";
     const sTxt = acc && !acc.supply.ok ? acc.supply.state : "Zuerst ärztlich abklären – Nahrungsergänzung besprichst du am besten in der Praxis.";
-    const row = (name, state, href) => `<div style="padding:12px 0;border-top:1px solid var(--border);">
+    const row = (name, state, href, id) => `<div style="padding:12px 0;border-top:1px solid var(--border);">
         <div style="font-weight:700;">${esc(name)}</div>
-        <div class="muted" style="margin:2px 0 ${href ? 8 : 0}px;">${esc(state)}</div>
-        ${href ? `<a class="btn" style="display:inline-block;padding:8px 16px;font-size:14px;" href="${href}">Öffnen →</a>` : ""}</div>`;
+        <div class="muted"${id ? ` id="${id}"` : ""} style="margin:2px 0 ${href ? 8 : 0}px;">${esc(state)}</div>
+        ${href ? `<a class="btn"${id ? ` id="${id}-btn"` : ""} style="display:inline-block;padding:8px 16px;font-size:14px;" href="${href}">Öffnen →</a>` : ""}</div>`;
     return `<div class="card">
         <h2>Deine Zusatzmodule</h2>
         <p class="muted">Zu deinem Check vom ${esc(dateDe(c.created_at))} – mit deinem Konto ohne PIN.</p>
         ${row("Ernährungs-Check", !nOk ? nTxt
               : "Verfügbar – wo beim Essen das meiste Potenzial liegt, ohne Diät und ohne Verbote.",
-              !nOk ? "" : `ernaehrung.html?code=${code}&utm_source=konto&utm_medium=modulkarte`)}
+              !nOk ? "" : `ernaehrung.html?code=${code}&utm_source=konto&utm_medium=modulkarte`, "mod-nutri")}
         ${row("Versorgungs-Check", !sOk ? sTxt
               : c.supply_done ? "Abgeschlossen – dein Versorgungsplan ist gespeichert." : "Verfügbar – ordnet ein, ob deine Nahrungsergänzung zu deinen Angaben passt.",
               !sOk ? "" : `versorgung.html?code=${code}&utm_source=konto&utm_medium=modulkarte`)}
       </div>`;
+  }
+
+  // 1.7.0 (Jörg 25.10.2026): Ernährungs-Check – laufende Runde und Kurzcheck-Termin in der Modulkarte (nur lesen, Modus „load“)
+  const NUTRI_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
+  const NUTRI_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
+  async function fillNutriState(c) {
+    const el = document.getElementById("mod-nutri"); if (!el || !sess || !c || !c.public_code) return;
+    try {
+      const r = await fetch(NUTRI_URL, { method: "POST", headers: { "Content-Type": "application/json", apikey: NUTRI_ANON, Authorization: `Bearer ${sess.access_token}` }, body: JSON.stringify({ mode: "load", public_code: c.public_code }) });
+      const j = await r.json(); if (!j || !j.success) return;
+      const ck = j.checkin, steps = j.self_steps || [], started = steps.filter((x) => x.state === "gestartet").length;
+      let t = "";
+      if (ck && ck.status === "scheduled" && ck.due_at) {
+        const due = new Date(ck.due_at), fmt = due.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
+        t = due.getTime() <= Date.now() ? `Runde ${ck.round || 1} · dein Kurzcheck ist fällig.` : `Runde ${ck.round || 1} · Kurzcheck am ${fmt}${ck.remind ? " – wir erinnern dich per Mail." : "."}`;
+      } else if (started) t = `Läuft – ${started === 1 ? "ein Schritt" : started + " Schritte"} gestartet.`;
+      else if (steps.length || (j.status && !["none", "consent_required"].includes(j.status))) t = "Begonnen – mach dort weiter, wo du aufgehört hast.";
+      if (t) { el.textContent = t; const b = document.getElementById("mod-nutri-btn"); if (b) b.textContent = "Weiter →"; }
+    } catch (e) { /* Karte bleibt beim Standardtext */ }
   }
 
   async function screenHome(note = "") {
@@ -657,6 +677,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
       };
     };
     bindToggle("t-rem", "reminders");
+    if (list.length) fillNutriState(list[0]); // 1.7.0
     document.getElementById("b-guide").onclick = () => K.showGuide && K.showGuide();
 
     document.getElementById("b-del-open").onclick = () => {
