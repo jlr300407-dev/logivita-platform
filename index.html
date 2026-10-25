@@ -756,6 +756,7 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.21.13 (25.10.2026, R7-08): Am breiten Bildschirm (ab 1100 px) steht die Spinne neben Index und Kernaussage; am Handy bleibt die Reihenfolge unverändert
 v2.21.12 (25.10.2026, Testrunde R7): R7-04 „Dein größter Ansatzpunkt“ entfällt, wenn die Kernaussage den Ansatzpunkt nennt
   (A1: Routinekern, aber Alkohol als größter Ansatzpunkt); R7-05 Simulator-Hebel „Alkohol-Häufigkeit“ statt „Alkohol“;
   R7-07 Hinweis Gewichtsverlust bei ärztlichem Vorrang „zeitnah abklären“ statt „bei Gelegenheit“ (gleiche Dringlichkeit wie „Abklärung zuerst“).
@@ -2303,6 +2304,11 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     .kern-erk { font-size: 16.5px; font-weight: 700; line-height: 1.4; color: var(--text-primary); }
     .kern-step { background: var(--brand-card); border: 1px solid rgba(var(--accent-green-rgb),0.45); border-left: 4px solid var(--accent-green); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px; }
     .kern-label { font-size: 12px; font-weight: 700; color: var(--accent-green-text); margin-bottom: 4px; }
+    /* v2.21.13 (R7-08): Spinne am breiten Bildschirm neben Index und Kernaussage; darunter (Handy, Tablet) alles untereinander wie bisher */
+    @media (min-width: 1100px) {
+      .r708.r708-on { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 20px; align-items: start; width: min(1100px, calc(100vw - 60px)); margin-left: calc(50% - min(550px, 50vw - 30px)); }
+      .r708.r708-on .r708-side > .section-card { margin-bottom: 16px; }
+    }
     .kern-jetzt { font-size: 15px; font-weight: 600; line-height: 1.5; color: var(--text-primary); }
     .kern-beob { font-size: 13px; color: var(--text-secondary); line-height: 1.55; margin-top: 8px; }
     .kern-note { font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-top: 8px; }
@@ -7481,9 +7487,8 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       if (kernOf(S)) {
         // v2.21.7 (Jörg 25.10.2026): Index übergeordnet oben, dann Kernaussage, dann sofort die Spinne;
         // Erklärungen und Nachschlage-Inhalte gebündelt unter „Weitere Infos“ (vollständig erreichbar).
-        html += stageHeroHtml(S);
-        html += kernCardHtml(S, hints1);
-        html += stageRadarHtml();
+        // v2.21.13 (R7-08): Index + Kernaussage links, Spinne rechts – nur am breiten Bildschirm; am Handy untereinander wie bisher
+        html += `<div class="r708 r708-on"><div class="r708-main">` + stageHeroHtml(S) + kernCardHtml(S, hints1) + `</div><div class="r708-side">` + stageRadarHtml() + `</div></div>`;
         html += S.wellbeing || "";
         html += S.lowIndex || "";
         html += stagePotentialHtml(S);
@@ -7533,8 +7538,10 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     }
     html += S.linkInvalid || "";
     const hints2 = (S.safetyBand || "") + (S.mental || "") + (S.sleepHint || "");   // v2.20.0 (Paket V): Hinweise über den Reitern
-    if (hasKern) html += stageHeroHtml(S); // v2.21.7 (Jörg 25.10.2026): Index übergeordnet, über Kernaussage und Reitern
-    html += hasKern ? kernCardHtml(S, hints2) : hints2;
+    // v2.21.7 (Jörg 25.10.2026): Index übergeordnet, über Kernaussage und Reitern
+    // v2.21.13 (R7-08): am breiten Bildschirm holt r708Place() die Spinne aus „Mein Ergebnis“ neben Index und Kernaussage
+    if (hasKern) html += `<div class="r708" id="r708Grid"><div class="r708-main">` + stageHeroHtml(S) + kernCardHtml(S, hints2) + `</div><div class="r708-side" id="r708Side"></div></div>`;
+    else html += hints2;
     // v2.21.7: „Mein Ergebnis“ links und geöffnet; direkt nach der Anforderung springt unlockStage2 einmal auf „Mein Plan“.
     const planFirst = false;
     html += `<div class="result-tabs">` + (hasKern
@@ -7545,7 +7552,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     html += `<div class="result-tab-content active" id="rtc-uebersicht">`;
     if (hasKern) {
       // v2.21.7: Spinne zuerst, dann persönliche Hinweise, Verlauf und Bereiche (schwächster zuerst); Nachschlagen unter „Weitere Infos“
-      html += S.radar || "";
+      html += `<div id="r708Home">` + (S.radar || "") + `</div>`;
       html += S.wellbeing || "";
       html += S.lowIndex || "";
       html += S.redFlag || "";
@@ -9398,7 +9405,25 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       tipBg: v('--brand-card'), tipBorder: a('--ink-rgb', 0.1), tipTitle: v('--text-primary'), tipBody: v('--text-secondary') };
   }
 
+  // v2.21.13 (R7-08): Am breiten Bildschirm steht die Spinne neben Index und Kernaussage (Stufe 2: aus „Mein Ergebnis“ dorthin verschoben).
+  // Am Handy bleibt sie an ihrem Platz. Die Spinne wird nur verschoben, nie doppelt erzeugt (IDs bleiben eindeutig).
+  const R708_MQ = window.matchMedia ? window.matchMedia("(min-width: 1100px)") : null;
+  function r708Place() {
+    const side = document.getElementById("r708Side"), home = document.getElementById("r708Home");
+    if (!side || !home) return;
+    const wide = !!(R708_MQ && R708_MQ.matches);
+    const from = wide ? home : side, to = wide ? side : home;
+    while (from.firstChild) to.appendChild(from.firstChild);
+    const grid = document.getElementById("r708Grid");
+    if (grid) grid.classList.toggle("r708-on", wide && side.children.length > 0);
+  }
+  if (R708_MQ) {
+    const _r708Change = () => { r708Place(); try { if (radarChart && radarChart.resize) radarChart.resize(); } catch (e) {} };
+    try { R708_MQ.addEventListener("change", _r708Change); } catch (e) { try { R708_MQ.addListener(_r708Change); } catch (e2) {} }
+  }
+
   function renderRadarChart(areas) {
+    r708Place();
     const ctx = document.getElementById("vitalChart");
     const T = chartTheme();
     if (!ctx) return;
@@ -9646,7 +9671,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.12</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.13</footer>
 
 
 </body>
