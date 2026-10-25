@@ -502,7 +502,7 @@
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.2.4"; // 1.2.4: Zettel-Karte direkt unter den Schritten; Kurzcheck ohne frisch dazugenommene Schritte · // 1.2.3: Einleitungszeile während des Kurzchecks · // 1.2.2: Plan ohne „dann“ wird beim Anpassen ins Wenn-Feld übernommen; Beispieltexte mit „z. B.“ und blasser · // 1.2.1: während des Kurzchecks keine zweiten Bewertungsknöpfe in den Schritt-Karten · // 1.2.0 (25.10.2026): Abschluss-Fenster „Deine nächsten 14 Tage“, Kurzcheck nach 14 Tagen (Link aus der Mail ohne PIN), Erinnerung nur mit Einwilligung
+  const FE_VERSION = "1.3.0"; // 1.3.0 (25.10.2026): „Deine Schritte“ nach Phasen (Statuskarte mit einer Hauptaktion; Bewerten nur im Kurzcheck; Angekommenes kompakt; Rest unter „Mehr“) · // 1.2.4: Zettel-Karte direkt unter den Schritten; Kurzcheck ohne frisch dazugenommene Schritte · // 1.2.3: Einleitungszeile während des Kurzchecks · // 1.2.2: Plan ohne „dann“ wird beim Anpassen ins Wenn-Feld übernommen; Beispieltexte mit „z. B.“ und blasser · // 1.2.1: während des Kurzchecks keine zweiten Bewertungsknöpfe in den Schritt-Karten · // 1.2.0 (25.10.2026): Abschluss-Fenster „Deine nächsten 14 Tage“, Kurzcheck nach 14 Tagen (Link aus der Mail ohne PIN), Erinnerung nur mit Einwilligung
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
@@ -522,7 +522,7 @@
   document.getElementById("fe-version").textContent = FE_VERSION;
 
   // Zustand — die PIN bleibt nur im Speicher dieser Seite
-  const st = { code: (params.get("code") || "").trim().toUpperCase(), pin: "", acct: null, ctoken: null, fromLink: false, data: null, answers: {}, partIdx: 0, parts: [], choice: [], canChoose: false };
+  const st = { code: (params.get("code") || "").trim().toUpperCase(), pin: "", acct: null, ctoken: null, fromLink: false, earlyCheck: false, data: null, answers: {}, partIdx: 0, parts: [], choice: [], canChoose: false };
   const isIntroPhase = (r) => (r || st.data || {}).phase === "einfuehrung";
   const INTRO_NOTE = "Kostenlos in der aktuellen Einführungsphase.";
 
@@ -1090,204 +1090,75 @@
     return (w.length >= 3 && d.length >= 3) ? `Wenn ${w}, dann ${d}.` : "";
   }
 
-  function stepCard(r, x) {
-    const [lbl, cls] = STATE_LABEL[x.state] || [x.state, "s-v"];
-    const needDoc = r.doctor_required && !r.doctor_confirmed_at;
-    const tip = [...(r.result?.shown || []), ...(r.result?.parking || [])].find((l) => l.lever_key === x.lever_key)?.tip || {};
-    const ex = (tip.benefits?.beispiele || []).slice(0, 2);
-    return `<div class="card ${x.state === "angekommen" ? "top" : ""}" data-step="${esc(x.lever_key)}">
-      <span class="state ${cls}">${lbl}</span>
-      <h3>${esc(leverTitle(r, x.lever_key))}</h3>
-      ${(r.result?.step_hints || r.result?.hints || []).filter((hn) => hn.lever_key === x.lever_key).map((hn) => `<p class="muted" style="border-left:3px solid var(--accent-blue);padding-left:10px;margin:6px 0 10px"><strong>${esc(hn.title)}</strong><br>${esc(hn.body)}</p>`).join("")}
-      ${x.state === "vorgemerkt" ? `
-        ${needDoc ? `<p class="muted" style="color:var(--accent-amber-text);margin-bottom:8px">Vor Umsetzung ärztlich klären.</p>` : ""}
-        ${ifThenFields(x.lever_key)}
-        ${ex.length ? `<div class="small" style="margin:-4px 0 10px">Beispiele zu diesem Schritt: ${ex.map(esc).join(" · ")}</div>` : ""}
-        ${needDoc ? `<label class="consent-box"><input type="checkbox" id="dc-${esc(x.lever_key)}"><span>Ich habe die Tipps mit meiner Ärztin oder meinem Arzt besprochen. <span class="small">Das ist meine eigene Angabe, keine medizinische Freigabe.</span></span></label>` : ""}
-        <div class="row"><button class="btn" data-act="start">Schritt starten</button><button class="btn ghost" data-act="unmark">Herausnehmen</button></div>`
-      : `<div class="ifthen">${esc(x.if_then_text || "")}</div>
-        ${x.state === "gestartet" ? `<details class="small" style="margin:-4px 0 12px" ${needsAdjust(r, x) ? "open" : ""}><summary style="cursor:pointer;font-weight:600">Plan anpassen</summary><div style="margin-top:10px">${ifThenFields(x.lever_key, x.if_then_text)}<button class="btn ghost" data-act="start">Plan speichern</button></div></details>` : ""}
-        <div class="row">${x.state === "gestartet"
-          ? (kurzcheckDue(r) /* 1.2.1: im Kurzcheck nur oben bewerten */ ? '<button class="btn ghost" data-act="unmark">Herausnehmen</button>' : '<button class="btn" data-act="arrive">Klappt inzwischen meistens</button><button class="btn ghost" data-act="unmark">Herausnehmen</button>')
-          : '<button class="btn ghost" data-act="back">Klappt doch noch nicht</button>'}</div>`}
-      <div class="error" data-err></div>
-    </div>`;
-  }
-
-  function screenSteps(r, msg = "") {
-    st.data = r;
-    const steps = r.self_steps || [];
-    const active = steps.filter((x) => x.state !== "angekommen").length;
-    const max = r.max_active_steps || 3;
-    const chosen = new Set(steps.map((x) => x.lever_key));
-    const more = [...(r.result?.shown || []), ...(r.result?.parking || [])].filter((l) => !chosen.has(l.lever_key) && !l.failed_before);
-    const needDoc = r.doctor_required && !r.doctor_confirmed_at;
-    const fbDone = r.feedback_given;
-    h(`
-      <h1>Deine Schritte</h1>
-      <p class="lead">${steps.some((x) => x.state !== "vorgemerkt")
-        ? (kurzcheckHtml(r) /* 1.2.3 */ ? "Schätz oben ein, wie deine Schritte laufen – danach geht es mit neuem Zettel weiter." : "Hake ab, was im Alltag angekommen ist — dann kannst du nachlegen.")
-        : "Mach aus deinem Schritt einen kurzen Plan und starte. Ein Schritt, der hält, bringt mehr als drei, die nach zwei Wochen wegbrechen."}</p>
-      ${msg ? `<div class="card warn"><p>${esc(msg)}</p></div>` : ""}
-      ${needDoc && r.clearance_text ? `<div class="card warn"><h3>${esc(r.clearance_text.title)}</h3><p class="muted">${esc(r.clearance_text.body)}</p></div>` : ""}
-      ${kurzcheckHtml(r)}
-    ${steps.map((x) => stepCard(r, x)).join("") || '<div class="card"><p class="muted">Noch kein Schritt gewählt.</p></div>'}
-      ${steps.some((x) => x.state !== "vorgemerkt") ? `
-      <div class="card">
-        <h2>Zettel für den Kühlschrank</h2>
-        <p class="muted">Deine Pläne auf einer Seite, mit Abhakleiste für zwei Wochen. Im Druckdialog kannst du ihn auch als PDF speichern.</p>
-        <button class="btn ghost block" id="b-fridge" style="margin-top:10px">Zettel drucken</button>
-      </div>` : ""}
-
-    ${steps.some((x) => x.state !== "vorgemerkt") ? `
-      <div class="card">
-        <h2>Wie es weitergeht</h2>
-        <p class="muted" style="margin-bottom:8px"><strong>Die nächsten zwei Wochen:</strong> Setz deine Pläne im Alltag um. Der Kühlschrank-Zettel oben hilft dir beim Abhaken.</p>
-        <p class="muted" style="margin-bottom:8px"><strong>Danach kommst du zurück</strong> – ${r.account?.in_account || st.acct ? 'über <a href="konto.html">Mein Bereich</a>' : "über Mein Bereich, wenn du unten ein Konto anlegst, sonst auf dieser Seite mit Pilot-ID und PIN"} – zum Kurzcheck und schätzt jeden Schritt mit einem Klick ein: klappt meistens, teilweise oder noch nicht. Was noch hakt, passt du an oder nimmst es heraus.</p>
-        <p class="muted" style="margin:0"><strong>Dann setzt du neue Ziele:</strong> Für jeden Schritt, der angekommen ist, kannst du einen neuen dazunehmen – höchstens drei gleichzeitig.</p>
-      ${checkinInfoHtml(r)}
-      </div>` : ""}
-
-      ${more.length ? `
-      <div class="card">
-        <h2>${active >= max ? "Später nachlegen" : "Weitere Schritte"}</h2>
-        <p class="muted" style="margin-bottom:8px">${active >= max
-          ? `Du hast ${max} Schritte gleichzeitig. Sobald einer im Alltag angekommen ist, kannst du einen dieser dazunehmen.`
-          : "Wenn dein Schritt gut läuft, nimm einen dazu — höchstens " + max + " gleichzeitig."}</p>
-        <ul class="addlist">${more.slice(0, 8).map((l) => `<li><span>${esc(l.variant?.title || l.tip?.title || l.lever_key)}</span>${active < max ? `<button data-add="${esc(l.lever_key)}">Dazunehmen</button>` : ""}</li>`).join("")}</ul>
-      </div>` : ""}
-
-      ${fbDone ? "" : `
-      <div class="card" id="fb">
-        <h2>Deine Rückmeldung</h2>
-        <p class="muted">Wie hilfreich waren die Vorschläge für dich?</p>
-        <div class="rate">${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-rate="${n}">${n}</button>`).join("")}</div>
-        <p class="muted">Was würde dir am meisten helfen, deine Ziele umzusetzen?</p>
-        <div class="chips">${HELP.map(([k, t]) => `<button type="button" data-help="${k}">${esc(t)}</button>`).join("")}</div>
-        <div class="field"><label for="fb-text">Was hat dir gefehlt?</label><textarea id="fb-text" maxlength="1000"></textarea></div>
-        <button class="btn block" id="b-fb">Rückmeldung senden</button>
-        <div class="error" id="fb-err"></div>
-      </div>`}
-
-      <div class="card" id="pi">${programHtml(r)}</div>
-
-      ${isDemo() || r.account?.in_account || st.acct ? "" : `<h2 style="margin-top:6px">Deine Schritte speichern</h2>
-        <p class="muted" id="konto-hint">Freiwillig.</p>`}
-      <div id="konto-step"></div>
-
-      <div class="card"><h3>Lieber mit Unterstützung?</h3><p class="muted" style="margin-bottom:6px">Wer möchte, kann im Studio ein Gespräch vereinbaren.</p>${contactHtml(r.studio_contact)}</div>
-      <div class="row"><button class="btn ghost" id="b-all">Alle Vorschläge ansehen</button></div>
-      <p class="phase-note" style="margin-top:14px;text-align:center">${esc(INTRO_NOTE)} Danach bieten wir den Ernährungs-Check mit persönlicher Begleitung im Studio an.</p>
-      ${INTERNAL ? `<p class="small" style="margin-top:14px">${esc(r.edge_version)} · Status ${esc(r.status)} · Arzt bestätigt ${esc(r.doctor_confirmed_at || "–")}</p>` : ""}`);
-
-    // Schritte
-    document.querySelectorAll("[data-step]").forEach((card) => {
-      const key = card.dataset.step;
-      card.querySelectorAll("[data-act]").forEach((b) => b.onclick = async () => {
-        const action = b.dataset.act;
-        const extra = { lever_key: key, action };
-        const wasMarked = (steps.find((s) => s.lever_key === key) || {}).state === "vorgemerkt"; // 1.2.0
-        if (action === "start") {
-          extra.if_then = readIfThen(key); // 1.1.0
-          if (!extra.if_then) { card.querySelector("[data-err]").textContent = errorText("IF_THEN"); return; }
-          const dc = document.getElementById("dc-" + key);
-          if (dc) extra.doctor_confirmed = dc.checked;
-        }
-        b.disabled = true;
-        const res = await call("step", extra);
-        b.disabled = false;
-        if (!res.success) { card.querySelector("[data-err]").textContent = errorText(res.error); return; }
-        const newState = { start: "gestartet", arrive: "angekommen", back: "gestartet", unmark: "beendet" }[action];
-        track("nutri_step_state", { step_key: key, state: newState, doctor_confirmed: action === "start" ? !!extra.doctor_confirmed : undefined });
-        // 1.2.0: letzter vorgemerkter Schritt gestartet → Abschluss-Fenster
-        if (action === "start" && wasMarked && !(res.self_steps || []).some((s) => s.state === "vorgemerkt")) { screenSteps(res); return openRoundModal(res); }
-        screenSteps(res);
-      });
-    });
-    document.querySelectorAll("[data-add]").forEach((b) => b.onclick = async () => {
-      b.disabled = true;
-      const res = await call("step", { lever_key: b.dataset.add, action: "add" });
-      if (!res.success) return screenSteps(r, errorText(res.error));
-      track("nutri_step_state", { step_key: b.dataset.add, state: "vorgemerkt", origin: "nachgelegt" });
-      screenSteps(res);
-    });
-    // Kühlschrank-Zettel
-    const bf = document.getElementById("b-fridge");
-    if (bf) bf.onclick = () => {
-      renderFridge(r);
-      call("fridge").catch(() => {});
-      track("nutri_fridge_note", { action: "print", steps_count: steps.filter((x) => x.state !== "vorgemerkt").length });
-      const imgs = [...document.querySelectorAll("#fridge img")];
-      Promise.all(imgs.map((i) => (i.decode ? i.decode().catch(() => {}) : null))).then(() => setTimeout(() => window.print(), 50));
-    };
-    // Feedback
-    if (!fbDone) {
-      let rating = null; const help = new Set();
-      document.querySelectorAll("[data-rate]").forEach((b) => b.onclick = () => {
-        rating = Number(b.dataset.rate);
-        document.querySelectorAll("[data-rate]").forEach((x) => x.classList.toggle("on", x === b));
-      });
-      document.querySelectorAll("[data-help]").forEach((b) => b.onclick = () => {
-        const k = b.dataset.help;
-        if (help.has(k)) help.delete(k); else { if (k === "keine") help.clear(); else help.delete("keine"); help.add(k); }
-        document.querySelectorAll("[data-help]").forEach((x) => x.classList.toggle("on", help.has(x.dataset.help)));
-      });
-      document.getElementById("b-fb").onclick = async () => {
-        const text = document.getElementById("fb-text").value.trim();
-        const res = await call("feedback", { rating, help_options: [...help], missing_text: text });
-        if (!res.success) return (document.getElementById("fb-err").textContent = errorText(res.error));
-        track("nutri_feedback", { rating, help_options: [...help].join(","), has_freetext: !!text });
-        document.getElementById("fb").innerHTML = '<h2>Danke für deine Rückmeldung</h2><p class="muted">Sie hilft uns, den Ernährungs-Check besser zu machen.</p>';
-        st.data.feedback_given = true;
-      };
-    }
-    bindProgram(r);
-    bindKurzcheck(r); // 1.2.0
-    document.getElementById("b-all").onclick = () => screenResult(r);
-    // Konto freiwillig (konto.js 1.1.0 ohne required → mit „Ohne Konto weiter“)
-    if (window.LeVitaKonto && !isDemo() && st.pin && !r.account?.in_account) {
-      window.LeVitaKonto.mountStep(document.getElementById("konto-step"), {
-        publicCode: st.code, pin: st.pin, context: "nutrition", required: false,
-        lead: "Mit Konto bleiben deine Schritte gespeichert, und wir erinnern dich an deinen Kurzcheck. Du öffnest alles ohne PIN, mit einem Link per E-Mail.",
-        onRequested: () => { track("nutri_account", { action: "requested" }); const hn = document.getElementById("konto-hint"); if (hn) hn.textContent = "Bitte bestätige den Link in deiner Mail innerhalb einer Stunde — erst dann ist dein Konto aktiv. Danach bleibt das Gerät angemeldet, auf dem du den Link öffnest."; },
-      });
-      document.getElementById("konto-step").addEventListener("click", (ev) => { if (ev.target && ev.target.id === "lk-skip") track("nutri_account", { action: "skipped" }); });
-    }
-  }
-
-  // ── 1.2.0 (25.10.2026): Kurzcheck nach 14 Tagen ──────────────────────
-// Abschluss-Fenster „Deine nächsten 14 Tage“ (Pläne, Zettel, Kalender, Erinnerung nur mit Einwilligung),
-// Kurzcheck-Karte mit drei Antworten je Schritt, Link aus der Erinnerungsmail ohne PIN (30 Tage gültig).
+  // ── 1.3.0 (25.10.2026): „Deine Schritte“ nach Phasen ─────────────────────────
+// Oben immer eine Statuskarte mit der Phase und genau einer Hauptaktion:
+//   plan (Pläne machen) → unstarted (14 Tage noch nicht festgelegt) → run (Runde läuft) → check (Kurzcheck)
+//   → next (alles eingeschätzt, nächste Runde vorbereiten) → wieder run. done = alles angekommen.
+// Bewertet wird nur im Kurzcheck; die Schritt-Karten zeigen Plan, „Plan anpassen“ und „Herausnehmen“.
 const KURZ_LABEL = { meistens: "Klappt meistens", teilweise: "Klappt teilweise", noch_nicht: "Klappt noch nicht" };
 const KURZ_OUTCOME = {
-  meistens: "Im Alltag angekommen. Du kannst jetzt einen neuen Schritt dazunehmen.",
+  meistens: "Im Alltag angekommen. Damit ist ein Platz frei für einen neuen Schritt.",
   teilweise: "Ein Anfang. Schau dir unten bei „Plan anpassen“ an: Kommt die Wenn-Situation wirklich jede Woche vor? Ist das Dann klein genug?",
-  noch_nicht: "Passiert. Mach den Plan kleiner oder einfacher – oder nimm den Schritt heraus und wähle einen anderen.",
+  noch_nicht: "Passiert. Mach den Plan unten kleiner oder einfacher – oder nimm den Schritt heraus und wähle einen anderen.",
 };
+const LINKBTN = 'style="background:none;border:0;padding:4px 0;color:var(--text-secondary);text-decoration:underline;cursor:pointer;font:inherit;font-size:13px"';
 const fmtDay = (d) => new Date(d).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
+const tms = (d) => (d ? new Date(d).getTime() : 0);
 function ratedThisRound(r, x) {
   if (!x.rated_at || !x.last_rating) return false;
-  const start = r.checkin && r.checkin.started_at ? new Date(r.checkin.started_at).getTime() : 0;
-  return new Date(x.rated_at).getTime() >= start;
+  return tms(x.rated_at) >= (r.checkin && r.checkin.started_at ? tms(r.checkin.started_at) : 0);
 }
 function needsAdjust(r, x) {
   return x.state === "gestartet" && ["teilweise", "noch_nicht"].includes(x.last_rating) && ratedThisRound(r, x);
 }
 function kurzcheckDue(r) {
   const c = r.checkin;
-  return st.fromLink || !!(c && new Date(c.due_at).getTime() <= Date.now());
+  return !!c && (st.fromLink || st.earlyCheck || tms(c.due_at) <= Date.now());
 }
-function kurzcheckHtml(r) {
-  if (!kurzcheckDue(r)) return "";
-  const roundStart = r.checkin && r.checkin.started_at ? new Date(r.checkin.started_at).getTime() : Infinity;
-  // 1.2.4: nur Schritte, die schon vor Beginn der Runde liefen (frisch dazugenommene werden erst in der nächsten Runde eingeschätzt)
-  const steps = (r.self_steps || []).filter((x) => (x.state === "gestartet" && (!x.started_at || new Date(x.started_at).getTime() <= roundStart)) || (x.state === "angekommen" && ratedThisRound(r, x)));
-  if (!steps.length) return "";
-  const allRated = steps.every((x) => ratedThisRound(r, x));
+// Schritte dieser Runde: liefen schon vor Rundenbeginn (frisch dazugenommene kommen in die nächste Runde)
+function roundSteps(r) {
+  const start = r.checkin && r.checkin.started_at ? tms(r.checkin.started_at) + 60e3 : Infinity;
+  return (r.self_steps || []).filter((x) => (x.state === "gestartet" && (!x.started_at || tms(x.started_at) <= start))
+    || (x.state === "angekommen" && ratedThisRound(r, x)));
+}
+function stepGroups(r) {
+  const s = r.self_steps || [];
+  return { active: s.filter((x) => x.state === "gestartet"), marked: s.filter((x) => x.state === "vorgemerkt"), arrived: s.filter((x) => x.state === "angekommen") };
+}
+function phaseOf(r) {
+  const { active, marked, arrived } = stepGroups(r);
+  if (!active.length && !marked.length && !arrived.length) return "empty";
+  const due = kurzcheckDue(r);
+  const ks = roundSteps(r);
+  if (due && ks.length) return ks.every((x) => ratedThisRound(r, x)) ? "next" : "check";
+  if (!active.length && marked.length) return "plan";
+  if (active.length && (!r.checkin || due)) return "unstarted";
+  if (active.length) return "run";
+  return "done";
+}
+function moreLevers(r) {
+  const chosen = new Set((r.self_steps || []).map((x) => x.lever_key));
+  return [...(r.result?.shown || []), ...(r.result?.parking || [])].filter((l) => !chosen.has(l.lever_key) && !l.failed_before);
+}
+function addListHtml(r, more, canAdd) {
+  return `<ul class="addlist">${more.slice(0, 8).map((l) => `<li><span>${esc(l.variant?.title || l.tip?.title || l.lever_key)}</span>${canAdd ? `<button data-add="${esc(l.lever_key)}">Dazunehmen</button>` : ""}</li>`).join("")}</ul>`;
+}
+const BTN_ICS = 'class="btn ghost" style="flex:1 1 160px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;text-align:center"';
+
+function kurzcheckHtml(r, ph) {
+  const c = r.checkin;
+  const ks = roundSteps(r);
+  const { active, marked } = stepGroups(r);
+  const max = r.max_active_steps || 3;
+  const free = Math.max(0, max - active.length - marked.length);
+  const more = moreLevers(r);
+  const early = tms(c.due_at) > Date.now();
+  const adjust = ks.filter((x) => needsAdjust(r, x));
   return `<div class="card top" id="kurzcheck">
-    <h2>Dein Kurzcheck</h2>
-    <p class="muted" style="margin-bottom:10px">Zwei Wochen sind um. Wie laufen deine Schritte? Ein Klick pro Schritt.</p>
-    ${steps.map((x) => {
+    <span class="state s-g">Runde ${c.round || 1} · Kurzcheck</span>
+    <h2>Wie laufen deine Schritte?</h2>
+    <p class="muted" style="margin-bottom:10px">${early ? "Du schätzt vor dem Termin ein – auch gut." : "Zwei Wochen sind um."} Ein Klick pro Schritt.</p>
+    ${ks.map((x) => {
       const done = ratedThisRound(r, x);
       return `<div style="border-top:1px solid var(--border, rgba(127,127,127,.25));padding:12px 0 4px">
         <strong>${esc(leverTitle(r, x.lever_key))}</strong>
@@ -1298,21 +1169,210 @@ function kurzcheckHtml(r) {
         <div class="error" data-kerr="${esc(x.lever_key)}"></div>
       </div>`;
     }).join("")}
-    ${allRated ? `<p class="muted" style="margin:12px 0 8px"><strong>Fertig eingeschätzt.</strong> Nimm bei Bedarf unten einen neuen Schritt dazu, dann starte deine nächsten 14 Tage – mit neuem Zettel.</p>
-    <button class="btn block" id="b-newround">Nächste 14 Tage starten</button>` : ""}
+    ${ph === "next" ? `<div style="border-top:1px solid var(--border, rgba(127,127,127,.25));padding-top:14px;margin-top:8px">
+      <h3>So geht es weiter</h3>
+      ${free > 0 && more.length ? `<p class="muted" style="margin:4px 0 6px">Du hast Platz für ${free === 1 ? "einen neuen Schritt" : free + " neue Schritte"}. Nimm einen dazu, wenn du magst:</p>${addListHtml(r, more, true)}` : ""}
+      ${adjust.length ? `<p class="muted" style="margin:8px 0">Bei ${adjust.map((x) => "„" + esc(leverTitle(r, x.lever_key)) + "“").join(" und ")} passt du unten den Plan an.</p>` : ""}
+      ${marked.length
+        ? `<p class="muted" style="margin:8px 0 0"><strong>Jetzt:</strong> Mach unten aus deinem neuen Schritt einen Plan und starte ihn – danach legst du deine nächsten 14 Tage fest.</p>`
+        : active.length
+          ? `<button class="btn block" id="b-newround" style="margin-top:10px">Nächste 14 Tage starten</button>`
+          : `<p class="muted" style="margin:8px 0 0">Alles angekommen – nimm einen neuen Schritt dazu, wenn du magst.</p>`}
+    </div>` : ""}
   </div>`;
 }
-function checkinInfoHtml(r) {
+
+function statusHtml(r, ph) {
   const c = r.checkin;
-  const started = (r.self_steps || []).some((x) => x.state === "gestartet");
-  if (c && c.status === "scheduled" && new Date(c.due_at).getTime() > Date.now()) {
-    return `<p class="muted" style="margin:8px 0 0"><strong>Dein Kurzcheck:</strong> ${esc(fmtDay(c.due_at))} – ${c.remind
-      ? "wir erinnern dich per E-Mail. Abbestellen kannst du über den Link in der Mail."
-      : "ohne Erinnerungsmail. Trag ihn dir am besten in den Kalender."}</p>`;
+  const { active, marked } = stepGroups(r);
+  const max = r.max_active_steps || 3;
+  if (ph === "empty") return `<div class="card top"><h2>Noch kein Schritt gewählt</h2><p class="muted">Such dir einen Vorschlag aus, mit dem du beginnen möchtest.</p><button class="btn block" id="b-all2" style="margin-top:10px">Vorschläge ansehen</button></div>`;
+  if (ph === "plan") return `<div class="card top"><span class="state s-v">Planen</span>
+    <h2>Mach aus ${marked.length === 1 ? "deinem Schritt" : "deinen Schritten"} einen Plan</h2>
+    <p class="muted">Für jeden Schritt ein kurzer Wenn-dann-Plan, dann „Schritt starten“. Danach legst du deine 14 Tage fest – mit Kühlschrank-Zettel und Termin für den Kurzcheck. Ein Schritt, der hält, bringt mehr als drei, die nach zwei Wochen wegbrechen.</p></div>`;
+  if (ph === "unstarted") return `<div class="card top"><span class="state s-v">Fast geschafft</span>
+    <h2>Deine 14 Tage sind noch nicht gestartet</h2>
+    <p class="muted">Leg fest, wann du deinen Kurzcheck machst. Dazu gibt es den Kühlschrank-Zettel und auf Wunsch eine Erinnerung per E-Mail.</p>
+    <button class="btn block" id="b-round" style="margin-top:10px">Deine 14 Tage starten</button></div>`;
+  if (ph === "run") {
+    const start = tms(c.started_at);
+    const day = Math.min(14, Math.max(1, Math.floor((Date.now() - start) / 864e5) + 1));
+    const fresh = active.some((x) => x.started_at && tms(x.started_at) > start + 60e3);
+    return `<div class="card top"><span class="state s-g">Runde ${c.round || 1} · Umsetzen</span>
+      <h2>Tag ${day} von 14</h2>
+      <div class="progress" style="margin:8px 0 12px"><div style="width:${Math.round((day / 14) * 100)}%"></div></div>
+      <p class="muted"><strong>Kurzcheck am ${esc(fmtDay(c.due_at))}.</strong> ${c.remind ? "Wir erinnern dich per E-Mail." : "Ohne Erinnerungsmail – trag ihn dir am besten in den Kalender."} Bis dahin: Pläne umsetzen und auf dem Zettel abhaken.</p>
+      ${fresh ? `<p class="muted" style="color:var(--accent-amber-text);margin-top:8px">Ein neuer Schritt ist dazugekommen – druck den Zettel neu, damit er draufsteht. Eingeschätzt wird er im nächsten Kurzcheck.</p>` : ""}
+      <div class="row" style="flex-wrap:wrap;gap:8px;margin-top:12px"><button class="btn" style="flex:1 1 160px" data-print>Zettel drucken</button><a ${BTN_ICS} href="${icsHref(c.due_at)}" download="kurzcheck-ernaehrung.ics" data-ics>In den Kalender</a></div>
+      <button type="button" id="b-early" ${LINKBTN}>Kurzcheck schon jetzt machen</button></div>`;
   }
-  if (!c && started) return `<button class="btn ghost block" id="b-round" style="margin-top:12px">Deine 14 Tage starten</button>`;
-  return "";
+  if (ph === "check" || ph === "next") return kurzcheckHtml(r, ph);
+  const more = moreLevers(r);
+  return `<div class="card top"><span class="state s-a">Geschafft</span><h2>Alles im Alltag angekommen</h2>
+    <p class="muted">${more.length ? "Nimm einen neuen Schritt dazu – mit eigenem Plan und neuem Zettel." : "Du hast alle Vorschläge umgesetzt."}</p>
+    ${more.length ? addListHtml(r, more, active.length + marked.length < max) : ""}</div>`;
 }
+
+function stepCard(r, x, ph) {
+  const needDoc = r.doctor_required && !r.doctor_confirmed_at;
+  const tip = [...(r.result?.shown || []), ...(r.result?.parking || [])].find((l) => l.lever_key === x.lever_key)?.tip || {};
+  const ex = (tip.benefits?.beispiele || []).slice(0, 2);
+  const hints = (r.result?.step_hints || r.result?.hints || []).filter((hn) => hn.lever_key === x.lever_key)
+    .map((hn) => `<p class="muted" style="border-left:3px solid var(--accent-blue);padding-left:10px;margin:6px 0 10px"><strong>${esc(hn.title)}</strong><br>${esc(hn.body)}</p>`).join("");
+  if (x.state === "vorgemerkt") return `<div class="card" data-step="${esc(x.lever_key)}">
+    <span class="state s-v">${ph === "run" || ph === "next" ? "Neu" : "Vorgemerkt"}</span>
+    <h3>${esc(leverTitle(r, x.lever_key))}</h3>
+    ${hints}
+    ${needDoc ? `<p class="muted" style="color:var(--accent-amber-text);margin-bottom:8px">Vor Umsetzung ärztlich klären.</p>` : ""}
+    ${ifThenFields(x.lever_key)}
+    ${ex.length ? `<div class="small" style="margin:-4px 0 10px">Beispiele zu diesem Schritt: ${ex.map(esc).join(" · ")}</div>` : ""}
+    ${needDoc ? `<label class="consent-box"><input type="checkbox" id="dc-${esc(x.lever_key)}"><span>Ich habe die Tipps mit meiner Ärztin oder meinem Arzt besprochen. <span class="small">Das ist meine eigene Angabe, keine medizinische Freigabe.</span></span></label>` : ""}
+    <div class="row"><button class="btn" data-act="start">Schritt starten</button><button class="btn ghost" data-act="unmark">Herausnehmen</button></div>
+    <div class="error" data-err></div>
+  </div>`;
+  return `<div class="card" data-step="${esc(x.lever_key)}">
+    <span class="state s-g">Gestartet</span>
+    <h3>${esc(leverTitle(r, x.lever_key))}</h3>
+    ${hints}
+    <div class="ifthen">${esc(x.if_then_text || "")}</div>
+    <details class="small" style="margin:-4px 0 8px" ${needsAdjust(r, x) ? "open" : ""}><summary style="cursor:pointer;font-weight:600">Plan anpassen</summary><div style="margin-top:10px">${ifThenFields(x.lever_key, x.if_then_text)}<button class="btn ghost" data-act="start">Plan speichern</button></div></details>
+    <button type="button" data-act="unmark" ${LINKBTN}>Schritt herausnehmen</button>
+    <div class="error" data-err></div>
+  </div>`;
+}
+function arrivedHtml(r, list) {
+  if (!list.length) return "";
+  return `<div class="card"><h2>Im Alltag angekommen</h2>
+    <ul class="addlist">${list.map((x) => `<li data-step="${esc(x.lever_key)}"><span>✓ ${esc(leverTitle(r, x.lever_key))}${x.if_then_text ? `<br><span class="small">${esc(x.if_then_text)}</span>` : ""}<span class="error" data-err></span></span><button data-act="back">Klappt doch nicht mehr</button></li>`).join("")}</ul></div>`;
+}
+
+function screenSteps(r, msg = "") {
+  st.data = r;
+  const ph = phaseOf(r);
+  const { active, marked, arrived } = stepGroups(r);
+  const max = r.max_active_steps || 3;
+  const free = Math.max(0, max - active.length - marked.length);
+  const more = moreLevers(r);
+  const needDoc = r.doctor_required && !r.doctor_confirmed_at;
+  const fbDone = r.feedback_given;
+  const showMore = ["plan", "unstarted", "run"].includes(ph) && free > 0 && more.length;
+  h(`
+    <h1>Deine Schritte</h1>
+    ${msg ? `<div class="card warn"><p>${esc(msg)}</p></div>` : ""}
+    ${needDoc && r.clearance_text ? `<div class="card warn"><h3>${esc(r.clearance_text.title)}</h3><p class="muted">${esc(r.clearance_text.body)}</p></div>` : ""}
+    ${statusHtml(r, ph)}
+    ${active.map((x) => stepCard(r, x, ph)).join("")}
+    ${marked.map((x) => stepCard(r, x, ph)).join("")}
+    ${arrivedHtml(r, arrived)}
+    ${showMore ? `<div class="card"><h2>Weitere Schritte</h2>
+      <p class="muted" style="margin-bottom:8px">${ph === "run" ? "Läuft ein Schritt gut, kannst du einen dazunehmen" : "Du kannst noch einen dazunehmen"} – höchstens ${max} gleichzeitig.</p>
+      ${addListHtml(r, more, true)}</div>` : ""}
+
+    <h2 style="margin:28px 0 10px;padding-top:18px;border-top:1px solid var(--border, rgba(127,127,127,.25))">Mehr</h2>
+    ${fbDone ? "" : `
+    <div class="card" id="fb">
+      <h2>Deine Rückmeldung</h2>
+      <p class="muted">Wie hilfreich waren die Vorschläge für dich?</p>
+      <div class="rate">${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-rate="${n}">${n}</button>`).join("")}</div>
+      <p class="muted">Was würde dir am meisten helfen, deine Ziele umzusetzen?</p>
+      <div class="chips">${HELP.map(([k, t]) => `<button type="button" data-help="${k}">${esc(t)}</button>`).join("")}</div>
+      <div class="field"><label for="fb-text">Was hat dir gefehlt?</label><textarea id="fb-text" maxlength="1000"></textarea></div>
+      <button class="btn block" id="b-fb">Rückmeldung senden</button>
+      <div class="error" id="fb-err"></div>
+    </div>`}
+    <div class="card" id="pi">${programHtml(r)}</div>
+    ${isDemo() || r.account?.in_account || st.acct ? "" : `<h2 style="margin-top:6px">Deine Schritte speichern</h2>
+      <p class="muted" id="konto-hint">Freiwillig.</p>`}
+    <div id="konto-step"></div>
+    <div class="card"><h3>Lieber mit Unterstützung?</h3><p class="muted" style="margin-bottom:6px">Wer möchte, kann im Studio ein Gespräch vereinbaren.</p>${contactHtml(r.studio_contact)}</div>
+    <div class="row"><button class="btn ghost" id="b-all">Alle Vorschläge ansehen</button></div>
+    <p class="phase-note" style="margin-top:14px;text-align:center">${esc(INTRO_NOTE)} Danach bieten wir den Ernährungs-Check mit persönlicher Begleitung im Studio an.</p>
+    ${INTERNAL ? `<p class="small" style="margin-top:14px">${esc(r.edge_version)} · Status ${esc(r.status)} · Phase ${esc(ph)} · Arzt bestätigt ${esc(r.doctor_confirmed_at || "–")}</p>` : ""}`);
+
+  // Schritte: starten, Plan speichern, herausnehmen, zurück
+  document.querySelectorAll("[data-step]").forEach((card) => {
+    const key = card.dataset.step;
+    card.querySelectorAll("[data-act]").forEach((b) => b.onclick = async () => {
+      const action = b.dataset.act;
+      const extra = { lever_key: key, action };
+      const wasMarked = (r.self_steps || []).some((s) => s.lever_key === key && s.state === "vorgemerkt");
+      if (action === "start") {
+        extra.if_then = readIfThen(key);
+        if (!extra.if_then) { card.querySelector("[data-err]").textContent = errorText("IF_THEN"); return; }
+        const dc = document.getElementById("dc-" + key);
+        if (dc) extra.doctor_confirmed = dc.checked;
+      }
+      b.disabled = true;
+      const res = await call("step", extra);
+      b.disabled = false;
+      if (!res.success) { card.querySelector("[data-err]").textContent = errorText(res.error); return; }
+      const newState = { start: "gestartet", arrive: "angekommen", back: "gestartet", unmark: "beendet" }[action];
+      track("nutri_step_state", { step_key: key, state: newState, doctor_confirmed: action === "start" ? !!extra.doctor_confirmed : undefined });
+      screenSteps(res);
+      // letzter neuer Schritt gestartet → Abschluss-Fenster (nicht mitten in einer laufenden Runde)
+      if (action === "start" && wasMarked && !(res.self_steps || []).some((s) => s.state === "vorgemerkt") && phaseOf(res) !== "run") openRoundModal(res);
+    });
+  });
+  document.querySelectorAll("[data-add]").forEach((b) => b.onclick = async () => {
+    b.disabled = true;
+    const key = b.dataset.add;
+    const res = await call("step", { lever_key: key, action: "add" });
+    if (!res.success) return screenSteps(r, errorText(res.error));
+    track("nutri_step_state", { step_key: key, state: "vorgemerkt", origin: "nachgelegt" });
+    screenSteps(res);
+    const el = document.querySelector(`[data-step="${key}"]`); if (el) el.scrollIntoView({ block: "center" });
+  });
+  // Kurzcheck
+  document.querySelectorAll("[data-krate]").forEach((b) => b.onclick = async () => {
+    const [key, rating] = b.dataset.krate.split("|");
+    b.disabled = true;
+    const res = await call("checkin_rate", { lever_key: key, rating });
+    b.disabled = false;
+    if (!res.success) { const el = document.querySelector(`[data-kerr="${key}"]`); if (el) el.textContent = errorText(res.error); return; }
+    track("nutri_checkin_rate", { step_key: key, rating, via: st.ctoken ? "mail" : "page" });
+    screenSteps(res);
+    const k = document.getElementById("kurzcheck"); if (k) k.scrollIntoView({ block: "start" });
+  });
+  ["b-newround", "b-round"].forEach((id) => { const el = document.getElementById(id); if (el) el.onclick = () => openRoundModal(st.data || r); });
+  const be = document.getElementById("b-early");
+  if (be) be.onclick = () => { st.earlyCheck = true; track("nutri_checkin_rate", { action: "early" }); screenSteps(st.data || r); };
+  document.querySelectorAll("[data-print]").forEach((b) => b.onclick = () => printFridge(r));
+  document.querySelectorAll("[data-ics]").forEach((a) => a.addEventListener("click", () => track("nutri_checkin_plan", { action: "calendar" })));
+  const ba2 = document.getElementById("b-all2"); if (ba2) ba2.onclick = () => screenResult(r);
+  // Feedback
+  if (!fbDone) {
+    let rating = null; const help = new Set();
+    document.querySelectorAll("[data-rate]").forEach((b) => b.onclick = () => {
+      rating = Number(b.dataset.rate);
+      document.querySelectorAll("[data-rate]").forEach((x) => x.classList.toggle("on", x === b));
+    });
+    document.querySelectorAll("[data-help]").forEach((b) => b.onclick = () => {
+      const k = b.dataset.help;
+      if (help.has(k)) help.delete(k); else { if (k === "keine") help.clear(); else help.delete("keine"); help.add(k); }
+      document.querySelectorAll("[data-help]").forEach((x) => x.classList.toggle("on", help.has(x.dataset.help)));
+    });
+    document.getElementById("b-fb").onclick = async () => {
+      const text = document.getElementById("fb-text").value.trim();
+      const res = await call("feedback", { rating, help_options: [...help], missing_text: text });
+      if (!res.success) return (document.getElementById("fb-err").textContent = errorText(res.error));
+      track("nutri_feedback", { rating, help_options: [...help].join(","), has_freetext: !!text });
+      document.getElementById("fb").innerHTML = '<h2>Danke für deine Rückmeldung</h2><p class="muted">Sie hilft uns, den Ernährungs-Check besser zu machen.</p>';
+      st.data.feedback_given = true;
+    };
+  }
+  bindProgram(r);
+  document.getElementById("b-all").onclick = () => screenResult(r);
+  // Konto freiwillig
+  if (window.LeVitaKonto && !isDemo() && st.pin && !r.account?.in_account) {
+    window.LeVitaKonto.mountStep(document.getElementById("konto-step"), {
+      publicCode: st.code, pin: st.pin, context: "nutrition", required: false,
+      lead: "Mit Konto bleiben deine Schritte gespeichert, und wir erinnern dich an deinen Kurzcheck. Du öffnest alles ohne PIN, mit einem Link per E-Mail.",
+      onRequested: () => { track("nutri_account", { action: "requested" }); const hn = document.getElementById("konto-hint"); if (hn) hn.textContent = "Bitte bestätige den Link in deiner Mail innerhalb einer Stunde — erst dann ist dein Konto aktiv. Danach bleibt das Gerät angemeldet, auf dem du den Link öffnest."; },
+    });
+    document.getElementById("konto-step").addEventListener("click", (ev) => { if (ev.target && ev.target.id === "lk-skip") track("nutri_account", { action: "skipped" }); });
+  }
+}
+
 function icsHref(dueDate) {
   const d = new Date(dueDate);
   const ymd = (x) => `${x.getFullYear()}${String(x.getMonth() + 1).padStart(2, "0")}${String(x.getDate()).padStart(2, "0")}`;
@@ -1329,7 +1389,7 @@ function icsHref(dueDate) {
 function printFridge(r, onDone) {
   renderFridge(r);
   call("fridge").catch(() => {});
-  track("nutri_fridge_note", { action: "print", steps_count: (r.self_steps || []).filter((x) => x.state !== "vorgemerkt").length, from: "round" });
+  track("nutri_fridge_note", { action: "print", steps_count: (r.self_steps || []).filter((x) => x.state === "gestartet").length });
   const imgs = [...document.querySelectorAll("#fridge img")];
   Promise.all(imgs.map((i) => (i.decode ? i.decode().catch(() => {}) : null))).then(() => setTimeout(() => { window.print(); if (onDone) onDone(); }, 50));
 }
@@ -1354,7 +1414,7 @@ function openRoundModal(r) {
     </ol>
     <div class="row" style="flex-wrap:wrap;gap:8px;margin-bottom:14px">
       <button type="button" class="btn ghost" id="rm-print" style="flex:1 1 160px">Zettel drucken</button>
-      <a class="btn ghost" id="rm-ics" style="flex:1 1 160px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;text-align:center" href="${icsHref(due)}" download="kurzcheck-ernaehrung.ics">In den Kalender eintragen</a>
+      <a ${BTN_ICS} id="rm-ics" href="${icsHref(due)}" download="kurzcheck-ernaehrung.ics">In den Kalender eintragen</a>
     </div>
     ${r.email_known
       ? `<label class="consent-box"><input type="checkbox" id="rm-remind"><span>${esc(r.checkin_consent_text || "Ja, erinnere mich nach 14 Tagen per E-Mail an meinen Kurzcheck.")}</span></label>
@@ -1380,24 +1440,12 @@ function openRoundModal(r) {
     ok.disabled = false;
     if (!res.success) return (document.getElementById("rm-err").textContent = errorText(res.error));
     track("nutri_checkin_plan", { action: "scheduled", remind, steps_count: steps.length });
-    st.fromLink = false;
+    st.fromLink = false; st.earlyCheck = false;
     close();
     screenSteps(res);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
   track("nutri_checkin_plan", { action: "shown", steps_count: steps.length });
-}
-function bindKurzcheck(r) {
-  document.querySelectorAll("[data-krate]").forEach((b) => b.onclick = async () => {
-    const [key, rating] = b.dataset.krate.split("|");
-    b.disabled = true;
-    const res = await call("checkin_rate", { lever_key: key, rating });
-    b.disabled = false;
-    if (!res.success) { const el = document.querySelector(`[data-kerr="${key}"]`); if (el) el.textContent = errorText(res.error); return; }
-    track("nutri_checkin_rate", { step_key: key, rating, via: st.ctoken ? "mail" : "page" });
-    screenSteps(res);
-    const k = document.getElementById("kurzcheck"); if (k) k.scrollIntoView({ block: "start" });
-  });
-  ["b-newround", "b-round"].forEach((id) => { const el = document.getElementById(id); if (el) el.onclick = () => openRoundModal(st.data || r); });
 }
 async function screenCheckinOptout(token) {
   spinner();
@@ -1449,7 +1497,7 @@ function programHtml(r) {
 
   // Kühlschrank-Zettel: nur die eigenen Pläne, Pilot-ID und Studio-Kontakt — keine PIN, keine Gesundheitsangaben
   function renderFridge(r) {
-    const steps = (r.self_steps || []).filter((x) => x.state !== "vorgemerkt");
+    const steps = (r.self_steps || []).filter((x) => x.state === "gestartet"); // 1.3.0: nur laufende Schritte
     const c = r.studio_contact || {};
     const days = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
     const doc = r.doctor_confirmed_at || r.doctor_required;
