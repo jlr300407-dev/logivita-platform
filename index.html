@@ -756,6 +756,7 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.21.14 (25.10.2026, Prüfstand): „Freiwillig, wenn du magst“ zeigt mit Kernaussage dieselben geprüften Schritte wie die Mail (kernaussage.frei, edge .48); die alte Tipp-Liste gilt nur noch für Checks ohne diese Daten
 v2.21.13 (25.10.2026, R7-08): Am breiten Bildschirm (ab 1100 px) steht die Spinne neben Index und Kernaussage; am Handy bleibt die Reihenfolge unverändert
 v2.21.12 (25.10.2026, Testrunde R7): R7-04 „Dein größter Ansatzpunkt“ entfällt, wenn die Kernaussage den Ansatzpunkt nennt
   (A1: Routinekern, aber Alkohol als größter Ansatzpunkt); R7-05 Simulator-Hebel „Alkohol-Häufigkeit“ statt „Alkohol“;
@@ -7597,7 +7598,15 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     const _dupOfKern = it => hasKern && (it[2] === "activity_recovery" || _planAreas.includes(it[2]) || it[0] === "Erholung vor Training" || it[0] === "Halten, was gut läuft"
       || [RECOVERY_TIP_NOW, RECOVERY_TIP_SOON, ALCOHOL_FIRST_TIP, ALCOHOL_WEEK_TIP].includes(it[1]));
     const more = (S.cat1Items || []).filter(it => (!S.worst || it[2] !== S.worst.key) && !_dupOfKern(it));
-    if (more.length) {
+    const _frei = hasKern && kernOf(S) && kernOf(S).frei; // v2.21.14 (Prüfstand 25.10.2026): „Freiwillig“ aus derselben Quelle wie die Mail (edge .48)
+    if (_frei) {
+      const fi = _frei.items || [], fn = _frei.notes || [];
+      if (fi.length || fn.length) {
+        html += `<div class="t3-zone-title">Freiwillig, wenn du magst</div>`;
+        fi.forEach((o) => { html += `<div class="hint-box" style="background:var(--sunken);border-left:3px solid var(--border);border-radius:0;padding:13px 16px;margin-bottom:8px;"><strong>${escHtml(o.name || "")}</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${escHtml(o.text || "")}</span></div>`; });
+        fn.forEach((x) => { html += `<p style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin:4px 0 12px;">${escHtml(x)}</p>`; });
+      }
+    } else if (more.length) {
       html += `<div class="t3-zone-title">${hasKern ? "Freiwillig, wenn du magst" : "Deine weiteren Hebel"}</div>`;
       more.forEach(([t, d]) => {
         html += `<div class="hint-box" style="background:${hasKern ? "var(--sunken)" : "var(--accent-green-dim)"};border-left:3px solid ${hasKern ? "var(--border)" : "var(--accent-green)"};border-radius:0;padding:13px 16px;margin-bottom:8px;">
@@ -9671,7 +9680,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.13</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.14</footer>
 
 
 </body>
