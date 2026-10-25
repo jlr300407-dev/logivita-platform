@@ -756,6 +756,7 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.21.15 (25.10.2026, Jörg): sehr Sportliche (5–7 aktive Tage, Kraft 3+, alles stabil) – Kernaussage mit Anerkennung, „So geht es weiter“ ohne „Beobachte dabei“, statt Wochenplan ein Satz (kernaussage.planNote, edge .49); kein Fahrplan-Versprechen im Teaser
 v2.21.14 (25.10.2026, Prüfstand): „Freiwillig, wenn du magst“ zeigt mit Kernaussage dieselben geprüften Schritte wie die Mail (kernaussage.frei, edge .48); die alte Tipp-Liste gilt nur noch für Checks ohne diese Daten
 v2.21.13 (25.10.2026, R7-08): Am breiten Bildschirm (ab 1100 px) steht die Spinne neben Index und Kernaussage; am Handy bleibt die Reihenfolge unverändert
 v2.21.12 (25.10.2026, Testrunde R7): R7-04 „Dein größter Ansatzpunkt“ entfällt, wenn die Kernaussage den Ansatzpunkt nennt
@@ -5653,7 +5654,8 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     // v1.41.4 — Die Edge schreibt den Fahrplan nur mit gesetztem Ziel (goalKey).
     // Ohne Ziel darf der Teaser ihn deshalb auch nicht versprechen.
     const _planPromised = !window._safetyTier && !window._doctorFirst && !!goalKeyForTeaser
-      && !(window._decision && window._decision.fixedPlan);   // v2.12.0 (R2-F07)
+      && !(window._decision && window._decision.fixedPlan)   // v2.12.0 (R2-F07)
+      && !(result && result.kernaussage && result.kernaussage.planNote); // v2.21.15: sehr Sportliche bekommen keinen Wochenplan
     if (!isLinkedRecheck || !window._previousData.goal_scenario) {
       teaserRows += _planPromised
         ? teaserRow(ICO("target"), `Dein 6-Wochen-Fahrplan für „${goalTeaser}“`, "konkret, Schritt für Schritt — mit Ausblick bis zu deinem Re-Check")
@@ -7252,6 +7254,8 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
             </div>`).join("")}`}
         </div>`;
     }
+    // v2.21.15 (Jörg 25.10.2026): sehr Sportliche – kein Wochenplan, ein Satz aus der Edge (kernaussage.planNote, dieselbe Quelle wie die Mail)
+    { const _k = kernOf(S); if (_k && _k.planNote) return `<div class="stage-fahrplan"><div class="stage-kicker" style="color:var(--accent-amber-text);">Dein Plan</div><div style="font-size:15px;line-height:1.6;">${escHtml(_k.planNote)}</div></div>`; }
     // v2.13.0 (Paket I, Nr. 2c): Die Mail ist hier schon erzeugt. Enthält sie keinen Fahrplan (fahrplan leer),
     // wird er auch nicht angekündigt.
     if (S.planPromised && window._unlockInfo && Array.isArray(window._unlockInfo.fahrplan)) {
@@ -7413,8 +7417,8 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       + `<div class="kern-step" id="kernStep">
           <div class="kern-label">${ICO("bolt")} ${escHtml(k.label || "Dein erster Schritt")}</div>
           <div class="kern-jetzt">${escHtml(k.jetzt)}</div>
-          <div class="kern-beob">${ICO("search")} <strong>Beobachte dabei:</strong> ${escHtml(k.beob)}</div>
-          ${locked ? `<div class="kern-note">Deinen 6-Wochen-Plan mit Ausblick bis zum Re-Check – Schritt für Schritt – bekommst du mit deinem Vital-Plan per Mail.</div>` : ``}
+          ${k.beob ? `<div class="kern-beob">${ICO("search")} <strong>Beobachte dabei:</strong> ${escHtml(k.beob)}</div>` : ""}
+          ${locked && !k.planNote ? `<div class="kern-note">Deinen 6-Wochen-Plan mit Ausblick bis zum Re-Check – Schritt für Schritt – bekommst du mit deinem Vital-Plan per Mail.</div>` : ``}
         </div>`;
   }
   // Eine ruhige Bestätigungszeile statt der Verwaltung oben (Zugang, Newsletter usw. stehen ganz unten)
@@ -7585,7 +7589,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     // v2.7.1 — drei Zonen: allein / im Studio / Zugang (Jörg 14.10.2026)
     html += planZoneHeadHtml("allein", ICO("home"), "Das kannst du allein tun", (window._decision && window._decision.fixedPlan)
       ? "Deine nächsten Schritte – der erste ist das Gespräch in deiner Hausarztpraxis."   // v2.12.0 (Paket E)
-      : "Dein Fahrplan für die nächsten Wochen – ohne Termin, im eigenen Alltag.");
+      : (kernOf(S) && kernOf(S).planNote ? "Dein Training läuft – hier steht, wie es weitergeht." : "Dein Fahrplan für die nächsten Wochen – ohne Termin, im eigenen Alltag."));
     // v2.21.0: Die Handlungskarte (S.hero) wiederholte Woche 1–4 aus dem Fahrplan – mit Kernaussage entfällt sie (Paket W, Streichung dokumentiert)
     if (!hasKern) { html += S.hero || ""; html += S.simulator || ""; }
     html += stageFahrplanHtml(S);
@@ -9680,7 +9684,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.14</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.15</footer>
 
 
 </body>
