@@ -756,6 +756,10 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.21.12 (25.10.2026, Testrunde R7): R7-04 „Dein größter Ansatzpunkt“ entfällt, wenn die Kernaussage den Ansatzpunkt nennt
+  (A1: Routinekern, aber Alkohol als größter Ansatzpunkt); R7-05 Simulator-Hebel „Alkohol-Häufigkeit“ statt „Alkohol“;
+  R7-07 Hinweis Gewichtsverlust bei ärztlichem Vorrang „zeitnah abklären“ statt „bei Gelegenheit“ (gleiche Dringlichkeit wie „Abklärung zuerst“).
+  Gehört zu edge-2026-10-25.46 (R7-06: Trainingshebel aus dem Simulator ebenfalls zurückgestellt).
 v2.21.11 (25.10.2026, Jörg): Simulator erklärt, dass die gestrichelte Linie in der Spinne die Veränderung zeigt.
 Gehört zu edge-2026-10-25.45 und SQL 13 (bis zu drei Schalter, auch zwei im selben Bereich).
 
@@ -2874,7 +2878,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     sleep_duration: "Schlafdauer", sleep_latency: "Einschlafzeit", daytime_sleepiness: "Tagesmüdigkeit",
     water_intake: "Trinkmenge", vegetables_fruit: "Gemüse und Obst", diet_type: "Ernährungsweise",
     protein_intake: "Eiweiß", omega3_fish: "fettreichem Seefisch", sun_exposure_winter: "Zeit draußen im Winter",
-    alcohol_frequency: "Alkohol", alcohol_amount: "Alkohol-Menge", nicotine_use: "Rauchen",
+    alcohol_frequency: "Alkohol-Häufigkeit", alcohol_amount: "Alkohol-Menge", nicotine_use: "Rauchen",
     stress_level: "Stress", social_connection: "sozialen Kontakten"
   };
   // Bereiche, aus denen bei diesem Status KEIN Hebel kommen darf ("*" = gar keiner)
@@ -5568,7 +5572,8 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     // Inhaltsblock es ueberholen kann. Genau eine Dringlichkeitsstufe.
     if (window._safetyTier) {
       const _sn = window._snips.notice;
-      const _bandText =
+      const _df0 = !!(window._care && window._care.status === "doctor_first"); // v2.21.12 (R7-07): bei ärztlichem Vorrang dieselbe Dringlichkeit wie „Abklärung zuerst“
+      const _bandText = _df0 ? "Du hast einen ungewollten Gewichtsverlust angegeben. Das gehört ärztlich abgeklärt – sprich es zeitnah in deiner Hausarztpraxis an." :
         window._safetyTier === "combined"
           ? (_sn.weight_appetite_combined?.body || "Ungewollter Gewichtsverlust zusammen mit verändertem Appetit oder Schwindel gehört ärztlich abgeklärt — am besten bei deiner Hausärztin oder deinem Hausarzt.")
         : window._safetyTier === "senior"
@@ -5576,7 +5581,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
         : window._safetyTier === "light"
           ? (_sn.weight_appetite?.body || "Du hast ungewollten Gewichtsverlust bzw. deutliche Appetit-Veränderungen angegeben. Falls das über mehrere Wochen anhält, lass es hausärztlich abklären — nicht dringend, aber der sichere Weg.")
           : (_sn.weight_appetite_single?.body || "Du hast Veränderungen bei Gewicht oder Appetit angegeben. Behalte das im Blick und sprich es bei Gelegenheit hausärztlich an.");
-      const _bandTitle = (window._safetyTier === "combined" || window._safetyTier === "senior")
+      const _bandTitle = (_df0 || window._safetyTier === "combined" || window._safetyTier === "senior")
         ? "Bitte ärztlich abklären lassen" : "Zuerst das Wichtigste";
       html += S.safetyBand = `
         <div style="background:rgba(var(--accent-amber-rgb),0.08);border:1px solid rgba(var(--accent-amber-rgb),0.25);
@@ -6126,7 +6131,8 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     // Hier bleibt nur der Rueckfall, falls das Band nicht gelaufen ist.
     if (window._safetyTier && !(window._shown && window._shown.triage)) {
       const _sn = window._snips.notice;
-      const _safetyText =
+      const _df1 = !!(window._care && window._care.status === "doctor_first"); // v2.21.12 (R7-07)
+      const _safetyText = _df1 ? "Du hast einen ungewollten Gewichtsverlust angegeben. Das gehört ärztlich abgeklärt – sprich es zeitnah in deiner Hausarztpraxis an." :
         window._safetyTier === "combined"
           ? (_sn.weight_appetite_combined?.body || "Ungewollter Gewichtsverlust zusammen mit verändertem Appetit oder Schwindel gehört ärztlich abgeklärt — am besten bei deiner Hausärztin oder deinem Hausarzt.")
         : window._safetyTier === "senior"
@@ -6134,7 +6140,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
         : window._safetyTier === "light"
           ? (_sn.weight_appetite?.body || "Du hast ungewollten Gewichtsverlust bzw. deutliche Appetit-Veränderungen angegeben. Falls das über mehrere Wochen anhält, lass es hausärztlich abklären — nicht dringend, aber der sichere Weg.")
           : (_sn.weight_appetite_single?.body || "Du hast Veränderungen bei Gewicht oder Appetit angegeben. Behalte das im Blick und sprich es bei Gelegenheit hausärztlich an.");
-      const _safetyTitle = (window._safetyTier === "combined" || window._safetyTier === "senior")
+      const _safetyTitle = (_df1 || window._safetyTier === "combined" || window._safetyTier === "senior")
         ? "Bitte ärztlich abklären lassen" : "Zuerst das Wichtigste";
       html += S.safetyFallback = `<div class="hint-box" style="background:rgba(var(--accent-amber-rgb),0.08);border-left:3px solid var(--accent-amber);border-radius:0;padding:14px 16px;margin-bottom:16px;">
         <strong style="color:var(--warn-text);">${_safetyTitle}</strong><br>
@@ -6803,7 +6809,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     const worst = S.worst;
     if (!best && !worst) return "";
     let body = "";
-    if (worst && Number(worst.score) < 70) {
+    if (worst && Number(worst.score) < 70 && !kernOf(S)) { // v2.21.12 (R7-04): mit Kernaussage nennt diese den Ansatzpunkt – kein zweiter, abweichender
       body += `<div style="font-size:12px;color:var(--text-secondary);">Dein größter Ansatzpunkt</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 12px;">
           <div style="font-size:19px;font-weight:700;">${areaIco(worst.key)} ${areaName(worst.label, worst.key)}</div>
@@ -8534,7 +8540,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     water_intake: "Trinkmenge", vegetables_fruit: "Gemüse & Obst", vegetable_fruit: "Gemüse & Obst",
     diet_type: "Ernährungsweise", protein_intake: "Eiweiß", protein_frequency: "Eiweiß",
     omega3_fish: "Seefisch / Omega-3", sun_exposure_winter: "Tageslicht im Winter",
-    alcohol_frequency: "Alkohol", alcohol_amount: "Alkohol-Menge", nicotine_use: "Nikotin",
+    alcohol_frequency: "Alkohol-Häufigkeit", alcohol_amount: "Alkohol-Menge", nicotine_use: "Nikotin",
     stress_level: "Stresslevel", social_connection: "Soziale Kontakte", meal_regularity: "Mahlzeiten-Rhythmus"
   };
 
@@ -9640,7 +9646,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.11</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.12</footer>
 
 
 </body>
