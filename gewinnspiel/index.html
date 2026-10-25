@@ -142,6 +142,7 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 <div style="font-style: italic; font-weight: 500; font-size: 18px; color: #745E3D">Antworten statt nur Zahlen.</div>
 <p style="margin: 0; font-size: 16px; line-height: 1.55">Du machst den LeVita Vital-Check zu acht Lebensbereichen und gehst die Ergebnisse danach persönlich mit einem unserer Trainer durch. Am Ende hast du konkrete nächste Schritte – zugeschnitten auf dich.</p>
 <div style="margin-top: auto; padding-top: 12px; border-top: 1px solid #E8E0D0; font-size: 15px"><strong>Ideal für</strong> alle, die wissen wollen, wo sie gerade stehen.</div>
+<a class="js-vc" data-vc="vitalpaket_link" href="https://app.le-vita.com/?utm_source=gewinnspiel&amp;utm_medium=gewinnspiel&amp;utm_campaign=gluecksrad_2026&amp;utm_content=vitalpaket_link" target="_blank" rel="noopener" style="font-size: 15px; font-weight: 700; color: #482922">Nicht warten? Den Vital-Check kannst du schon heute kostenlos machen »</a>
 </div>
 
 <div style="background: #F6F2EA; border-radius: 22px; padding: 28px; display: flex; flex-direction: column; gap: 12px">
@@ -276,6 +277,11 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 <p style="margin: 0; font-size: 17px; line-height: 1.5">Dein Gutschein für <strong class="js-prize"></strong> <span id="mailOk">ist auf dem Weg in dein Postfach.</span><span id="mailFehler" hidden>ist gespeichert – nur die E-Mail kam gerade nicht durch. Ruf uns kurz an, dann nennen wir dir deinen Code.</span> Du kannst ihn bis 31.01.2027 bei uns einlösen. Und du bist jetzt im Lostopf für <strong>dein Vital-Jahr</strong> – verlost wird am 31.12.2026.</p>
 <p style="margin: 0; font-size: 17px; line-height: 1.5">Am besten gleich einen Termin ausmachen:</p>
 <a href="tel:+4964536480009" style="align-self: center; display: inline-block; background: #482922; color: #FFFFFF; font-weight: 700; font-size: 17px; padding: 14px 24px; border-radius: 12px; text-decoration: none">Anrufen: 06453 6480009</a>
+<div style="margin-top: 10px; background: #F6F2EA; border-radius: 16px; padding: 20px; text-align: left; display: flex; flex-direction: column; gap: 8px">
+<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 26px; line-height: 1.1">Schon heute starten: dein kostenloser <span style="white-space: nowrap">Vital-Check</span></div>
+<p style="margin: 0; font-size: 16px; line-height: 1.5">In 5–7 Minuten siehst du, wo deine Stärken liegen und mit welchem Schritt du am meisten für deine Vitalität erreichst – mit persönlichem Plan per Mail. Dein Ergebnis bringst du einfach zum Termin mit.</p>
+<a class="js-vc" data-vc="nach_dem_dreh" href="https://app.le-vita.com/?utm_source=gewinnspiel&amp;utm_medium=gewinnspiel&amp;utm_campaign=gluecksrad_2026&amp;utm_content=nach_dem_dreh" target="_blank" rel="noopener" style="align-self: flex-start; display: inline-block; background: #A6D71C; color: #482922; font-weight: 700; font-size: 17px; padding: 14px 24px; border-radius: 12px; text-decoration: none">Vital-Check starten »</a>
+</div>
 </div>
 </div>
 </div>
@@ -310,10 +316,10 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 </footer>
 
 </div>
-<!-- gewinnspiel-seite 1.4.0 · 25.10.2026 (Functional Training) -->
+<!-- gewinnspiel-seite 1.5.0 · 25.10.2026 (Vital-Check-Hinweis) -->
 
 <script>
-/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.4.0 · 25.10.2026 (Functional Training)
+/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.5.0 · 25.10.2026 (Vital-Check-Hinweis)
    Ablauf: eintragen → Server (Edge "gewinnspiel") prüft, lost aus, speichert, schickt die Mail
    → das Rad läuft auf das Feld aus, das der Server bestimmt hat.
    Erfolg wird erst nach bestätigter Server-Antwort angezeigt. */
@@ -469,6 +475,28 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
       showErr('Die Verbindung hat nicht geklappt. Bitte prüf dein Netz und versuch es noch einmal.');
     });
   });
+  // Vital-Check-Links: Herkunft des Gewinnspiel-Besuchs an den Vital-Check-Funnel weitergeben
+  // (UTM-Konvention dort: social/gmb/studio/empfehlung …), Weg = utm_medium=gewinnspiel.
+  (function () {
+    var roh = {}; try { roh = JSON.parse(sessionStorage.getItem('levita_gw_utm') || '{}'); } catch (e) {}
+    var q = (roh.utm_source || '').toLowerCase();
+    var quelle = { google: 'gmb', whatsapp: 'empfehlung', studio: 'studio', email: 'newsletter' }[q] || q || 'gewinnspiel';
+    var intern = false; try { intern = sessionStorage.getItem('levita_internal') === '1'; } catch (e) {}
+    [].forEach.call(document.querySelectorAll('.js-vc'), function (l) {
+      var wo = l.getAttribute('data-vc') || '';
+      try {
+        var u = new URL(l.getAttribute('href'));
+        u.searchParams.set('utm_source', quelle.slice(0, 100));
+        u.searchParams.set('utm_medium', 'gewinnspiel');
+        u.searchParams.set('utm_campaign', 'gluecksrad_2026');
+        u.searchParams.set('utm_content', wo);
+        if (roh.fbclid) u.searchParams.set('fbclid', roh.fbclid);
+        if (intern) u.searchParams.set('internal', '1');
+        l.setAttribute('href', u.toString());
+      } catch (e) {}
+      l.addEventListener('click', function () { track('gw_vc_click', { wo: wo, quelle: quelle }); });
+    });
+  })();
 })();
 </script>
 </body>
