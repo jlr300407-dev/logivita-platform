@@ -756,6 +756,7 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.21.17 (25.10.2026, Jörg): Trainer-Einwilligung wieder im Einwilligungs-Schritt (freiwillig, nicht vorbelegt), unabhängig vom Stufenmodell; die drei Stufen bleiben. Stufe 3 zeigt das Häkchen nur, wenn noch nicht zugestimmt wurde, und nimmt eine erteilte Zustimmung nie zurück
 v2.21.16 (25.10.2026, Jörg): Ist der Check nicht mit dem angemeldeten Konto verbunden, erklärt die PIN-Seite das und bietet „Zu Mein Bereich“ und „Abmelden und neu anmelden“ an
 v2.21.15 (25.10.2026, Jörg): sehr Sportliche (5–7 aktive Tage, Kraft 3+, alles stabil) – Kernaussage mit Anerkennung, „So geht es weiter“ ohne „Beobachte dabei“, statt Wochenplan ein Satz (kernaussage.planNote, edge .49); kein Fahrplan-Versprechen im Teaser
 v2.21.14 (25.10.2026, Prüfstand): „Freiwillig, wenn du magst“ zeigt mit Kernaussage dieselben geprüften Schritte wie die Mail (kernaussage.frei, edge .48); die alte Tipp-Liste gilt nur noch für Checks ohne diese Daten
@@ -4406,10 +4407,11 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
           <input type="checkbox" id="consent_storage" />
           <label for="consent_storage">Ich willige ein, dass meine Angaben für den Vital-Check gespeichert werden. Diese werden nicht für andere Zwecke genutzt und können jederzeit gelöscht werden.</label>
         </div>
-        <!-- v2.0.0 — Die Trainer-Einwilligung steht jetzt bei der Studio-Anfrage
-             (Stufe 3), also dort, wo ihr Zweck entsteht. Der Fragebogen hat
-             wieder zwei Häkchen. -->
-        ${RESULT_STAGES_ENABLED ? '' : `
+        <!-- v2.0.0 hatte die Trainer-Einwilligung nur noch bei der Studio-Anfrage (Stufe 3).
+             v2.21.17 (Jörg 25.10.2026): wieder hier im Einwilligungs-Schritt, unabhängig vom
+             Stufenmodell – sonst erreicht kaum ein Check das Trainer-Dashboard (seit 12.10.
+             fast nur noch "nein"). Stufe 3 fragt nur noch, wenn hier nicht zugestimmt wurde. -->
+        ${`
         <!-- v1.55.0 — freiwillig, nicht vorbelegt, keine Bedingung fuer den Check.
              Der Trainerzugriff gilt nur fuer Checks mit diesem Haken; ohne ihn
              bleibt der Weg, bei dem das Mitglied selbst Pilot-ID und PIN zeigt. -->
@@ -5030,7 +5032,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     personalData.consent_privacy = true; personalData.consent_storage = true;
     // v1.55.0 — freiwillige Trainer-Einwilligung; fehlt der Haken, wird false gesendet
     // v2.0.0 — die Trainer-Einwilligung kommt mit der Studio-Anfrage
-    const _ta = RESULT_STAGES_ENABLED ? false : (document.getElementById("consent_trainer_access")?.checked === true);
+    const _ta = document.getElementById("consent_trainer_access")?.checked === true;   // v2.21.17: immer aus dem Häkchen
     const btn = document.getElementById("submitBtn");
     btn.disabled = true; btn.innerText = "Auswertung wird erstellt…";
     try {
@@ -6985,6 +6987,10 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
 
   // ── v2.0.0 Stufe 3: Anfrage an das Studio (Edge-Modus studio_request) ──
   // Die freiwillige Trainer-Einwilligung steht hier, wo ihr Zweck entsteht.
+  // v2.21.17: Zustimmung schon im Einwilligungs-Schritt (oder beim Wiederaufruf) erteilt?
+  function _srTaAlready() {
+    return window._trainerAccess === true || !!(latestResult && latestResult.submission && latestResult.submission.trainer_access === true);
+  }
   function stageStudioFormHtml() {
     const done = window._studioRequest || (latestResult && latestResult.studio_request) || null;
     if (done) return stageStudioDoneHtml(done);
@@ -7020,10 +7026,11 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
             <label for="sr_c1" style="font-size:12.5px;">LeVITA darf mich zur Terminabsprache anrufen.</label>
           </div>
         </div>
-        <div class="checkbox-row" style="margin-top:12px;">
+        ${_srTaAlready() ? '' : `<div class="checkbox-row" style="margin-top:12px;">
           <input type="checkbox" id="sr_c2">
           <label for="sr_c2" style="font-size:12.5px;">Die Trainerinnen und Trainer von LeVITA dürfen meine Angaben und mein Ergebnis einsehen, damit sie das Gespräch vorbereiten können. <span style="color:var(--text-muted);">Freiwillig, das Gespräch geht auch ohne, und ich kann es jederzeit widerrufen.</span></label>
         </div>
+`}
         <button type="button" class="stage-btn-blue" id="srBtn" onclick="submitStudioRequest()" style="width:100%;border:none;cursor:pointer;font-family:inherit;">Anfrage senden →</button>
         <div id="sr-status"></div>
       </div>`;
@@ -7092,7 +7099,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     const phone = (document.getElementById("sr_phone")?.value || "").trim();
     const c1 = document.getElementById("sr_c1")?.checked === true;
     const way = document.querySelector('input[name="sr_way"]:checked')?.value || "";   // v2.8.1
-    const c2 = document.getElementById("sr_c2")?.checked === true;
+    const c2 = _srTaAlready() || document.getElementById("sr_c2")?.checked === true;   // v2.21.17: eine erteilte Einwilligung nie per Formular zurücknehmen
     const st = document.getElementById("sr-status");
     const btn = document.getElementById("srBtn");
     const fail = (msg) => { if (st) st.innerHTML = `<div class="status-msg info-box box-warning">${msg}</div>`; };
@@ -9694,7 +9701,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.16</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.17</footer>
 
 
 </body>
