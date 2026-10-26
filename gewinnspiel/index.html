@@ -316,10 +316,10 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 </footer>
 
 </div>
-<!-- gewinnspiel-seite 1.5.0 · 25.10.2026 (Vital-Check-Hinweis) -->
+<!-- gewinnspiel-seite 1.5.1 · 26.10.2026 (Direkteinstieg Glücksrad) -->
 
 <script>
-/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.5.0 · 25.10.2026 (Vital-Check-Hinweis)
+/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.5.1 · 26.10.2026 (Direkteinstieg Glücksrad)
    Ablauf: eintragen → Server (Edge "gewinnspiel") prüft, lost aus, speichert, schickt die Mail
    → das Rad läuft auf das Feld aus, das der Server bestimmt hat.
    Erfolg wird erst nach bestätigter Server-Antwort angezeigt. */
@@ -496,6 +496,19 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
       } catch (e) {}
       l.addEventListener('click', function () { track('gw_vc_click', { wo: wo, quelle: quelle }); });
     });
+  })();
+  // Direkteinstieg aus Anzeigen: ?ziel=rad (oder #rad) springt direkt zum Glücksrad.
+  (function () {
+    var ziel = ''; try { ziel = new URLSearchParams(location.search).get('ziel') || ''; } catch (e) {}
+    if (ziel !== 'rad' && location.hash.indexOf('#rad') !== 0) return;
+    var sek = document.getElementById('rad'); if (!sek) return;
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    var springen = function () { sek.scrollIntoView({ behavior: 'auto', block: 'start' }); };
+    springen();
+    var bewegt = false;
+    ['wheel', 'touchstart', 'keydown'].forEach(function (t) { window.addEventListener(t, function () { bewegt = true; }, { once: true, passive: true }); });
+    window.addEventListener('load', function () { if (!bewegt) springen(); });
+    track('gw_direkt_rad', {});
   })();
 })();
 </script>
