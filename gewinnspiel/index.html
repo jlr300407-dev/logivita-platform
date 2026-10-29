@@ -316,10 +316,10 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 </footer>
 
 </div>
-<!-- gewinnspiel-seite 1.5.1 · 26.10.2026 (Direkteinstieg Glücksrad) -->
+<!-- gewinnspiel-seite 1.5.2 · 29.10.2026 (Gutschein erneut zusenden) -->
 
 <script>
-/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.5.1 · 26.10.2026 (Direkteinstieg Glücksrad)
+/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.5.2 · 29.10.2026 (Gutschein erneut zusenden)
    Ablauf: eintragen → Server (Edge "gewinnspiel") prüft, lost aus, speichert, schickt die Mail
    → das Rad läuft auf das Feld aus, das der Server bestimmt hat.
    Erfolg wird erst nach bestätigter Server-Antwort angezeigt. */
@@ -415,7 +415,52 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
   function anhalten() { laeuft = false; cancelAnimationFrame(raf); }
 
   function setText(sel, t) { document.querySelectorAll(sel).forEach(function (el) { el.textContent = t; }); }
-  function showErr(t) { errText.textContent = t || ''; errBox.hidden = !t; }
+  // Knopf „Gutschein noch einmal zusenden" (nur nach „bereits teilgenommen")
+  var erneutBox = document.createElement('div');
+  erneutBox.hidden = true;
+  erneutBox.style.cssText = 'margin-top: 10px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start';
+  var erneutBtn = document.createElement('button');
+  erneutBtn.type = 'button'; erneutBtn.textContent = 'Gutschein noch einmal zusenden';
+  erneutBtn.style.cssText = 'min-height: 44px; padding: 10px 16px; border: 2px solid #482922; border-radius: 10px; background: #FFFFFF; color: #482922; font-family: inherit; font-weight: 700; font-size: 16px; cursor: pointer';
+  var erneutInfo = document.createElement('div');
+  erneutInfo.setAttribute('aria-live', 'polite'); erneutInfo.style.cssText = 'font-size: 15px; line-height: 1.45; color: #482922';
+  erneutBox.appendChild(erneutBtn); erneutBox.appendChild(erneutInfo);
+  errBox.appendChild(erneutBox);
+  var erneutMail = '';
+  function zeigeErneut(mail) {
+    erneutMail = mail; erneutInfo.textContent = ''; erneutBtn.hidden = false; erneutBtn.disabled = false;
+    erneutBox.hidden = false;
+  }
+  erneutBtn.addEventListener('click', function () {
+    if (!erneutMail || erneutBtn.disabled) return;
+    erneutBtn.disabled = true; erneutBtn.textContent = 'Wird gesendet …';
+    track('gw_erneut_klick', {});
+    fetch(CONFIG.endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CONFIG.anonKey, 'apikey': CONFIG.anonKey },
+      body: JSON.stringify({ aktion: 'gutschein_erneut', email: erneutMail })
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, j: j }; });
+    }).then(function (res) {
+      var j = res.j || {};
+      erneutBtn.textContent = 'Gutschein noch einmal zusenden';
+      if (res.status === 200 && j.ok) {
+        erneutBtn.hidden = true;
+        erneutInfo.textContent = 'Erledigt! Dein Gutschein ist noch einmal an ' + erneutMail + ' unterwegs. Schau in ein paar Minuten auch im Spam-Ordner nach.';
+        track('gw_erneut_ok', {});
+      } else {
+        erneutBtn.hidden = j.fehler === 'eingeloest' || j.fehler === 'erneut_limit';
+        erneutBtn.disabled = false;
+        erneutInfo.textContent = j.meldung || 'Gerade klappt es technisch nicht. Bitte versuch es später noch einmal oder frag im Studio nach.';
+        track('gw_erneut_fehler', { fehler: j.fehler || ('http_' + res.status) });
+      }
+    }).catch(function () {
+      erneutBtn.textContent = 'Gutschein noch einmal zusenden'; erneutBtn.disabled = false;
+      erneutInfo.textContent = 'Die Verbindung hat nicht geklappt. Bitte prüf dein Netz und versuch es noch einmal.';
+      track('gw_erneut_fehler', { fehler: 'netz' });
+    });
+  });
+  function showErr(t) { errText.textContent = t || ''; errBox.hidden = !t; erneutBox.hidden = true; }
   function sperren(an) {
     busy = an; submitBtn.disabled = an;
     submitBtn.textContent = an ? 'Das Rad dreht …' : 'Rad drehen und Gutschein sichern';
@@ -457,7 +502,9 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
         anhalten(); sperren(false);
         track('gw_error', { fehler: j.fehler || ('http_' + res.status) });
         formBox.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
-        return showErr(j.meldung || 'Gerade klappt es technisch nicht. Bitte versuch es gleich noch einmal.');
+        showErr(j.meldung || 'Gerade klappt es technisch nicht. Bitte versuch es gleich noch einmal.');
+        if (j.fehler === 'bereits_teilgenommen') zeigeErneut(daten.email);
+        return;
       }
       track('gw_success', { feld: j.index, mail: !!j.mail, newsletter: daten.newsletter });
       auslaufen(j.index, function () {
