@@ -275,13 +275,13 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 </div>
 <h3 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 34px">Geschafft, <span class="js-vn"></span>!</h3>
 <p style="margin: 0; font-size: 17px; line-height: 1.5">Dein Gutschein für <strong class="js-prize"></strong> <span id="mailOk">ist auf dem Weg in dein Postfach.</span><span id="mailFehler" hidden>ist gespeichert – nur die E-Mail kam gerade nicht durch. Ruf uns kurz an, dann nennen wir dir deinen Code.</span> Du kannst ihn bis 31.01.2027 bei uns einlösen. Und du bist jetzt im Lostopf für <strong>dein Vital-Jahr</strong> – verlost wird am 31.12.2026.</p>
-<p style="margin: 0; font-size: 17px; line-height: 1.5">Am besten gleich einen Termin ausmachen:</p>
-<a href="tel:+4964536480009" style="align-self: center; display: inline-block; background: #482922; color: #FFFFFF; font-weight: 700; font-size: 17px; padding: 14px 24px; border-radius: 12px; text-decoration: none">Anrufen: 06453 6480009</a>
 <div style="margin-top: 10px; background: #F6F2EA; border-radius: 16px; padding: 20px; text-align: left; display: flex; flex-direction: column; gap: 8px">
-<div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 26px; line-height: 1.1">Schon heute starten: dein kostenloser <span style="white-space: nowrap">Vital-Check</span></div>
-<p style="margin: 0; font-size: 16px; line-height: 1.5">In 5–7 Minuten siehst du, wo deine Stärken liegen und mit welchem Schritt du am meisten für deine Vitalität erreichst – mit persönlichem Plan per Mail. Dein Ergebnis bringst du einfach zum Termin mit.</p>
-<a class="js-vc" data-vc="nach_dem_dreh" href="https://app.le-vita.com/?utm_source=gewinnspiel&amp;utm_medium=gewinnspiel&amp;utm_campaign=gluecksrad_2026&amp;utm_content=nach_dem_dreh" target="_blank" rel="noopener" style="align-self: flex-start; display: inline-block; background: #A6D71C; color: #482922; font-weight: 700; font-size: 17px; padding: 14px 24px; border-radius: 12px; text-decoration: none">Vital-Check starten »</a>
+<div id="vcTitel" style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 26px; line-height: 1.1">Schon heute starten: dein kostenloser <span style="white-space: nowrap">Vital-Check</span></div>
+<p id="vcText" style="margin: 0; font-size: 16px; line-height: 1.5">In 5–7 Minuten siehst du, wo deine Stärken liegen und mit welchem Schritt du am meisten für deine Vitalität erreichst – mit persönlichem Plan per Mail. Dein Ergebnis bringst du einfach zum Termin mit.</p>
+<a id="vcLink" class="js-vc" data-vc="nach_dem_dreh" href="https://app.le-vita.com/?utm_source=gewinnspiel&amp;utm_medium=gewinnspiel&amp;utm_campaign=gluecksrad_2026&amp;utm_content=nach_dem_dreh" target="_blank" rel="noopener" style="align-self: flex-start; display: inline-block; background: #A6D71C; color: #482922; font-weight: 700; font-size: 17px; padding: 14px 24px; border-radius: 12px; text-decoration: none">Vital-Check starten »</a>
 </div>
+<p style="margin: 0; font-size: 17px; line-height: 1.5">Und deinen Termin machst du am einfachsten telefonisch aus:</p>
+<a href="tel:+4964536480009" style="align-self: center; display: inline-block; background: #482922; color: #FFFFFF; font-weight: 700; font-size: 17px; padding: 14px 24px; border-radius: 12px; text-decoration: none">Anrufen: 06453 6480009</a>
 </div>
 </div>
 </div>
@@ -424,7 +424,13 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
   erneutBtn.style.cssText = 'min-height: 44px; padding: 10px 16px; border: 2px solid #482922; border-radius: 10px; background: #FFFFFF; color: #482922; font-family: inherit; font-weight: 700; font-size: 16px; cursor: pointer';
   var erneutInfo = document.createElement('div');
   erneutInfo.setAttribute('aria-live', 'polite'); erneutInfo.style.cssText = 'font-size: 15px; line-height: 1.45; color: #482922';
-  erneutBox.appendChild(erneutBtn); erneutBox.appendChild(erneutInfo);
+  var erneutVc = document.createElement('a');
+  erneutVc.className = 'js-vc'; erneutVc.setAttribute('data-vc', 'bereits_teilgenommen');
+  erneutVc.href = 'https://app.le-vita.com/?utm_source=gewinnspiel&utm_medium=gewinnspiel&utm_campaign=gluecksrad_2026&utm_content=bereits_teilgenommen';
+  erneutVc.target = '_blank'; erneutVc.rel = 'noopener';
+  erneutVc.textContent = 'Den kostenlosen Vital-Check kannst du jederzeit machen »';
+  erneutVc.style.cssText = 'font-size: 15px; font-weight: 700; color: #482922';
+  erneutBox.appendChild(erneutBtn); erneutBox.appendChild(erneutInfo); erneutBox.appendChild(erneutVc);
   errBox.appendChild(erneutBox);
   var erneutMail = '';
   function zeigeErneut(mail) {
@@ -460,6 +466,14 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
       track('gw_erneut_fehler', { fehler: 'netz' });
     });
   });
+  // Vital-Paket gewonnen: Der Check ist der erste Teil des Gewinns
+  function vitalPaketBruecke() {
+    $('vcTitel').textContent = 'Dein Vital-Paket beginnt mit dem Check';
+    $('vcText').textContent = 'Mach den Vital-Check am besten gleich (5–7 Minuten). Beim Termin gehst du die Ergebnisse dann mit einem unserer Trainer durch und bekommst deine nächsten Schritte.';
+    var l = $('vcLink'); l.textContent = 'Jetzt Vital-Check machen »';
+    l.setAttribute('data-vc', 'nach_dem_dreh_vitalpaket');
+    try { var u = new URL(l.href); u.searchParams.set('utm_content', 'nach_dem_dreh_vitalpaket'); l.href = u.toString(); } catch (e) {}
+  }
   function showErr(t) { errText.textContent = t || ''; errBox.hidden = !t; erneutBox.hidden = true; }
   function sperren(an) {
     busy = an; submitBtn.disabled = an;
@@ -510,6 +524,7 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
       auslaufen(j.index, function () {
         setText('.js-prize', j.gewinn); setText('.js-vn', daten.vorname);
         $('mailOk').hidden = !j.mail; $('mailFehler').hidden = !!j.mail;
+        if (/vital-?paket/i.test(String(j.gewinn || '')) || j.index === 2) vitalPaketBruecke();
         landedBox.hidden = false; spinBtn.hidden = true;
         setTimeout(function () {
           formBox.hidden = true; sentBox.hidden = false;
@@ -541,7 +556,7 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
         if (intern) u.searchParams.set('internal', '1');
         l.setAttribute('href', u.toString());
       } catch (e) {}
-      l.addEventListener('click', function () { track('gw_vc_click', { wo: wo, quelle: quelle }); });
+      l.addEventListener('click', function () { track('gw_vc_click', { wo: l.getAttribute('data-vc') || wo, quelle: quelle }); });
     });
   })();
   // Direkteinstieg aus Anzeigen: ?ziel=rad (oder #rad) springt direkt zum Glücksrad.
