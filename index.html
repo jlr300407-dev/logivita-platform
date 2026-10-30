@@ -756,6 +756,7 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.21.18 (30.10.2026, Jörg): Einstieg auf dem Handy neu geordnet – Bild 170 statt 290 px, Kopfzeile flacher, darunter direkt „Was möchtest du erreichen?“ mit vier Ziel-Knöpfen (ein Tipp beantwortet die erste Frage), Start-Knopf bleibt darunter; die Merkmalzeile (8 Lebensbereiche …) entfällt nur auf dem Handy. Überschrift passt sich der Anzeige an (utm_content vc_team/vc_vito → Hebel, vc_ernaehrung → Ernährung, sonst unverändert). Jedes Event trägt lp_variant (z. B. m2-hebel), damit die Fassungen im Funnel vergleichbar sind. Desktop unverändert.
 v2.21.17 (25.10.2026, Jörg): Trainer-Einwilligung wieder im Einwilligungs-Schritt (freiwillig, nicht vorbelegt), unabhängig vom Stufenmodell; die drei Stufen bleiben. Stufe 3 zeigt das Häkchen nur, wenn noch nicht zugestimmt wurde, und nimmt eine erteilte Zustimmung nie zurück
 v2.21.16 (25.10.2026, Jörg): Ist der Check nicht mit dem angemeldeten Konto verbunden, erklärt die PIN-Seite das und bietet „Zu Mein Bereich“ und „Abmelden und neu anmelden“ an
 v2.21.15 (25.10.2026, Jörg): sehr Sportliche (5–7 aktive Tage, Kraft 3+, alles stabil) – Kernaussage mit Anerkennung, „So geht es weiter“ ohne „Beobachte dabei“, statt Wochenplan ein Satz (kernaussage.planNote, edge .49); kein Fahrplan-Versprechen im Teaser
@@ -2402,13 +2403,28 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       #hero-block { min-height: 0 !important; justify-content: flex-start !important; background: var(--brand-dark) !important; }
       #hero-brand { position: relative; order: 0; }
       #hero-brand .hb-inner { padding: 16px 22px 14px; }
-      #hero-img-mobile { position: relative !important; inset: auto !important; order: 1; width: 100% !important; height: 290px !important;
+      #hero-img-mobile { position: relative !important; inset: auto !important; order: 1; width: 100% !important; height: 170px !important;   /* v2.21.18: 290 → 170, Start im ersten Bild */
         object-position: center 86% !important;
         -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); }
       #hero-overlay { display: none; }
       #hero-content { order: 2; padding: 4px 22px 34px !important; }
       #hero-title, #hero-subline, #hero-features { text-shadow: none !important; }
+      /* v2.21.18 — Ziel-Knöpfe direkt im Einstieg (nur Handy); Merkmalzeile entfällt hier */
+      #hero-features { display: none !important; }
+      #hero-title { font-size: 31px !important; margin-bottom: 8px !important; }
+      #hero-subline { font-size: 15px !important; margin-bottom: 14px !important; }
+      #hero-goals { display: block !important; }
+      #hero-brand .hb-inner { padding: 10px 22px 6px !important; }
+      #hero-content { padding-top: 0 !important; padding-bottom: 26px !important; }
+      #hero-eyebrow { margin-bottom: 6px !important; }
     }
+    #hero-goals { display: none; margin: 0 auto 10px; max-width: 360px; }
+    #hero-goals .hg-q { font-size: 14px; font-weight: 700; color: rgb(var(--ink-rgb)); margin: 0 0 9px; }
+    #hero-goals .hg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    #hero-goals .hg-btn { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; color: rgb(var(--ink-rgb)); background: rgba(var(--ink-rgb),0.07); border: 1px solid rgba(var(--ink-rgb),0.22); border-radius: 12px; padding: 10px 8px; min-height: 46px; cursor: pointer; line-height: 1.2; }
+    #hero-goals .hg-btn:active, #hero-goals .hg-btn:focus-visible { border-color: var(--cta-green); background: rgba(var(--ink-rgb),0.12); outline: none; }
+    #hero-goals .hg-btn .ic { width: 16px; height: 16px; vertical-align: -0.25em; margin-right: 4px; color: var(--cta-green); }
+    #hero-goals .hg-or { font-size: 12px; color: rgba(var(--ink-rgb),0.55); margin: 8px 0 0; }
     #hero-brand .hb-inner { max-width:1120px; margin:0 auto; padding:16px 22px 26px; display:flex; align-items:center; justify-content:center; gap:10px; }
     #hero-brand .hb-mark { width:40px; height:40px; border-radius:11px; display:block; }
     #hero-brand .hb-word { height:30px; width:auto; max-width:160px; display:block; }
@@ -2492,6 +2508,17 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     <div id="hero-eyebrow"><span class="he-name">LeVITA Vital-Check</span><span class="he-sep"> · </span><span class="he-claim">Dein Kompass für mehr Vitalität</span></div>
     <h1 id="hero-title" style="margin:0 0 12px;font-family:'DM Serif Display',Georgia,serif;font-size:36px;font-weight:400;color:rgb(var(--ink-rgb));line-height:1.1;letter-spacing:0;">Was steckt in dir?</h1>
     <p id="hero-subline" style="margin:0 auto 20px;font-size:16px;color:rgba(var(--ink-rgb),0.78);line-height:1.55;max-width:360px;">Finde in 5–7 Minuten heraus, wo deine Stärken liegen, wo dein größter Hebel sitzt — und was dir ein kleiner Schritt konkret bringt.</p>
+    <!-- v2.21.18: Ziel-Knöpfe im Einstieg (nur Handy sichtbar) — ein Tipp startet den Check mit gesetztem Ziel -->
+    <div id="hero-goals">
+      <p class="hg-q">Was möchtest du erreichen?</p>
+      <div class="hg-grid">
+        <button type="button" class="hg-btn" onclick="startWithGoal('goal_energy','hero')"><svg class="ic" aria-hidden="true"><use href="#ic-bolt"/></svg>Mehr Energie</button>
+        <button type="button" class="hg-btn" onclick="startWithGoal('goal_weight','hero')"><svg class="ic" aria-hidden="true"><use href="#ic-scale"/></svg>Abnehmen</button>
+        <button type="button" class="hg-btn" onclick="startWithGoal('goal_fitness','hero')"><svg class="ic" aria-hidden="true"><use href="#ic-dumbbell"/></svg>Fitter &amp; stärker</button>
+        <button type="button" class="hg-btn" onclick="startWithGoal('goal_curious','hero')"><svg class="ic" aria-hidden="true"><use href="#ic-spark"/></svg>Einfach neugierig</button>
+      </div>
+      <p class="hg-or">oder ohne Ziel starten:</p>
+    </div>
     <div id="hero-features" style="margin-bottom:24px;font-size:12px;color:rgba(var(--ink-rgb),0.6);letter-spacing:0.3px;">
       <svg class="ic" aria-hidden="true"><use href="#ic-radar"/></svg> 8 Lebensbereiche&nbsp;&nbsp;·&nbsp;&nbsp;<svg class="ic" aria-hidden="true"><use href="#ic-report"/></svg> Persönliche Auswertung&nbsp;&nbsp;·&nbsp;&nbsp;<svg class="ic" aria-hidden="true"><use href="#ic-trending"/></svg> Dein Verlauf
     </div>
@@ -3675,6 +3702,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
         })(),
         host: pageHostname(),   // v2.8.18: welche Kopie des Checks schreibt (alte Kopien erkennbar)
         page: 'check',          // v2.8.18: Vital-Check; der Ernaehrungs-Check schreibt 'ernaehrung'
+        lp_variant: window._lpVariant || undefined,   // v2.21.18: welche Einstiegsfassung (m2-standard|m2-hebel|m2-ernaehrung, d… = Desktop)
         referrer: (function(){ const r = pageReferrer(); return r ? String(r).slice(0, 200) : undefined; })(), // v1.33.0: Rohwert — nur damit lassen sich organische Suche, Maps und Direkteinstieg trennen (undefined wird von JSON.stringify entfernt)
         device: window.innerWidth < 600 ? 'mobile' : 'desktop',
         is_internal: window._isInternal === true ? true : undefined, // Sofort-Fix 5: Testdaten markieren (undefined wird von JSON.stringify entfernt)
@@ -3738,6 +3766,32 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       window._utm = utm;
     } catch(e) { window._utm = {}; }
   }
+
+  // ── v2.21.18: Einstieg passend zur Anzeige ──
+  // Die Überschrift greift die Frage auf, mit der die Anzeige geholt hat. Ohne
+  // passende Anzeige bleibt alles wie bisher. lp_variant geht in jedes Event:
+  // Präfix m2 = neuer Handy-Einstieg (ab v2.21.18), d = Desktop (unverändert).
+  (function () {
+    try {
+      const c = String((window._utm && window._utm.utm_content) || '').toLowerCase();
+      const LP_TEXTE = {
+        hebel: { t: 'Wo liegt dein größter Hebel?', s: 'Training, Entspannung oder Ernährung – in 5–7 Minuten siehst du, was dir am meisten bringt.' },
+        ernaehrung: { t: 'Gesünder essen – einfach anfangen', s: 'Erst der Vital-Check in 5–7 Minuten, danach der Ernährungs-Check mit kleinen Schritten, die zu deinem Alltag passen.' }
+      };
+      const art = (c === 'vc_team' || c === 'vc_vito') ? 'hebel' : (c === 'vc_ernaehrung' ? 'ernaehrung' : 'standard');
+      const mobil = window.matchMedia ? window.matchMedia('(max-width: 639px)').matches : (window.innerWidth < 640);
+      window._lpVariant = (mobil ? 'm2-' : 'd-') + art;
+      const tx = LP_TEXTE[art];
+      if (tx) {
+        const setze = function () {
+          const h = document.getElementById('hero-title'), sl = document.getElementById('hero-subline');
+          if (h) h.textContent = tx.t;
+          if (sl) sl.textContent = tx.s;
+        };
+        if (document.getElementById('hero-title')) setze(); else document.addEventListener('DOMContentLoaded', setze);
+      }
+    } catch (e) { /* Einstieg bleibt wie bisher */ }
+  })();
 
   // ── Sofort-Fix 5: Internes Test-Flag (?internal=1) ──
   // Markiert alle Funnel-Events dieser Browser-Session als is_internal=true,
@@ -4874,8 +4928,8 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
   // Tracking (step_answered) und nextStep genau wie bei einem normalen Klick
   // laufen. Sind die Fragen noch nicht geladen, wird bis ~3 s nachgesehen;
   // danach bleibt einfach die Zielfrage stehen — nichts geht verloren.
-  function startWithGoal(goalKey) {
-    trackEvent('landing_goal_click', { goal_key: goalKey });
+  function startWithGoal(goalKey, wo) {
+    trackEvent('landing_goal_click', { goal_key: goalKey, wo: wo || 'liste' });   // v2.21.18: wo = hero | liste
     startDirectCheck();
     let tries = 0;
     (function pick() {
@@ -9701,7 +9755,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.17</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.18</footer>
 
 
 </body>
