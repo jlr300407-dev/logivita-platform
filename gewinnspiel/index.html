@@ -316,10 +316,13 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 </footer>
 
 </div>
-<!-- gewinnspiel-seite 1.5.2 · 29.10.2026 (Gutschein erneut zusenden) -->
+<!-- gewinnspiel-seite 1.5.3 · 30.10.2026 (Messpunkte Rad gesehen / Drehen-Knopf) -->
 
 <script>
-/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.5.2 · 29.10.2026 (Gutschein erneut zusenden)
+/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.5.3 · 30.10.2026 (Messpunkte Rad gesehen / Drehen-Knopf)
+   1.5.3: Nur Messung, keine Änderung am Ablauf. gw_rad_sichtbar = Rad zur Hälfte im Bild (einmal je Laden),
+   gw_drehen_klick = Knopf "Jetzt eintragen und drehen". Damit trennt der Funnel "kommt nicht bis zum Rad"
+   von "sieht das Rad, trägt sich aber nicht ein" (bisher 382 Aufrufe → 50 Formularstarts, Ursache offen).
    Ablauf: eintragen → Server (Edge "gewinnspiel") prüft, lost aus, speichert, schickt die Mail
    → das Rad läuft auf das Feld aus, das der Server bestimmt hat.
    Erfolg wird erst nach bestätigter Server-Antwort angezeigt. */
@@ -388,6 +391,16 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
     } catch (e) {}
   }
   track('gw_view');
+  // 1.5.3: einmal melden, sobald das Rad zur Hälfte im Bild ist
+  (function () {
+    try {
+      var sek = document.getElementById('rad'); if (!sek || !('IntersectionObserver' in window)) return;
+      var io = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting) { track('gw_rad_sichtbar', {}); io.disconnect(); } });
+      }, { threshold: 0.5 });
+      io.observe(sek.querySelector('svg') || sek);
+    } catch (e) {}
+  })();
   var formBegonnen = false;
   ['vn', 'nn', 'em'].forEach(function (id) {
     $(id).addEventListener('input', function () { if (!formBegonnen) { formBegonnen = true; track('gw_form_start'); } });
@@ -481,6 +494,7 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
   }
 
   spinBtn.addEventListener('click', function () {
+    track('gw_drehen_klick', {});   // 1.5.3
     var vn = $('vn'); formBox.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
     setTimeout(function () { vn.focus({ preventScroll: true }); }, reduce ? 0 : 400);
   });
