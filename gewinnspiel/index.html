@@ -316,10 +316,11 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 </footer>
 
 </div>
-<!-- gewinnspiel-seite 1.5.4 · 31.10.2026 (Rad als Knopf: erst drehen-Impuls, dann eintragen) -->
+<!-- gewinnspiel-seite 1.5.5 · 31.10.2026 (Fix: Rad dreht beim Antippen um die Mitte) -->
 
 <script>
-/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.5.4 · 31.10.2026 (Rad als Knopf: erst drehen-Impuls, dann eintragen)
+/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.5.5 · 31.10.2026 (Fix: Rad dreht beim Antippen um die Mitte)
+   1.5.5: Anrucken nicht mehr per CSS-Animation (flog in Safari/iOS durchs Bild), sondern über setzeWinkel().
    1.5.4: Am 30./31.10. sahen 20 von 20 Besuchern das Rad, nur 4 klickten "Jetzt eintragen und drehen" –
    wer klickte, nahm teil. Deshalb: Knopf heißt "Rad drehen" (grün), das Rad selbst ist antippbar, es ruckt
    sofort an, danach "Wohin sollen wir deinen Gewinn schicken?". Ausgelost wird WIE BISHER erst nach dem
@@ -504,13 +505,20 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
     track('gw_drehen_klick', { wo: wo });
     var titel = $('formTitel'); if (titel) titel.textContent = 'Wohin sollen wir deinen Gewinn schicken?';
     var anstoss = 0;
-    if (!reduce && rad && rad.animate) {
-      try {
-        rad.style.transformBox = 'fill-box'; rad.style.transformOrigin = 'center';
-        rad.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(38deg)' }, { transform: 'rotate(-8deg)' }, { transform: 'rotate(0deg)' }],
-          { duration: 650, easing: 'ease-out' });
-        anstoss = 550;
-      } catch (e) {}
+    // 1.5.5: Anrucken über dasselbe transform-Attribut wie die echte Drehung (rotate(w 160 160)).
+    // 1.5.4 nutzte CSS-transform am <g> – in Safari/iOS drehte das Rad um den falschen Punkt und "flog" durchs Bild.
+    if (!reduce && !laeuft && !busy) {
+      var w0 = winkel, t0 = 0, dauer = 650;
+      var bahn = function (x) { return x < 0.45 ? 38 * Math.sin(x / 0.45 * Math.PI / 2) : (x < 0.8 ? 38 - 46 * ((x - 0.45) / 0.35) : -8 + 8 * ((x - 0.8) / 0.2)); };
+      var schritt = function (t) {
+        if (!t0) t0 = t;
+        var x = Math.min(1, (t - t0) / dauer);
+        if (laeuft || busy) return;
+        setzeWinkel(w0 + bahn(x));
+        if (x < 1) requestAnimationFrame(schritt); else setzeWinkel(w0);
+      };
+      requestAnimationFrame(schritt);
+      anstoss = 550;
     }
     setTimeout(function () {
       var vn = $('vn'); formBox.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
