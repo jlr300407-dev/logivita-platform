@@ -756,6 +756,7 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.21.19 (31.10.2026, Jörg): Handy-Startbild zeigt wieder Gesichter und Handy – Ausschnitt 52 % statt 86 %, Höhe 190 statt 170 px. Start-Knopf bleibt im ersten Bild.
 v2.21.18 (30.10.2026, Jörg): Einstieg auf dem Handy neu geordnet – Bild 170 statt 290 px, Kopfzeile flacher, darunter direkt „Was möchtest du erreichen?“ mit vier Ziel-Knöpfen (ein Tipp beantwortet die erste Frage), Start-Knopf bleibt darunter; die Merkmalzeile (8 Lebensbereiche …) entfällt nur auf dem Handy. Überschrift passt sich der Anzeige an (utm_content vc_team/vc_vito → Hebel, vc_ernaehrung → Ernährung, sonst unverändert). Jedes Event trägt lp_variant (z. B. m2-hebel), damit die Fassungen im Funnel vergleichbar sind. Desktop unverändert.
 v2.21.17 (25.10.2026, Jörg): Trainer-Einwilligung wieder im Einwilligungs-Schritt (freiwillig, nicht vorbelegt), unabhängig vom Stufenmodell; die drei Stufen bleiben. Stufe 3 zeigt das Häkchen nur, wenn noch nicht zugestimmt wurde, und nimmt eine erteilte Zustimmung nie zurück
 v2.21.16 (25.10.2026, Jörg): Ist der Check nicht mit dem angemeldeten Konto verbunden, erklärt die PIN-Seite das und bietet „Zu Mein Bereich“ und „Abmelden und neu anmelden“ an
@@ -2403,8 +2404,8 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       #hero-block { min-height: 0 !important; justify-content: flex-start !important; background: var(--brand-dark) !important; }
       #hero-brand { position: relative; order: 0; }
       #hero-brand .hb-inner { padding: 16px 22px 14px; }
-      #hero-img-mobile { position: relative !important; inset: auto !important; order: 1; width: 100% !important; height: 170px !important;   /* v2.21.18: 290 → 170, Start im ersten Bild */
-        object-position: center 86% !important;
+      #hero-img-mobile { position: relative !important; inset: auto !important; order: 1; width: 100% !important; height: 190px !important;   /* v2.21.19: 170 → 190, Ausschnitt mit Gesichtern und Handy (vorher Köpfe abgeschnitten) */
+        object-position: center 52% !important;
         -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); mask-image: linear-gradient(to bottom, #000 72%, transparent 100%); }
       #hero-overlay { display: none; }
       #hero-content { order: 2; padding: 4px 22px 34px !important; }
@@ -9755,7 +9756,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.18</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.19</footer>
 
 
 </body>
