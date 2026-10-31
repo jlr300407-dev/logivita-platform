@@ -282,6 +282,10 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 </div>
 <p style="margin: 0; font-size: 17px; line-height: 1.5">Und deinen Termin machst du am einfachsten telefonisch aus:</p>
 <a href="tel:+4964536480009" style="align-self: center; display: inline-block; background: #482922; color: #FFFFFF; font-weight: 700; font-size: 17px; padding: 14px 24px; border-radius: 12px; text-decoration: none">Anrufen: 06453 6480009</a>
+<div style="margin-top: 6px; border-top: 1px solid #E8E0D0; padding-top: 18px; display: flex; flex-direction: column; gap: 10px">
+<p style="margin: 0; font-size: 16px; line-height: 1.5">Bleib dran: Die Verlosung des Vital-Jahrs am 31.12. zeigen wir auf Instagram – und dort gibt's jede Woche Tipps aus dem Studio.</p>
+<a id="igLink" href="https://www.instagram.com/levita_gemuenden/" target="_blank" rel="noopener" style="align-self: center; display: inline-block; border: 2px solid #482922; color: #482922; font-weight: 700; font-size: 17px; padding: 12px 22px; border-radius: 12px; text-decoration: none">Folge uns auf Instagram</a>
+</div>
 </div>
 </div>
 </div>
@@ -316,10 +320,10 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 </footer>
 
 </div>
-<!-- gewinnspiel-seite 1.5.5 · 31.10.2026 (Fix: Rad dreht beim Antippen um die Mitte) -->
+<!-- gewinnspiel-seite 1.5.6 · 31.10.2026 (Instagram-Hinweis nach dem Dreh) -->
 
 <script>
-/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.5.5 · 31.10.2026 (Fix: Rad dreht beim Antippen um die Mitte)
+/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.5.6 · 31.10.2026 (Instagram-Hinweis nach dem Dreh)
    1.5.5: Anrucken nicht mehr per CSS-Animation (flog in Safari/iOS durchs Bild), sondern über setzeWinkel().
    1.5.4: Am 30./31.10. sahen 20 von 20 Besuchern das Rad, nur 4 klickten "Jetzt eintragen und drehen" –
    wer klickte, nahm teil. Deshalb: Knopf heißt "Rad drehen" (grün), das Rad selbst ist antippbar, es ruckt
@@ -620,6 +624,11 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
     ['wheel', 'touchstart', 'keydown'].forEach(function (t) { window.addEventListener(t, function () { bewegt = true; }, { once: true, passive: true }); });
     window.addEventListener('load', function () { if (!bewegt) springen(); });
     track('gw_direkt_rad', {});
+  })();
+  // Instagram-Hinweis nach dem Dreh
+  (function () {
+    var ig = document.getElementById('igLink'); if (!ig) return;
+    ig.addEventListener('click', function () { track('gw_ig_klick', {}); });
   })();
 })();
 </script>
