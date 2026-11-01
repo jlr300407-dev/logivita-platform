@@ -29,6 +29,8 @@
   Aufruf mit ?code=LEV-2026-000123 füllt die Pilot-ID vor.
 
   Versionen:
+  1.3.4 (01.11.2026) Testlauf DASH: Ein in Teil 6 angekreuzter Schritt (z. B. „Würzen statt salzen“) war unter
+  „Weitere Schritte“ nicht wählbar, weil die Liste nach acht Einträgen endet. Angekreuzte Schritte stehen jetzt vorn.
   1.1.0 (24.10.2026) Wunsch Jörg: Wenn-dann-Plan in zwei Feldern ("Wenn …" / "dann …") mit Anleitung und Begründung
   (Gollwitzer & Sheeran 2006, Meta-Analyse 94 Studien); "Plan anpassen" bei gestarteten Schritten; neue Karte "Wie es
   weitergeht" (zwei Wochen umsetzen, über Mein Bereich zurückkommen und einschätzen, dann neue Ziele). Gehört zu
@@ -502,7 +504,7 @@
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.3.3"; // 1.3.3 (Jörg 25.10.2026): Erinnerung ab Runde 2 vorbelegt; anderes Konto angemeldet → Hinweis mit „Abmelden und neu anmelden“ · // 1.3.2: alter Mail-Link öffnet während einer neuen Runde nicht den Kurzcheck · // 1.3.1: „Plan gespeichert“-Bestätigung an der Karte; Anpassen-Hinweis verschwindet nach dem Anpassen · // 1.3.0 (25.10.2026): „Deine Schritte“ nach Phasen (Statuskarte mit einer Hauptaktion; Bewerten nur im Kurzcheck; Angekommenes kompakt; Rest unter „Mehr“) · // 1.2.4: Zettel-Karte direkt unter den Schritten; Kurzcheck ohne frisch dazugenommene Schritte · // 1.2.3: Einleitungszeile während des Kurzchecks · // 1.2.2: Plan ohne „dann“ wird beim Anpassen ins Wenn-Feld übernommen; Beispieltexte mit „z. B.“ und blasser · // 1.2.1: während des Kurzchecks keine zweiten Bewertungsknöpfe in den Schritt-Karten · // 1.2.0 (25.10.2026): Abschluss-Fenster „Deine nächsten 14 Tage“, Kurzcheck nach 14 Tagen (Link aus der Mail ohne PIN), Erinnerung nur mit Einwilligung
+  const FE_VERSION = "1.3.4"; // 1.3.4 (Jörg 01.11.2026): unter „Weitere Schritte“ stehen die in Teil 6 angekreuzten Schritte vorn · // 1.3.3 (Jörg 25.10.2026): Erinnerung ab Runde 2 vorbelegt; anderes Konto angemeldet → Hinweis mit „Abmelden und neu anmelden“ · // 1.3.2: alter Mail-Link öffnet während einer neuen Runde nicht den Kurzcheck · // 1.3.1: „Plan gespeichert“-Bestätigung an der Karte; Anpassen-Hinweis verschwindet nach dem Anpassen · // 1.3.0 (25.10.2026): „Deine Schritte“ nach Phasen (Statuskarte mit einer Hauptaktion; Bewerten nur im Kurzcheck; Angekommenes kompakt; Rest unter „Mehr“) · // 1.2.4: Zettel-Karte direkt unter den Schritten; Kurzcheck ohne frisch dazugenommene Schritte · // 1.2.3: Einleitungszeile während des Kurzchecks · // 1.2.2: Plan ohne „dann“ wird beim Anpassen ins Wenn-Feld übernommen; Beispieltexte mit „z. B.“ und blasser · // 1.2.1: während des Kurzchecks keine zweiten Bewertungsknöpfe in den Schritt-Karten · // 1.2.0 (25.10.2026): Abschluss-Fenster „Deine nächsten 14 Tage“, Kurzcheck nach 14 Tagen (Link aus der Mail ohne PIN), Erinnerung nur mit Einwilligung
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
@@ -1148,7 +1150,9 @@ function phaseOf(r) {
 }
 function moreLevers(r) {
   const chosen = new Set((r.self_steps || []).map((x) => x.lever_key));
-  return [...(r.result?.shown || []), ...(r.result?.parking || [])].filter((l) => !chosen.has(l.lever_key) && !l.failed_before);
+  const list = [...(r.result?.shown || []), ...(r.result?.parking || [])].filter((l) => !chosen.has(l.lever_key) && !l.failed_before);
+  // 1.3.4 (Jörg 01.11.2026): Was jemand in Teil 6 selbst angekreuzt hat, steht vorn – sonst fiel es hinter die ersten acht
+  return [...list.filter((l) => l.imaginable), ...list.filter((l) => !l.imaginable)];
 }
 function addListHtml(r, more, canAdd) {
   return `<ul class="addlist">${more.slice(0, 8).map((l) => `<li><span>${esc(l.variant?.title || l.tip?.title || l.lever_key)}</span>${canAdd ? `<button data-add="${esc(l.lever_key)}">Dazunehmen</button>` : ""}</li>`).join("")}</ul>`;
