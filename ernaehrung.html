@@ -29,6 +29,7 @@
   Aufruf mit ?code=LEV-2026-000123 füllt die Pilot-ID vor.
 
   Versionen:
+  1.3.6 (01.11.2026) „Angaben korrigieren“ nicht bei Hinweisen auf Essstörung (SCOFF) – dort bleibt es beim Gespräch.
   1.3.5 (01.11.2026) Testlauf: Nach einem Ausschluss (z. B. Fehlklick bei „schwanger“) gab es keinen Weg zurück.
   Jetzt „Angaben korrigieren“ (Edge nutrition-check .10 erlaubt den Bearbeiten-Modus auch bei „excluded“).
   1.3.4 (01.11.2026) Testlauf DASH: Ein in Teil 6 angekreuzter Schritt (z. B. „Würzen statt salzen“) war unter
@@ -506,7 +507,7 @@
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.3.5"; // 1.3.5 (01.11.2026): Ausschluss mit „Angaben korrigieren“ · // 1.3.4 (Jörg 01.11.2026): unter „Weitere Schritte“ stehen die in Teil 6 angekreuzten Schritte vorn · // 1.3.3 (Jörg 25.10.2026): Erinnerung ab Runde 2 vorbelegt; anderes Konto angemeldet → Hinweis mit „Abmelden und neu anmelden“ · // 1.3.2: alter Mail-Link öffnet während einer neuen Runde nicht den Kurzcheck · // 1.3.1: „Plan gespeichert“-Bestätigung an der Karte; Anpassen-Hinweis verschwindet nach dem Anpassen · // 1.3.0 (25.10.2026): „Deine Schritte“ nach Phasen (Statuskarte mit einer Hauptaktion; Bewerten nur im Kurzcheck; Angekommenes kompakt; Rest unter „Mehr“) · // 1.2.4: Zettel-Karte direkt unter den Schritten; Kurzcheck ohne frisch dazugenommene Schritte · // 1.2.3: Einleitungszeile während des Kurzchecks · // 1.2.2: Plan ohne „dann“ wird beim Anpassen ins Wenn-Feld übernommen; Beispieltexte mit „z. B.“ und blasser · // 1.2.1: während des Kurzchecks keine zweiten Bewertungsknöpfe in den Schritt-Karten · // 1.2.0 (25.10.2026): Abschluss-Fenster „Deine nächsten 14 Tage“, Kurzcheck nach 14 Tagen (Link aus der Mail ohne PIN), Erinnerung nur mit Einwilligung
+  const FE_VERSION = "1.3.6"; // 1.3.6 (01.11.2026): „Angaben korrigieren“ nicht bei SCOFF · // 1.3.5 (01.11.2026): Ausschluss mit „Angaben korrigieren“ · // 1.3.4 (Jörg 01.11.2026): unter „Weitere Schritte“ stehen die in Teil 6 angekreuzten Schritte vorn · // 1.3.3 (Jörg 25.10.2026): Erinnerung ab Runde 2 vorbelegt; anderes Konto angemeldet → Hinweis mit „Abmelden und neu anmelden“ · // 1.3.2: alter Mail-Link öffnet während einer neuen Runde nicht den Kurzcheck · // 1.3.1: „Plan gespeichert“-Bestätigung an der Karte; Anpassen-Hinweis verschwindet nach dem Anpassen · // 1.3.0 (25.10.2026): „Deine Schritte“ nach Phasen (Statuskarte mit einer Hauptaktion; Bewerten nur im Kurzcheck; Angekommenes kompakt; Rest unter „Mehr“) · // 1.2.4: Zettel-Karte direkt unter den Schritten; Kurzcheck ohne frisch dazugenommene Schritte · // 1.2.3: Einleitungszeile während des Kurzchecks · // 1.2.2: Plan ohne „dann“ wird beim Anpassen ins Wenn-Feld übernommen; Beispieltexte mit „z. B.“ und blasser · // 1.2.1: während des Kurzchecks keine zweiten Bewertungsknöpfe in den Schritt-Karten · // 1.2.0 (25.10.2026): Abschluss-Fenster „Deine nächsten 14 Tage“, Kurzcheck nach 14 Tagen (Link aus der Mail ohne PIN), Erinnerung nur mit Einwilligung
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
   const PARTS = {
@@ -730,10 +731,11 @@
     if (canFix) document.getElementById("b-fix").onclick = async () => { spinner(); route(await call("edit")); };
   }
   function screenExcluded(r) {
-    if (r.text) return screenText(r.text, "info", true);
+    const fix = r.reason !== "scoff";   // 1.3.6: bei Hinweisen auf Essstörung kein „Angaben korrigieren“
+    if (r.text) return screenText(r.text, "info", fix);
     // beim erneuten Laden fehlt der Text — dann allgemein
     screenText({ title: "Gerade passt etwas anderes besser",
-      body: "Nach deinen Angaben ist dieses Programm im Moment nicht der richtige Rahmen für dich. Sprich uns im Studio gern an — wir finden gemeinsam einen passenden Weg." }, "info", true);
+      body: "Nach deinen Angaben ist dieses Programm im Moment nicht der richtige Rahmen für dich. Sprich uns im Studio gern an — wir finden gemeinsam einen passenden Weg." }, "info", fix);
   }
 
   // ── Fragebogen ──────────────────────────────────────────
@@ -854,7 +856,7 @@
     clearDraft();
     if (r.status === "excluded") {
       track("nutri_screen_out", { reason: /^med_/.test(r.reason || "") ? "medication" : (r.reason === "scoff" ? "scoff" : (r.reason || "other")) });
-      return screenText(r.text, "info", true);
+      return screenText(r.text, "info", r.reason !== "scoff");
     }
     if (r.status === "pending_clearance") track("nutri_doctor_flag", { count: (r.result?.shown || []).length });
     track("nutri_complete", {});
