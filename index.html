@@ -756,6 +756,7 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.22.2 (02.11.2026, Jörg: Plan-Vorschau): Vor der Mail-Anforderung steht unter dem ersten Schritt „So geht es weiter“ – Woche 3–4, 5–6 und 7–12 mit je dem ersten Satz aus dem echten Plan (kernaussage.preview, Edge edge-2026-11-02.59, dieselbe Quelle wie die Mail) und der Knopf „Plan per Mail anfordern →“ (springt zum Mail-Kasten). Nichts verschwommen oder verschlossen. Nicht bei ärztlichem Vorrang, Praxis-Vorrang, festem Plan oder sehr Sportlichen (planNote). Messpunkte plan_preview_view, plan_preview_cta.
 v2.22.1 (02.11.2026, Jörg: Stufe 3 aktiv anbieten): Direkt unter der Bestätigung „Dein Vital-Plan ist freigeschaltet“ fragt ein Kasten „Magst du dein Ergebnis kurz mit uns besprechen?“ – „Ja, ruft mich an“ klappt Telefon, Zeitfenster und Anruf-Haken auf (Edge-Modus studio_request, Weg callback), „Jetzt nicht“ blendet ihn für die Sitzung aus. Nicht bei ärztlichem Vorrang, nicht nach einer Anfrage. Neue Messpunkte: quick_callback_view/open/later, studio_card_view; studio_request_sent mit from quick. Plan-Mail lädt konkret ein (Edge edge-2026-11-02.58).
 v2.22.0 (02.11.2026, Jörg): Mail-Kasten mit EINEM Pflicht-Häkchen (Plan mit persönlicher Einordnung + persönlicher Bereich, konto-v4). Darunter "Lieber ohne KI?" – dann Einordnung aus festen Textbausteinen, nichts an Anthropic (Edge edge-2026-11-02.57, Einwilligung levita-privacy-v5). Erinnerung bleibt freiwillig. Neue Messpunkte: mail_email_typed, mail_consent_checked, mail_no_ai_chosen; mail_sent_success mit ki.
 v2.21.19 (31.10.2026, Jörg): Handy-Startbild zeigt wieder Gesichter und Handy – Ausschnitt 52 % statt 86 %, Höhe 190 statt 170 px. Start-Knopf bleibt im ersten Bild.
@@ -7500,6 +7501,30 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       <div class="more-info-body">${inner}</div></details>`;
   }
 
+  // v2.22.2 (02.11.2026, Plan-Vorschau vor der Mail): Woche 3–12 aus dem echten Plan (kernaussage.preview, Edge .59,
+  // dieselbe Quelle wie die Mail), je Abschnitt der erste Satz. Bewusst nichts verschwommen oder verschlossen (wie v2.3.1:
+  // kein Zurückhalte-Ton) – der ganze Plan mit allen Details kommt per Mail. Nicht bei ärztlichem Vorrang, Praxis-Vorrang
+  // oder festem Plan; dann bleibt der bisherige Satz.
+  function planPreviewHtml(k) {
+    const note = `<div class="kern-note">Deinen 6-Wochen-Plan mit Ausblick bis zum Re-Check – Schritt für Schritt – bekommst du mit deinem Vital-Plan per Mail.</div>`;
+    const D = window._decision || {};
+    const pv = Array.isArray(k && k.preview) ? k.preview.filter(p => p && p.label && p.text) : [];
+    if (!pv.length || D.doctor || D.praxis || D.fixedPlan || !document.getElementById || window._isReviewMode) return note;
+    const first = (s) => {
+      const x = String(s || "").split(/(?<=[.!?;])\s/)[0];
+      return x.length > 120 ? x.slice(0, 118).replace(/\s\S*$/, "") + " …" : x;
+    };
+    if (!window._ppViewSent) { window._ppViewSent = true; setTimeout(() => { try { trackEvent("plan_preview_view", { rows: pv.length }); } catch (e) {} }, 300); }
+    return `<div class="plan-preview" id="planPreview" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border,rgba(127,127,127,0.3));">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">So geht es weiter</div>
+        ${pv.map(p => `<div style="display:flex;gap:10px;margin-bottom:7px;font-size:13px;line-height:1.5;">
+          <span style="flex:0 0 78px;color:var(--accent-green-text);font-weight:700;white-space:nowrap;">${escHtml(p.label)}</span>
+          <span style="color:var(--text-secondary);">${escHtml(first(p.text))}</span></div>`).join("")}
+        <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin:8px 0 10px;">Den ganzen Plan mit allen Details bis zum Re-Check bekommst du per Mail – dazu deinen persönlichen Bereich.</div>
+        <button type="button" onclick="try{trackEvent('plan_preview_cta',{})}catch(e){};scrollToAiBox();" style="background:none;border:1px solid rgba(var(--accent-green-rgb),0.5);border-radius:10px;padding:9px 14px;color:var(--accent-green-text);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;">Plan per Mail anfordern →</button>
+      </div>`;
+  }
+
   function kernCardHtml(S, hintsHtml) {
     const k = kernOf(S);
     if (!k) return hintsHtml || "";
@@ -7510,7 +7535,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
           <div class="kern-label">${ICO("bolt")} ${escHtml(k.label || "Dein erster Schritt")}</div>
           <div class="kern-jetzt">${escHtml(k.jetzt)}</div>
           ${k.beob ? `<div class="kern-beob">${ICO("search")} <strong>Beobachte dabei:</strong> ${escHtml(k.beob)}</div>` : ""}
-          ${locked && !k.planNote ? `<div class="kern-note">Deinen 6-Wochen-Plan mit Ausblick bis zum Re-Check – Schritt für Schritt – bekommst du mit deinem Vital-Plan per Mail.</div>` : ``}
+          ${locked && !k.planNote ? planPreviewHtml(k) : ``}
         </div>`;
   }
   // Eine ruhige Bestätigungszeile statt der Verwaltung oben (Zugang, Newsletter usw. stehen ganz unten)
@@ -9873,7 +9898,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.22.1</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.22.2</footer>
 
 
 </body>
