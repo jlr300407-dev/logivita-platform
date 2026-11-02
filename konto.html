@@ -36,6 +36,7 @@
   Testmodus: ?internal=1 zeigt die letzte Server-Antwort.
 
   Versionen:
+1.9.1 (02.11.2026) Ernährungs-Check in der Modulkarte: Vorrang für den laufenden mit Kurzcheck-Termin, dann gestartete Schritte, dann begonnen; die letzten sechs Checks werden parallel gelesen.
 1.9.0 (02.11.2026) Wunsch Jörg: Zusatzmodule über alle Checks – der zuletzt begonnene Ernährungs-Check wird auch nach einem Re-Check gezeigt (Runde, Kurzcheck-Termin, „fällig“ mit Knopf „Jetzt einschätzen“, Rhythmus-Hinweis alle zwei Wochen); Versorgungs-Check „Abgeschlossen“ mit „Ansehen“ und Hinweis zur Wiederholung (bei geänderter Einnahme oder mit dem nächsten Vital-Check), nach einem Re-Check „Auffrischen“ plus Link zum bisherigen Plan.
 1.8.1 (02.11.2026) Wunsch Jörg: „Ergebnis ansehen“ bei allen Checks als Knopf in derselben Form – der neueste grün gefüllt, ältere mit Rahmen (vorher Textlink).
 1.8.0 (02.11.2026) Wunsch Jörg: Karte „Dein Verlauf“ (ab zwei Checks) bzw. „Dein Index im Detail“ – Index-Verlauf als Linie, Tabelle aller acht Bereiche mit Gewicht, aktuellem Wert und Veränderung seit dem letzten und dem ersten Check, Summenzeile; aufklappbar „So entsteht dein Index“ (gewichteter Mittelwert, Stufen, Schwelle „stabil“ unter 2 Punkten, Orientierungswerte). Alles aus score_payload von my_checks, keine neue Abfrage. Re-Checks in der Liste gekennzeichnet.
@@ -398,7 +399,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.9.0"; // R7-01: Anzeige an den Stand 1.6.0 angeglichen
+  const FE_VERSION = "1.9.1"; // R7-01: Anzeige an den Stand 1.6.0 angeglichen
   const K = window.LeVitaKonto;
   const esc = K.esc;
   const params = new URLSearchParams(location.search);
@@ -607,13 +608,18 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
     const el = document.getElementById("mod-nutri"); if (!el || !sess || !c || !c.public_code) return;
     if (!document.getElementById("mod-nutri-btn")) return;   // gesperrt (z. B. ärztlicher Vorrang beim neuesten Check): Text bleibt
     const cands = (Array.isArray(list) && list.length ? list : [c]).slice(0, 6);
-    let hit = null, hitCheck = null;
-    for (const x of cands) {
-      const j = await nutriLoad(x.public_code); if (!j) continue;
+    // 1.9.1: Vorrang hat ein laufender Ernährungs-Check mit Kurzcheck-Termin, dann einer mit gestarteten Schritten,
+    // dann ein nur begonnener – jeweils der neueste.
+    let hit = null, hitCheck = null, best = 0;
+    const loaded = await Promise.all(cands.map((x) => nutriLoad(x.public_code)));
+    loaded.forEach((j, i) => {
+      if (!j) return;
       const steps = j.self_steps || [];
-      const begun = j.checkin || steps.length || (j.status && !["none", "consent_required"].includes(j.status));
-      if (begun) { hit = j; hitCheck = x; break; }
-    }
+      const rank = (j.checkin && j.checkin.status === "scheduled") ? 3
+        : steps.some((x) => x.state === "gestartet") ? 2
+        : (j.checkin || steps.length || (j.status && !["none", "consent_required"].includes(j.status))) ? 1 : 0;
+      if (rank > best) { best = rank; hit = j; hitCheck = cands[i]; }
+    });
     if (!hit) return; // Karte bleibt bei „Verfügbar“
     const ck = hit.checkin, steps = hit.self_steps || [], started = steps.filter((x) => x.state === "gestartet").length;
     let t = "", btn = "Weiter →", hint = "";
