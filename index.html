@@ -756,6 +756,7 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.22.3 (02.11.2026, Jörg): Rückruf-Formular mit freiwilligem, nicht vorbelegtem Häkchen zur Trainer-Einsicht (gleicher Wortlaut wie die Studio-Karte; nur wenn noch nicht erteilt). PIN-Hinweise im Mail-Kasten entfernt („In deinem persönlichen Bereich findest du dein Ergebnis jederzeit wieder“), Zusatzmodule ohne „alternativ mit Pilot-ID und PIN“. Edge edge-2026-11-02.60: Studio-Benachrichtigung verweist auf „Mein Bereich“.
 v2.22.2 (02.11.2026, Jörg: Plan-Vorschau): Vor der Mail-Anforderung steht unter dem ersten Schritt „So geht es weiter“ – Woche 3–4, 5–6 und 7–12 mit je dem ersten Satz aus dem echten Plan (kernaussage.preview, Edge edge-2026-11-02.59, dieselbe Quelle wie die Mail) und der Knopf „Plan per Mail anfordern →“ (springt zum Mail-Kasten). Nichts verschwommen oder verschlossen. Nicht bei ärztlichem Vorrang, Praxis-Vorrang, festem Plan oder sehr Sportlichen (planNote). Messpunkte plan_preview_view, plan_preview_cta.
 v2.22.1 (02.11.2026, Jörg: Stufe 3 aktiv anbieten): Direkt unter der Bestätigung „Dein Vital-Plan ist freigeschaltet“ fragt ein Kasten „Magst du dein Ergebnis kurz mit uns besprechen?“ – „Ja, ruft mich an“ klappt Telefon, Zeitfenster und Anruf-Haken auf (Edge-Modus studio_request, Weg callback), „Jetzt nicht“ blendet ihn für die Sitzung aus. Nicht bei ärztlichem Vorrang, nicht nach einer Anfrage. Neue Messpunkte: quick_callback_view/open/later, studio_card_view; studio_request_sent mit from quick. Plan-Mail lädt konkret ein (Edge edge-2026-11-02.58).
 v2.22.0 (02.11.2026, Jörg): Mail-Kasten mit EINEM Pflicht-Häkchen (Plan mit persönlicher Einordnung + persönlicher Bereich, konto-v4). Darunter "Lieber ohne KI?" – dann Einordnung aus festen Textbausteinen, nichts an Anthropic (Edge edge-2026-11-02.57, Einwilligung levita-privacy-v5). Erinnerung bleibt freiwillig. Neue Messpunkte: mail_email_typed, mail_consent_checked, mail_no_ai_chosen; mail_sent_success mit ki.
@@ -7384,13 +7385,13 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     {   // v2.12.1 (Paket G): nur Module nennen, die offen sind
       const acc = moduleAccessLocal();
       const open = [acc.nutrition.ok ? "Ernährungs-Check" : null, (SUPPLY_MODULE_URL && acc.supply.ok) ? "Versorgungs-Check" : null].filter(Boolean);
-      if (open.length) rows += row(ICO("leaf"), "Zugang zu den Zusatzmodulen", `${open.join(" und ")} — in deinem persönlichen Bereich, alternativ mit Pilot-ID und PIN`);
+      if (open.length) rows += row(ICO("leaf"), "Zugang zu den Zusatzmodulen", `${open.join(" und ")} — in deinem persönlichen Bereich`);
     }
     const box = S.buildAiBox(rows, {
       badge: "✦ Kostenlos",
       title: "Was du konkret tust – sofort hier und per Mail",
       btn: "Meinen Vital-Plan anfordern →",
-      note: "Kostenlos &nbsp;·&nbsp; sofort hier sichtbar &nbsp;·&nbsp; die Mail kommt in wenigen Minuten<br>Mit Pilot-ID und PIN kommst du jederzeit zu deinem Ergebnis zurück."
+      note: "Kostenlos &nbsp;·&nbsp; sofort hier sichtbar &nbsp;·&nbsp; die Mail kommt in wenigen Minuten<br>In deinem persönlichen Bereich findest du dein Ergebnis jederzeit wieder."   /* v2.22.3: PIN läuft aus */
     });
     return `<div class="stage-ladder-title">Wie geht es weiter?</div>
       <div style="font-size:13px;color:var(--text-secondary);line-height:1.55;margin-bottom:14px;">Drei Stufen – du entscheidest, wie weit du gehst.</div>
@@ -7567,6 +7568,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
             <input type="checkbox" id="qc_c1">
             <label for="qc_c1" style="font-size:12.5px;">LeVITA darf mich zur Terminabsprache anrufen.</label>
           </div>
+          ${_srTaAlready() ? "" : `<div class="checkbox-row" style="margin-top:8px;"><input type="checkbox" id="qc_c2"><label for="qc_c2" style="font-size:12.5px;">Die Trainerinnen und Trainer von LeVITA dürfen meine Angaben und mein Ergebnis vorab einsehen, damit sie das Gespräch vorbereiten können. <span style="color:var(--text-muted);">Freiwillig – der Rückruf geht auch ohne, und ich kann es jederzeit widerrufen.</span></label></div>`}
           <button type="button" class="stage-btn-blue" id="qcBtn" onclick="submitQuickCallback()" style="width:100%;border:none;cursor:pointer;font-family:inherit;margin-top:12px;">Rückruf anfordern</button>
           <div id="qc-status"></div>
           <div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">Lieber selbst melden? Telefon und Öffnungszeiten stehen weiter unten bei „Dein Gespräch im Studio“.</div>
@@ -7600,7 +7602,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     if (!c1) return fail("Bitte bestätige, dass wir dich zur Terminabsprache anrufen dürfen.");
     if (!latestResult || !latestResult.public_code) return fail("Es liegt kein Ergebnis vor. Bitte lade die Seite neu.");
     if (btn) { btn.disabled = true; btn.textContent = "Wird gesendet …"; }
-    const ta = _srTaAlready();
+    const ta = _srTaAlready() || document.getElementById("qc_c2")?.checked === true;   // v2.22.3: freiwillige Trainer-Einsicht, nie vorbelegt
     try {
       const res = await callFunction({
         mode: "studio_request", public_code: latestResult.public_code,
@@ -7610,6 +7612,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       });
       if (res && res.access_pin) window._accessPin = res.access_pin;
       window._studioRequest = { name, slot, offer: "gespraech", way: "callback" };
+      if (ta) window._trainerAccess = true;
       trackEvent("studio_request_sent", { from_stage: window._stage, offer: "gespraech", trainer_access: ta, contact_way: "callback", from: "quick" });
       const box = document.getElementById("qcBox");
       if (box) box.innerHTML = `<div style="display:flex;gap:10px;align-items:flex-start;"><div style="color:var(--accent-green-text);font-weight:700;">✓</div><div><div style="font-size:15px;font-weight:700;">Danke, ${escHtml(name)} – wir melden uns</div><div style="font-size:13px;color:var(--text-secondary);line-height:1.55;margin-top:2px;">Wir rufen dich an, am liebsten ${escHtml(slot)}, und vereinbaren deinen Termin. Im Gespräch schauen wir gemeinsam auf deine Stärken, deinen wichtigsten Ansatzpunkt und zwei passende nächste Schritte.</div></div></div>`;
@@ -9898,7 +9901,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.22.2</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.22.3</footer>
 
 
 </body>
