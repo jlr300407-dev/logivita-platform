@@ -36,6 +36,7 @@
   Testmodus: ?internal=1 zeigt die letzte Server-Antwort.
 
   Versionen:
+1.9.0 (02.11.2026) Wunsch Jörg: Zusatzmodule über alle Checks – der zuletzt begonnene Ernährungs-Check wird auch nach einem Re-Check gezeigt (Runde, Kurzcheck-Termin, „fällig“ mit Knopf „Jetzt einschätzen“, Rhythmus-Hinweis alle zwei Wochen); Versorgungs-Check „Abgeschlossen“ mit „Ansehen“ und Hinweis zur Wiederholung (bei geänderter Einnahme oder mit dem nächsten Vital-Check), nach einem Re-Check „Auffrischen“ plus Link zum bisherigen Plan.
 1.8.1 (02.11.2026) Wunsch Jörg: „Ergebnis ansehen“ bei allen Checks als Knopf in derselben Form – der neueste grün gefüllt, ältere mit Rahmen (vorher Textlink).
 1.8.0 (02.11.2026) Wunsch Jörg: Karte „Dein Verlauf“ (ab zwei Checks) bzw. „Dein Index im Detail“ – Index-Verlauf als Linie, Tabelle aller acht Bereiche mit Gewicht, aktuellem Wert und Veränderung seit dem letzten und dem ersten Check, Summenzeile; aufklappbar „So entsteht dein Index“ (gewichteter Mittelwert, Stufen, Schwelle „stabil“ unter 2 Punkten, Orientierungswerte). Alles aus score_payload von my_checks, keine neue Abfrage. Re-Checks in der Liste gekennzeichnet.
 1.7.0 (25.10.2026) Wunsch Jörg: Modulkarte Ernährungs-Check zeigt laufende Runde und Kurzcheck-Termin (nutrition-check Modus „load“, nur lesen).
@@ -397,7 +398,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.8.1"; // R7-01: Anzeige an den Stand 1.6.0 angeglichen
+  const FE_VERSION = "1.9.0"; // R7-01: Anzeige an den Stand 1.6.0 angeglichen
   const K = window.LeVitaKonto;
   const esc = K.esc;
   const params = new URLSearchParams(location.search);
@@ -551,8 +552,11 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
     return esc(c.score_label || "") + (age ? ` · Vitalitäts-Alter ${num(age)} <span class="note" style="display:inline">(experimentelle Umrechnung)</span>` : "");
   }
   // 1.4.0 (W1): feste Karte "Deine Zusatzmodule" zum neuesten Check
-  function modulesCard(c) {
+  // 1.9.0 (Jörg 02.11.2026): Module über alle Checks – der laufende Ernährungs-Check und der letzte Versorgungs-Check
+  // bleiben sichtbar, auch wenn inzwischen ein Re-Check dazugekommen ist; Hinweise zur Wiederholung.
+  function modulesCard(c, list) {
     if (!c || !c.public_code) return "";
+    list = Array.isArray(list) && list.length ? list : [c];
     const code = encodeURIComponent(c.public_code);
     const doctor = c.care_status === "doctor_first";
     // 1.5.0 (Paket G): Zugang aus der Datenbank; ohne module_access (vor SQL 07) wie bisher
@@ -560,40 +564,73 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
     const nOk = acc ? acc.nutrition.ok : !doctor, sOk = acc ? acc.supply.ok : !doctor;
     const nTxt = acc && !acc.nutrition.ok ? acc.nutrition.state : "Zuerst ärztlich abklären – danach ist der Ernährungs-Check für dich da.";
     const sTxt = acc && !acc.supply.ok ? acc.supply.state : "Zuerst ärztlich abklären – Nahrungsergänzung besprichst du am besten in der Praxis.";
-    const row = (name, state, href, id) => `<div style="padding:12px 0;border-top:1px solid var(--border);">
+    const row = (name, state, href, id, btn, extra) => `<div style="padding:12px 0;border-top:1px solid var(--border);">
         <div style="font-weight:700;">${esc(name)}</div>
-        <div class="muted"${id ? ` id="${id}"` : ""} style="margin:2px 0 ${href ? 8 : 0}px;">${esc(state)}</div>
-        ${href ? `<a class="btn"${id ? ` id="${id}-btn"` : ""} style="display:inline-block;padding:8px 16px;font-size:14px;" href="${href}">Öffnen →</a>` : ""}</div>`;
+        <div class="muted"${id ? ` id="${id}"` : ""} style="margin:2px 0 ${href ? 8 : 0}px;">${state}</div>
+        ${extra || ""}
+        ${href ? `<a class="btn"${id ? ` id="${id}-btn"` : ""} style="display:inline-block;padding:8px 16px;font-size:14px;" href="${href}">${btn || "Öffnen →"}</a>` : ""}</div>`;
+    // Versorgungs-Check: letzter abgeschlossener über alle Checks
+    const sDone = list.find((x) => x.supply_done);
+    let sState, sHref, sBtn, sExtra = "";
+    if (!sOk) { sState = esc(sTxt); sHref = ""; }
+    else if (!sDone) { sState = "Verfügbar – ordnet ein, ob deine Nahrungsergänzung zu deinen Angaben passt."; sHref = `versorgung.html?code=${code}&utm_source=konto&utm_medium=modulkarte`; }
+    else if (sDone.public_code === c.public_code) {
+      sState = `Abgeschlossen – dein Versorgungsplan ist gespeichert.`;
+      sHref = `versorgung.html?code=${code}&utm_source=konto&utm_medium=modulkarte`; sBtn = "Ansehen →";
+      sExtra = `<div class="note" style="margin:0 0 8px;">Wiederholen lohnt sich, wenn sich etwas an dem ändert, was du einnimmst – oder mit deinem nächsten Vital-Check.</div>`;
+    } else {
+      sState = `Dein Versorgungsplan stammt von deinem Check vom ${esc(dateDe(sDone.created_at))}. Dein neuer Vital-Check ist da – magst du ihn dazu auffrischen?`;
+      sHref = `versorgung.html?code=${code}&utm_source=konto&utm_medium=modulkarte_auffrischen`; sBtn = "Auffrischen →";
+      sExtra = `<a class="open-link" style="margin:0 0 8px;display:block;" href="versorgung.html?code=${encodeURIComponent(sDone.public_code)}&utm_source=konto&utm_medium=modulkarte">Bisherigen Plan ansehen</a>`;
+    }
     return `<div class="card">
         <h2>Deine Zusatzmodule</h2>
-        <p class="muted">Zu deinem Check vom ${esc(dateDe(c.created_at))} – mit deinem Konto ohne PIN.</p>
-        ${row("Ernährungs-Check", !nOk ? nTxt
+        <p class="muted">Mit deinem Konto ohne PIN – auch zu früheren Checks.</p>
+        ${row("Ernährungs-Check", !nOk ? esc(nTxt)
               : "Verfügbar – wo beim Essen das meiste Potenzial liegt, ohne Diät und ohne Verbote.",
               !nOk ? "" : `ernaehrung.html?code=${code}&utm_source=konto&utm_medium=modulkarte`, "mod-nutri")}
-        ${row("Versorgungs-Check", !sOk ? sTxt
-              : c.supply_done ? "Abgeschlossen – dein Versorgungsplan ist gespeichert." : "Verfügbar – ordnet ein, ob deine Nahrungsergänzung zu deinen Angaben passt.",
-              !sOk ? "" : `versorgung.html?code=${code}&utm_source=konto&utm_medium=modulkarte`)}
+        ${row("Versorgungs-Check", sState, sHref, "", sBtn, sExtra)}
       </div>`;
   }
 
   // 1.7.0 (Jörg 25.10.2026): Ernährungs-Check – laufende Runde und Kurzcheck-Termin in der Modulkarte (nur lesen, Modus „load“)
+  // 1.9.0: sucht den zuletzt begonnenen Ernährungs-Check über die letzten Checks (neueste zuerst) – ein Re-Check versteckt ihn nicht mehr.
   const NUTRI_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/nutrition-check";
   const NUTRI_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
-  async function fillNutriState(c) {
-    const el = document.getElementById("mod-nutri"); if (!el || !sess || !c || !c.public_code) return;
+  async function nutriLoad(code) {
     try {
-      const r = await fetch(NUTRI_URL, { method: "POST", headers: { "Content-Type": "application/json", apikey: NUTRI_ANON, Authorization: `Bearer ${sess.access_token}` }, body: JSON.stringify({ mode: "load", public_code: c.public_code }) });
-      const j = await r.json(); if (!j || !j.success) return;
-      const ck = j.checkin, steps = j.self_steps || [], started = steps.filter((x) => x.state === "gestartet").length;
-      let t = "";
-      if (ck && ck.status === "scheduled" && ck.due_at) {
-        const due = new Date(ck.due_at), fmt = due.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
-        t = due.getTime() <= Date.now() ? `Runde ${ck.round || 1} · dein Kurzcheck ist fällig.` : `Runde ${ck.round || 1} · Kurzcheck am ${fmt}${ck.remind ? " – wir erinnern dich per Mail." : "."}`;
-      } else if (started) t = `Läuft – ${started === 1 ? "ein Schritt" : started + " Schritte"} gestartet.`;
-      else if (steps.length || (j.status && !["none", "consent_required"].includes(j.status))) t = "Begonnen – mach dort weiter, wo du aufgehört hast.";
-      if (t) { el.textContent = t; const b = document.getElementById("mod-nutri-btn"); if (b) b.textContent = "Weiter →"; }
-    } catch (e) { /* Karte bleibt beim Standardtext */ }
+      const r = await fetch(NUTRI_URL, { method: "POST", headers: { "Content-Type": "application/json", apikey: NUTRI_ANON, Authorization: `Bearer ${sess.access_token}` }, body: JSON.stringify({ mode: "load", public_code: code }) });
+      const j = await r.json(); return (j && j.success) ? j : null;
+    } catch (e) { return null; }
   }
+  async function fillNutriState(c, list) {
+    const el = document.getElementById("mod-nutri"); if (!el || !sess || !c || !c.public_code) return;
+    if (!document.getElementById("mod-nutri-btn")) return;   // gesperrt (z. B. ärztlicher Vorrang beim neuesten Check): Text bleibt
+    const cands = (Array.isArray(list) && list.length ? list : [c]).slice(0, 6);
+    let hit = null, hitCheck = null;
+    for (const x of cands) {
+      const j = await nutriLoad(x.public_code); if (!j) continue;
+      const steps = j.self_steps || [];
+      const begun = j.checkin || steps.length || (j.status && !["none", "consent_required"].includes(j.status));
+      if (begun) { hit = j; hitCheck = x; break; }
+    }
+    if (!hit) return; // Karte bleibt bei „Verfügbar“
+    const ck = hit.checkin, steps = hit.self_steps || [], started = steps.filter((x) => x.state === "gestartet").length;
+    let t = "", btn = "Weiter →", hint = "";
+    if (ck && ck.status === "scheduled" && ck.due_at) {
+      const due = new Date(ck.due_at), fmt = due.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
+      if (due.getTime() <= Date.now()) { t = `Runde ${ck.round || 1} · dein Kurzcheck ist fällig.`; btn = "Jetzt einschätzen →"; }
+      else t = `Runde ${ck.round || 1} · Kurzcheck am ${fmt}${ck.remind ? " – wir erinnern dich per Mail." : "."}`;
+      hint = "Alle zwei Wochen ein kurzer Blick: Was klappt, was passt du an – dann kommt der nächste Schritt dazu.";
+    } else if (started) { t = `Läuft – ${started === 1 ? "ein Schritt" : started + " Schritte"} gestartet.`; hint = "Nach zwei Wochen schätzt du kurz ein, wie es läuft."; }
+    else t = "Begonnen – mach dort weiter, wo du aufgehört hast.";
+    if (hitCheck.public_code !== c.public_code) t += ` (zu deinem Check vom ${dateDe(hitCheck.created_at)})`;
+    el.textContent = t;
+    if (hint) { const n = document.createElement("div"); n.className = "note"; n.style.margin = "0 0 8px"; n.textContent = hint; el.insertAdjacentElement("afterend", n); }
+    const b = document.getElementById("mod-nutri-btn");
+    if (b) { b.textContent = btn; b.href = `ernaehrung.html?code=${encodeURIComponent(hitCheck.public_code)}&utm_source=konto&utm_medium=modulkarte`; }
+  }
+
 
   // 1.8.0 (Jörg 02.11.2026): Index transparent und Verlauf über alle Checks – aus score_payload (my_checks), keine neue Abfrage.
   // Der Index ist der gewichtete Mittelwert der acht Bereiche (Score-Version 4, Gewichte aus dem Payload jedes Checks).
@@ -723,7 +760,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
 
       ${progressCard(list)}
 
-      ${list.length ? modulesCard(list[0]) : ""}
+      ${list.length ? modulesCard(list[0], list) : ""}
 
       <div class="card">
         <h2>E-Mails von uns</h2>
@@ -758,7 +795,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
       };
     };
     bindToggle("t-rem", "reminders");
-    if (list.length) fillNutriState(list[0]); // 1.7.0
+    if (list.length) fillNutriState(list[0], list); // 1.7.0 · 1.9.0: über alle Checks
     document.getElementById("b-guide").onclick = () => K.showGuide && K.showGuide();
 
     document.getElementById("b-del-open").onclick = () => {
