@@ -756,6 +756,7 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.22.0 (02.11.2026, Jörg): Mail-Kasten mit EINEM Pflicht-Häkchen (Plan mit persönlicher Einordnung + persönlicher Bereich, konto-v4). Darunter "Lieber ohne KI?" – dann Einordnung aus festen Textbausteinen, nichts an Anthropic (Edge edge-2026-11-02.57, Einwilligung levita-privacy-v5). Erinnerung bleibt freiwillig. Neue Messpunkte: mail_email_typed, mail_consent_checked, mail_no_ai_chosen; mail_sent_success mit ki.
 v2.21.19 (31.10.2026, Jörg): Handy-Startbild zeigt wieder Gesichter und Handy – Ausschnitt 52 % statt 86 %, Höhe 190 statt 170 px. Start-Knopf bleibt im ersten Bild.
 v2.21.18 (30.10.2026, Jörg): Einstieg auf dem Handy neu geordnet – Bild 170 statt 290 px, Kopfzeile flacher, darunter direkt „Was möchtest du erreichen?“ mit vier Ziel-Knöpfen (ein Tipp beantwortet die erste Frage), Start-Knopf bleibt darunter; die Merkmalzeile (8 Lebensbereiche …) entfällt nur auf dem Handy. Überschrift passt sich der Anzeige an (utm_content vc_team/vc_vito → Hebel, vc_ernaehrung → Ernährung, sonst unverändert). Jedes Event trägt lp_variant (z. B. m2-hebel), damit die Fassungen im Funnel vergleichbar sind. Desktop unverändert.
 v2.21.17 (25.10.2026, Jörg): Trainer-Einwilligung wieder im Einwilligungs-Schritt (freiwillig, nicht vorbelegt), unabhängig vom Stufenmodell; die drei Stufen bleiben. Stufe 3 zeigt das Häkchen nur, wenn noch nicht zugestimmt wurde, und nimmt eine erteilte Zustimmung nie zurück
@@ -5212,16 +5213,35 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     toggle.textContent = isHidden ? 'Weniger' : 'Details';
   }
 
+  // v2.22.0 — "Lieber ohne KI?": Plan und Bereich kommen trotzdem, die Einordnung entsteht aus festen Textbausteinen.
+  function toggleNoAi(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    window._noAi = window._noAi !== true;
+    const note = document.getElementById('kiNote'), link = document.getElementById('noAiLink');
+    if (note) note.textContent = window._noAi
+      ? 'Ohne KI: Die Einordnung kommt aus festen Textbausteinen. Es geht nichts an Anthropic. Anmeldung per Link oder Code, jederzeit löschbar.'
+      : 'Für die Einordnung gehen deine Angaben ohne Name und E-Mail-Adresse an Anthropic (USA), nicht zum Training von KI. Anmeldung per Link oder Code, jederzeit löschbar.';
+    if (link) link.textContent = window._noAi ? 'Doch mit KI-Einordnung' : 'Einordnung aus festen Textbausteinen wählen';
+    try { trackEvent(window._noAi ? 'mail_no_ai_chosen' : 'mail_no_ai_undone'); } catch (_e) {}
+  }
+  // v2.22.0 — Messpunkte am Mail-Kasten, je Sitzung einmal: Adresse eingetippt, Häkchen gesetzt.
+  (function () {
+    const once = {};
+    const t = (n) => { if (once[n]) return; once[n] = 1; try { trackEvent(n); } catch (_e) {} };
+    document.addEventListener('input', (e) => { const el = e.target; if (el && el.id === 'ai_email' && /\S+@\S+\.\S+/.test(el.value)) t('mail_email_typed'); });
+    document.addEventListener('change', (e) => { const el = e.target; if (el && el.id === 'consent_email_delivery' && el.checked) t('mail_consent_checked'); });
+  })();
+
   async function requestIndividualAnalysis() {
     const email = document.getElementById("ai_email").value.trim();
-    const ca = document.getElementById("consent_ai_analysis").checked;
+    const ca = window._noAi !== true;   // v2.22.0: KI-Einordnung, außer "Lieber ohne KI" gewählt
     const cm = document.getElementById("consent_email_delivery").checked;
     const btn = document.getElementById("aiBtn");
     const statusEl = document.getElementById("ai-status");
     if (!email) return uiAlert("Bitte E-Mail-Adresse eingeben.");
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) return uiAlert("Bitte eine gültige E-Mail-Adresse eingeben — z.B. name@beispiel.de");
-    if (!ca || !cm) return uiAlert("Bitte die beiden ersten Haken setzen – der dritte ist freiwillig.");
+    if (!cm) return uiAlert("Bitte den ersten Haken setzen – der zweite ist freiwillig.");
     const cr = document.getElementById("consent_reminders")?.checked === true;   // v2.21.1 (W5): freiwillig
     if (typeof fbq !== 'undefined') fbq('track', 'Subscribe', { content_name: 'ai_mail_requested' });
     btn.disabled = true; btn.innerText = "Auswertung wird erstellt…";
@@ -5230,17 +5250,17 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       const waitBuddy = buddyHtml("buddy-thinking");
       statusEl.innerHTML = `<div class="status-msg info-box box-info">`
         + (waitBuddy ? `<div class="buddy-wait">${waitBuddy}<div>Einen Moment — deine Antworten werden gerade eingeordnet. Das kann bis zu 30 Sekunden dauern.</div></div>`
-                     : `⏳ Die KI-Auswertung wird gerade erstellt — das kann bis zu 30 Sekunden dauern. Bitte warte kurz…`)
+                     : `⏳ Deine Auswertung wird gerade erstellt — das kann bis zu 30 Sekunden dauern. Bitte warte kurz…`)
         + `</div>`;
     }, 8000);
     try {
       const firstName = (document.getElementById("ai_firstname")?.value || "").trim().slice(0, 60);
-      const result = await callFunction({ mode:"request_ai_analysis", public_code:latestResult.public_code, email, first_name: firstName || null, consent_ai_analysis:true, consent_email_delivery:true, consent_ui:"konto-v3" });
+      const result = await callFunction({ mode:"request_ai_analysis", public_code:latestResult.public_code, email, first_name: firstName || null, consent_ai_analysis:ca, consent_email_delivery:true, consent_ui:"konto-v4" });
       clearTimeout(hintTimer);
       // Ehrliches Event-Reporting (v1.28.14, Post-Mortem 11.07.):
       // mail_sent_success NUR bei bestätigtem email_sent:true — nie optimistisch.
       if (result.email_sent) {
-        trackEvent('mail_sent_success', { email_sent: true });
+        trackEvent('mail_sent_success', { email_sent: true, ki: ca });   // v2.22.0: ki false = "ohne KI" gewählt
         // v1.39.1: Die Edge liefert den PIN jetzt mit — fuer die Sitzung merken,
         // damit Re-Check und Ziel-Speichern ohne erneute Eingabe funktionieren.
         if (result.access_pin) window._accessPin = result.access_pin;
@@ -5768,21 +5788,19 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
         <input type="text" id="ai_firstname" placeholder="Vorname (optional)" style="margin-bottom:8px;" />
         <input type="email" id="ai_email" placeholder="deine@email.de" />
         <div class="ai-consent">
-          <div class="checkbox-row">
-            <input type="checkbox" id="consent_ai_analysis" />
-            <label for="consent_ai_analysis">Ja, ich möchte meine persönliche KI-Auswertung erhalten.
-              <span id="consentDetail1" style="display:none;color:var(--text-muted);font-size:10px;line-height:1.5;margin-top:4px;">Deine Angaben werden zur Erstellung der Auswertung ohne Name und E-Mail-Adresse an Anthropic PBC (USA) übermittelt — ausschließlich für diesen Zweck, nicht zum Training von KI-Modellen. Steht ein Gespräch in deiner Hausarztpraxis an erster Stelle, entsteht die Mail ohne KI aus festen Textbausteinen. Grundlage: Standardvertragsklauseln (Art. 46 DSGVO). Der Versand erfolgt über Resend (USA). Grundlage: Angemessenheitsbeschluss der EU-Kommission (EU-US Data Privacy Framework, Art. 45 DSGVO).</span>
-              <span onclick="toggleConsent1(event)" style="color:var(--text-muted);font-size:10px;cursor:pointer;text-decoration:underline;margin-left:4px;" id="consentToggle1">Details</span>
-            </label>
-          </div>
-          <div class="checkbox-row">
+                    <div class="checkbox-row">
             <input type="checkbox" id="consent_email_delivery" />
-            <label for="consent_email_delivery">Ja, schickt mir meinen Vital-Plan per E-Mail und legt mir dafür einen persönlichen Bereich an. Dort finde ich meine Auswertung wieder. Angemeldet werde ich mit einem Link oder Code per E-Mail, ein Passwort gibt es nicht. Den Bereich kann ich jederzeit mit allen Daten löschen.</label>
+            <label for="consent_email_delivery"><strong>Ja, schickt mir meinen Vital-Plan mit persönlicher Einordnung per E-Mail und legt mir einen persönlichen Bereich an.</strong>
+              <span id="kiNote" style="display:block;color:var(--text-muted);font-size:11px;line-height:1.5;margin-top:4px;">Für die Einordnung gehen deine Angaben ohne Name und E-Mail-Adresse an Anthropic (USA), nicht zum Training von KI. Anmeldung per Link oder Code, jederzeit löschbar.</span>
+              <span id="consentDetail1" style="display:none;color:var(--text-muted);font-size:10px;line-height:1.5;margin-top:4px;">Die Einordnung schreibt eine KI von Anthropic PBC (USA). Sie bekommt deine Angaben ohne Name und E-Mail-Adresse, ausschließlich für diesen Zweck und nicht zum Training von KI-Modellen. Grundlage: Standardvertragsklauseln (Art. 46 DSGVO). Steht ein Gespräch in deiner Hausarztpraxis an erster Stelle, entsteht die Mail immer ohne KI aus festen Textbausteinen. Der Versand erfolgt über Resend (USA), Grundlage: Angemessenheitsbeschluss der EU-Kommission (EU-US Data Privacy Framework, Art. 45 DSGVO). Im persönlichen Bereich findest du deine Auswertung wieder. Angemeldet wirst du mit einem Link oder Code per E-Mail, ein Passwort gibt es nicht. Den Bereich kannst du jederzeit mit allen Daten löschen.</span>
+              <span onclick="toggleConsent1(event)" style="color:var(--text-muted);font-size:10px;cursor:pointer;text-decoration:underline;" id="consentToggle1">Details</span>
+            </label>
           </div>
           <div class="checkbox-row">
             <input type="checkbox" id="consent_reminders" />
             <label for="consent_reminders">Erinnert mich per E-Mail an meinen nächsten Check. Abbestellen geht jederzeit mit einem Klick. <span style="color:var(--text-muted);">(freiwillig)</span></label>
           </div>
+          <div id="noAiRow" style="font-size:11px;color:var(--text-muted);margin:2px 0 4px;line-height:1.5;">Lieber ohne KI? <a href="#" id="noAiLink" onclick="toggleNoAi(event)" style="color:inherit;text-decoration:underline;">Einordnung aus festen Textbausteinen wählen</a></div>
         </div>
         <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">${o.btn || 'Meinen kostenlosen Vital-Plan anfordern →'}</button>
         <div style="margin-top:8px;font-size:11px;color:var(--text-muted);text-align:center;line-height:1.5;">Wer Zugriff auf dein E-Mail-Postfach hat, kann sich mit dem Link oder Code anmelden. Ein Anmeldelink gilt eine Stunde und nur einmal.</div>
@@ -9756,7 +9774,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.21.19</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.22.0</footer>
 
 
 </body>
