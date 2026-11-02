@@ -36,6 +36,7 @@
   Testmodus: ?internal=1 zeigt die letzte Server-Antwort.
 
   Versionen:
+1.8.0 (02.11.2026) Wunsch Jörg: Karte „Dein Verlauf“ (ab zwei Checks) bzw. „Dein Index im Detail“ – Index-Verlauf als Linie, Tabelle aller acht Bereiche mit Gewicht, aktuellem Wert und Veränderung seit dem letzten und dem ersten Check, Summenzeile; aufklappbar „So entsteht dein Index“ (gewichteter Mittelwert, Stufen, Schwelle „stabil“ unter 2 Punkten, Orientierungswerte). Alles aus score_payload von my_checks, keine neue Abfrage. Re-Checks in der Liste gekennzeichnet.
 1.7.0 (25.10.2026) Wunsch Jörg: Modulkarte Ernährungs-Check zeigt laufende Runde und Kurzcheck-Termin (nutrition-check Modus „load“, nur lesen).
 1.6.0 (24.10.2026) Gewichtung nach Zeitpunkt (Wunsch Jörg): beim neuesten Check ist "Ergebnis ansehen" der
 Hauptknopf; "Neuen Vital-Check starten" ist bis 8 Wochen nach dem letzten Check nur ein kleiner Link mit Datum,
@@ -311,6 +312,17 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
     .recheck-link { display: inline-block; margin-top: 6px; font-size: 13.5px; font-weight: 600; color: var(--text-secondary); text-decoration: underline; } /* 1.6.0 */
     .recheck-link:hover { color: var(--text-primary); }
     .recheck-soon { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); } /* 1.6.0 */
+  /* 1.8.0 Verlauf und Index-Tabelle */
+  .ptab { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .ptab th { font-size: 12px; font-weight: 600; color: var(--text-muted); text-align: right; padding: 6px; border-bottom: 1px solid var(--border); line-height: 1.25; vertical-align: bottom; }
+  .ptab td { text-align: right; padding: 8px 6px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .ptab td:first-child, .ptab th:first-child { white-space: normal; padding-left: 0; }
+  .ptab tr.ptot td { border-bottom: 0; border-top: 2px solid var(--border-hover); font-weight: 700; }
+  .pexp { margin-top: 14px; }
+  .pexp summary { cursor: pointer; font-weight: 600; color: var(--accent-green-text); font-size: 14px; }
+  .pexp p { font-size: 13.5px; color: var(--text-secondary); line-height: 1.55; margin: 8px 0 0; }
+  .pexp a { color: var(--accent-green-text); }
+  @media (max-width: 440px) { .ptab { font-size: 13px; } .ptab td, .ptab th { padding: 7px 3px; } .ptab th { font-size: 11px; } }
 
   .toggle { display: flex; gap: 14px; align-items: flex-start; padding: 12px 0; cursor: pointer; }
   .toggle + .toggle { border-top: 1px solid var(--border); }
@@ -384,7 +396,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.7.0"; // R7-01: Anzeige an den Stand 1.6.0 angeglichen
+  const FE_VERSION = "1.8.0"; // R7-01: Anzeige an den Stand 1.6.0 angeglichen
   const K = window.LeVitaKonto;
   const esc = K.esc;
   const params = new URLSearchParams(location.search);
@@ -582,6 +594,72 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
     } catch (e) { /* Karte bleibt beim Standardtext */ }
   }
 
+  // 1.8.0 (Jörg 02.11.2026): Index transparent und Verlauf über alle Checks – aus score_payload (my_checks), keine neue Abfrage.
+  // Der Index ist der gewichtete Mittelwert der acht Bereiche (Score-Version 4, Gewichte aus dem Payload jedes Checks).
+  const AREA_LBL = { activity: "Bewegung & Kraft", nutrition: "Ernährung", sleep: "Schlaf & Regeneration", bmi: "BMI / Körperkomposition",
+    smoking: "Rauchen", mental: "Stressbalance", alcohol: "Alkohol", vitamin_d: "Tageslicht" };
+  const LEVELS = [[85, "Vital & Stabil"], [67, "Aktiv mit Momentum"], [54, "Auf dem Weg"], [45, "Im Aufbau"], [0, "Neustart"]];
+  function areasOf(c) {
+    const p = (c && c.score_payload) || {};
+    return Object.keys(p).filter((k) => p[k] && typeof p[k] === "object" && p[k].weight != null && p[k].score != null)
+      .map((k) => ({ key: k, label: AREA_LBL[k] || p[k].label || k, score: Number(p[k].score), weight: Number(p[k].weight) }))
+      .sort((a, b) => b.weight - a.weight || a.label.localeCompare(b.label));
+  }
+  function deltaHtml(d, small) {
+    if (d == null || !isFinite(d)) return `<span class="flat">–</span>`;
+    if (Math.abs(d) < 2) return `<span class="flat">${small ? "≈" : "stabil"}</span>`;
+    return `<span class="${d > 0 ? "up" : "down"}">${d > 0 ? "+" : "−"}${num(Math.abs(d), 0)}</span>`;
+  }
+  function trendSvg(chrono) {
+    // chrono: älteste zuerst; nur bei mindestens zwei Checks
+    const pts = chrono.filter((c) => c.total_score != null);
+    if (pts.length < 2) return "";
+    const W = 320, H = 120, padX = 26, padTop = 18, padBot = 22;
+    const x = (i) => padX + (pts.length === 1 ? 0 : i * (W - 2 * padX) / (pts.length - 1));
+    const y = (v) => padTop + (100 - Math.max(0, Math.min(100, v))) * (H - padTop - padBot) / 100;
+    const line = pts.map((c, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(Number(c.total_score)).toFixed(1)}`).join(" ");
+    const grid = [45, 67, 85].map((v) => `<line x1="${padX}" x2="${W - padX}" y1="${y(v)}" y2="${y(v)}" stroke="currentColor" stroke-opacity=".12" stroke-dasharray="3 4"/>`).join("");
+    const dots = pts.map((c, i) => `<circle cx="${x(i)}" cy="${y(Number(c.total_score))}" r="4" fill="var(--accent-green)"/>
+        <text x="${x(i)}" y="${y(Number(c.total_score)) - 8}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--text-primary)">${num(c.total_score)}</text>
+        <text x="${x(i)}" y="${H - 6}" text-anchor="middle" font-size="10" fill="var(--text-muted)">${esc(dateDe(c.created_at).slice(0, 6))}</text>`).join("");
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Verlauf deines Vitalitäts-Index" style="width:100%;max-width:520px;height:auto;display:block;margin:4px 0 10px;color:var(--text-secondary);">
+        ${grid}<path d="${line}" fill="none" stroke="var(--accent-green)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>${dots}</svg>`;
+  }
+  function progressCard(list) {
+    // list: neueste zuerst
+    if (!list.length || list[0].total_score == null) return "";
+    const cur = list[0], prev = list[1] || null, first = list.length > 2 ? list[list.length - 1] : null;
+    const A = areasOf(cur);
+    if (!A.length) return "";
+    const mapOf = (c) => { const m = {}; areasOf(c).forEach((a) => { m[a.key] = a.score; }); return m; };
+    const P = prev ? mapOf(prev) : null, F = first ? mapOf(first) : null;
+    const care = cur.care_status && CARE_ACTIVE.includes(cur.care_status);
+    const sumW = A.reduce((s, a) => s + a.weight, 0) || 100;
+    const head = `<tr><th style="text-align:left;">Bereich</th><th>Gewicht</th><th>Jetzt</th>${P ? `<th title="seit ${esc(dateDe(prev.created_at))}">seit<br>letztem</th>` : ""}${F ? `<th title="seit ${esc(dateDe(first.created_at))}">seit<br>erstem</th>` : ""}</tr>`;
+    const body = A.map((a) => `<tr><td style="text-align:left;">${esc(a.label)}</td><td>${num(a.weight)} %</td><td><strong>${num(a.score)}</strong></td>${P ? `<td>${deltaHtml(P[a.key] != null ? a.score - P[a.key] : null, true)}</td>` : ""}${F ? `<td>${deltaHtml(F[a.key] != null ? a.score - F[a.key] : null, true)}</td>` : ""}</tr>`).join("");
+    const dTot = prev && prev.total_score != null ? Number(cur.total_score) - Number(prev.total_score) : null;
+    const dFirst = first && first.total_score != null ? Number(cur.total_score) - Number(first.total_score) : null;
+    const top = A.slice().sort((a, b) => (b.weight * (100 - b.score)) - (a.weight * (100 - a.score)))[0];
+    const chrono = list.slice().reverse();
+    const summary = prev
+      ? `Dein Index: <strong>${num(cur.total_score)}</strong> – ${Math.abs(dTot) < 2 ? "stabil gehalten" : `${dTot > 0 ? "+" : "−"}${num(Math.abs(dTot), 1)} Punkte`} seit deinem Check vom ${esc(dateDe(prev.created_at))}${first ? `, ${Math.abs(dFirst) < 2 ? "stabil" : `${dFirst > 0 ? "+" : "−"}${num(Math.abs(dFirst), 1)}`} seit deinem ersten Check vom ${esc(dateDe(first.created_at))}` : ""}.`
+      : `Dein Index: <strong>${num(cur.total_score)}</strong>. Mit deinem nächsten Check siehst du hier, was sich in jedem Bereich verändert hat.`;
+    return `<div class="card" id="progress">
+        <h2>${prev ? "Dein Verlauf" : "Dein Index im Detail"}</h2>
+        <p class="muted" style="margin-top:0;">${summary}</p>
+        ${trendSvg(chrono)}
+        <div style="overflow-x:auto;"><table class="ptab">${head}${body}
+          <tr class="ptot"><td style="text-align:left;">Vitalitäts-Index</td><td>${num(sumW)} %</td><td><strong>${num(cur.total_score)}</strong></td>${P ? `<td>${deltaHtml(dTot, true)}</td>` : ""}${F ? `<td>${deltaHtml(dFirst, true)}</td>` : ""}</tr></table></div>
+        ${top && top.score < 85 && !care ? `<p class="note">Am meisten bewegt sich dein Index über <strong>${esc(top.label)}</strong> – hoher Anteil und noch Luft nach oben.</p>` : ""}
+        <details class="pexp"><summary>So entsteht dein Index</summary>
+          <p>Jeder Bereich bekommt aus deinen Antworten einen Wert von 0 bis 100. Der Vitalitäts-Index ist der gewichtete Mittelwert dieser acht Werte – die Gewichte stehen in der Tabelle und sind für alle gleich. Beispiel: Bewegung & Kraft zählt ${num((A.find((a) => a.key === "activity") || { weight: 25 }).weight)} %, ein Plus von 10 Punkten dort hebt den Index um rund ${num((A.find((a) => a.key === "activity") || { weight: 25 }).weight / 10, 1)} Punkte.</p>
+          <p>Stufen: ${LEVELS.slice().reverse().map(([m, l]) => m === 0 ? `${l} unter ${LEVELS[LEVELS.length - 2][0]}` : `${l} ab ${m}`).join(" · ")}. Bei täglichem Rauchen bleibt die Stufe begrenzt, auch wenn der Index höher liegt.</p>
+          <p>Eine Veränderung unter 2 Punkten zeigen wir als „stabil“ – so klein kann sie schon durch eine etwas andere Antwort entstehen.</p>
+          <p>Alle Werte sind Orientierungswerte, keine medizinischen Befunde. Die Gewichtung ist eine fachlich begründete Auswahl, kein medizinisch validiertes Vorhersagemodell. <a href="so-entsteht-deine-auswertung.html" target="_blank" rel="noopener">Mehr dazu, wie die Auswertung entsteht</a></p>
+        </details>
+      </div>`;
+  }
+
   async function screenHome(note = "") {
     $logout.classList.remove("hidden");
     spinner();
@@ -615,7 +693,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
       return `<div class="check">
           <div><div class="date">${esc(dateDe(c.created_at))}</div>
             <div class="label">${checkLabel(c)}</div>
-            <div class="code">${esc(c.public_code)}</div>
+            <div class="code">${esc(c.public_code)}${c.previous_public_code ? " · Re-Check" : ""}</div>
             <a class="${i === 0 ? "btn open-main" : "open-link"}" href="index.html?code=${encodeURIComponent(c.public_code)}" data-open="${esc(c.public_code)}">Ergebnis ansehen →</a></div>
           <div><div class="score">${num(c.total_score)}<small> /100</small></div>${delta}</div>
         </div>`;
@@ -641,6 +719,8 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
         <p class="recheck-hint">Zeit für deinen nächsten Check: Dein neues Ergebnis wird automatisch mit dem letzten verglichen.</p>`;
     })() : ""}
       </div>
+
+      ${progressCard(list)}
 
       ${list.length ? modulesCard(list[0]) : ""}
 
