@@ -756,6 +756,7 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.22.1 (02.11.2026, Jörg: Stufe 3 aktiv anbieten): Direkt unter der Bestätigung „Dein Vital-Plan ist freigeschaltet“ fragt ein Kasten „Magst du dein Ergebnis kurz mit uns besprechen?“ – „Ja, ruft mich an“ klappt Telefon, Zeitfenster und Anruf-Haken auf (Edge-Modus studio_request, Weg callback), „Jetzt nicht“ blendet ihn für die Sitzung aus. Nicht bei ärztlichem Vorrang, nicht nach einer Anfrage. Neue Messpunkte: quick_callback_view/open/later, studio_card_view; studio_request_sent mit from quick. Plan-Mail lädt konkret ein (Edge edge-2026-11-02.58).
 v2.22.0 (02.11.2026, Jörg): Mail-Kasten mit EINEM Pflicht-Häkchen (Plan mit persönlicher Einordnung + persönlicher Bereich, konto-v4). Darunter "Lieber ohne KI?" – dann Einordnung aus festen Textbausteinen, nichts an Anthropic (Edge edge-2026-11-02.57, Einwilligung levita-privacy-v5). Erinnerung bleibt freiwillig. Neue Messpunkte: mail_email_typed, mail_consent_checked, mail_no_ai_chosen; mail_sent_success mit ki.
 v2.21.19 (31.10.2026, Jörg): Handy-Startbild zeigt wieder Gesichter und Handy – Ausschnitt 52 % statt 86 %, Höhe 190 statt 170 px. Start-Knopf bleibt im ersten Bild.
 v2.21.18 (30.10.2026, Jörg): Einstieg auf dem Handy neu geordnet – Bild 170 statt 290 px, Kopfzeile flacher, darunter direkt „Was möchtest du erreichen?“ mit vier Ziel-Knöpfen (ein Tipp beantwortet die erste Frage), Start-Knopf bleibt darunter; die Merkmalzeile (8 Lebensbereiche …) entfällt nur auf dem Handy. Überschrift passt sich der Anzeige an (utm_content vc_team/vc_vito → Hebel, vc_ernaehrung → Ernährung, sonst unverändert). Jedes Event trägt lp_variant (z. B. m2-hebel), damit die Fassungen im Funnel vergleichbar sind. Desktop unverändert.
@@ -5393,6 +5394,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     setTimeout(() => { updateSimulatorUI(); syncRadarToggleButtons(); }, 120); // V2: Startzustand Simulator + Radar-Schalter
     setTimeout(() => { document.querySelectorAll(".area-bar-fill[data-w]").forEach(el => { el.style.width = el.getAttribute("data-w") + "%"; }); }, 300);
     setTimeout(initStageTracking, 400);
+    setTimeout(initStudioCardTracking, 450);   // v2.22.1
     setTimeout(initReferralTracking, 450);
     if (!opts.rerender) ra.scrollIntoView({ behavior:"smooth" });
   }
@@ -7512,6 +7514,103 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
         </div>`;
   }
   // Eine ruhige Bestätigungszeile statt der Verwaltung oben (Zugang, Newsletter usw. stehen ganz unten)
+  // v2.22.1 (02.11.2026, Stufe 3 aktiv anbieten): kurzes Rückruf-Angebot direkt nach der Freischaltung.
+  // Zweistufig: erst eine Frage mit "Ja, ruft mich an" / "Jetzt nicht", das Formular klappt erst auf Klick auf.
+  // Nicht bei ärztlichem Vorrang, nicht nach einer Studio-Anfrage, nicht nach "Jetzt nicht" (Sitzung).
+  function quickCallbackHtml() {
+    const D = window._decision || {};
+    if (D.doctor || window._studioRequest || (latestResult && latestResult.studio_request) || window._qcHidden) return "";
+    let hidden = false; try { hidden = sessionStorage.getItem("qc_hidden") === "1"; } catch (e) {}
+    if (hidden) return "";
+    const name = escHtml((window._unlockInfo && window._unlockInfo.firstName) || personalData.first_name || "");
+    const slot = (v) => `<label class="stage-slot"><input type="radio" name="qc_slot" value="${v}"><span>${v}</span></label>`;
+    if (!window._qcViewSent) { window._qcViewSent = true; setTimeout(() => { try { trackEvent("quick_callback_view", { praxis: !!D.praxis }); } catch (e) {} }, 300); }
+    return `<div id="qcBox" style="background:rgba(var(--accent-blue-rgb,59,130,246),0.07);border:1px solid rgba(var(--accent-blue-rgb,59,130,246),0.28);border-radius:14px;padding:14px 16px;margin:0 0 14px;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:4px;">Magst du dein Ergebnis kurz mit uns besprechen?</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.55;">15 Minuten im Studio, kostenlos. Wir schauen gemeinsam auf deinen ersten Schritt und messen, was der Fragebogen nur schätzen kann.${D.praxis ? " Das geht auch schon vor dem Gespräch in deiner Hausarztpraxis." : ""}</div>
+        <div id="qcAsk" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+          <button type="button" class="stage-btn-blue" onclick="openQuickCallback()" style="flex:1 1 180px;border:none;cursor:pointer;font-family:inherit;">Ja, ruft mich an</button>
+          <button type="button" onclick="hideQuickCallback()" style="flex:0 1 auto;background:none;border:1px solid var(--border,rgba(127,127,127,0.35));border-radius:10px;padding:10px 14px;color:var(--text-secondary);cursor:pointer;font-family:inherit;font-size:13px;">Jetzt nicht</button>
+        </div>
+        <div id="qcForm" style="display:none;margin-top:12px;">
+          ${name ? `<input type="hidden" id="qc_name" value="${name}">` : `<label class="stage-form-label" for="qc_name">Vorname</label><input type="text" id="qc_name" class="stage-input" maxlength="60" autocomplete="given-name">`}
+          <label class="stage-form-label" for="qc_phone">Telefon</label>
+          <input type="tel" id="qc_phone" class="stage-input" autocomplete="tel" maxlength="25" placeholder="0170 …">
+          <div class="stage-form-legend" style="margin-top:12px;">Wann passt es dir am besten?</div>
+          <div class="stage-slots">${slot("vormittags")}${slot("nachmittags")}${slot("abends")}</div>
+          <div class="checkbox-row" style="margin-top:12px;">
+            <input type="checkbox" id="qc_c1">
+            <label for="qc_c1" style="font-size:12.5px;">LeVITA darf mich zur Terminabsprache anrufen.</label>
+          </div>
+          <button type="button" class="stage-btn-blue" id="qcBtn" onclick="submitQuickCallback()" style="width:100%;border:none;cursor:pointer;font-family:inherit;margin-top:12px;">Rückruf anfordern</button>
+          <div id="qc-status"></div>
+          <div style="font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-top:8px;">Lieber selbst melden? Telefon und Öffnungszeiten stehen weiter unten bei „Dein Gespräch im Studio“.</div>
+        </div>
+      </div>`;
+  }
+  function openQuickCallback() {
+    const f = document.getElementById("qcForm"), a = document.getElementById("qcAsk");
+    if (f) f.style.display = "";
+    if (a) a.style.display = "none";
+    const p = document.getElementById("qc_phone"); const n = document.getElementById("qc_name");
+    if (n && n.type !== "hidden" && !n.value) n.focus(); else if (p) p.focus();
+    try { trackEvent("quick_callback_open", { from_stage: window._stage }); } catch (e) {}
+  }
+  function hideQuickCallback() {
+    window._qcHidden = true;
+    try { sessionStorage.setItem("qc_hidden", "1"); } catch (e) {}
+    document.getElementById("qcBox")?.remove();
+    try { trackEvent("quick_callback_later", { from_stage: window._stage }); } catch (e) {}
+  }
+  async function submitQuickCallback() {
+    const name = (document.getElementById("qc_name")?.value || "").trim().slice(0, 60);
+    const phone = (document.getElementById("qc_phone")?.value || "").trim();
+    const slot = document.querySelector('input[name="qc_slot"]:checked')?.value || "";
+    const c1 = document.getElementById("qc_c1")?.checked === true;
+    const st = document.getElementById("qc-status"), btn = document.getElementById("qcBtn");
+    const fail = (msg) => { if (st) st.innerHTML = `<div class="status-msg info-box box-warning">${msg}</div>`; };
+    if (!name) return fail("Bitte gib deinen Vornamen an.");
+    if (!/^[+0-9][0-9 ()\/-]{5,24}$/.test(phone)) return fail("Bitte gib eine gültige Telefonnummer an.");
+    if (!slot) return fail("Bitte wähle, wann es dir am besten passt.");
+    if (!c1) return fail("Bitte bestätige, dass wir dich zur Terminabsprache anrufen dürfen.");
+    if (!latestResult || !latestResult.public_code) return fail("Es liegt kein Ergebnis vor. Bitte lade die Seite neu.");
+    if (btn) { btn.disabled = true; btn.textContent = "Wird gesendet …"; }
+    const ta = _srTaAlready();
+    try {
+      const res = await callFunction({
+        mode: "studio_request", public_code: latestResult.public_code,
+        pin: window._accessPin || null, client_token: window._clientToken || null,
+        first_name: name, offer: "gespraech", contact_way: "callback", consent_trainer_access: ta,
+        phone, preferred_slot: slot, consent_contact: true
+      });
+      if (res && res.access_pin) window._accessPin = res.access_pin;
+      window._studioRequest = { name, slot, offer: "gespraech", way: "callback" };
+      trackEvent("studio_request_sent", { from_stage: window._stage, offer: "gespraech", trainer_access: ta, contact_way: "callback", from: "quick" });
+      const box = document.getElementById("qcBox");
+      if (box) box.innerHTML = `<div style="display:flex;gap:10px;align-items:flex-start;"><div style="color:var(--accent-green-text);font-weight:700;">✓</div><div><div style="font-size:15px;font-weight:700;">Danke, ${escHtml(name)} – wir melden uns</div><div style="font-size:13px;color:var(--text-secondary);line-height:1.55;margin-top:2px;">Wir rufen dich an, am liebsten ${escHtml(slot)}, und vereinbaren deinen Termin. Im Gespräch schauen wir gemeinsam auf deine Stärken, deinen wichtigsten Ansatzpunkt und zwei passende nächste Schritte.</div></div></div>`;
+      const sf = document.getElementById("stageStudioForm");
+      if (sf) sf.innerHTML = stageStudioDoneHtml(window._studioRequest);
+      document.querySelectorAll('.referral-box[data-place="stufe1"], .referral-box[data-place="plan"]').forEach(el => el.remove());
+      try { setTimeout(initReferralTracking, 100); } catch (e) {}
+    } catch (e) {
+      const m = String((e && e.message) || "");
+      fail(/PIN_REQUIRED|SESSION_EXPIRED/.test(m)
+        ? "Die Anfrage geht nur aus deiner aktuellen Sitzung. Ruf uns gern direkt an oder komm einfach vorbei."
+        : "Das hat gerade nicht geklappt. Bitte versuch es gleich noch einmal oder ruf uns direkt an.");
+      if (btn) { btn.disabled = false; btn.textContent = "Rückruf anfordern"; }
+    }
+  }
+  // v2.22.1 — Wird die Studio-Karte (Stufe 3) überhaupt gesehen? Einmal je Sitzung.
+  function initStudioCardTracking() {
+    if (window._studioCardSeen) return;
+    const el = document.getElementById("stageStudio");
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const ob = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting && !window._studioCardSeen) { window._studioCardSeen = true; try { trackEvent("studio_card_view", { from_stage: window._stage }); } catch (x) {} ob.disconnect(); } });
+    }, { threshold: 0.4 });
+    ob.observe(el);
+  }
+
   function stageConfirmLineHtml(S) {
     const info = window._unlockInfo || {};
     return `<div class="stage-confirm"><div style="color:var(--accent-green-text);font-weight:700;">✓</div><div><strong>Dein Vital-Plan ist freigeschaltet.</strong>${info.email ? ` Die Mail ist unterwegs an <strong>${escHtml(info.email)}</strong> – schau ggf. auch im Spam-Ordner.` : ""} Zugang und Re-Check findest du <a href="#stageAccess" onclick="event.preventDefault();document.getElementById('stageAccess')?.scrollIntoView({behavior:'smooth',block:'start'})">ganz unten</a>.</div></div>`;
@@ -7625,7 +7724,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     // (geöffnet) und „Mein Ergebnis“ → ganz unten Zugang, Re-Check, Zusatzmodule, Newsletter. Ohne Kernaussage (alte Edge): bisheriger Aufbau.
     const hasKern = !!kernOf(S);
     const review = !window._unlockInfo && window._isReviewMode && window._accessPin;
-    if (window._unlockInfo) html += hasKern ? stageConfirmLineHtml(S) : stageUnlockBannerHtml(S);
+    if (window._unlockInfo) html += (hasKern ? stageConfirmLineHtml(S) : stageUnlockBannerHtml(S)) + quickCallbackHtml();   // v2.22.1: Rückruf-Angebot direkt unter der Bestätigung
     else if (window._isReviewMode && window._accessPin) html += hasKern ? "" : (S.recheckBanner || "");
     else if (S.mailBox) {
       // Verknüpfter Re-Check ohne neue Mail: der neue Vital-Plan wird hier angefordert.
@@ -9774,7 +9873,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.22.0</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.22.1</footer>
 
 
 </body>
