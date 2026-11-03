@@ -756,6 +756,24 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.23.0 (03.11.2026, Jörg: UX-Prüfung vom 03.11.2026, Schritt A – nur Frontend, kein Eingriff in Scoring, Fragen oder Edge):
+- UX-02: Basisdaten ohne „Name ist optional“ (dort gibt es kein Namensfeld); Zweck von Alter/Geschlecht/Größe/Gewicht erklärt.
+- UX-03/04: Abschnittsansicht mit großem Buddy nur noch bei Bereichen ab drei Fragen (AREA_GATE_MIN_QUESTIONS). Kurze Bereiche
+  starten direkt, Buddy klein im Kopf der ersten Frage. Keine feste Fragenzahl und keine Minuten je Abschnitt mehr, stattdessen
+  verbleibende Gesamtzeit und ein Satz zum Zweck (AREA_PURPOSE).
+- UX-01: Startseite spricht beim Simulator von rechnerischen Indexpunkten; Beispiel trennt Antwortkategorie und ersten Schritt.
+- UX-11: Nach „ohne KI“ folgen auch Detailtext und Fußzeile der Auswahl (Anthropic wird dort nicht mehr genannt).
+- UX-17: Versorgungskarte ohne Punktzahl; bei „kein Bedarf“: kein Anlass erkennbar, Nährstoffstatus nicht gemessen.
+- UX-10: Rückruf-Angebot bleibt oben direkt unter der Bestätigung (Entscheidung Jörg 03.11.2026, wie v2.22.1).
+- UX-13: Unterer Block heißt „So geht's weiter“; Newsletter-Überschrift „Newsletter: Tipps, Neuigkeiten und Angebote“
+  (Einwilligungstext unverändert).
+- UX-14: Mit Kernaussage nur eine freiwillige Ergänzung offen, weitere eingeklappt; allgemeine Tipps (Unterstützungsbox)
+  aufklappbar. Nichts gestrichen.
+- UX-21: Aufklappbare Kurzanleitung (drei Übungen, Sätze, Wiederholungen), wenn der erste Schritt Krafttraining ist.
+- UX-09/15: Simulator-Hebel sind benannte Schalter (role=switch, aria-checked, Tastatur Leertaste/Enter); Rundungshinweis.
+Offen für Schritt B/Edge: UX-05/06/07 (Fragetexte, eigene Fragebogen-Version), UX-08/18 (Begründung aus Priorisierungsregel,
+Edge), UX-12 (Modulübergang), UX-16 (LogiVita-Seite), UX-19/20 (Mailtexte, Edge).
+
 v2.22.3 (02.11.2026, Jörg): Rückruf-Formular mit freiwilligem, nicht vorbelegtem Häkchen zur Trainer-Einsicht (gleicher Wortlaut wie die Studio-Karte; nur wenn noch nicht erteilt). PIN-Hinweise im Mail-Kasten entfernt („In deinem persönlichen Bereich findest du dein Ergebnis jederzeit wieder“), Zusatzmodule ohne „alternativ mit Pilot-ID und PIN“. Edge edge-2026-11-02.60: Studio-Benachrichtigung verweist auf „Mein Bereich“.
 v2.22.2 (02.11.2026, Jörg: Plan-Vorschau): Vor der Mail-Anforderung steht unter dem ersten Schritt „So geht es weiter“ – Woche 3–4, 5–6 und 7–12 mit je dem ersten Satz aus dem echten Plan (kernaussage.preview, Edge edge-2026-11-02.59, dieselbe Quelle wie die Mail) und der Knopf „Plan per Mail anfordern →“ (springt zum Mail-Kasten). Nichts verschwommen oder verschlossen. Nicht bei ärztlichem Vorrang, Praxis-Vorrang, festem Plan oder sehr Sportlichen (planNote). Messpunkte plan_preview_view, plan_preview_cta.
 v2.22.1 (02.11.2026, Jörg: Stufe 3 aktiv anbieten): Direkt unter der Bestätigung „Dein Vital-Plan ist freigeschaltet“ fragt ein Kasten „Magst du dein Ergebnis kurz mit uns besprechen?“ – „Ja, ruft mich an“ klappt Telefon, Zeitfenster und Anruf-Haken auf (Edge-Modus studio_request, Weg callback), „Jetzt nicht“ blendet ihn für die Sitzung aus. Nicht bei ärztlichem Vorrang, nicht nach einer Anfrage. Neue Messpunkte: quick_callback_view/open/later, studio_card_view; studio_request_sent mit from quick. Plan-Mail lädt konkret ein (Edge edge-2026-11-02.58).
@@ -2004,6 +2022,10 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     .supply-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .supply-name { font-size: 13px; font-weight: 700; color: var(--text-primary); display: inline-flex; align-items: center; gap: 6px; }
     .supply-chip { font-size: 10.5px; font-weight: 700; letter-spacing: .3px; color: var(--text-secondary); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; }
+    /* v2.23.0 (UX-14): eingeklappte Plan-Ergänzungen */
+    details.plan-more { margin: 4px 0 14px; border: 1px solid var(--border); border-radius: var(--radius-sm, 10px); padding: 10px 14px; }
+    details.plan-more > summary { cursor: pointer; font-size: 13.5px; font-weight: 700; color: var(--text-secondary); }
+    details.plan-more[open] > summary { margin-bottom: 10px; }
     .supply-val { margin-left: auto; font-size: 15px; font-weight: 800; }
     .supply-word { font-size: 12.5px; font-weight: 700; margin: 6px 0 2px; }
     .supply-text { font-size: 13px; line-height: 1.55; color: var(--text-secondary); }
@@ -2166,6 +2188,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     .sim-switch { position: relative; width: 40px; height: 22px; border-radius: 12px; background: rgba(var(--ink-rgb),0.12); flex-shrink: 0; transition: background 0.2s; }
     .sim-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--text-secondary); transition: all 0.2s; }
     .sim-lever.on .sim-switch { background: var(--accent-blue); }
+    .sim-lever:focus-visible { outline: 2px solid var(--accent-blue); outline-offset: 2px; }
     .sim-lever.on .sim-switch::after { left: 20px; background: var(--knob); }
     .sim-projection { display: flex; align-items: center; gap: 14px; background: rgba(var(--accent-blue-rgb),0.06); border: 1px dashed rgba(var(--accent-blue-rgb),0.4); border-radius: var(--radius-sm); padding: 14px 16px; margin: 12px 0 10px; }
     .sim-proj-num { font-family: 'DM Serif Display', serif; font-size: 30px; line-height: 1; color: var(--accent-blue-text); white-space: nowrap; }
@@ -2622,7 +2645,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     <div class="lp-value">
       <div class="lp-vrow"><div class="lp-vicon"><svg class="ic" aria-hidden="true"><use href="#ic-radar"/></svg></div><div class="lp-vget">Deine Vitalitäts-Spinne mit allen Bereichen</div><div class="lp-vuse">Du siehst auf einen Blick, wo du stark bist.</div></div>
       <div class="lp-vrow"><div class="lp-vicon"><svg class="ic" aria-hidden="true"><use href="#ic-target"/></svg></div><div class="lp-vget">Dein größter Hebel</div><div class="lp-vuse">Du weißt, wo sich der erste Schritt am meisten lohnt.</div></div>
-      <div class="lp-vrow"><div class="lp-vicon"><svg class="ic" aria-hidden="true"><use href="#ic-sliders"/></svg></div><div class="lp-vget">Der Potenzial-Simulator</div><div class="lp-vuse">Du siehst, was eine Veränderung bringt — bevor du sie machst.</div></div>
+      <div class="lp-vrow"><div class="lp-vicon"><svg class="ic" aria-hidden="true"><use href="#ic-sliders"/></svg></div><div class="lp-vget">Der Potenzial-Simulator</div><div class="lp-vuse">Du siehst, wie sich dein Index rechnerisch verändert, wenn sich einzelne Angaben ändern.</div></div>
       <div class="lp-vrow"><div class="lp-vicon"><svg class="ic" aria-hidden="true"><use href="#ic-envelope"/></svg></div><div class="lp-vget">Dein Vital-Plan per Mail</div><div class="lp-vuse">Persönlich auf deine Antworten geschrieben: 6-Wochen-Plan mit Ausblick bis zum Re-Check – dazu dein persönlicher Bereich, wenn du ihn anforderst.</div></div>
       <div class="lp-vrow"><div class="lp-vicon"><svg class="ic" aria-hidden="true"><use href="#ic-trending"/></svg></div><div class="lp-vget">Dein Re-Check im persönlichen Bereich</div><div class="lp-vuse">In 8–12 Wochen siehst du schwarz auf weiß, was sich verändert hat.</div></div>
       <div class="lp-vrow"><div class="lp-vicon"><svg class="ic" aria-hidden="true"><use href="#ic-users"/></svg></div><div class="lp-vget">Ein Gespräch im Studio, wenn du magst</div><div class="lp-vuse">Du setzt deinen Plan mit Menschen um, die dich begleiten.</div></div>
@@ -2647,7 +2670,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
           <div class="lp-ex-facts">
             <div class="lp-ex-fact"><b>Stärken:</b> Schlaf und ein ausgewogener Lebensstil — ihre Basis.</div>
             <div class="lp-ex-fact hebel"><b>Größter Hebel:</b> Bewegung — hier bringt der erste Schritt am meisten.</div>
-            <div class="lp-ex-fact sim"><b>Simulator:</b> Von 1–2 auf 3–4 aktive Tage pro Woche bringt ihr rund +3 Punkte im Vitalitäts-Index.</div>
+            <div class="lp-ex-fact sim"><b>Simulator:</b> Lautet ihre Antwort später „3–4 aktive Tage“ statt „1–2“, rechnet der Index rund +3 Punkte. Der erste Schritt dorthin ist ein zusätzlicher aktiver Tag.</div>
           </div>
           <div class="lp-ex-mail">„Dein Schlaf ist eine echte Stärke, darauf kannst du aufbauen. Für mehr Energie liegt dein größter Hebel in der Bewegung: Nimm einen aktiven Tag pro Woche dazu — 30 Minuten zügig gehen, mit Uhr oder Handy rund 3.000 Schritte.“<span>Auszug aus einem Vital-Plan</span></div>
         </div>
@@ -4155,7 +4178,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
         <div class="question-text">Deine persönlichen Angaben</div>
         <div class="help-text">${pre
           ? 'Deine Angaben vom letzten Check sind übernommen. Bitte prüfe besonders <strong style="color:var(--text-primary);">Alter und Gewicht</strong> — die beiden ändern sich, und der Vergleich wird nur so genau wie diese Zahlen.'
-          : 'Für deinen persönlichen Vitalitäts-Index brauchen wir noch ein paar Angaben zu dir, etwa Alter, Größe und Gewicht. Name ist optional.'}</div>
+          : 'Für deinen persönlichen Vitalitäts-Index brauchen wir noch ein paar Angaben zu dir. Alter und Geschlecht helfen bei der Einordnung deiner Antworten, aus Größe und Gewicht berechnen wir deinen BMI.'}</div>
         <div class="form-grid">
 
           <div class="form-field"><label>Alter *</label><input type="number" id="age" placeholder="z.B. 38" min="18" max="100" value="${pre ? v(pre.age) : ''}" /></div>
@@ -4196,9 +4219,18 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
   // tritt nach "Weiter" zur Seite. Damit bleibt currentStep unberuehrt —
   // gespeicherte Fortschritte (progress_resumed) und die Trichterzahlen
   // (step_answered.step_index) bleiben mit allen bisherigen Checks vergleichbar.
+  // v2.23.0 (UX-Prüfung 03.11.2026, UX-04): Die Abschnittsansicht mit grossem Buddy
+  // gibt es nur noch fuer Bereiche ab drei Fragen. Kurze Bereiche beginnen direkt
+  // mit der Frage; Buddy steht dann klein im Kopf der ersten Frage, ohne Extra-Klick.
+  const AREA_GATE_MIN_QUESTIONS = 3;
+  function areaIsLong(key) {
+    const m = areaMeta(key);
+    return (m.count + m.cond) >= AREA_GATE_MIN_QUESTIONS;
+  }
   function questionStepHtml(q) {
-    const gate = BUDDY_ENABLED && buddyIsAreaStart(q) && !_areaIntroSeen[q.area_key];
-    const body = questionCardHtml(q, gate);
+    const start = BUDDY_ENABLED && buddyIsAreaStart(q);
+    const gate = start && !_areaIntroSeen[q.area_key] && areaIsLong(q.area_key);
+    const body = questionCardHtml(q, gate, start && !gate);
     return gate ? areaGateHtml(q, body) : body;
   }
 
@@ -4224,17 +4256,30 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     return { pos: seq.indexOf(key) + 1, total: seq.length, count: count, cond: cond };
   }
 
+  // v2.23.0 (UX-03/04): keine feste Fragenzahl und keine Minuten je Abschnitt mehr
+  // (die Zahl stimmte je nach Verzweigung nicht, und acht Mal "etwa 1 Minute" passte
+  // nicht zu 5–7 Minuten gesamt). Stattdessen die verbleibende Gesamtzeit und ein
+  // Satz, wozu die Angaben dienen.
+  const AREA_PURPOSE = {
+    nutrition: "Wie du isst und trinkst – das fließt in deinen Bereich Ernährung.",
+    sleep: "Wie lange und wie gut du schläfst – Grundlage für deinen Bereich Schlaf.",
+    activity: "Wie viel du dich bewegst und wie lange du sitzt – Grundlage für deinen Bereich Bewegung.",
+    mental: "Wie es dir mit Stress und Stimmung geht – Grundlage für deinen Bereich Stressbalance.",
+    micronutrients: "Ein paar Alltagsangaben, die uns bei der Einordnung helfen."
+  };
   function areaGateHtml(q, body) {
     const m = areaMeta(q.area_key);
-    const min = Math.max(1, Math.round((m.count * (STEP_SECONDS.question || 11)) / 60));
-    const sub = `${m.cond ? `${m.count}–${m.count + m.cond} Fragen` : `${m.count} ${m.count === 1 ? "Frage" : "Fragen"}`} · etwa ${min} ${min === 1 ? "Minute" : "Minuten"}`;
+    const idx = groupedQuestions.indexOf(q);
+    const rest = estimateRemaining(idx >= 0 ? idx : currentStep);
+    const purpose = AREA_PURPOSE[q.area_key] || "";
     const buddy = buddyForStep(q, { size: "lg", force: true });
     return `<div class="area-gate" data-area="${q.area_key}">
         <div class="area-intro">
           ${buddy}
           <div class="area-intro-kicker">Abschnitt ${m.pos} von ${m.total}</div>
           <div class="area-intro-title">${areaIco(q.area_key)} ${areaName(q.area_label, q.area_key)}</div>
-          <div class="area-intro-sub">${sub}</div>
+          ${purpose ? `<div class="area-intro-sub">${purpose}</div>` : ""}
+          ${rest ? `<div class="area-intro-sub">${rest.charAt(0).toUpperCase() + rest.slice(1)}</div>` : ""}
           <button class="next-btn" onclick="enterArea('${q.area_key}')">Weiter →</button>
         </div>
         <div class="area-body">${body}</div>
@@ -4255,12 +4300,14 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function questionCardHtml(q, noBuddy) {
+  function questionCardHtml(q, noBuddy, smallBuddy) {
     const icon = areaIco(q.area_key);
     // v2.8.19 — Seit es die Abschnittsansicht gibt, traegt NUR sie den Buddy.
     // Vorher rutschte er hinter eine gesperrte Frage (z. B. "niedergeschlagen")
     // auf die naechste Karte und stand damit mitten im Abschnitt.
-    const buddy = (noBuddy || BUDDY_ENABLED) ? "" : buddyForStep(q);
+    // v2.23.0: Ausnahme kurze Bereiche ohne Abschnittsansicht – dort steht der Buddy
+    // klein im Kopf der ersten Frage (smallBuddy kommt nur fuer den Bereichsbeginn).
+    const buddy = smallBuddy ? buddyForStep(q, { size: "sm" }) : ((noBuddy || BUDDY_ENABLED) ? "" : buddyForStep(q));
     const badge = `<div class="area-badge">${icon} ${areaName(q.area_label, q.area_key)}</div>`;
     // v2.9.0 (P1): PHQ-2 — Einleitung mit Zeitraum ÜBER der Frage, Quelle unter den Antworten
     const isPhq = PHQ_KEYS.includes(q.question_key) && (q.options || []).some(o => /^p[0-3]$/.test(o.option_key || ""));
@@ -5225,6 +5272,18 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       ? 'Ohne KI: Die Einordnung kommt aus festen Textbausteinen. Es geht nichts an Anthropic. Anmeldung per Link oder Code, jederzeit löschbar.'
       : 'Für die Einordnung gehen deine Angaben ohne Name und E-Mail-Adresse an Anthropic (USA), nicht zum Training von KI. Anmeldung per Link oder Code, jederzeit löschbar.';
     if (link) link.textContent = window._noAi ? 'Doch mit KI-Einordnung' : 'Einordnung aus festen Textbausteinen wählen';
+    // v2.23.0 (UX-11): auch Detailtext und Fusszeile folgen der Auswahl – vorher nannten sie nach
+    // "ohne KI" weiterhin Anthropic als Dienst für die Auswertung.
+    const det = document.getElementById('consentDetail1'), prov = document.getElementById('mbProviders');
+    if (det) {
+      if (!det.dataset.kiText) det.dataset.kiText = det.textContent;
+      det.textContent = window._noAi
+        ? 'Ohne KI entsteht die Einordnung aus festen Textbausteinen; an Anthropic geht nichts. Der Versand erfolgt über Resend (USA), Grundlage: Angemessenheitsbeschluss der EU-Kommission (EU-US Data Privacy Framework, Art. 45 DSGVO). Im persönlichen Bereich findest du deine Auswertung wieder. Angemeldet wirst du mit einem Link oder Code per E-Mail, ein Passwort gibt es nicht. Den Bereich kannst du jederzeit mit allen Daten löschen.'
+        : det.dataset.kiText;
+    }
+    if (prov) prov.textContent = window._noAi
+      ? 'Ohne KI ausgewählt: Für den Versand nutzen wir Resend (USA) – nur mit deiner Einwilligung.'
+      : 'Für Auswertung und Versand nutzen wir Anthropic und Resend (USA) – nur mit deiner Einwilligung.';
     try { trackEvent(window._noAi ? 'mail_no_ai_chosen' : 'mail_no_ai_undone'); } catch (_e) {}
   }
   // v2.22.0 — Messpunkte am Mail-Kasten, je Sitzung einmal: Adresse eingetippt, Häkchen gesetzt.
@@ -5809,7 +5868,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
         <button class="ai-btn" id="aiBtn" onclick="requestIndividualAnalysis()">${o.btn || 'Meinen kostenlosen Vital-Plan anfordern →'}</button>
         <div style="margin-top:8px;font-size:11px;color:var(--text-muted);text-align:center;line-height:1.5;">Wer Zugriff auf dein E-Mail-Postfach hat, kann sich mit dem Link oder Code anmelden. Ein Anmeldelink gilt eine Stunde und nur einmal.</div>
         <div id="ai-status"></div>
-        <div style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center;"><span style="color:var(--accent-green-text);">✓</span> Keine Werbung, kein Verkauf deiner Daten, jederzeit löschbar. Für Auswertung und Versand nutzen wir Anthropic und Resend (USA) – nur mit deiner Einwilligung. <a href="so-entsteht-deine-auswertung.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;" onclick="try{trackEvent('howitworks_open',{from:'mailbox'})}catch(e){}">So entsteht deine Auswertung</a></div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center;"><span style="color:var(--accent-green-text);">✓</span> Keine Werbung, kein Verkauf deiner Daten, jederzeit löschbar. <span id="mbProviders">Für Auswertung und Versand nutzen wir Anthropic und Resend (USA) – nur mit deiner Einwilligung.</span> <a href="so-entsteht-deine-auswertung.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;" onclick="try{trackEvent('howitworks_open',{from:'mailbox'})}catch(e){}">So entsteht deine Auswertung</a></div>
       </div>`;
     let mailBoxHtml = (window._isReviewMode && window._accessPin) ? renderMailAlreadySentHtml(result) : buildAiBox(teaserRows);
     S.buildAiBox = buildAiBox;
@@ -7526,6 +7585,20 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       </div>`;
   }
 
+  // v2.23.0 (UX-21): Beim Kraftschritt fehlte das praktische Wie. Kurze Anleitung zum Aufklappen,
+  // nur wenn der erste Schritt das Krafttraining betrifft. Grundlage: übliche Empfehlung für Einsteiger
+  // (WHO-Leitlinie 2020: Kraft für die großen Muskelgruppen an mindestens 2 Tagen; 8–12 Wiederholungen je Satz).
+  function kernStrengthHowtoHtml(k) {
+    const used = Array.isArray(k && k.used) ? k.used : [];
+    if (!used.includes("strength_training")) return "";
+    return `<details class="plan-more" style="margin-top:10px;"><summary>So geht's: drei einfache Übungen für den Start</summary>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+          <strong>Kniebeugen</strong> (ggf. mit Stuhl hinter dir), <strong>Liegestütze an Wand oder Tisch</strong> und <strong>Rudern mit Band</strong> (um einen Türgriff gelegt).<br>
+          Je Übung 2 Durchgänge mit 10–12 ruhigen Wiederholungen, dazwischen etwa 1 Minute Pause – zusammen rund 20 Minuten.
+          Die letzten Wiederholungen dürfen anstrengend sein, die Bewegung bleibt aber sauber. Fällt es nach zwei Wochen leicht: ein paar Wiederholungen mehr oder ein stärkeres Band.<br>
+          Unsicher bei der Technik? Im Studio zeigen wir dir die Übungen gern.
+        </div></details>`;
+  }
   function kernCardHtml(S, hintsHtml) {
     const k = kernOf(S);
     if (!k) return hintsHtml || "";
@@ -7536,6 +7609,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
           <div class="kern-label">${ICO("bolt")} ${escHtml(k.label || "Dein erster Schritt")}</div>
           <div class="kern-jetzt">${escHtml(k.jetzt)}</div>
           ${k.beob ? `<div class="kern-beob">${ICO("search")} <strong>Beobachte dabei:</strong> ${escHtml(k.beob)}</div>` : ""}
+          ${kernStrengthHowtoHtml(k)}
           ${locked && !k.planNote ? planPreviewHtml(k) : ``}
         </div>`;
   }
@@ -7752,6 +7826,8 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     // (geöffnet) und „Mein Ergebnis“ → ganz unten Zugang, Re-Check, Zusatzmodule, Newsletter. Ohne Kernaussage (alte Edge): bisheriger Aufbau.
     const hasKern = !!kernOf(S);
     const review = !window._unlockInfo && window._isReviewMode && window._accessPin;
+    // v2.23.0: Rückruf-Angebot bleibt direkt unter der Bestätigung (Entscheidung Jörg 03.11.2026, bestätigt v2.22.1 –
+    // die UX-Empfehlung UX-10, es nach unten zu verschieben, wurde bewusst nicht übernommen).
     if (window._unlockInfo) html += (hasKern ? stageConfirmLineHtml(S) : stageUnlockBannerHtml(S)) + quickCallbackHtml();   // v2.22.1: Rückruf-Angebot direkt unter der Bestätigung
     else if (window._isReviewMode && window._accessPin) html += hasKern ? "" : (S.recheckBanner || "");
     else if (S.mailBox) {
@@ -7824,7 +7900,10 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       const fi = _frei.items || [], fn = _frei.notes || [];
       if (fi.length || fn.length) {
         html += `<div class="t3-zone-title">Freiwillig, wenn du magst</div>`;
-        fi.forEach((o) => { html += `<div class="hint-box" style="background:var(--sunken);border-left:3px solid var(--border);border-radius:0;padding:13px 16px;margin-bottom:8px;"><strong>${escHtml(o.name || "")}</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${escHtml(o.text || "")}</span></div>`; });
+        // v2.23.0 (UX-14): höchstens eine freiwillige Ergänzung offen, weitere eingeklappt (nichts entfällt)
+        const _fiBox = (o) => `<div class="hint-box" style="background:var(--sunken);border-left:3px solid var(--border);border-radius:0;padding:13px 16px;margin-bottom:8px;"><strong>${escHtml(o.name || "")}</strong><br><span style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${escHtml(o.text || "")}</span></div>`;
+        if (fi.length) html += _fiBox(fi[0]);
+        if (fi.length > 1) html += `<details class="plan-more"><summary>Weitere freiwillige Ergänzungen (${fi.length - 1})</summary>${fi.slice(1).map(_fiBox).join("")}</details>`;
         fn.forEach((x) => { html += `<p style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin:4px 0 12px;">${escHtml(x)}</p>`; });
       }
     } else if (more.length) {
@@ -7835,7 +7914,10 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       });
     }
     // v2.21.9: Simulator steht mit Kernaussage im Reiter „Mein Ergebnis“ (unter der Spinne)
-    html += S.support || "";
+    // v2.23.0 (UX-14): die allgemeinen Abschnitte (Ernährung, Stress, Bewegung, Regeneration) stehen mit Kernaussage
+    // aufklappbar – vollständig erreichbar, aber nicht mehr gleichrangig neben dem konkreten Start.
+    if (hasKern && S.support) html += `<details class="plan-more"><summary>Allgemeine Tipps zu Ernährung, Stress, Bewegung und Regeneration</summary>${S.support}</details>`;
+    else html += S.support || "";
     html += S.supplyPlan || "";   // v2.8.20
     if (!hasKern) html += stageModulesCardHtml();   // v2.10.0 (W1)
     html += S.watch || "";
@@ -7857,7 +7939,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     // Ganz unten: Zugang & Re-Check, Zusatzmodule, Newsletter – erreichbar, aber nicht mehr vor dem Ergebnis
     if (hasKern) {
       html += `<div id="stageAccess">`;
-      html += planZoneHeadHtml("zugang", ICO("key"), "Dein Zugang und was es noch gibt", "Wiederkommen, Re-Check, Zusatzmodule.");
+      html += planZoneHeadHtml("zugang", ICO("key"), "So geht's weiter", "Dein Bereich, Re-Check und Zusatzmodule – das Gespräch im Studio ist freiwillig.");
       if (window._unlockInfo) html += stageUnlockBannerHtml(S);
       else if (review) { html += S.recheckBanner || ""; html += S.recheckLater || ""; if (S.mailBox) html += S.mailBox; }
       html += stageModulesCardHtml();
@@ -8613,7 +8695,13 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     let text = supplyMixedText(s) || SUPPLY_SHORT[s.case_key];
     // v2.12.2 (Paket H): offener Praxispunkt ohne Präparat (z. B. Eisen) zählt nicht in die Punktzahl — dann kein "Gut aufgestellt"
     const openClarify = (s.clarify || []).filter(n => !(s.products || []).some(p => p.substance === n));
-    let showVal = true;
+    // v2.23.0 (UX-17): keine Punktzahl mehr an der Karte – "100 · Gut aufgestellt" wirkte wie eine
+    // gemessene Versorgung. Gemessen wird hier nichts; die Karte sagt nur, ob die Angaben einen Anlass zeigen.
+    let showVal = false;
+    if (s.case_key === "kein_bedarf" && !openClarify.length) {
+      word = "Kein Anlass erkennbar";
+      text = "Aus deinen Angaben ist kein Anlass für eine Ergänzung erkennbar. Dein Nährstoffstatus wurde nicht gemessen.";
+    }
     if (s.case_key === "kein_bedarf" && openClarify.length) {
       word = "Ein Punkt für die Praxis"; col = "var(--accent-amber-text)"; showVal = false;
       text = `Kein Anlass, etwas einzunehmen. ${openClarify.map(n => SUPPLY_NUTRIENT[n] || n).join(" und ")}: Das sprichst du am besten in deiner Hausarztpraxis an.`;
@@ -8935,7 +9023,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       const icon = areaIco(l.area_key);
       const short = SIM_SHORT_LABELS[l.question_key] || l.label || l.question_key;
       leversHtml += `
-        <div class="sim-lever" id="simLever_${escHtml(l.question_key)}" onclick="toggleSimLever('${escHtml(l.question_key)}')">
+        <div class="sim-lever" id="simLever_${escHtml(l.question_key)}" role="switch" aria-checked="false" tabindex="0" aria-label="${escHtml(short)}: ${escHtml(l.from_text)} zu ${escHtml(l.to_text)}, plus ${fmtGain(l.gain)} Punkte" onclick="toggleSimLever('${escHtml(l.question_key)}')" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();toggleSimLever('${escHtml(l.question_key)}');}">
           <div class="sim-lever-body">
             <div class="sim-lever-title">${icon} ${escHtml(short)}${simTagHtml(l.question_key)}${l.area_label ? ` <span style="font-weight:500;color:var(--text-secondary);">· ${escHtml(l.area_key === "mental" ? "Stressbalance" : l.area_label)}</span>` : ''}${l.reason === 'goal' ? ` <span class="pill-goal">passt zu deinem Ziel</span>` : ''}</div>
             <div class="sim-lever-change">${escHtml(l.from_text)} → <strong style="color:var(--text-primary);">${escHtml(l.to_text)}</strong></div>
@@ -9195,7 +9283,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
   function marketingOptinHtml(source) {
     return `
       <div id="mkOptin" style="margin-top:12px;padding:14px 16px;background:var(--accent-green-dim);border:1px solid rgba(var(--accent-green-rgb),0.3);border-radius:var(--radius-sm);text-align:left;">
-        <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">${ICO("envelope")} Bleib dran — wir erinnern dich an deinen Re-Check</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">${ICO("envelope")} Newsletter: Tipps, Neuigkeiten und Angebote</div>
         <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:10px;">Höchstens einmal im Monat Tipps für deine Vitalität, Neues aus dem LeVITA Studio und rechtzeitig eine Erinnerung an deinen nächsten Check. Jederzeit abbestellbar.</div>
         <button id="mkBtn" onclick="requestMarketingOptin('${source}')" style="width:100%;padding:12px;border-radius:var(--radius-sm);border:none;background:var(--accent-green);color:var(--on-accent);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">Ja, halte mich auf dem Laufenden</button>
         <div style="font-size:10.5px;color:var(--text-secondary);line-height:1.5;margin-top:8px;">${MARKETING_CONSENT_TEXT} Du bekommst gleich eine E-Mail, in der du deine Anmeldung bestätigst.</div>
@@ -9310,7 +9398,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     if (!simScenarios) return;
     simScenarios.levers.forEach(l => {
       const el = document.getElementById('simLever_' + l.question_key);
-      if (el) el.classList.toggle('on', simActiveKeys.includes(l.question_key));
+      if (el) { const on = simActiveKeys.includes(l.question_key); el.classList.toggle('on', on); el.setAttribute('aria-checked', on ? 'true' : 'false'); }   // v2.23.0 (UX-15)
     });
     const proj = getActiveProjection();
     const num = document.getElementById('simProjNum');
@@ -9336,7 +9424,9 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
           bioTxt = ` · Vitalitäts-Alter ~<strong>${proj.bio_age} J.</strong>${dTxt}`;
         }
         const comboNote = simActiveKeys.length >= 2 ? ' <span style="color:var(--text-muted);">(gemeinsam berechnet, rechnerische Änderung im Index)</span>' : '';
-        meta.innerHTML = `<strong>+${fmtGain(proj.gain)} Punkte</strong> gegenüber heute${bioTxt}${comboNote}`;
+        // v2.23.0 (UX-09): Ziel und Zugewinn werden getrennt gerundet (73 + 8,6 = 81,6 → 81 oder 82). Der Hinweis erklärt das.
+        const roundNote = ' <span style="color:var(--text-muted);">· Anzeige gerundet, gerechnet wird mit Nachkommastellen</span>';
+        meta.innerHTML = `<strong>+${fmtGain(proj.gain)} Punkte</strong> gegenüber heute${bioTxt}${comboNote}${roundNote}`;
       }
     } else {
       // Ehrlicher Zustand: gewählte Kombination liegt nicht vorberechnet vor (sollte nicht vorkommen)
@@ -9901,7 +9991,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.22.3</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.23.0</footer>
 
 
 </body>
