@@ -756,6 +756,10 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.23.1 (03.11.2026, Abnahmetest LEV-2026-000549): Abschnittsansicht nur bei mindestens drei sicheren Fragen (Zusatzfragen
+zählen nicht mehr mit; supplement_types hängt an supplement_usage) – „Mikronährstoffe“ mit zwei Fragen startet direkt.
+Zwecksatz für „Lebensstil“ ergänzt.
+
 v2.23.0 (03.11.2026, Jörg: UX-Prüfung vom 03.11.2026, Schritt A – nur Frontend, kein Eingriff in Scoring, Fragen oder Edge):
 - UX-02: Basisdaten ohne „Name ist optional“ (dort gibt es kein Namensfeld); Zweck von Alter/Geschlecht/Größe/Gewicht erklärt.
 - UX-03/04: Abschnittsansicht mit großem Buddy nur noch bei Bereichen ab drei Fragen (AREA_GATE_MIN_QUESTIONS). Kurze Bereiche
@@ -4225,7 +4229,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
   const AREA_GATE_MIN_QUESTIONS = 3;
   function areaIsLong(key) {
     const m = areaMeta(key);
-    return (m.count + m.cond) >= AREA_GATE_MIN_QUESTIONS;
+    return m.count >= AREA_GATE_MIN_QUESTIONS;   // v2.23.1: nur sichere Fragen zählen, Zusatzfragen nicht
   }
   function questionStepHtml(q) {
     const start = BUDDY_ENABLED && buddyIsAreaStart(q);
@@ -4239,7 +4243,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
   // also nach dem Zu- und Abschalten der bedingten Fragen.
   // v2.13.0 (Paket I): Zusatzfragen, deren Auslöser noch nicht beantwortet ist, zählen nicht mit
   // ("Mentale Balance · 4 Fragen" zeigte drei).
-  const AREA_COND_TRIGGER = { muscle_cramps: "strength_training", social_connection: "low_interest",
+  const AREA_COND_TRIGGER = { muscle_cramps: "strength_training", social_connection: "low_interest", supplement_types: "supplement_usage",
     omega3_fish: "diet_type", alcohol_amount: "alcohol_frequency" };
   function areaMeta(key) {
     const seq = [];
@@ -4265,7 +4269,8 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     sleep: "Wie lange und wie gut du schläfst – Grundlage für deinen Bereich Schlaf.",
     activity: "Wie viel du dich bewegst und wie lange du sitzt – Grundlage für deinen Bereich Bewegung.",
     mental: "Wie es dir mit Stress und Stimmung geht – Grundlage für deinen Bereich Stressbalance.",
-    micronutrients: "Ein paar Alltagsangaben, die uns bei der Einordnung helfen."
+    micronutrients: "Ein paar Alltagsangaben, die uns bei der Einordnung helfen.",
+    lifestyle: "Alkohol und Nikotin – Grundlage für deine Bereiche Alkohol und Rauchen."
   };
   function areaGateHtml(q, body) {
     const m = areaMeta(q.area_key);
@@ -9991,7 +9996,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.23.0</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.23.1</footer>
 
 
 </body>
