@@ -229,6 +229,8 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 </svg>
 </div>
 <button type="button" id="spinBtn" style="min-height: 56px; padding: 14px 44px; border: none; border-radius: 12px; background: #A6D71C; color: #482922; font-family: 'Barlow', sans-serif; font-weight: 800; font-size: 21px; cursor: pointer; box-shadow: 0 4px 0 #482922">Rad drehen</button>
+<p id="spinHinweis" style="margin: -8px 0 0; max-width: 340px; text-align: center; font-size: 15px; line-height: 1.45; color: #745E3D">Kurz eintragen – dann dreht das Rad und zeigt dir sofort deinen Gewinn.</p>
+<div id="fastBox" hidden aria-live="polite" style="max-width: 360px; background: #FFFFFF; border: 2px solid #A6D71C; border-radius: 14px; padding: 14px 18px; text-align: center; font-size: 17px; line-height: 1.4"><strong>Fast geschafft!</strong> Trag unten kurz ein, wohin dein Gutschein soll – dann dreht das Rad.</div>
 <div id="landedBox" hidden aria-live="polite">
 <div style="background: #FFFFFF; border: 2px solid #A6D71C; border-radius: 14px; padding: 16px 20px; text-align: center; font-size: 18px; line-height: 1.4">Glückwunsch, dein Gewinn:<br><strong style="font-size: 24px" class="js-prize"></strong></div>
 </div>
@@ -238,7 +240,7 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 <div id="formBox">
 <div style="display: flex; flex-direction: column; gap: 18px">
 <h3 id="formTitel" style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 32px">Eintragen und drehen</h3>
-<p style="margin: 0; font-size: 16px; line-height: 1.5; color: #745E3D">Trag dich ein und dreh das Rad. Deinen Gutschein schicken wir dir per E-Mail. Pro Person gibt es einen Dreh – auch mit mehreren E-Mail-Adressen gilt nur der erste Gutschein.</p>
+<p id="formIntro" style="margin: 0; font-size: 16px; line-height: 1.5; color: #745E3D">Trag dich ein und dreh das Rad. Deinen Gutschein schicken wir dir per E-Mail. Pro Person gibt es einen Dreh – auch mit mehreren E-Mail-Adressen gilt nur der erste Gutschein.</p>
 <div style="display: flex; flex-wrap: wrap; gap: 14px">
 <div style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 6px">
 <label for="vn" style="font-weight: 600; font-size: 15px">Vorname</label>
@@ -265,7 +267,7 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 <div id="errBox" hidden>
 <div role="alert" id="errText" style="background: #FBEDE8; color: #8A2A12; border-radius: 10px; padding: 12px 14px; font-size: 15px"></div>
 </div>
-<button type="button" id="submitBtn" style="min-height: 54px; border: none; border-radius: 12px; background: #A6D71C; color: #482922; font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 19px; cursor: pointer">Rad drehen und Gutschein sichern</button>
+<button type="button" id="submitBtn" style="min-height: 54px; border: none; border-radius: 12px; background: #A6D71C; color: #482922; font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 19px; cursor: pointer">Jetzt drehen und Gutschein sichern</button>
 </div>
 </div>
 <div id="sentBox" hidden aria-live="polite">
@@ -320,10 +322,15 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 </footer>
 
 </div>
-<!-- gewinnspiel-seite 1.5.6 · 31.10.2026 (Instagram-Hinweis nach dem Dreh) -->
+<!-- gewinnspiel-seite 1.5.7 · 03.11.2026 (Ablauf vor dem Dreh klar ankündigen) -->
 
 <script>
-/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.5.6 · 31.10.2026 (Instagram-Hinweis nach dem Dreh)
+/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.5.7 · 03.11.2026 (Ablauf vor dem Dreh klar ankündigen)
+   1.5.7: 1.–3.11.: 160 sahen das Rad, 75 tippten "Rad drehen", nur 21 begannen das Formular. Grund: Nach dem
+   Tippen ruckte das Rad nur an und es kam ein Formular – kein Dreh, kein Gewinn. Jetzt steht unter dem Knopf,
+   dass man sich kurz einträgt und das Rad DANN dreht; nach dem Tippen erscheint "Fast geschafft!" am Rad,
+   das Formular erklärt den nächsten Schritt und der Knopf heißt "Jetzt drehen". Auslosung unverändert.
+   1.5.6: Instagram-Hinweis nach dem Dreh.
    1.5.5: Anrucken nicht mehr per CSS-Animation (flog in Safari/iOS durchs Bild), sondern über setzeWinkel().
    1.5.4: Am 30./31.10. sahen 20 von 20 Besuchern das Rad, nur 4 klickten "Jetzt eintragen und drehen" –
    wer klickte, nahm teil. Deshalb: Knopf heißt "Rad drehen" (grün), das Rad selbst ist antippbar, es ruckt
@@ -500,14 +507,16 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
   function showErr(t) { errText.textContent = t || ''; errBox.hidden = !t; erneutBox.hidden = true; }
   function sperren(an) {
     busy = an; submitBtn.disabled = an;
-    submitBtn.textContent = an ? 'Das Rad dreht …' : 'Rad drehen und Gutschein sichern';
+    submitBtn.textContent = an ? 'Das Rad dreht …' : 'Jetzt drehen und Gutschein sichern';
   }
 
   // 1.5.4: Knopf UND Rad starten den Dreh-Impuls; ausgelost wird erst nach dem Eintragen (Server)
   function drehenStart(wo) {
     if (spinBtn.hidden) return;   // schon teilgenommen
     track('gw_drehen_klick', { wo: wo });
-    var titel = $('formTitel'); if (titel) titel.textContent = 'Wohin sollen wir deinen Gewinn schicken?';
+    var titel = $('formTitel'); if (titel) titel.textContent = 'Fast geschafft! Wohin sollen wir deinen Gewinn schicken?';
+    var intro = $('formIntro'); if (intro) intro.textContent = 'Sobald du auf „Jetzt drehen“ tippst, dreht das Rad und zeigt dir deinen Gewinn. Den Gutschein schicken wir dir per E-Mail. Pro Person gibt es einen Dreh.';
+    var fb = $('fastBox'); if (fb) fb.hidden = false; var sh = $('spinHinweis'); if (sh) sh.hidden = true;
     var anstoss = 0;
     // 1.5.5: Anrucken über dasselbe transform-Attribut wie die echte Drehung (rotate(w 160 160)).
     // 1.5.4 nutzte CSS-transform am <g> – in Safari/iOS drehte das Rad um den falschen Punkt und "flog" durchs Bild.
@@ -579,6 +588,7 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
         $('mailOk').hidden = !j.mail; $('mailFehler').hidden = !!j.mail;
         if (/vital-?paket/i.test(String(j.gewinn || '')) || j.index === 2) vitalPaketBruecke();
         landedBox.hidden = false; spinBtn.hidden = true;
+        var fb2 = $('fastBox'); if (fb2) fb2.hidden = true; var sh2 = $('spinHinweis'); if (sh2) sh2.hidden = true;
         setTimeout(function () {
           formBox.hidden = true; sentBox.hidden = false;
           sentBox.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
