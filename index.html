@@ -756,6 +756,7 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.23.2 (08.11.2026, Revision Restpunkt): Bei ?internal=1 geht is_internal mit der Erstauswertung an die Edge (edge-2026-11-08.65), damit Testdaten in submissions markiert sind. Sonst keine Änderung.
 v2.23.1 (03.11.2026, Abnahmetest LEV-2026-000549): Abschnittsansicht nur bei mindestens drei sicheren Fragen (Zusatzfragen
 zählen nicht mehr mit; supplement_types hängt an supplement_usage) – „Mikronährstoffe“ mit zwei Fragen startet direkt.
 Zwecksatz für „Lebensstil“ ergänzt.
@@ -5150,6 +5151,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       // V2: Re-Check-Verknüpfung — previous_public_code + previous_pin nur mitschicken,
       // wenn der Nutzer aus einer PIN-verifizierten Ansicht gestartet ist.
       const payload = { age:personalData.age, gender:personalData.gender, height_cm:personalData.height_cm, weight_kg:personalData.weight_kg, first_name:personalData.first_name||null, last_name:personalData.last_name||null, goal_key:personalData.goal_key||null, consent_privacy:true, consent_storage:true, consent_trainer_access:_ta, answers:selectedAnswers };
+      if (window._isInternal === true) payload.is_internal = true; // v2.23.2: Testdaten in submissions markieren (Edge .65 schreibt submissions.is_internal)
       // v1.50.0 — freiwillige Werte aus Uhr oder Tracker; null, wenn nichts eingetragen
       const _watch = collectWatchValues();
       if (_watch) payload.watch = _watch;
@@ -9996,7 +9998,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.23.1</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.23.2</footer>
 
 
 </body>
