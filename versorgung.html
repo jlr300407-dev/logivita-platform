@@ -39,6 +39,7 @@
   BfR-Höchstmengenvorschlag" in jeder Gruppe (aus dem festen Notiztext der Bewertung).
   W2 Link "Quellen und Regeln" (quellen-versorgung.html) statt "auf Nachfrage im Studio".
   W3 Link "Mikronährstoff-Versorgung" ausgeblendet, bis die Seite existiert.
+  1.3.1 (09.11.2026): Link „Quellen und Regeln“ zeigt auf die studioneutrale Seite logivita.de/grundlagen-versorgung.html.
   1.3.0 (20.10.2026, Paket K3): Beim Re-Check übernimmt der Check Menge, Anlass und Erwartung aus dem letzten
   Versorgungs-Check (supply-edge .3, Antwort prefilled_previous); der Einleitungssatz sagt das und bittet um "seit wann".
   1.2.0 (19.10.2026, Paket H, Tiefenprüfung Versorgungs-Check): Karte "Nicht eingeordnet"
@@ -488,7 +489,7 @@
 <script src="assets/konto.js?v=1.4.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.3.0";
+  const FE_VERSION = "1.3.1";
   const FUNCTION_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/supply-check";
   const SUPABASE_URL = "https://koctweetotpqaazeicwj.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvY3R3ZWV0b3RwcWFhemVpY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODQ3NzMsImV4cCI6MjA5NDk2MDc3M30.OS4WUR-q2rc82yxs_HkwlCzr9gDG8tBL0gIlwdUoyc0";
@@ -808,7 +809,7 @@
         ${res.doctor_sheet ? `<p class="muted"><strong>Zuerst:</strong> Nimm den Zettel für die Praxis zu deinem nächsten Termin in der Hausarztpraxis mit.</p>` : ""}
         <p class="muted">Ändert sich etwas an deinen Präparaten — zum Beispiel nach einem Praxisgespräch —, pass deine Angaben über „Angaben ändern“ an. Der Plan wird dann neu berechnet.</p>
         <p class="muted">Nach deinem nächsten Vital-Check (Re-Check) kannst du den Versorgungs-Check auf dieser Grundlage noch einmal machen. Für ein Gespräch im Studio sprich uns einfach an.</p></div>
-      <p class="small">Diese Tipps folgen festen Regeln aus den Empfehlungen von DGE und BfR (<a href="quellen-versorgung.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Quellen und Regeln, Stand 18.10.2026</a>). Sie sind keine Diagnose, ersetzen keine ärztliche Beratung und
+      <p class="small">Diese Tipps folgen festen Regeln aus den Empfehlungen von DGE und BfR (<a href="https://www.logivita.de/grundlagen-versorgung.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Grundlagen und Quellen, Stand 08.11.2026</a>). Sie sind keine Diagnose, ersetzen keine ärztliche Beratung und
         nennen bewusst keine Dosierungen. Wenn du dauerhaft Medikamente nimmst oder eine Vorerkrankung hast, sprich vor jeder Einnahme mit deiner Ärztin oder deinem Arzt.</p>
       ${INTERNAL ? `<p class="small">${esc(r.version || "")} · Fall im Vital-Check: ${esc(res.vital_check_case || "–")}</p>` : ""}`);
     document.getElementById("b-edit").onclick = () => screenForm();
