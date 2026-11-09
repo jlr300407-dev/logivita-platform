@@ -227,13 +227,13 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 </g>
 <path d="M160 44 L146 10 L174 10 Z" fill="#A6D71C" stroke="#482922" stroke-width="4" stroke-linejoin="round"></path>
 </svg>
-<div id="radCover" hidden aria-live="polite" style="position: absolute; left: 0.6%; width: 98.8%; top: 6.2%; aspect-ratio: 1 / 1; border-radius: 50%; background: rgba(246,242,234,0.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; pointer-events: none">
-<div style="background: rgba(72,41,34,0.92); color: #FFFFFF; border: 3px solid #A6D71C; border-radius: 18px; padding: 16px 22px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.25)"><div style="font-size: 40px; line-height: 1">🎁</div><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 28px; line-height: 1.1; margin-top: 6px">Dein Gewinn ist reserviert!</div><div style="font-size: 15px; margin-top: 4px; color: #E8E0D0">Jetzt eintragen und aufdecken</div></div>
+<div id="radCover" hidden aria-live="polite" style="position: absolute; left: 0.6%; width: 98.8%; top: 6.2%; aspect-ratio: 1 / 1; border-radius: 50%; background: rgba(246,242,234,0.97); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; pointer-events: none">
+<div style="background: rgba(72,41,34,0.92); color: #FFFFFF; border: 3px solid #A6D71C; border-radius: 18px; padding: 16px 22px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.25)"><div style="font-size: 40px; line-height: 1">🎁</div><div style="font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 28px; line-height: 1.1; margin-top: 6px">Dein Gewinn wartet!</div><div style="font-size: 15px; margin-top: 4px; color: #E8E0D0">Jetzt eintragen und aufdecken</div></div>
 </div>
 </div>
 <button type="button" id="spinBtn" style="min-height: 56px; padding: 14px 44px; border: none; border-radius: 12px; background: #A6D71C; color: #482922; font-family: 'Barlow', sans-serif; font-weight: 800; font-size: 21px; cursor: pointer; box-shadow: 0 4px 0 #482922">Rad drehen</button>
-<p id="spinHinweis" style="margin: -8px 0 0; max-width: 340px; text-align: center; font-size: 15px; line-height: 1.45; color: #745E3D">Dreh am Rad – wir reservieren deinen Gewinn. Danach trägst du dich ein und deckst ihn auf.</p>
-<div id="fastBox" hidden aria-live="polite" style="max-width: 360px; background: #FFFFFF; border: 2px solid #A6D71C; border-radius: 14px; padding: 14px 18px; text-align: center; font-size: 17px; line-height: 1.4"><strong>Geschafft – dein Gewinn ist reserviert!</strong> Trag dich kurz ein, dann decken wir ihn auf und schicken dir den Gutschein.</div>
+<p id="spinHinweis" style="margin: -8px 0 0; max-width: 340px; text-align: center; font-size: 15px; line-height: 1.45; color: #745E3D">Dreh am Rad! Danach trägst du dich kurz ein – erst dann bleibt das Rad stehen und zeigt deinen Gewinn.</p>
+<div id="fastBox" hidden aria-live="polite" style="max-width: 360px; background: #FFFFFF; border: 2px solid #A6D71C; border-radius: 14px; padding: 14px 18px; text-align: center; font-size: 17px; line-height: 1.4"><strong>Geschafft – dein Gewinn wartet auf dich!</strong> Trag dich kurz ein, dann dreht das Rad aus, zeigt dir deinen Gewinn und wir schicken dir den Gutschein.</div>
 <div id="landedBox" hidden aria-live="polite">
 <div style="background: #FFFFFF; border: 2px solid #A6D71C; border-radius: 14px; padding: 16px 20px; text-align: center; font-size: 18px; line-height: 1.4">Glückwunsch, dein Gewinn:<br><strong style="font-size: 24px" class="js-prize"></strong></div>
 </div>
@@ -325,10 +325,14 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 </footer>
 
 </div>
-<!-- gewinnspiel-seite 1.5.8 · 06.11.2026 (Rad dreht sofort, Gewinn wird reserviert) -->
+<!-- gewinnspiel-seite 1.5.9 · 09.11.2026 (Rad bleibt nie sichtbar auf einem Feld stehen) -->
 
 <script>
-/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.5.8 · 06.11.2026 (Rad dreht sofort, Gewinn wird reserviert)
+/* LeVita Glücksrad-Gewinnspiel · gewinnspiel-seite 1.5.9 · 09.11.2026 (Rad bleibt nie sichtbar auf einem Feld stehen)
+   1.5.9: Rückmeldung aus dem Studio (09.11.): Das Rad blieb beim ersten Dreh sichtbar auf einem Feld stehen, die
+   Abdeckung war durchsichtig; nach dem Eintragen landete es auf dem echten (Server-)Gewinn – wirkte wie
+   "Gewinn weg". Jetzt legt sich die Abdeckung schon WÄHREND des Drehs blickdicht über das Rad, man sieht nie
+   ein Ergebnis vor dem Eintragen. Texte: "Dein Gewinn wartet" statt "reserviert". Auslosung unverändert.
    1.5.8: 04./05.11.: 41 tippten "Rad drehen", nur 5 begannen das Formular (vorher 24.–30.10. mit sofort
    sichtbarem Formular 11 % Teilnahme, 1.5.6 7 %, 1.5.7 ca. 5 %). Grund: Tippen auf "Rad drehen" ergab keinen
    Dreh, sondern sprang zu einem Formular, und die Tastatur ging sofort auf. Jetzt dreht das Rad wirklich und
@@ -535,12 +539,14 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
       if (!t0) t0 = t;
       var p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
       setzeWinkel(start + (ziel - start) * e);
+      // 1.5.9: Abdeckung kommt, solange das Rad noch schnell dreht – kein sichtbares Ergebnis vor dem Eintragen
+      if (p >= 0.3) { var cvf = $('radCover'); if (cvf && cvf.hidden) cvf.hidden = false; }
       if (p < 1) { requestAnimationFrame(schritt); return; }
       reserviert = true;
       spinBtn.hidden = true;
       var cv = $('radCover'); if (cv) cv.hidden = false;
       var fb = $('fastBox'); if (fb) fb.hidden = false;
-      var titel = $('formTitel'); if (titel) titel.textContent = '🎁 Dein Gewinn ist reserviert – wohin sollen wir ihn schicken?';
+      var titel = $('formTitel'); if (titel) titel.textContent = '🎁 Dein Gewinn wartet – wohin sollen wir ihn schicken?';
       var intro = $('formIntro'); if (intro) intro.textContent = 'Trag dich ein und tipp auf „Gewinn aufdecken“: Das Rad zeigt dir sofort, was du gewonnen hast, und den Gutschein schicken wir dir per E-Mail. Pro Person gibt es einen Gewinn.';
       submitBtn.textContent = 'Gewinn aufdecken und Gutschein sichern';
       track('gw_reserviert', { wo: wo });
@@ -552,7 +558,7 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
   (function () {
     var svg = rad && rad.closest('svg'); if (!svg) return;
     svg.style.cursor = 'pointer'; svg.setAttribute('tabindex', '0'); svg.setAttribute('role', 'button');
-    svg.setAttribute('aria-label', 'Glücksrad drehen – dein Gewinn wird reserviert, danach trägst du dich ein');
+    svg.setAttribute('aria-label', 'Glücksrad drehen – danach trägst du dich ein und siehst deinen Gewinn');
     svg.addEventListener('click', function () { drehenStart('rad'); });
     svg.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); drehenStart('rad'); } });
   })();
@@ -572,9 +578,9 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #A6D7
 
     track('gw_submit', { newsletter: daten.newsletter });
     sperren(true);
+    freilauf();
     var cv0 = $('radCover'); if (cv0) cv0.hidden = true; var fb0 = $('fastBox'); if (fb0) fb0.hidden = true;
     rad.closest('svg').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
-    freilauf();
     var ctrl = new AbortController(); var timer = setTimeout(function () { ctrl.abort(); }, 20000);
     fetch(CONFIG.endpoint, {
       method: 'POST', signal: ctrl.signal,
