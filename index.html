@@ -10,6 +10,35 @@
   <meta name="description" content="Was steckt in dir? Der kostenlose LeVITA Vital-Check zeigt dir in 5–7 Minuten deine Stärken in 8 Lebensbereichen, deinen größten Hebel und einen persönlichen Plan. Überblick sofort, ohne Anmeldung." />
   <link rel="canonical" href="https://le-vita.com/vital-check" />
   <meta name="theme-color" content="#0a1628" />
+  <!-- v2.24.0 (09.11.2026, Jörg): Studio-Tablet-App. Auf den Studio-Tablets liegt der Check als App
+       auf dem Home-Bildschirm (ohne Adresszeile). Einmal app.le-vita.com/?studio=1 öffnen, dann
+       "Zum Home-Bildschirm" – das Gerät merkt sich den Studio-Modus (localStorage levita-studio-device),
+       ?studio=0 schaltet ihn wieder ab. Nur im Studio-Modus wird das Manifest eingebunden; am Handy
+       der Kunden ändert sich nichts. Studio-Modus: kein lokaler Zwischenstand, Rücksprung zur
+       Startseite nach 3 Minuten ohne Eingabe (mit 30 s Vorwarnung), Knopf "Fertig – neuer Check",
+       Funnel-Kanal studio/tablet. -->
+  <link rel="apple-touch-icon" href="assets/app/check-apple-180.png" />
+  <script>
+    (function () {
+      var on = false;
+      try {
+        var q = new URLSearchParams(location.search).get('studio');
+        if (q === '1') localStorage.setItem('levita-studio-device', '1');
+        if (q === '0') localStorage.removeItem('levita-studio-device');
+        on = localStorage.getItem('levita-studio-device') === '1';
+      } catch (e) { on = new URLSearchParams(location.search).get('studio') === '1'; }
+      window._studioMode = on;
+      if (!on) return;
+      var h = document.head;
+      function add(tag, attrs) { var el = document.createElement(tag); for (var k in attrs) el.setAttribute(k, attrs[k]); h.appendChild(el); }
+      add('link', { rel: 'manifest', href: 'studio.webmanifest' });
+      add('meta', { name: 'apple-mobile-web-app-capable', content: 'yes' });
+      add('meta', { name: 'mobile-web-app-capable', content: 'yes' });
+      add('meta', { name: 'apple-mobile-web-app-title', content: 'Vital-Check' });
+      add('meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' });
+      try { localStorage.removeItem('levita_progress_v1'); } catch (e) {}   // nie einen fremden Zwischenstand anbieten
+    })();
+  </script>
   <script>
     /* v2.8.13: Gewaehltes Thema VOR dem ersten Zeichnen setzen - sonst blitzt
        die falsche Fassung kurz auf. Ohne Wahl entscheidet die Geraeteeinstellung
@@ -756,6 +785,7 @@ schrittweisen Bausteinen; der Hinweis (wortgleich edge-2026-10-24.43) informiert
 und nennt die Hausarztpraxis nur bei Problemen. Grund: Der alte Text wirkte belehrend und traf auch Menschen
 mit einem Glas Wein am Tag.
 
+v2.24.0 (09.11.2026, Jörg): Studio-Tablet-App mit Manifest (studio.webmanifest) und Studio-Modus – siehe Kommentar im Kopf. Ohne ?studio=1 keine Änderung.
 v2.23.2 (08.11.2026, Revision Restpunkt): Bei ?internal=1 geht is_internal mit der Erstauswertung an die Edge (edge-2026-11-08.65), damit Testdaten in submissions markiert sind. Sonst keine Änderung.
 v2.23.1 (03.11.2026, Abnahmetest LEV-2026-000549): Abschnittsansicht nur bei mindestens drei sicheren Fragen (Zusatzfragen
 zählen nicht mehr mit; supplement_types hängt an supplement_usage) – „Mikronährstoffe“ mit zwei Fragen startet direkt.
@@ -3738,6 +3768,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
         lp_variant: window._lpVariant || undefined,   // v2.21.18: welche Einstiegsfassung (m2-standard|m2-hebel|m2-ernaehrung, d… = Desktop)
         referrer: (function(){ const r = pageReferrer(); return r ? String(r).slice(0, 200) : undefined; })(), // v1.33.0: Rohwert — nur damit lassen sich organische Suche, Maps und Direkteinstieg trennen (undefined wird von JSON.stringify entfernt)
         device: window.innerWidth < 600 ? 'mobile' : 'desktop',
+        studio_app: window._studioMode === true ? true : undefined,   // v2.24.0: Check auf dem Studio-Tablet
         is_internal: window._isInternal === true ? true : undefined, // Sofort-Fix 5: Testdaten markieren (undefined wird von JSON.stringify entfernt)
         env: (function(){ const h = pageHostname(); return (h.endsWith('le-vita.com') || h.endsWith('logivita.de')) ? 'prod' : h.endsWith('github.io') ? 'dev' : 'local'; })(), // v1.33.0: Hostname der einbettenden Seite — im iFrame ist der eigene immer 'dev'
         ...(window._utm || {})
@@ -3796,6 +3827,8 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       // v2.8.18 — Re-Check aus "Mein Bereich" (?recheck=…) kam ohne UTM und zaehlte
       // ueber den Referrer als Homepage. Ohne eigene Angabe gilt er jetzt als Re-Check.
       if (!utm.utm_source && p.get('recheck')) { utm.utm_source = 'recheck'; utm.utm_medium = 'konto'; }
+      // v2.24.0: Studio-Tablet – auch nach einem Neustart ohne Parameter als Kanal Studio zählen
+      if (!utm.utm_source && window._studioMode) { utm.utm_source = 'studio'; utm.utm_medium = 'tablet'; utm.utm_campaign = 'studio_tablet'; }
       window._utm = utm;
     } catch(e) { window._utm = {}; }
   }
@@ -4645,6 +4678,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
 
   function saveProgress() {
     if (window._isReviewMode) return;
+    if (window._studioMode) return;   // v2.24.0: geteiltes Studio-Tablet – nichts lokal ablegen
     if (!selectedAnswers.length && !personalData.age) return;
     // v2.21.4 (R6-05): Wer trotz Banner einen neuen Check beginnt, hat sich für "Neu beginnen" entschieden –
     // der alte Zwischenstand wird gleich überschrieben, der Banner verschwindet.
@@ -4730,6 +4764,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
   }
 
   function offerResume() {
+    if (window._studioMode) return;   // v2.24.0
     const p = loadProgress();
     if (!p) return;
     const host = document.getElementById('quiz-flow') || document.body;
@@ -9998,8 +10033,84 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.23.2</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.24.0</footer>
 
 
+<!-- v2.24.0: Studio-Modus (nur auf den Studio-Tablets aktiv, siehe Kopf) -->
+<style>
+  #studioDone { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 9000;
+    background: var(--accent-green); color: var(--on-accent); border: none; border-radius: 999px;
+    padding: 13px 20px; font-size: 15px; font-weight: 700; box-shadow: 0 6px 20px rgba(0,0,0,.35); cursor: pointer; }
+  #studioDone[hidden] { display: none; }
+  #studioOverlay { position: fixed; inset: 0; z-index: 9500; background: rgba(5,12,24,.82); display: flex;
+    align-items: center; justify-content: center; padding: 16px; }
+  #studioOverlay[hidden] { display: none; }
+  #studioOverlay .box { background: var(--brand-card); color: var(--text-primary); border-radius: 18px;
+    padding: 24px; max-width: 420px; width: 100%; text-align: center; border: 1px solid var(--border); }
+  #studioOverlay h3 { font-size: 20px; margin: 0 0 8px; }
+  #studioOverlay p { font-size: 15px; line-height: 1.55; color: var(--text-secondary); margin: 0 0 18px; }
+  #studioOverlay .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  #studioOverlay button { flex: 1 1 140px; min-height: 50px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  #studioOverlay .go { background: var(--accent-green); color: var(--on-accent); border: none; }
+  #studioOverlay .alt { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+</style>
+<script>
+(function () {
+  if (!window._studioMode) return;
+  var IDLE_MS = 3 * 60 * 1000, WARN_S = 30;
+  var last = Date.now(), warnTimer = null, left = 0;
+  var btn = document.createElement('button');
+  btn.id = 'studioDone'; btn.type = 'button'; btn.hidden = true; btn.textContent = 'Fertig – neuer Check';
+  var ov = document.createElement('div');
+  ov.id = 'studioOverlay'; ov.hidden = true;
+  document.body.appendChild(btn); document.body.appendChild(ov);
+
+  function inUse() {   // Check begonnen oder Ergebnis offen = Startbild ausgeblendet
+    var hero = document.getElementById('hero-block');
+    return !!hero && hero.style.display === 'none';
+  }
+  function restart() {
+    try { localStorage.removeItem('levita_progress_v1'); } catch (e) {}
+    try { sessionStorage.clear(); } catch (e) {}
+    try { trackEvent('studio_reset', { reason: restart.reason || 'button' }); } catch (e) {}
+    setTimeout(function () { location.replace(location.pathname + '?studio=1'); }, 150);
+  }
+  function show(kind) {
+    if (kind === 'ask') {
+      ov.innerHTML = '<div class="box"><h3>Neuen Check starten?</h3><p>Deine Antworten und dein Ergebnis werden von diesem Tablet gelöscht. ' +
+        'Hast du deinen Plan per E-Mail angefordert, ist er schon unterwegs.</p><div class="row">' +
+        '<button type="button" class="alt" data-a="close">Zurück</button><button type="button" class="go" data-a="reset">Ja, neu starten</button></div></div>';
+    } else {
+      left = WARN_S;
+      ov.innerHTML = '<div class="box"><h3>Bist du noch da?</h3><p>Zum Schutz deiner Angaben startet der Check in <b id="studioLeft">' + left +
+        '</b> Sekunden neu.</p><div class="row"><button type="button" class="alt" data-a="reset">Jetzt neu starten</button>' +
+        '<button type="button" class="go" data-a="close">Ich bin noch da</button></div></div>';
+      clearInterval(warnTimer);
+      warnTimer = setInterval(function () {
+        left--; var el = document.getElementById('studioLeft'); if (el) el.textContent = left;
+        if (left <= 0) { clearInterval(warnTimer); restart.reason = 'idle'; restart(); }
+      }, 1000);
+    }
+    ov.hidden = false;
+  }
+  ov.addEventListener('click', function (e) {
+    var a = e.target && e.target.getAttribute && e.target.getAttribute('data-a');
+    if (a === 'close') { clearInterval(warnTimer); ov.hidden = true; last = Date.now(); }
+    if (a === 'reset') { clearInterval(warnTimer); restart.reason = restart.reason || 'button'; restart(); }
+  });
+  btn.addEventListener('click', function () { restart.reason = 'button'; show('ask'); });
+  ['pointerdown', 'keydown', 'touchstart', 'scroll', 'input'].forEach(function (ev) {
+    window.addEventListener(ev, function () { if (ov.hidden) last = Date.now(); }, { passive: true, capture: true });
+  });
+  setInterval(function () {
+    var used = inUse();
+    btn.hidden = !used || !ov.hidden;
+    if (!ov.hidden) return;
+    if (Date.now() - last < IDLE_MS) return;
+    if (used) { restart.reason = 'idle'; show('warn'); }
+    else if (window.scrollY > 0) { window.scrollTo({ top: 0 }); last = Date.now(); }   // Startseite: nur nach oben
+  }, 1000);
+})();
+</script>
 </body>
 </html>
