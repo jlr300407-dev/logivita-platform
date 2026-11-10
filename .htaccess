@@ -28,6 +28,7 @@ RewriteCond %{REQUEST_URI} !^/so-entsteht-deine-auswertung\.html$
 RewriteCond %{REQUEST_URI} !^/gewinnspiel(/|$)
 RewriteCond %{REQUEST_URI} !^/assets/
 RewriteCond %{REQUEST_URI} !^/robots\.txt$
+RewriteCond %{REQUEST_URI} !^/studio\.webmanifest$
 RewriteRule ^ - [F]
 
 # 15.10.2026: konto.html ("Mein Bereich", Ziel des Anmeldelinks aus der E-Mail)
@@ -48,6 +49,12 @@ RewriteRule ^ - [F]
 
 # 24.10.2026: gewinnspiel/ (Gluecksrad-Gewinnspiel Herbst 2026, eigener Ordner mit index.html,
 # img/ und fonts/) ergaenzt. Sonst unveraendert; die FilesMatch-Sperren gelten auch dort.
+
+# 10.11.2026: studio.webmanifest (Studio-Tablet-App, v2.24.0) ergaenzt. Ohne diese Zeile
+# blockiert der Server das Manifest und Android/iPad legen nur eine Verknuepfung statt einer App an.
+<IfModule mod_mime.c>
+AddType application/manifest+json .webmanifest
+</IfModule>
 
 DirectoryIndex index.html
 <IfModule mod_autoindex.c>
