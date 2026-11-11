@@ -36,6 +36,7 @@
   Testmodus: ?internal=1 zeigt die letzte Server-Antwort.
 
   Versionen:
+1.10.0 (11.11.2026) Wunsch Jörg: Karte „Deine Messungen im Studio“ – die Werte der Körperanalysewaage (Tanita MC-780MA-N) aus dem Trainer-Dashboard, mit Veränderung seit der letzten und der ersten Messung. Quelle: RPC my_measurements (nur eigene Messwerte, keine Notizen/Trainer). Fehlt die Funktion oder schlägt sie fehl, bleibt die Übersicht unverändert. Ohne Messung ein kurzer Hinweis auf die Messung im Studio.
 1.9.1 (02.11.2026) Ernährungs-Check in der Modulkarte: Vorrang für den laufenden mit Kurzcheck-Termin, dann gestartete Schritte, dann begonnen; die letzten sechs Checks werden parallel gelesen.
 1.9.0 (02.11.2026) Wunsch Jörg: Zusatzmodule über alle Checks – der zuletzt begonnene Ernährungs-Check wird auch nach einem Re-Check gezeigt (Runde, Kurzcheck-Termin, „fällig“ mit Knopf „Jetzt einschätzen“, Rhythmus-Hinweis alle zwei Wochen); Versorgungs-Check „Abgeschlossen“ mit „Ansehen“ und Hinweis zur Wiederholung (bei geänderter Einnahme oder mit dem nächsten Vital-Check), nach einem Re-Check „Auffrischen“ plus Link zum bisherigen Plan.
 1.8.1 (02.11.2026) Wunsch Jörg: „Ergebnis ansehen“ bei allen Checks als Knopf in derselben Form – der neueste grün gefüllt, ältere mit Rahmen (vorher Textlink).
@@ -399,7 +400,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.9.1"; // R7-01: Anzeige an den Stand 1.6.0 angeglichen
+  const FE_VERSION = "1.10.0"; // R7-01: Anzeige an den Stand 1.6.0 angeglichen
   const K = window.LeVitaKonto;
   const esc = K.esc;
   const params = new URLSearchParams(location.search);
@@ -669,6 +670,64 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
     return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Verlauf deines Vitalitäts-Index" style="width:100%;max-width:520px;height:auto;display:block;margin:4px 0 10px;color:var(--text-secondary);">
         ${grid}<path d="${line}" fill="none" stroke="var(--accent-green)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>${dots}</svg>`;
   }
+  // 1.10.0: Messwerte der Körperanalysewaage im Studio (Tanita MC-780MA-N), eingetragen im Trainer-Dashboard.
+  // Nur Anzeige und Veränderung – keine Bewertung der Werte selbst (keine Befunde).
+  const M_ROWS = [
+    // key, Bezeichnung, Einheit, Nachkommastellen, Richtung (+1 mehr ist gut, −1 weniger ist gut, 0 neutral), Schwelle "stabil"
+    ["muscle_mass_kg", "Muskelmasse", " kg", 1, 1, 0.3],
+    ["skeletal_muscle_kg", "Skelettmuskelmasse", " kg", 1, 1, 0.3],
+    ["leg_muscle_score", "Beinmuskelwert", "", 0, 1, 2],
+    ["body_fat_pct", "Körperfett", " %", 1, -1, 0.3],
+    ["weight_kg", "Gewicht", " kg", 1, 0, 0.3],
+    ["body_water_pct", "Körperwasser", " %", 1, 0, 0.3],
+    ["visceral_fat", "Viszerales Fett (Stufe)", "", 1, -1, 0.5],
+    ["bmr_kcal", "Grundumsatz", " kcal", 0, 0, 20],
+  ];
+  function mDelta(a, b, dir, d, thr) {
+    if (a == null || b == null || isNaN(Number(a)) || isNaN(Number(b))) return `<span class="flat">–</span>`;
+    const x = Number(b) - Number(a);
+    if (Math.abs(x) < thr) return `<span class="flat">≈</span>`;
+    const cls = dir === 0 ? "flat" : (x * dir > 0 ? "up" : "down");
+    return `<span class="${cls}">${x > 0 ? "+" : "−"}${num(Math.abs(x), d)}</span>`;
+  }
+  function measureCard(meas) {
+    const m = meas.filter((r) => r && (r.weight_kg != null || r.body_fat_pct != null || r.muscle_mass_kg != null || r.skeletal_muscle_kg != null));
+    if (!m.length) {
+      return `<div class="card" id="measure">
+        <h2>Deine Messungen im Studio</h2>
+        <p class="muted" style="margin:0;">Bei deinem Ergebnisgespräch bei LeVITA messen wir auf Wunsch deine Körperzusammensetzung – Muskelmasse, Körperfett und mehr. Die Werte erscheinen dann hier, und bei jeder weiteren Messung siehst du, was sich verändert hat.</p>
+      </div>`;
+    }
+    const cur = m[m.length - 1], prev = m.length > 1 ? m[m.length - 2] : null, first = m.length > 2 ? m[0] : null;
+    const rows = M_ROWS.filter(([k]) => cur[k] != null || (prev && prev[k] != null));
+    const head = `<tr><th style="text-align:left;">Messwert</th><th>${esc(dateDe(cur.measured_on))}</th>${prev ? `<th>seit<br>letzter</th>` : ""}${first ? `<th>seit<br>erster</th>` : ""}</tr>`;
+    const body = rows.map(([k, l, u, d, dir, thr]) => `<tr><td style="text-align:left;">${esc(l)}</td><td><strong>${cur[k] != null ? num(cur[k], d) + u : "–"}</strong></td>${prev ? `<td>${mDelta(prev[k], cur[k], dir, d, thr)}</td>` : ""}${first ? `<td>${mDelta(first[k], cur[k], dir, d, thr)}</td>` : ""}</tr>`).join("");
+    const base = first || prev;
+    let summary;
+    if (base) {
+      const parts = [];
+      const f = (k, l, u, d, thr) => { if (cur[k] == null || base[k] == null) return; const x = Number(cur[k]) - Number(base[k]); if (Math.abs(x) >= thr) parts.push(`${l} ${x > 0 ? "+" : "−"}${num(Math.abs(x), d)}${u}`); };
+      f("muscle_mass_kg", "Muskelmasse", " kg", 1, 0.3); f("body_fat_pct", "Körperfett", " %", 1, 0.3);
+      summary = `${m.length} Messungen seit dem ${esc(dateDe(m[0].measured_on))}` + (parts.length ? `: ${parts.join(", ")} seit deiner ersten Messung.` : " – deine Werte sind stabil geblieben.");
+    } else {
+      summary = `Deine erste Messung vom ${esc(dateDe(cur.measured_on))}. Bei der nächsten Messung siehst du hier, was sich verändert hat.`;
+    }
+    let legs = "";
+    if (cur.leg_muscle_left_kg != null && cur.leg_muscle_right_kg != null) {
+      const L = Number(cur.leg_muscle_left_kg), R = Number(cur.leg_muscle_right_kg);
+      legs = `<p class="muted" style="font-size:13.5px;margin:10px 0 0;">Beinmuskulatur links ${num(L, 1)} kg · rechts ${num(R, 1)} kg${Math.abs(L - R) < 0.2 ? " – ausgeglichen" : ""}.</p>`;
+    }
+    return `<div class="card" id="measure">
+        <h2>Deine Messungen im Studio</h2>
+        <p class="muted" style="margin-top:0;">${summary}</p>
+        <div style="overflow-x:auto;"><table class="ptab">${head}${body}</table></div>
+        ${legs}
+        <details class="pexp"><summary>So entstehen diese Werte</summary>
+          <p>Gemessen mit der Körperanalysewaage im Studio (bioelektrische Impedanz, Tanita MC-780). Die Werte schwanken mit Tageszeit, Trinken, Essen und Training – am aussagekräftigsten ist der Vergleich von Messungen unter ähnlichen Bedingungen, zum Beispiel immer vormittags vor dem Training.</p>
+          <p>Grün markieren wir Veränderungen in die meist gewünschte Richtung (mehr Muskeln, weniger Körperfett). Gewicht, Körperwasser und Grundumsatz zeigen wir ohne Farbe. Es sind Orientierungswerte, keine medizinischen Befunde. Fragen dazu beantworten dir unsere Trainer gern.</p>
+        </details>
+      </div>`;
+  }
   function progressCard(list) {
     // list: neueste zuerst
     if (!list.length || list[0].total_score == null) return "";
@@ -707,11 +766,12 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
   async function screenHome(note = "") {
     $logout.classList.remove("hidden");
     spinner();
-    let acc, checks;
+    let acc, checks, meas = [];
     try {
-      [acc, checks] = await Promise.all([
+      [acc, checks, meas] = await Promise.all([
         K.rpc("my_account", { p_tenant_id: K.tenantId }, sess.access_token),
         K.rpc("my_checks", { p_tenant_id: K.tenantId }, sess.access_token),
+        K.rpc("my_measurements", { p_tenant_id: K.tenantId }, sess.access_token).catch(() => []),   // 1.10.0
       ]);
     } catch (e) {
       const again = await K.session();
@@ -765,6 +825,8 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
       </div>
 
       ${progressCard(list)}
+
+      ${measureCard(Array.isArray(meas) ? meas : [])}
 
       ${list.length ? modulesCard(list[0], list) : ""}
 
