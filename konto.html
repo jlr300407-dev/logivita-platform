@@ -271,6 +271,30 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
   .offer:first-of-type { border-top: 0; }
   .offer small { display: block; color: var(--text-muted); font-size: 13px; margin-top: 2px; }
   .offer .arr { color: var(--text-secondary); font-size: 18px; flex: none; }
+  /* 1.12.0: Index-Hero + Aufklapp-Sektionen */
+  .hero-idx { background: linear-gradient(180deg, var(--accent-green-dim), var(--brand-card) 55%); }
+  .idxrow { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 2px; }
+  .idxrow .big { font-family: 'DM Serif Display', serif; font-size: 60px; line-height: .9; }
+  .idxrow .big small { font-size: 17px; color: var(--text-secondary); }
+  .idxmeta { display: flex; flex-direction: column; gap: 8px; padding-bottom: 6px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; border-radius: 999px; padding: 4px 11px; width: fit-content; }
+  .pill.good { background: var(--accent-green-dim); color: var(--accent-green-text); }
+  .chg { font-size: 13.5px; color: var(--text-secondary); }
+  .chg .up { color: var(--accent-green-text); font-weight: 700; }
+  .chg .down { color: var(--accent-amber-text); font-weight: 700; }
+  .recheck-box { background: var(--accent-green-dim); border: 1px solid var(--border-hover); border-radius: var(--radius-sm); padding: 13px 15px; margin-top: 14px; }
+  .recheck-box strong { display: block; color: var(--text-primary); font-size: 14.5px; margin-bottom: 2px; }
+  .recheck-box .rk { font-size: 13.5px; color: var(--text-secondary); }
+  .hero-btns { margin-top: 14px; }
+  details.sec { padding: 0; }
+  details.sec > summary { list-style: none; cursor: pointer; padding: 20px 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  details.sec > summary::-webkit-details-marker { display: none; }
+  details.sec .sec-t { font-family: 'DM Serif Display', serif; font-size: 19px; display: block; }
+  details.sec .sec-s { font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; display: block; }
+  details.sec .sec-chev { color: var(--text-secondary); font-size: 20px; flex: none; transition: transform .2s; }
+  details.sec[open] .sec-chev { transform: rotate(90deg); }
+  details.sec .acc-body { padding: 0 22px 22px; }
+  @media (prefers-reduced-motion: reduce) { .sec-chev { transition: none; } }
   .hdr-btn { background: transparent; border: 1px solid var(--border-hover); color: var(--text-secondary); border-radius: 999px; padding: 6px 14px; font: 600 12px 'DM Sans', sans-serif; cursor: pointer; }
 
   h1 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 30px; line-height: 1.2; margin-bottom: 10px; }
@@ -413,7 +437,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.11.0"; // 1.11.0: Buddy in der Begrüßung (Wiedererkennung) + Karte „Angebote im Studio" mit Verlinkung
+  const FE_VERSION = "1.12.0"; // 1.12.0: Index-Hero + Re-Check-Hinweisfeld, Vital-Checks & Studio-Messungen als Aufklapp-Sektionen
   const K = window.LeVitaKonto;
   const esc = K.esc;
   const params = new URLSearchParams(location.search);
@@ -730,8 +754,9 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
       const L = Number(cur.leg_muscle_left_kg), R = Number(cur.leg_muscle_right_kg);
       legs = `<p class="muted" style="font-size:13.5px;margin:10px 0 0;">Beinmuskulatur links ${num(L, 1)} kg · rechts ${num(R, 1)} kg${Math.abs(L - R) < 0.2 ? " – ausgeglichen" : ""}.</p>`;
     }
-    return `<div class="card" id="measure">
-        <h2>Deine Messungen im Studio</h2>
+    return `<details class="card sec" id="measure">
+        <summary><span><span class="sec-t">Deine Messungen im Studio</span><span class="sec-s">Tanita · ${m.length === 1 ? "1 Messung" : num(m.length) + " Messungen"}</span></span><span class="sec-chev">›</span></summary>
+        <div class="acc-body">
         <p class="muted" style="margin-top:0;">${summary}</p>
         <div style="overflow-x:auto;"><table class="ptab">${head}${body}</table></div>
         ${legs}
@@ -739,7 +764,8 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
           <p>Gemessen mit der Körperanalysewaage im Studio (bioelektrische Impedanz, Tanita MC-780). Die Werte schwanken mit Tageszeit, Trinken, Essen und Training – am aussagekräftigsten ist der Vergleich von Messungen unter ähnlichen Bedingungen, zum Beispiel immer vormittags vor dem Training.</p>
           <p>Grün markieren wir Veränderungen in die meist gewünschte Richtung (mehr Muskeln, weniger Körperfett). Gewicht, Körperwasser und Grundumsatz zeigen wir ohne Farbe. Es sind Orientierungswerte, keine medizinischen Befunde. Fragen dazu beantworten dir unsere Trainer gern.</p>
         </details>
-      </div>`;
+        </div>
+      </details>`;
   }
   function progressCard(list) {
     // list: neueste zuerst
@@ -773,6 +799,39 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
           <p>Eine Veränderung unter 2 Punkten zeigen wir als „stabil“ – so klein kann sie schon durch eine etwas andere Antwort entstehen.</p>
           <p>Alle Werte sind Orientierungswerte, keine medizinischen Befunde. Die Gewichtung ist eine fachlich begründete Auswahl, kein medizinisch validiertes Vorhersagemodell. <a href="so-entsteht-deine-auswertung.html" target="_blank" rel="noopener">Mehr dazu, wie die Auswertung entsteht</a></p>
         </details>
+      </div>`;
+  }
+
+  // 1.12.0: Index-Hero – wichtigster Wert, Veränderung und Re-Check-Fälligkeit auf einen Blick
+  function heroCard(list) {
+    const cur = list[0]; if (!cur || cur.total_score == null) return "";
+    const prev = list[1] || null, sc = Number(cur.total_score);
+    const care = cur.care_status && CARE_ACTIVE.includes(cur.care_status);
+    const lvl = (LEVELS.find(([m]) => sc >= m) || LEVELS[LEVELS.length - 1])[1];
+    const dTot = prev && prev.total_score != null ? sc - Number(prev.total_score) : null;
+    const chg = dTot == null
+      ? `<span class="chg">Dein erster Index – ab dem nächsten Check siehst du hier die Veränderung.</span>`
+      : Math.abs(dTot) < 2
+        ? `<span class="chg">Stabil gehalten seit deinem Check vom ${esc(dateDe(prev.created_at))}</span>`
+        : `<span class="chg"><span class="${dTot > 0 ? "up" : "down"}">${dTot > 0 ? "▲ +" : "▼ −"}${num(Math.abs(dTot), 0)}</span> seit dem letzten Check</span>`;
+    const wk = weeksSince(cur.created_at);
+    const href = `index.html?recheck=${encodeURIComponent(cur.public_code)}`;
+    const win8 = dateDe(new Date(new Date(cur.created_at).getTime() + 56 * 864e5).toISOString());
+    const ideal = dateDe(new Date(new Date(cur.created_at).getTime() + 84 * 864e5).toISOString());
+    const rk = wk < 8
+      ? `<strong>Nächster Re-Check: ab ${esc(win8)}</strong>Am aussagekräftigsten nach 8–12 Wochen (ideal um den ${esc(ideal)}). Dein Verlauf wird dann automatisch verglichen.`
+      : `<strong>Dein Re-Check ist dran</strong>Seit deinem letzten Check sind über 8 Wochen vergangen – dein neues Ergebnis wird automatisch mit dem letzten verglichen.`;
+    const btn = wk < 8
+      ? `<a class="btn ghost block" href="${href}">Trotzdem jetzt neuen Check starten</a>`
+      : `<a class="btn block" href="${href}">Neuen Vital-Check starten</a>`;
+    return `<div class="card hero-idx">
+        <h2 style="margin-bottom:12px">Dein Vitalitäts-Index</h2>
+        ${care
+          ? `<p class="muted" style="margin:0 0 2px">Dein letzter Check ist ein Lebensstilprofil – bitte ärztlich besprechen. Danach steht dir dein Index wieder zur Verfügung.</p>`
+          : `<div class="idxrow"><div class="big">${num(sc)}<small> /100</small></div>
+            <div class="idxmeta"><span class="pill good">● ${esc(lvl)}</span>${chg}</div></div>`}
+        <div class="recheck-box"><div class="rk">${rk}</div></div>
+        <div class="hero-btns">${btn}</div>
       </div>`;
   }
 
@@ -826,21 +885,12 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
       </div>
       ${note ? `<div class="card ok"><p class="muted" style="margin:0">${esc(note)}</p></div>` : ""}
 
-      <div class="card">
-        <h2>Deine Vital-Checks</h2>
-        ${list.length ? rows : `<p class="muted">Noch kein Check in deinem Konto.</p>`}
-        ${list.length ? (() => { /* 1.6.0: Re-Check erst nach 8 Wochen als großer Knopf */
-      const wk = weeksSince(list[0].created_at);
-      const href = `index.html?recheck=${encodeURIComponent(list[0].public_code)}`;
-      if (wk < 8) {
-        const due = new Date(new Date(list[0].created_at).getTime() + 56 * 864e5).toISOString();
-        return `<div class="recheck-soon"><p class="recheck-hint" style="margin-top:0">Dein nächster Check ist ab dem ${esc(dateDe(due))} sinnvoll – am aussagekräftigsten ist der Vergleich nach 8 bis 12 Wochen.</p>
-          <a class="recheck-link" href="${href}">Trotzdem schon jetzt einen neuen Check starten</a></div>`;
-      }
-      return `<a class="btn block" style="margin-top:16px" href="${href}">Neuen Vital-Check starten</a>
-        <p class="recheck-hint">Zeit für deinen nächsten Check: Dein neues Ergebnis wird automatisch mit dem letzten verglichen.</p>`;
-    })() : ""}
-      </div>
+      ${list.length ? heroCard(list) : `<div class="card"><h2>Deine Vital-Checks</h2><p class="muted">Noch kein Check in deinem Konto.</p></div>`}
+
+      ${list.length ? `<details class="card sec">
+        <summary><span><span class="sec-t">Deine Vital-Checks</span><span class="sec-s">${list.length === 1 ? "1 Check" : num(list.length) + " Checks"} · Ergebnisse ansehen</span></span><span class="sec-chev">›</span></summary>
+        <div class="acc-body">${rows}</div>
+      </details>` : ""}
 
       ${progressCard(list)}
 
