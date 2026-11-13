@@ -18,6 +18,23 @@
        Startseite nach 3 Minuten ohne Eingabe (mit 30 s Vorwarnung), Knopf "Fertig – neuer Check",
        Funnel-Kanal studio/tablet. -->
   <link rel="apple-touch-icon" href="assets/app/check-apple-180.png" />
+  <!-- v2.25.1: Aufruf aus „Mein Bereich“ (?code= / ?recheck=) – keine öffentliche Startseite aufblitzen lassen -->
+  <style>
+    html.dl-wait #hero-block, html.dl-wait #hero-value-props { display: none !important; }
+    html.dl-wait body::after { content: attr(data-dlmsg); position: fixed; left: 16px; right: 16px; top: 38%; text-align: center; font: 600 16px/1.4 'DM Sans', system-ui, sans-serif; color: var(--text-secondary, #8a97a8); z-index: 50; pointer-events: none; }
+  </style>
+  <script>
+    (function () {
+      try {
+        var p = new URLSearchParams(location.search), d = document.documentElement;
+        if (p.get('code') || p.get('recheck')) {
+          d.classList.add('dl-wait');
+          d.setAttribute('data-dlmsg', p.get('code') ? 'Dein Ergebnis wird geladen …' : 'Dein Re-Check wird vorbereitet …');
+          setTimeout(function () { d.classList.remove('dl-wait'); }, 12000);
+        }
+      } catch (e) {}
+    })();
+  </script>
   <script>
     (function () {
       var on = false;
@@ -3677,10 +3694,12 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     const codeParam = urlParams.get("code");
     // v2.8.2 — aus "Mein Bereich": Re-Check direkt verknüpft starten, ohne PIN
     const recheckParam = urlParams.get("recheck");
+    const dlDone = () => { try { document.documentElement.classList.remove('dl-wait'); } catch (e) {} };   // v2.25.1
     if (recheckParam && !codeParam) {
       if (await tryAccountLoad(recheckParam, { render: false })) {
         try { history.replaceState({}, '', selfUrlKeepEmbed()); } catch (e) {}
         startRecheckFromReview();
+        dlDone();
         return;
       }
       // nicht angemeldet / nicht im Konto: wie ein ?code=-Aufruf mit PIN weiter
@@ -3692,6 +3711,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       document.getElementById("progressWrap").style.display = "none";
       const heroElA = document.getElementById('hero-block'); if (heroElA) heroElA.style.display = 'none';
       const heroVpA = document.getElementById('hero-value-props'); if (heroVpA) heroVpA.style.display = 'none';
+      dlDone();
       return;
     }
     if (codeForPin) {
@@ -3704,6 +3724,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
       document.getElementById("progressWrap").style.display = "none";
       document.getElementById("quiz-flow").classList.remove("hidden");
       document.getElementById("quiz-flow").innerHTML = acctMismatchHtml(codeForPin) + buildPinScreen(codeForPin); // v2.21.16
+      dlDone();
       return;
     }
 
@@ -10034,7 +10055,7 @@ statt „eine Stufe höher“ (die Obergrenze kann zwei Stufen ausmachen).
     } catch (e) { /* still: der Check laeuft auch ohne Zielvorgabe */ }
   })();
 </script>
-<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.25.0</footer>
+<footer class="app-footer"><a href="konto.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mein Bereich</a> &nbsp;·&nbsp; Der LeVITA Vital-Check ist eine Lösung von <a href="https://www.logivita.de" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">LogiVita</a> &nbsp;·&nbsp; v2.25.1</footer>
 
 
 <!-- v2.24.0: Studio-Modus (nur auf den Studio-Tablets aktiv, siehe Kopf) -->

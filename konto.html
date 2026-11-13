@@ -280,6 +280,30 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
   .vb-hist { margin: 8px 0 0; padding: 0; list-style: none; font-size: 14px; color: var(--text-secondary); }
   .vb-hist li { padding: 4px 0; display: flex; gap: 8px; align-items: baseline; }
   .vb-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--accent-green); flex: none; display: inline-block; }
+  /* 1.14.0: Wiederkommen – aktueller Schritt, nächste Termine, Geschafftes */
+  .focus { border: 1px solid var(--border-hover); background: linear-gradient(180deg, var(--accent-green-dim), var(--brand-card) 60%); }
+  .focus .kicker { font-size: 12px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--accent-green-text); margin: 0 0 6px; }
+  .focus h2 { margin: 0 0 8px; }
+  .ifthen-k { font-size: 16px; font-weight: 600; background: rgba(127,127,127,.08); border-radius: var(--radius-sm); padding: 12px 14px; margin: 6px 0 10px; }
+  .meta-k { font-size: 13.5px; color: var(--text-secondary); margin: 0 0 12px; }
+  .next-list { list-style: none; margin: 0; padding: 0; }
+  .next-list li { display: grid; grid-template-columns: 92px 1fr; gap: 10px; padding: 12px 0; border-top: 1px solid var(--border); }
+  .next-list li:first-child { border-top: 0; }
+  .next-list .nd { font-weight: 700; font-size: 14px; }
+  .next-list .nt { font-weight: 700; }
+  .next-list .nm { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .next-list li.hl .nd, .next-list li.hl .nt { color: var(--accent-green-text); }
+  .next-list a.small-link { display: inline-block; margin-top: 6px; font-size: 14px; font-weight: 700; }
+  .done-list { list-style: none; margin: 0; padding: 0; }
+  .done-list li { padding: 6px 0; display: flex; gap: 10px; align-items: baseline; }
+  .done-list li::before { content: "✓"; color: var(--accent-green-text); font-weight: 800; flex: none; }
+  .idx-compact { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .idx-compact .big { font-family: 'DM Serif Display', serif; font-size: 40px; line-height: 1; }
+  .idx-compact .big small { font-size: 15px; color: var(--text-secondary); }
+  .row-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .row-btns .btn { padding: 10px 18px; font-size: 14px; }
+  .verbal { margin: 0 0 12px; padding-left: 18px; }
+  .verbal li { margin: 4px 0; }
   /* 1.12.0: Index-Hero + Aufklapp-Sektionen */
   .hero-idx { background: linear-gradient(180deg, var(--accent-green-dim), var(--brand-card) 55%); }
   .idxrow { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 2px; }
@@ -446,7 +470,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.13.1"; // 1.13.1: Begleitungs-Karte für alle freigeschaltet · // 1.13.0: Karte „Begleitung zu deinem Vital-Plan“ (Kurzcheck alle zwei Wochen, Edge vital-begleitung) · // 1.12.0: Index-Hero + Re-Check-Hinweisfeld, Vital-Checks & Studio-Messungen als Aufklapp-Sektionen
+  const FE_VERSION = "1.14.0"; // 1.14.0: Wiederkommen – erste Karte je nach Anlass (fälliger Kurzcheck / aktueller Schritt / Ergebnis), „Was als Nächstes ansteht“, „Was du schon geschafft hast“, Verlauf in Worten, Mail-Status je Begleitung · // 1.13.1: Begleitungs-Karte für alle freigeschaltet · // 1.13.0: Karte „Begleitung zu deinem Vital-Plan“ (Kurzcheck alle zwei Wochen, Edge vital-begleitung) · // 1.12.0: Index-Hero + Re-Check-Hinweisfeld, Vital-Checks & Studio-Messungen als Aufklapp-Sektionen
   const K = window.LeVitaKonto;
   const esc = K.esc;
   const params = new URLSearchParams(location.search);
@@ -467,6 +491,16 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
     el.textContent = label + "\n" + JSON.stringify(json, null, 2);
   };
   const dateDe = (iso) => { try { return new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }); } catch { return ""; } };
+  // 1.14.0: bei mehreren Checks am selben Tag die Uhrzeit dazu
+  const sameDay = (a, b) => { try { return new Date(a).toDateString() === new Date(b).toDateString(); } catch (e) { return false; } };
+  const whenDe = (c, list) => {
+    const d = dateDe(c.created_at);
+    const twin = (list || []).some((x) => x !== c && x.created_at && sameDay(x.created_at, c.created_at));
+    if (!twin) return d;
+    try { return d + ", " + new Date(c.created_at).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) + " Uhr"; } catch (e) { return d; }
+  };
+  const dayLong = (iso) => { try { return new Date(iso).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" }); } catch (e) { return ""; } };
+  const dayShort = (iso) => { try { return new Date(iso).toLocaleDateString("de-DE", { day: "numeric", month: "short" }); } catch (e) { return ""; } };
   const weeksSince = (iso) => { const t = new Date(iso).getTime(); return isNaN(t) ? 99 : Math.floor((Date.now() - t) / (7 * 24 * 3600 * 1000)); };
   const num = (v, d = 0) => (v == null || isNaN(Number(v))) ? "–" : Number(v).toLocaleString("de-DE", { maximumFractionDigits: d, minimumFractionDigits: d });
 
@@ -651,12 +685,10 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
       const j = await r.json(); return (j && j.success) ? j : null;
     } catch (e) { return null; }
   }
-  async function fillNutriState(c, list) {
-    const el = document.getElementById("mod-nutri"); if (!el || !sess || !c || !c.public_code) return;
-    if (!document.getElementById("mod-nutri-btn")) return;   // gesperrt (z. B. ärztlicher Vorrang beim neuesten Check): Text bleibt
-    const cands = (Array.isArray(list) && list.length ? list : [c]).slice(0, 6);
-    // 1.9.1: Vorrang hat ein laufender Ernährungs-Check mit Kurzcheck-Termin, dann einer mit gestarteten Schritten,
-    // dann ein nur begonnener – jeweils der neueste.
+  // 1.14.0: Auswahl ausgelagert – screenHome lädt den Ernährungs-Check einmal vorab (für die erste Karte und die Termine)
+  async function nutriBest(list) {
+    if (!sess || !Array.isArray(list) || !list.length) return { hit: null, hitCheck: null };
+    const cands = list.slice(0, 6);
     let hit = null, hitCheck = null, best = 0;
     const loaded = await Promise.all(cands.map((x) => nutriLoad(x.public_code)));
     loaded.forEach((j, i) => {
@@ -667,6 +699,16 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
         : (j.checkin || steps.length || (j.status && !["none", "consent_required"].includes(j.status))) ? 1 : 0;
       if (rank > best) { best = rank; hit = j; hitCheck = cands[i]; }
     });
+    return { hit, hitCheck };
+  }
+  const nutriTitle = (r, key) => {
+    const l = [...((r && r.result && r.result.shown) || []), ...((r && r.result && r.result.parking) || [])].find((x) => x.lever_key === key);
+    return (l && ((l.variant && l.variant.title) || (l.tip && l.tip.title))) || "Dein Ernährungsschritt";
+  };
+  async function fillNutriState(c, list, pre) {
+    const el = document.getElementById("mod-nutri"); if (!el || !sess || !c || !c.public_code) return;
+    if (!document.getElementById("mod-nutri-btn")) return;   // gesperrt (z. B. ärztlicher Vorrang beim neuesten Check): Text bleibt
+    const { hit, hitCheck } = pre || await nutriBest(list && list.length ? list : [c]);
     if (!hit) return; // Karte bleibt bei „Verfügbar“
     const ck = hit.checkin, steps = hit.self_steps || [], started = steps.filter((x) => x.state === "gestartet").length;
     let t = "", btn = "Weiter →", hint = "";
@@ -754,9 +796,9 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
       return localStorage.getItem("levita-vb-test") === "1";
     } catch (e) { return false; }
   };
-  async function vbFill() {
+  async function vbFill(pre, openAbove) {
     const el = document.getElementById("vb-card"); if (!el || !sess || !vbVisible()) return;
-    const st = await vbCall("state");
+    const st = pre || await vbCall("state");
     if (!st || !st.success) return;
     const wrap = (inner) => `<div class="card"><h2>Begleitung zu deinem Vital-Plan</h2>${inner}<div class="error"></div></div>`;
     const offLink = `<p class="small" style="margin-top:14px"><button class="linkbtn" id="vb-off" type="button">Begleitung abschalten</button> – dein Plan und dein Bereich bleiben erhalten.</p>`;
@@ -768,24 +810,25 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
       if (!st.can_enable) { el.innerHTML = ""; return; }
       el.innerHTML = wrap(`<p class="muted" style="margin-top:0">Alle zwei Wochen eine kurze Mail: Wie läuft dein Schritt? Danach siehst du hier deinen Zwischenstand und den passenden nächsten Schritt. Höchstens drei Kurzchecks und eine Einladung zum Re-Check – nur zu deinem Plan, keine Angebote.</p>
         <button class="btn" id="vb-on" type="button" style="margin-top:6px">Begleitung einschalten</button>`);
-      document.getElementById("vb-on").onclick = async () => { const r = await vbCall("enable"); if (r.success) vbFill(); else el.querySelector(".error").textContent = "Das hat gerade nicht geklappt. Bitte versuche es noch einmal."; };
+      document.getElementById("vb-on").onclick = async () => { const r = await vbCall("enable"); if (r.success) screenHome(); else el.querySelector(".error").textContent = "Das hat gerade nicht geklappt. Bitte versuche es noch einmal."; };
       return;
     }
     if (!st.begleitung.active) {
       el.innerHTML = wrap(`<p class="muted" style="margin-top:0">Die Begleitung ist abgeschaltet. Du bekommst keine Kurzcheck-Mails mehr.</p>
         <button class="btn ghost" id="vb-on" type="button">Wieder einschalten</button>${histHtml}`);
-      document.getElementById("vb-on").onclick = async () => { const r = await vbCall("enable"); if (r.success) vbFill(); };
+      document.getElementById("vb-on").onclick = async () => { const r = await vbCall("enable"); if (r.success) screenHome(); };
       return;
     }
     const render = (open) => {
       let inner;
-      if (open) inner = vbOpenHtml(open);
+      if (open && openAbove) inner = `<p class="muted" style="margin-top:0">Dein Kurzcheck ist fällig – er steht ganz oben. Ein Klick genügt.</p>`;
+      else if (open) inner = vbOpenHtml(open);
       else if (st.next_due) inner = `<p class="muted" style="margin-top:0">Dein nächster Kurzcheck ist am <strong>${esc(new Date(st.next_due).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" }))}</strong> – wir schicken dir dann eine kurze Mail.</p>`;
       else inner = `<p class="muted" style="margin-top:0">Gerade ist kein Kurzcheck offen.</p>`;
       el.innerHTML = wrap(inner + histHtml + offLink);
-      if (open) vbBind(el, open, null, (r) => { if (r.chosen) { el.innerHTML = wrap(vbChosenHtml(r)); } else render(r); });
+      if (open && !openAbove) vbBind(el, open, null, (r) => { if (r.chosen) { el.innerHTML = wrap(vbChosenHtml(r)); } else render(r); });
       const off = document.getElementById("vb-off");
-      if (off) off.onclick = async () => { off.disabled = true; const r = await vbCall("disable"); if (r.success) vbFill(); else off.disabled = false; };
+      if (off) off.onclick = async () => { off.disabled = true; const r = await vbCall("disable"); if (r.success) screenHome(); else off.disabled = false; };
     };
     render(st.open);
   }
@@ -923,11 +966,25 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
     const top = A.slice().sort((a, b) => (b.weight * (100 - b.score)) - (a.weight * (100 - a.score)))[0];
     const chrono = list.slice().reverse();
     const summary = prev
-      ? `Dein Index: <strong>${num(cur.total_score)}</strong> – ${Math.abs(dTot) < 2 ? "stabil gehalten" : `${dTot > 0 ? "+" : "−"}${num(Math.abs(dTot), 1)} Punkte`} seit deinem Check vom ${esc(dateDe(prev.created_at))}${first ? `, ${Math.abs(dFirst) < 2 ? "stabil" : `${dFirst > 0 ? "+" : "−"}${num(Math.abs(dFirst), 1)}`} seit deinem ersten Check vom ${esc(dateDe(first.created_at))}` : ""}.`
+      ? `Dein Index: <strong>${num(cur.total_score)}</strong> – ${Math.abs(dTot) < 2 ? "stabil gehalten" : `${dTot > 0 ? "+" : "−"}${num(Math.abs(dTot), 0)} Punkte`} seit deinem Check vom ${esc(whenDe(prev, list))}${first ? `, ${Math.abs(dFirst) < 2 ? "stabil" : `${dFirst > 0 ? "+" : "−"}${num(Math.abs(dFirst), 0)}`} seit deinem ersten Check vom ${esc(whenDe(first, list))}` : ""}.`
       : `Dein Index: <strong>${num(cur.total_score)}</strong>. Mit deinem nächsten Check siehst du hier, was sich in jedem Bereich verändert hat.`;
+    // 1.14.0: vor der Tabelle in Worten – was höher, was niedriger bewertet wurde (gerundet wie überall: ganze Punkte)
+    let verbal = "";
+    if (prev && P) {
+      const ch = A.filter((a) => P[a.key] != null).map((a) => ({ label: a.label, d: a.score - P[a.key] }));
+      const up = ch.filter((x) => x.d >= 2).sort((a, b) => b.d - a.d), down = ch.filter((x) => x.d <= -2).sort((a, b) => a.d - b.d);
+      const same = ch.filter((x) => Math.abs(x.d) < 2), lines = [];
+      if (up.length) lines.push(`Höher bewertet: ${up.slice(0, 2).map((x) => `<strong>${esc(x.label)}</strong> (+${num(x.d, 0)})`).join(", ")}.`);
+      if (down.length) lines.push(`Niedriger bewertet: ${down.slice(0, 2).map((x) => `<strong>${esc(x.label)}</strong> (−${num(Math.abs(x.d), 0)})`).join(", ")}.`);
+      if (!up.length && !down.length) lines.push("Deine Angaben haben sich in allen Bereichen kaum verändert.");
+      else if (same.length) lines.push(`Kaum verändert: ${same.slice(0, 3).map((x) => esc(x.label)).join(", ")}.`);
+      verbal = `<ul class="verbal">${lines.map((l) => `<li>${l}</li>`).join("")}</ul>
+        <p class="note" style="margin:-4px 0 12px">Verglichen mit deinem Check vom ${esc(whenDe(prev, list))}. Der Index folgt deinen Antworten im Fragebogen – er ist keine Messung. Gemessene Werte findest du unter „Deine Messungen im Studio“.</p>`;
+    }
     return `<div class="card" id="progress">
         <h2>${prev ? "Dein Verlauf" : "Dein Index im Detail"}</h2>
         <p class="muted" style="margin-top:0;">${summary}</p>
+        ${verbal}
         ${trendSvg(chrono)}
         <div style="overflow-x:auto;"><table class="ptab">${head}${body}
           <tr class="ptot"><td style="text-align:left;">Vitalitäts-Index</td><td>${num(sumW)} %</td><td><strong>${num(cur.total_score)}</strong></td>${P ? `<td>${deltaHtml(dTot, true)}</td>` : ""}${F ? `<td>${deltaHtml(dFirst, true)}</td>` : ""}</tr></table></div>
@@ -942,7 +999,9 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
   }
 
   // 1.12.0: Index-Hero – wichtigster Wert, Veränderung und Re-Check-Fälligkeit auf einen Blick
-  function heroCard(list) {
+  // 1.14.0: compact = kleine Karte unter der ersten Karte (wenn oben ein Schritt oder Kurzcheck steht);
+  // der Re-Check-Termin steht jetzt in „Was als Nächstes ansteht“.
+  function heroCard(list, compact) {
     const cur = list[0]; if (!cur || cur.total_score == null) return "";
     const prev = list[1] || null, sc = Number(cur.total_score);
     const care = cur.care_status && CARE_ACTIVE.includes(cur.care_status);
@@ -963,15 +1022,106 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
     const btn = wk < 8
       ? `<a class="btn ghost block" href="${href}">Trotzdem jetzt neuen Check starten</a>`
       : `<a class="btn block" href="${href}">Neuen Vital-Check starten</a>`;
+    const resHref = `index.html?code=${encodeURIComponent(cur.public_code)}`;
+    const careTxt = `<p class="muted" style="margin:0 0 2px">Dein letzter Check ist ein Lebensstilprofil – bitte ärztlich besprechen. Danach steht dir dein Index wieder zur Verfügung.</p>`;
+    const histBtn = list.length > 1 ? `<a class="btn ghost" href="#progress">Verlauf anzeigen</a>` : "";
+    if (compact) {
+      return `<div class="card">
+        <h2 style="margin:0 0 10px">Dein letzter Vital-Check</h2>
+        ${care ? careTxt : `<div class="idx-compact"><div class="big">${num(sc)}<small> von 100</small></div><span class="pill good">● ${esc(lvl)}</span></div>
+          <div style="margin-top:6px">${chg}</div>`}
+        <div class="row-btns"><a class="btn" href="${resHref}">Ergebnis ansehen</a>${histBtn}</div>
+      </div>`;
+    }
+    const reBtn = wk >= 8 ? `<a class="btn" href="${href}">Neuen Vital-Check starten</a>` : "";
     return `<div class="card hero-idx">
         <h2 style="margin-bottom:12px">Dein Vitalitäts-Index</h2>
-        ${care
-          ? `<p class="muted" style="margin:0 0 2px">Dein letzter Check ist ein Lebensstilprofil – bitte ärztlich besprechen. Danach steht dir dein Index wieder zur Verfügung.</p>`
+        ${care ? careTxt
           : `<div class="idxrow"><div class="big">${num(sc)}<small> /100</small></div>
             <div class="idxmeta"><span class="pill good">● ${esc(lvl)}</span>${chg}</div></div>`}
-        <div class="recheck-box"><div class="rk">${rk}</div></div>
-        <div class="hero-btns">${btn}</div>
+        <div class="row-btns">${reBtn}<a class="btn${reBtn ? " ghost" : ""}" href="${resHref}">Letztes Ergebnis ansehen</a>${histBtn}</div>
       </div>`;
+  }
+
+
+  // 1.14.0 (Jörg 13.11.2026, Testbericht „Mein Bereich als Begleiter“): Beim Wiederkommen zuerst das, was heute dran ist.
+  // Reihenfolge der ersten Karte: fälliger Vital-Plan-Kurzcheck → fälliger Ernährungs-Kurzcheck → laufender Ernährungsschritt
+  // → laufender Vital-Plan-Schritt → sonst das letzte Ergebnis (Index wie bisher).
+  function homeParts(list, nut, st, remOn) {
+    const cur = list[0] || null, now = Date.now();
+    const j = nut && nut.hit, jc = nut && nut.hitCheck;
+    const ck = j && j.checkin && j.checkin.status === "scheduled" ? j.checkin : null;
+    const steps = (j && j.self_steps) || [];
+    const active = steps.filter((x) => x.state === "gestartet"), arrived = steps.filter((x) => x.state === "angekommen");
+    const nHref = jc ? `ernaehrung.html?code=${encodeURIComponent(jc.public_code)}&utm_source=konto&utm_medium=fokus` : "";
+    const nDue = !!(ck && ck.due_at && new Date(ck.due_at).getTime() <= now);
+    const vbOn = !!(st && st.success && st.begleitung && st.begleitung.active);
+    const vOpen = vbOn && st.open ? st.open : null;
+    const vCur = vbOn && st.current && st.current.kind === "kurzcheck" ? st.current : null;
+    const resHref = cur ? `index.html?code=${encodeURIComponent(cur.public_code)}` : "";
+    let focus = "", kind = "result";
+
+    if (vOpen) {
+      kind = "vb-open";
+      focus = `<div class="card focus" id="focus-vb"><p class="kicker">Heute dran</p><h2>Kurzcheck zu deinem Vital-Plan</h2>${vbOpenHtml(vOpen)}<div class="error"></div></div>`;
+    } else if (nDue) {
+      kind = "nutri-due";
+      focus = `<div class="card focus"><p class="kicker">Heute dran</p><h2>Dein Ernährungs-Kurzcheck ist fällig</h2>
+        <p class="muted" style="margin-top:0">Runde ${ck.round || 1}: Wie lief ${active.length === 1 ? "dein Schritt" : "es mit deinen Schritten"}? Danach kommt der nächste Schritt dazu.</p>
+        ${active.length ? `<ul class="verbal">${active.map((x) => `<li><strong>${esc(nutriTitle(j, x.lever_key))}</strong>${x.if_then_text ? `<br><span class="small">${esc(x.if_then_text)}</span>` : ""}</li>`).join("")}</ul>` : ""}
+        <a class="btn" href="${nHref}">Kurzcheck machen</a></div>`;
+    } else if (active.length) {
+      kind = "nutri-step";
+      const x = active[0];
+      let meta = "";
+      if (ck && ck.started_at && ck.due_at) {
+        const total = Math.max(1, Math.round((new Date(ck.due_at) - new Date(ck.started_at)) / 864e5));
+        const day = Math.min(total, Math.max(1, Math.floor((now - new Date(ck.started_at)) / 864e5) + 1));
+        meta = `Tag ${day} von ${total} · Ernährungs-Kurzcheck am ${esc(dayLong(ck.due_at))}`;
+      } else if (ck && ck.due_at) meta = `Ernährungs-Kurzcheck am ${esc(dayLong(ck.due_at))}`;
+      focus = `<div class="card focus"><p class="kicker">Dein aktueller Schritt</p><h2>${esc(nutriTitle(j, x.lever_key))}</h2>
+        ${x.if_then_text ? `<div class="ifthen-k">„${esc(x.if_then_text)}“</div>` : ""}
+        ${meta ? `<p class="meta-k">${meta}</p>` : ""}
+        ${active.length > 1 ? `<p class="note" style="margin:-4px 0 12px">Dazu ${active.length - 1 === 1 ? "ein weiterer Schritt" : (active.length - 1) + " weitere Schritte"} – alle im Ernährungsplan.</p>` : ""}
+        ${vCur && vCur.step_text ? `<p class="note" style="margin:-4px 0 12px">Aus deinem Vital-Plan: ${esc(vCur.step_text)}</p>` : ""}
+        <a class="btn" href="${nHref}">Ernährungsplan öffnen</a></div>`;
+    } else if (vCur && vCur.step_text) {
+      kind = "vb-step";
+      focus = `<div class="card focus"><p class="kicker">Dein aktueller Schritt</p><h2>Aus deinem Vital-Plan</h2>
+        <div class="ifthen-k">${esc(vCur.step_text)}</div>
+        <p class="meta-k">Kurzcheck am ${esc(dayLong(vCur.due_at))} – wir schicken dir dann eine kurze Mail.</p>
+        ${resHref ? `<a class="btn" href="${resHref}">Plan und Ergebnis ansehen</a>` : ""}</div>`;
+    }
+
+    // Was als Nächstes ansteht – Datum, Zweck, Aktion, Mail-Erinnerung
+    const items = [];
+    if (ck && ck.due_at) items.push({ t: new Date(ck.due_at).getTime(), due: nDue, title: "Ernährungsschritt überprüfen",
+      what: "Kurzcheck im Ernährungs-Check", href: nHref, act: nDue ? "Kurzcheck machen" : "Ernährungsplan öffnen",
+      mail: ck.remind ? "Mail-Erinnerung an" : "ohne Mail-Erinnerung – im Ernährungsplan einschaltbar" });
+    if (vOpen) items.push({ t: now - 1, due: true, title: "Vital-Plan kurz einschätzen", what: "Kurzcheck zur Begleitung", href: "#focus-vb", act: "Jetzt einschätzen", mail: "Mail kommt mit der Begleitung · abschaltbar unten" });
+    else if (vbOn && st.next_due) items.push({ t: new Date(st.next_due).getTime(), due: false, title: st.current && st.current.kind === "recheck" ? "Einladung zum Re-Check" : "Vital-Plan kurz einschätzen",
+      what: "Kurzcheck zur Begleitung", href: "", act: "", mail: "Mail kommt mit der Begleitung · abschaltbar unten" });
+    if (cur && cur.created_at) {
+      const t8 = new Date(cur.created_at).getTime() + 56 * 864e5, due = t8 <= now;
+      items.push({ t: t8, due, title: "Vital-Check wiederholen", what: "Re-Check – am aussagekräftigsten nach 8–12 Wochen",
+        href: `index.html?recheck=${encodeURIComponent(cur.public_code)}`, act: due ? "Re-Check starten" : "Trotzdem jetzt starten",
+        mail: remOn ? "Mail-Erinnerung an" : `ohne Mail-Erinnerung – <a href="#mail-settings">einschalten</a>`, from: !due });
+    }
+    items.sort((a, b) => a.t - b.t);
+    const next = items.length ? `<div class="card"><h2>Was als Nächstes ansteht</h2><ul class="next-list">${items.map((it, i) =>
+      `<li class="${i === 0 ? "hl" : ""}"><div class="nd">${it.due ? "jetzt" : (it.from ? "ab " : "") + esc(dayShort(new Date(it.t).toISOString()))}</div>
+        <div><div class="nt">${esc(it.title)}</div><div class="nm">${esc(it.what)} · ${it.mail}</div>
+        ${it.href && it.act ? `<a class="small-link" href="${it.href}">${esc(it.act)} →</a>` : ""}</div></li>`).join("")}</ul></div>` : "";
+
+    // Was du schon geschafft hast – umgesetzte Gewohnheiten (nicht der Index)
+    const doneItems = [];
+    arrived.forEach((x) => doneItems.push(esc(nutriTitle(j, x.lever_key)) + (x.if_then_text ? ` <span class="small">– ${esc(x.if_then_text)}</span>` : "")));
+    ((st && st.history) || []).filter((x) => x.rating === "meistens" && x.step_text).forEach((x) => doneItems.push(esc(x.step_text)));
+    const done = doneItems.length ? `<div class="card"><h2>Was du schon geschafft hast</h2>
+      <p class="muted" style="margin-top:0">${doneItems.length === 1 ? "Eine Gewohnheit ist" : doneItems.length + " Gewohnheiten sind"} bereits in deinem Alltag angekommen:</p>
+      <ul class="done-list">${doneItems.map((d) => `<li><span>${d}</span></li>`).join("")}</ul>
+      <p class="note">Das zählt auch dann, wenn sich dein Index nicht bewegt.</p></div>` : "";
+    return { focus, kind, next, done };
   }
 
   async function screenHome(note = "") {
@@ -995,6 +1145,11 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
     const list = Array.isArray(checks) ? checks.slice().reverse() : [];   // neueste zuerst
     const cons = acc.consents || {};
     const remOn = !!(cons.appointment_reminder && cons.appointment_reminder.granted);
+    // 1.14.0: Ernährungs-Check und Begleitung vorab laden – sie bestimmen die erste Karte
+    const [nut, vbst] = list.length
+      ? await Promise.all([nutriBest(list).catch(() => ({ hit: null, hitCheck: null })), (vbVisible() ? vbCall("state") : Promise.resolve(null)).catch(() => null)])
+      : [{ hit: null, hitCheck: null }, null];
+    const parts = list.length ? homeParts(list, nut, vbst, remOn) : { focus: "", kind: "result", next: "", done: "" };
 
     const rows = list.map((c, i) => {
       const prev = list[i + 1];
@@ -1003,10 +1158,10 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
         const d = Number(c.total_score) - Number(prev.total_score);
         delta = Math.abs(d) < 2
           ? `<div class="delta flat">stabil gehalten</div>`
-          : `<div class="delta ${d > 0 ? "up" : "down"}">${d > 0 ? "+" : "−"}${num(Math.abs(d), 1)} seit ${esc(dateDe(prev.created_at))}</div>`;
+          : `<div class="delta ${d > 0 ? "up" : "down"}">${d > 0 ? "+" : "−"}${num(Math.abs(d), 0)} seit ${esc(whenDe(prev, list))}</div>`;
       }
       return `<div class="check">
-          <div><div class="date">${esc(dateDe(c.created_at))}</div>
+          <div><div class="date">${esc(whenDe(c, list))}</div>
             <div class="label">${checkLabel(c)}</div>
             <div class="code">${esc(c.public_code)}${c.previous_public_code ? " · Re-Check" : ""}</div>
             <a class="btn ${i === 0 ? "" : "ghost "}open-main" href="index.html?code=${encodeURIComponent(c.public_code)}" data-open="${esc(c.public_code)}">Ergebnis ansehen →</a></div>
@@ -1024,9 +1179,13 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
       </div>
       ${note ? `<div class="card ok"><p class="muted" style="margin:0">${esc(note)}</p></div>` : ""}
 
-      ${list.length ? heroCard(list) : `<div class="card"><h2>Deine Vital-Checks</h2><p class="muted">Noch kein Check in deinem Konto.</p></div>`}
+      ${parts.focus}
 
-      <div id="vb-card"></div>
+      ${list.length ? heroCard(list, !!parts.focus) : `<div class="card"><h2>Deine Vital-Checks</h2><p class="muted">Noch kein Check in deinem Konto.</p></div>`}
+
+      ${parts.next}
+
+      ${parts.done}
 
       ${list.length ? `<details class="card sec">
         <summary><span><span class="sec-t">Deine Vital-Checks</span><span class="sec-s">${list.length === 1 ? "1 Check" : num(list.length) + " Checks"} · Ergebnisse ansehen</span></span><span class="sec-chev">›</span></summary>
@@ -1039,6 +1198,8 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
 
       ${list.length ? modulesCard(list[0], list) : ""}
 
+      <div id="vb-card"></div>
+
       <div class="card">
         <h2>Angebote im Studio</h2>
         <p class="muted" style="margin-top:0">Wenn du magst, geht es bei LeVITA persönlich weiter.</p>
@@ -1048,10 +1209,11 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
         <a class="offer" href="https://le-vita.com/mikronaehrstoff-versorgung" target="_blank" rel="noopener"><span><strong>Nahrungsergänzung (BIOGENA)</strong><small>Empfehlungen aus der LeVITA-Auswahl</small></span><span class="arr">→</span></a>
       </div>
 
-      <div class="card">
+      <div class="card" id="mail-settings">
         <h2>E-Mails von uns</h2>
         <label class="toggle"><input type="checkbox" id="t-rem" ${remOn ? "checked" : ""}>
-          <span><strong>Erinnerungen</strong>Vor vereinbarten Terminen und an deinen nächsten Vital-Check.</span></label>
+          <span><strong>Erinnerung an Termine und den nächsten Vital-Check</strong>Vor vereinbarten Terminen im Studio und wenn dein Re-Check ansteht.</span></label>
+        <p class="note">Die Kurzcheck-Mails zu deinem Ernährungsplan und zu deinem Vital-Plan sind davon getrennt: Du stellst sie direkt dort ein – deinen Plan behältst du in jedem Fall.</p>
         <div class="error" id="err-c"></div>
       </div>
 
@@ -1081,8 +1243,16 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
       };
     };
     bindToggle("t-rem", "reminders");
-    if (list.length) fillNutriState(list[0], list); // 1.7.0 · 1.9.0: über alle Checks
-    if (list.length) vbFill(); // 1.13.0
+    if (list.length) fillNutriState(list[0], list, nut); // 1.7.0 · 1.9.0: über alle Checks · 1.14.0: vorab geladen
+    if (list.length) vbFill(vbst && vbst.success ? vbst : null, parts.kind === "vb-open"); // 1.13.0
+    // 1.14.0: fälliger Vital-Plan-Kurzcheck direkt in der ersten Karte beantworten
+    const fv = document.getElementById("focus-vb");
+    const fvRender = (r) => {
+      if (r.chosen) { fv.innerHTML = `<p class="kicker">Erledigt</p>${vbChosenHtml(r)}`; return; }
+      fv.innerHTML = `<p class="kicker">Heute dran</p><h2>Kurzcheck zu deinem Vital-Plan</h2>${vbOpenHtml(r)}<div class="error"></div>`;
+      vbBind(fv, r, null, fvRender);
+    };
+    if (fv && vbst && vbst.open) vbBind(fv, vbst.open, null, fvRender);
     document.getElementById("b-guide").onclick = () => K.showGuide && K.showGuide();
 
     document.getElementById("b-del-open").onclick = () => {
