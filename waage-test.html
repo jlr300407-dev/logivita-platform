@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Waagen-Test · Tanita MC-780</title>
+<!-- Waagen-Test 1.0.0 (13.11.2026): liest die Ausgabe der Tanita MC-780MA-N über USB (Web Serial, Chrome/Edge
+     am Laptop/PC) oder aus einer Datei der SD-Karte und zeigt die Werte an. Es wird NICHTS gespeichert oder
+     verschickt – die Seite dient nur dazu, das echte Datenformat für den späteren Import ins Trainer-Dashboard
+     zu sehen. Format laut Tanita: {Kürzel,Wert,Kürzel,"Text",…} je Messung, 9600 Baud, 8N1. -->
+<style>
+  :root { --bg:#0a1628; --card:#13233a; --line:#25385a; --t:#eef3f8; --s:#a9b8c9; --g:#7fd17f; --r:#ff7b7b; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--t); font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif; padding:16px; }
+  main { max-width:860px; margin:0 auto; }
+  h1 { font-size:22px; margin:6px 0 4px; } h2 { font-size:17px; margin:0 0 8px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin:14px 0; }
+  .muted { color:var(--s); font-size:13.5px; }
+  button, label.btn { background:#7FAE0F; color:#0a1628; border:0; border-radius:10px; padding:11px 16px; font-weight:700; font-size:15px; cursor:pointer; display:inline-block; }
+  button.alt { background:transparent; color:var(--t); border:1px solid var(--line); }
+  #state { margin-left:10px; font-weight:600; }
+  table { width:100%; border-collapse:collapse; margin-top:8px; font-size:14px; }
+  td, th { border-bottom:1px solid var(--line); padding:6px 4px; text-align:left; vertical-align:top; }
+  th { color:var(--s); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
+  pre { white-space:pre-wrap; word-break:break-all; background:#0d1b30; border:1px solid var(--line); border-radius:10px; padding:10px; font-size:12px; max-height:220px; overflow:auto; }
+  .ok { color:var(--g); } .err { color:var(--r); }
+  ol { padding-left:20px; } li { margin:4px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Waagen-Test · Tanita MC-780MA-N</h1>
+  <p class="muted">Diese Seite liest die Messwerte der Waage nur aus und zeigt sie an. Es wird nichts gespeichert und nichts verschickt. Bitte nur an sich selbst testen.</p>
+
+  <div class="card">
+    <h2>1. Über das USB-Kabel</h2>
+    <ol class="muted">
+      <li>USB-Kabel der Waage an den Laptop/PC stecken, Waage einschalten.</li>
+      <li>Diese Seite in <strong>Chrome</strong> oder <strong>Edge</strong> öffnen (nicht Safari/Firefox, nicht am Handy).</li>
+      <li>„Mit Waage verbinden“ klicken und im Fenster den Eintrag der Waage wählen (meist „FT232R“, „USB Serial“ oder „COM…“).</li>
+      <li>An der Waage eine Messung machen – als ID eine Testnummer, z. B. 999.</li>
+    </ol>
+    <button id="connect">Mit Waage verbinden</button> <button id="disconnect" class="alt" hidden>Trennen</button> <span id="state" class="muted"></span>
+  </div>
+
+  <div class="card">
+    <h2>2. Oder: Datei von der SD-Karte</h2>
+    <p class="muted">SD-Karte aus der Waage in den Rechner stecken und die Datei des Tages wählen (Name beginnt mit dem Datum).</p>
+    <label class="btn" for="file">Datei wählen</label> <input type="file" id="file" hidden />
+    <span id="fileState" class="muted"></span>
+  </div>
+
+  <div class="card" id="resultCard" hidden>
+    <h2>Ergebnis</h2>
+    <div id="results"></div>
+    <p class="muted" style="margin-top:12px;">Für den Import ins Dashboard: bitte die Rohdaten unten kopieren und an Claude schicken.</p>
+    <button id="copy" class="alt">Rohdaten kopieren</button> <span id="copyState" class="muted"></span>
+    <pre id="raw"></pre>
+  </div>
+</main>
+<script>
+(function () {
+  // Bekannte Kürzel laut Tanita-Ausgabebeschreibung MC-780 (Auswahl)
+  const LABELS = {
+    ID: 'ID-Nummer', DT: 'Datum', TI: 'Uhrzeit', MO: 'Modell', Bt: 'Körpertyp (0 Standard, 2 Athlet)', GE: 'Geschlecht (1 m, 2 w)',
+    AG: 'Alter', Hm: 'Größe (cm)', Pt: 'Kleidung (kg)', Wk: 'Gewicht (kg)', MI: 'BMI', FW: 'Körperfett (%)', fW: 'Fettmasse (kg)',
+    MW: 'Fettfreie Masse (kg)', mW: 'Muskelmasse (kg)', sW: 'Muskel-Score (−4…4)', bW: 'Knochenmasse (kg)', wW: 'Körperwasser (kg)',
+    ww: 'Körperwasser (%)', wI: 'Intrazelluläres Wasser (kg)', wO: 'Extrazelluläres Wasser (kg)', wo: 'Extrazellulär-Anteil (%)',
+    rB: 'Grundumsatz (kcal)', rJ: 'Grundumsatz-Bewertung', rA: 'Stoffwechselalter', IF: 'Viszerales Fett (Stufe)',
+    AS: 'Skelettmuskel Arme+Beine (kg)', ah: 'SMI', ab: 'ASM/Gewicht',
+    mR: 'Muskel rechtes Bein (kg)', mL: 'Muskel linkes Bein (kg)', mr: 'Muskel rechter Arm (kg)', ml: 'Muskel linker Arm (kg)', mT: 'Muskel Rumpf (kg)',
+    FR: 'Fett rechtes Bein (%)', FL: 'Fett linkes Bein (%)', Fr: 'Fett rechter Arm (%)', Fl: 'Fett linker Arm (%)', FT: 'Fett Rumpf (%)',
+    sR: 'Muskel-Score rechtes Bein', sL: 'Muskel-Score linkes Bein', LP: 'Beinmuskelwert (Punkte)', CS: 'Prüfsumme'
+  };
+  const $ = id => document.getElementById(id);
+  let port = null, reader = null, buffer = '', rawAll = '';
+
+  function parseLine(line) {
+    const t = line.trim().replace(/^\{/, '').replace(/\}$/, '');
+    if (!t) return null;
+    const parts = t.split(',');
+    const out = [];
+    for (let i = 0; i + 1 < parts.length; i += 2) {
+      const k = parts[i].replace(/"/g, '').trim(), v = parts[i + 1].replace(/"/g, '').trim();
+      if (k) out.push([k, v]);
+    }
+    return out.length ? out : null;
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+  function show(line) {
+    rawAll += line.trim() + '\n';
+    $('raw').textContent = rawAll;
+    const pairs = parseLine(line);
+    $('resultCard').hidden = false;
+    if (!pairs) return;
+    const m = Object.fromEntries(pairs);
+    const head = `<p><strong>Messung ${esc(m.DT || '')} ${esc(m.TI || '')}</strong> · ID ${esc(m.ID || '–')} · ${pairs.length} Werte</p>`;
+    const rows = pairs.map(([k, v]) => `<tr><td><code>${esc(k)}</code></td><td>${esc(LABELS[k] || '<span class="muted">unbekannt</span>')}</td><td><strong>${esc(v)}</strong></td></tr>`).join('');
+    const div = document.createElement('div');
+    div.innerHTML = head + `<table><tr><th>Kürzel</th><th>Bedeutung</th><th>Wert</th></tr>${rows}</table>`;
+    $('results').prepend(div);
+  }
+
+  $('connect').addEventListener('click', async () => {
+    if (!('serial' in navigator)) { $('state').innerHTML = '<span class="err">Dieser Browser kann nicht auf USB-Geräte zugreifen – bitte Chrome oder Edge am Laptop/PC nutzen.</span>'; return; }
+    try {
+      port = await navigator.serial.requestPort();
+      await port.open({ baudRate: 9600, dataBits: 8, stopBits: 1, parity: 'none', flowControl: 'none' });
+      $('state').innerHTML = '<span class="ok">Verbunden – jetzt an der Waage messen.</span>';
+      $('connect').hidden = true; $('disconnect').hidden = false;
+      const dec = new TextDecoderStream();
+      port.readable.pipeTo(dec.writable).catch(() => {});
+      reader = dec.readable.getReader();
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += value;
+        let i;
+        while ((i = buffer.search(/\r?\n/)) >= 0) { const line = buffer.slice(0, i); buffer = buffer.slice(i + 1).replace(/^\n/, ''); if (line.trim()) show(line); }
+      }
+    } catch (e) {
+      $('state').innerHTML = '<span class="err">' + esc(e.message || e) + '</span>';
+    }
+  });
+  $('disconnect').addEventListener('click', async () => {
+    try { if (reader) await reader.cancel(); if (port) await port.close(); } catch (e) {}
+    $('state').textContent = 'Getrennt.'; $('connect').hidden = false; $('disconnect').hidden = true;
+  });
+  $('file').addEventListener('change', async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const text = await f.text();
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    $('fileState').textContent = `${f.name}: ${lines.length} Zeilen gelesen`;
+    lines.forEach(show);
+  });
+  $('copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(rawAll); $('copyState').textContent = 'Kopiert.'; } catch (e) { $('copyState').textContent = 'Bitte die Rohdaten markieren und kopieren.'; }
+  });
+})();
+</script>
+</body>
+</html>
