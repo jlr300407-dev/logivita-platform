@@ -286,6 +286,8 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
   .focus h2 { margin: 0 0 8px; }
   .ifthen-k { font-size: 16px; font-weight: 600; background: rgba(127,127,127,.08); border-radius: var(--radius-sm); padding: 12px 14px; margin: 6px 0 10px; }
   .meta-k { font-size: 13.5px; color: var(--text-secondary); margin: 0 0 12px; }
+  .also-k { border-top: 1px solid var(--border); margin-top: 16px; padding-top: 12px; font-size: 14px; color: var(--text-secondary); }
+  .also-k .also-l { display: block; font-size: 11.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px; }
   .next-list { list-style: none; margin: 0; padding: 0; }
   .next-list li { display: grid; grid-template-columns: 92px 1fr; gap: 10px; padding: 12px 0; border-top: 1px solid var(--border); }
   .next-list li:first-child { border-top: 0; }
@@ -470,7 +472,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.14.0"; // 1.14.0: Wiederkommen – erste Karte je nach Anlass (fälliger Kurzcheck / aktueller Schritt / Ergebnis), „Was als Nächstes ansteht“, „Was du schon geschafft hast“, Verlauf in Worten, Mail-Status je Begleitung · // 1.13.1: Begleitungs-Karte für alle freigeschaltet · // 1.13.0: Karte „Begleitung zu deinem Vital-Plan“ (Kurzcheck alle zwei Wochen, Edge vital-begleitung) · // 1.12.0: Index-Hero + Re-Check-Hinweisfeld, Vital-Checks & Studio-Messungen als Aufklapp-Sektionen
+  const FE_VERSION = "1.14.1"; // 1.14.1: Vital-Plan-Aufgabe als eigene Zeile „Auch in deinem Vital-Plan“, Potenzial-Hinweis im Verlauf klarer · // 1.14.0: Wiederkommen – erste Karte je nach Anlass (fälliger Kurzcheck / aktueller Schritt / Ergebnis), „Was als Nächstes ansteht“, „Was du schon geschafft hast“, Verlauf in Worten, Mail-Status je Begleitung · // 1.13.1: Begleitungs-Karte für alle freigeschaltet · // 1.13.0: Karte „Begleitung zu deinem Vital-Plan“ (Kurzcheck alle zwei Wochen, Edge vital-begleitung) · // 1.12.0: Index-Hero + Re-Check-Hinweisfeld, Vital-Checks & Studio-Messungen als Aufklapp-Sektionen
   const K = window.LeVitaKonto;
   const esc = K.esc;
   const params = new URLSearchParams(location.search);
@@ -988,7 +990,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
         ${trendSvg(chrono)}
         <div style="overflow-x:auto;"><table class="ptab">${head}${body}
           <tr class="ptot"><td style="text-align:left;">Vitalitäts-Index</td><td>${num(sumW)} %</td><td><strong>${num(cur.total_score)}</strong></td>${P ? `<td>${deltaHtml(dTot, true)}</td>` : ""}${F ? `<td>${deltaHtml(dFirst, true)}</td>` : ""}</tr></table></div>
-        ${top && top.score < 85 && !care ? `<p class="note">Am meisten bewegt sich dein Index über <strong>${esc(top.label)}</strong> – hoher Anteil und noch Luft nach oben.</p>` : ""}
+        ${top && top.score < 85 && !care ? `<p class="note">Hier liegt Potenzial für deinen nächsten Check: <strong>${esc(top.label)}</strong> – hoher Anteil und noch Luft nach oben.</p>` : ""}
         <details class="pexp"><summary>So entsteht dein Index</summary>
           <p>Jeder Bereich bekommt aus deinen Antworten einen Wert von 0 bis 100. Der Vitalitäts-Index ist der gewichtete Mittelwert dieser acht Werte – die Gewichte stehen in der Tabelle und sind für alle gleich. Beispiel: Bewegung & Kraft zählt ${num((A.find((a) => a.key === "activity") || { weight: 25 }).weight)} %, ein Plus von 10 Punkten dort hebt den Index um rund ${num((A.find((a) => a.key === "activity") || { weight: 25 }).weight / 10, 1)} Punkte.</p>
           <p>Stufen: ${LEVELS.slice().reverse().map(([m, l]) => m === 0 ? `${l} unter ${LEVELS[LEVELS.length - 2][0]}` : `${l} ab ${m}`).join(" · ")}. Bei täglichem Rauchen bleibt die Stufe begrenzt, auch wenn der Index höher liegt.</p>
@@ -1083,8 +1085,8 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
         ${x.if_then_text ? `<div class="ifthen-k">„${esc(x.if_then_text)}“</div>` : ""}
         ${meta ? `<p class="meta-k">${meta}</p>` : ""}
         ${active.length > 1 ? `<p class="note" style="margin:-4px 0 12px">Dazu ${active.length - 1 === 1 ? "ein weiterer Schritt" : (active.length - 1) + " weitere Schritte"} – alle im Ernährungsplan.</p>` : ""}
-        ${vCur && vCur.step_text ? `<p class="note" style="margin:-4px 0 12px">Aus deinem Vital-Plan: ${esc(vCur.step_text)}</p>` : ""}
-        <a class="btn" href="${nHref}">Ernährungsplan öffnen</a></div>`;
+        <a class="btn" href="${nHref}">Ernährungsplan öffnen</a>
+        ${vCur && vCur.step_text ? `<div class="also-k"><span class="also-l">Auch in deinem Vital-Plan</span>${esc(vCur.step_text)}</div>` : ""}</div>`;
     } else if (vCur && vCur.step_text) {
       kind = "vb-step";
       focus = `<div class="card focus"><p class="kicker">Dein aktueller Schritt</p><h2>Aus deinem Vital-Plan</h2>
