@@ -263,6 +263,14 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
   .logo-sub { font-size: 12px; color: var(--text-secondary); letter-spacing: .04em; text-transform: uppercase; }
   .brand { display: flex; align-items: center; gap: 12px; }
   .brand-mark { width: 40px; height: 40px; object-fit: contain; flex: none; border-radius: 10px; box-shadow: 0 0 0 1px var(--border); }
+  /* 1.11.0: Buddy zur Wiedererkennung in der Begrüßung */
+  .greet-row { display: flex; align-items: center; gap: 14px; }
+  .greet-buddy { width: 60px; height: 60px; flex: none; border-radius: 50%; background: var(--accent-green-dim); padding: 3px; object-fit: contain; }
+  /* 1.11.0: Angebote-im-Studio-Karte */
+  .offer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 0; border-top: 1px solid var(--border); text-decoration: none; color: var(--text-primary); }
+  .offer:first-of-type { border-top: 0; }
+  .offer small { display: block; color: var(--text-muted); font-size: 13px; margin-top: 2px; }
+  .offer .arr { color: var(--text-secondary); font-size: 18px; flex: none; }
   .hdr-btn { background: transparent; border: 1px solid var(--border-hover); color: var(--text-secondary); border-radius: 999px; padding: 6px 14px; font: 600 12px 'DM Sans', sans-serif; cursor: pointer; }
 
   h1 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 30px; line-height: 1.2; margin-bottom: 10px; }
@@ -405,7 +413,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.10.0"; // R7-01: Anzeige an den Stand 1.6.0 angeglichen
+  const FE_VERSION = "1.11.0"; // 1.11.0: Buddy in der Begrüßung (Wiedererkennung) + Karte „Angebote im Studio" mit Verlinkung
   const K = window.LeVitaKonto;
   const esc = K.esc;
   const params = new URLSearchParams(location.search);
@@ -809,8 +817,13 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
     }).join("");
 
     h(`
-      <h1>Hallo${acc.first_name ? " " + esc(acc.first_name) : ""}</h1>
-      <p class="lead">Dein persönlicher Bereich bei LeVITA.</p>
+      <div class="greet-row">
+        <img class="greet-buddy" src="assets/buddy-welcome-back-256.webp" alt="" width="60" height="60" loading="lazy" onerror="this.onerror=null;this.src='assets/buddy-welcome-back-256.png'">
+        <div>
+          <h1 style="margin:0">Hallo${acc.first_name ? " " + esc(acc.first_name) : ""}</h1>
+          <p class="lead" style="margin:4px 0 0">Schön, dass du wieder da bist – dein persönlicher Bereich bei LeVITA.</p>
+        </div>
+      </div>
       ${note ? `<div class="card ok"><p class="muted" style="margin:0">${esc(note)}</p></div>` : ""}
 
       <div class="card">
@@ -834,6 +847,15 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
       ${measureCard(Array.isArray(meas) ? meas : [])}
 
       ${list.length ? modulesCard(list[0], list) : ""}
+
+      <div class="card">
+        <h2>Angebote im Studio</h2>
+        <p class="muted" style="margin-top:0">Wenn du magst, geht es bei LeVITA persönlich weiter.</p>
+        <a class="offer" href="https://le-vita.com/probetraining" target="_blank" rel="noopener"><span><strong>Kostenloses Probetraining</strong><small>Unverbindlich bei uns reinschnuppern</small></span><span class="arr">→</span></a>
+        <a class="offer" href="https://le-vita.com/kurse-gemuenden-wohra" target="_blank" rel="noopener"><span><strong>Kurse &amp; Kursplan</strong><small>Von Rückenfit bis Ausdauer</small></span><span class="arr">→</span></a>
+        <a class="offer" href="tel:+4964536480009"><span><strong>Kostenloses Ergebnisgespräch</strong><small>15 Min mit Trainer, ausführlich als Vital-Analyse Plus (49 €) · 06453 6480009</small></span><span class="arr">→</span></a>
+        <a class="offer" href="https://le-vita.com/mikronaehrstoff-versorgung" target="_blank" rel="noopener"><span><strong>Nahrungsergänzung (BIOGENA)</strong><small>Empfehlungen aus der LeVITA-Auswahl</small></span><span class="arr">→</span></a>
+      </div>
 
       <div class="card">
         <h2>E-Mails von uns</h2>
