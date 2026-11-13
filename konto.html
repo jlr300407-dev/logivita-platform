@@ -446,7 +446,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.13.0"; // 1.13.0: Karte „Begleitung zu deinem Vital-Plan“ (Kurzcheck alle zwei Wochen, Edge vital-begleitung) · // 1.12.0: Index-Hero + Re-Check-Hinweisfeld, Vital-Checks & Studio-Messungen als Aufklapp-Sektionen
+  const FE_VERSION = "1.13.1"; // 1.13.1: Begleitungs-Karte für alle freigeschaltet · // 1.13.0: Karte „Begleitung zu deinem Vital-Plan“ (Kurzcheck alle zwei Wochen, Edge vital-begleitung) · // 1.12.0: Index-Hero + Re-Check-Hinweisfeld, Vital-Checks & Studio-Messungen als Aufklapp-Sektionen
   const K = window.LeVitaKonto;
   const esc = K.esc;
   const params = new URLSearchParams(location.search);
@@ -744,7 +744,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
   }
   // Karte im Bereich (angemeldet)
   // Testschalter bis zum Go-live: Karte nur auf Geräten, die einmal konto.html?vbtest=1 aufgerufen haben (?vbtest=0 schaltet ab).
-  const VB_PUBLIC = false;
+  const VB_PUBLIC = true;   // 13.11.2026: freigeschaltet mit Vital-Check v2.25.0 (konto-v5)
   const vbVisible = () => {
     if (VB_PUBLIC) return true;
     try {
