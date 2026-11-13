@@ -271,6 +271,15 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
   .offer:first-of-type { border-top: 0; }
   .offer small { display: block; color: var(--text-muted); font-size: 13px; margin-top: 2px; }
   .offer .arr { color: var(--text-secondary); font-size: 18px; flex: none; }
+  /* 1.13.0: Digitale Begleitung – Kurzcheck zum Vital-Plan */
+  .vb-step { border-left: 3px solid var(--accent-green); padding: 4px 0 4px 12px; margin: 10px 0 12px; font-weight: 600; }
+  .vb-btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
+  .vb-btns .btn { padding: 10px 16px; font-size: 14px; }
+  .vb-btns .btn.sel { outline: 2px solid var(--accent-green); }
+  .vb-box { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 12px; }
+  .vb-hist { margin: 8px 0 0; padding: 0; list-style: none; font-size: 14px; color: var(--text-secondary); }
+  .vb-hist li { padding: 4px 0; display: flex; gap: 8px; align-items: baseline; }
+  .vb-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--accent-green); flex: none; display: inline-block; }
   /* 1.12.0: Index-Hero + Aufklapp-Sektionen */
   .hero-idx { background: linear-gradient(180deg, var(--accent-green-dim), var(--brand-card) 55%); }
   .idxrow { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 2px; }
@@ -437,7 +446,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
 <script src="assets/konto.js?v=1.5.0"></script>
 <script>
 (() => {
-  const FE_VERSION = "1.12.0"; // 1.12.0: Index-Hero + Re-Check-Hinweisfeld, Vital-Checks & Studio-Messungen als Aufklapp-Sektionen
+  const FE_VERSION = "1.13.0"; // 1.13.0: Karte „Begleitung zu deinem Vital-Plan“ (Kurzcheck alle zwei Wochen, Edge vital-begleitung) · // 1.12.0: Index-Hero + Re-Check-Hinweisfeld, Vital-Checks & Studio-Messungen als Aufklapp-Sektionen
   const K = window.LeVitaKonto;
   const esc = K.esc;
   const params = new URLSearchParams(location.search);
@@ -675,6 +684,136 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
     if (b) { b.textContent = btn; b.href = `ernaehrung.html?code=${encodeURIComponent(hitCheck.public_code)}&utm_source=konto&utm_medium=modulkarte`; }
   }
 
+  // 1.13.0 (Jörg 13.11.2026): Digitale Begleitung zum Vital-Plan – Zwei-Wochen-Kurzcheck (Edge vital-begleitung).
+  // Zwei Wege: angemeldet (Karte im Bereich) oder per Link aus der Mail (?kc=Token&r=Bewertung, ohne Anmeldung).
+  const VB_URL = "https://koctweetotpqaazeicwj.supabase.co/functions/v1/vital-begleitung";
+  const RATE_LBL = { meistens: "Klappt meistens", teilweise: "Teilweise", noch_nicht: "Noch nicht" };
+  async function vbCall(mode, body, token) {
+    try {
+      const auth = (!token && sess) ? sess.access_token : NUTRI_ANON;
+      const r = await fetch(VB_URL, { method: "POST", headers: { "Content-Type": "application/json", apikey: NUTRI_ANON, Authorization: `Bearer ${auth}` },
+        body: JSON.stringify(Object.assign({ mode }, token ? { token } : {}, body || {})) });
+      return await r.json();
+    } catch (e) { return { success: false, error: "NETWORK" }; }
+  }
+  function vbInterimHtml(ck, base) {
+    if (ck.interim_total == null) return "";
+    const a = ck.interim_area;
+    const area = a ? ` ${esc(AREA_LBL[a.area_key] || a.label)}: ${num(a.before, 0)} → ${num(a.after, 0)}.` : "";
+    const b = base != null ? ` (bei deinem Check: ${num(base, 0)})` : "";
+    return `<div class="vb-box"><p style="margin:0">Mit deiner neuen Angabe ergibt sich rechnerisch ein Index von <strong>${num(ck.interim_total, 0)}</strong>${b}.${area}</p>
+      <p class="note" style="margin-top:6px">Das ist ein Zwischenstand aus einer Angabe – kein neuer Vital-Check und kein gemessener Gesundheitswert.</p></div>`;
+  }
+  // st: Antwort der Edge (checkin, question, options, base_total) · token: nur beim Weg über die Mail
+  function vbOpenHtml(st) {
+    const ck = st.checkin, q = st.question;
+    let html = `<p class="muted" style="margin:0">${ck.round === 1 ? "Dein erster Schritt" : "Dein Schritt der letzten zwei Wochen"}${ck.step_label ? ` (${esc(ck.step_label)})` : ""}:</p>
+      <div class="vb-step">${esc(ck.step_text || "")}</div>
+      <p style="margin:0">Wie läuft es?</p>
+      <div class="vb-btns">${Object.keys(RATE_LBL).map((k) => `<button class="btn ${ck.rating === k ? "sel" : "ghost"}" data-vb-rate="${k}" type="button">${RATE_LBL[k]}</button>`).join("")}</div>`;
+    if (ck.rating === "noch_nicht") html += `<p class="note">„Noch nicht“ ist eine völlig normale Antwort. Dann suchen wir einen leichteren Einstieg.</p>`;
+    if (ck.rating && q && q.options && q.options.length) {
+      html += `<div class="vb-box"><p style="margin:0 0 4px">Freiwillig: ${esc(q.text)}</p>
+        <div class="vb-btns">${q.options.map((o) => `<button class="btn ${ck.answer_option === o.key ? "sel" : "ghost"}" data-vb-opt="${esc(o.key)}" type="button">${esc(o.text)}</button>`).join("")}</div></div>`;
+    }
+    html += vbInterimHtml(ck, st.base_total);
+    if (ck.rating && (st.options || []).length) {
+      html += `<div class="vb-box"><p style="margin:0 0 6px"><strong>So kann es weitergehen</strong></p>` + st.options.map((o) => `
+        <div style="margin:10px 0"><p style="margin:0 0 4px"><strong>${esc(o.label)}</strong></p>
+          <p class="muted" style="margin:0">${esc(o.text)}</p>${o.hilfe ? `<p class="note" style="margin-top:4px">Wenn-dann-Hilfe: ${esc(o.hilfe)}</p>` : ""}
+          <button class="btn" style="margin-top:8px;padding:10px 18px;font-size:14px" data-vb-choose="${o.choice}" type="button">${o.choice === "gespraech" ? "Rückruf wünschen" : "Übernehmen"}</button></div>`).join("") + `</div>`;
+    }
+    return html;
+  }
+  function vbBind(el, st, token, rerender) {
+    const id = st.checkin && st.checkin.id;
+    const go = async (mode, body) => {
+      el.querySelectorAll("button").forEach((b) => (b.disabled = true));
+      const r = await vbCall(mode, Object.assign(token ? {} : { checkin_id: id }, body), token);
+      if (!r.success) { el.querySelectorAll("button").forEach((b) => (b.disabled = false)); const e = el.querySelector(".error"); if (e) e.textContent = "Das hat gerade nicht geklappt. Bitte versuche es noch einmal."; return; }
+      rerender(r);
+    };
+    el.querySelectorAll("[data-vb-rate]").forEach((b) => (b.onclick = () => go("rate", { rating: b.dataset.vbRate })));
+    el.querySelectorAll("[data-vb-opt]").forEach((b) => (b.onclick = () => go("answer", { option: b.dataset.vbOpt })));
+    el.querySelectorAll("[data-vb-choose]").forEach((b) => (b.onclick = () => go("choose", { choice: b.dataset.vbChoose })));
+  }
+  function vbChosenHtml(r) {
+    if (r.callback) return `<p style="margin:0">Danke! Wir melden uns bei dir. Lieber gleich selbst anrufen? <a href="tel:+4964536480009">06453 6480009</a></p>`;
+    return `<p style="margin:0">Übernommen. Dein Schritt für die nächsten zwei Wochen:</p><div class="vb-step">${esc(r.chosen && r.chosen.text || "")}</div>
+      <p class="note">In zwei Wochen fragen wir kurz nach, wie es läuft.</p>`;
+  }
+  // Karte im Bereich (angemeldet)
+  // Testschalter bis zum Go-live: Karte nur auf Geräten, die einmal konto.html?vbtest=1 aufgerufen haben (?vbtest=0 schaltet ab).
+  const VB_PUBLIC = false;
+  const vbVisible = () => {
+    if (VB_PUBLIC) return true;
+    try {
+      const q = new URLSearchParams(location.search).get("vbtest");
+      if (q === "1") localStorage.setItem("levita-vb-test", "1");
+      if (q === "0") localStorage.removeItem("levita-vb-test");
+      return localStorage.getItem("levita-vb-test") === "1";
+    } catch (e) { return false; }
+  };
+  async function vbFill() {
+    const el = document.getElementById("vb-card"); if (!el || !sess || !vbVisible()) return;
+    const st = await vbCall("state");
+    if (!st || !st.success) return;
+    const wrap = (inner) => `<div class="card"><h2>Begleitung zu deinem Vital-Plan</h2>${inner}<div class="error"></div></div>`;
+    const offLink = `<p class="small" style="margin-top:14px"><button class="linkbtn" id="vb-off" type="button">Begleitung abschalten</button> – dein Plan und dein Bereich bleiben erhalten.</p>`;
+    const hist = (st.history || []).filter((x) => x.rating);
+    const histHtml = hist.length ? `<details style="margin-top:12px"><summary class="small">Deine Kurzchecks (${hist.length})</summary><ul class="vb-hist">${hist.map((x) =>
+      `<li><span class="vb-dot" title="Zwischenstand"></span><span>Runde ${x.round}: ${esc(RATE_LBL[x.rating] || "")}${x.interim_total != null ? ` · Zwischenstand ${num(x.interim_total, 0)}` : ""}</span></li>`).join("")}</ul>
+      <p class="note" style="margin-top:4px">Hohle Punkte: Zwischenstände aus einer Angabe. Dein Index oben zählt nur vollständige Checks.</p></details>` : "";
+    if (!st.begleitung) {
+      if (!st.can_enable) { el.innerHTML = ""; return; }
+      el.innerHTML = wrap(`<p class="muted" style="margin-top:0">Alle zwei Wochen eine kurze Mail: Wie läuft dein Schritt? Danach siehst du hier deinen Zwischenstand und den passenden nächsten Schritt. Höchstens drei Kurzchecks und eine Einladung zum Re-Check – nur zu deinem Plan, keine Angebote.</p>
+        <button class="btn" id="vb-on" type="button" style="margin-top:6px">Begleitung einschalten</button>`);
+      document.getElementById("vb-on").onclick = async () => { const r = await vbCall("enable"); if (r.success) vbFill(); else el.querySelector(".error").textContent = "Das hat gerade nicht geklappt. Bitte versuche es noch einmal."; };
+      return;
+    }
+    if (!st.begleitung.active) {
+      el.innerHTML = wrap(`<p class="muted" style="margin-top:0">Die Begleitung ist abgeschaltet. Du bekommst keine Kurzcheck-Mails mehr.</p>
+        <button class="btn ghost" id="vb-on" type="button">Wieder einschalten</button>${histHtml}`);
+      document.getElementById("vb-on").onclick = async () => { const r = await vbCall("enable"); if (r.success) vbFill(); };
+      return;
+    }
+    const render = (open) => {
+      let inner;
+      if (open) inner = vbOpenHtml(open);
+      else if (st.next_due) inner = `<p class="muted" style="margin-top:0">Dein nächster Kurzcheck ist am <strong>${esc(new Date(st.next_due).toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" }))}</strong> – wir schicken dir dann eine kurze Mail.</p>`;
+      else inner = `<p class="muted" style="margin-top:0">Gerade ist kein Kurzcheck offen.</p>`;
+      el.innerHTML = wrap(inner + histHtml + offLink);
+      if (open) vbBind(el, open, null, (r) => { if (r.chosen) { el.innerHTML = wrap(vbChosenHtml(r)); } else render(r); });
+      const off = document.getElementById("vb-off");
+      if (off) off.onclick = async () => { off.disabled = true; const r = await vbCall("disable"); if (r.success) vbFill(); else off.disabled = false; };
+    };
+    render(st.open);
+  }
+  // Weg über die Mail: ?kc=Token&r=meistens|teilweise|noch_nicht|aus – ohne Anmeldung
+  async function vbFromMail(token, rating) {
+    try { history.replaceState(null, "", location.pathname); } catch (e) {}
+    spinner();
+    const r = await vbCall("rate", { rating }, token);
+    const foot = `<a class="btn ghost" href="konto.html" style="margin-top:16px">Zu meinem Bereich →</a>`;
+    if (!r.success) {
+      h(`<h1>Begleitung zu deinem Vital-Plan</h1><div class="card warn"><p class="muted" style="margin:0">Dieser Link gilt nicht mehr. In deinem Bereich findest du deinen aktuellen Stand.</p>${foot}</div>`);
+      return;
+    }
+    if (r.opted_out) {
+      h(`<h1>Begleitung abgeschaltet</h1><div class="card ok"><p class="muted" style="margin:0">Du bekommst keine Kurzcheck-Mails mehr. Dein Plan und dein Bereich bleiben erhalten – dort kannst du die Begleitung jederzeit wieder einschalten.</p>${foot}</div>`);
+      return;
+    }
+    const render = (st) => {
+      h(`<h1>Danke für deine Rückmeldung</h1><div class="card" id="vb-mail">${vbOpenHtml(st)}<div class="error"></div></div>
+        <p class="small">Alles Weitere, auch deinen Verlauf, findest du in deinem Bereich.</p>${foot}`);
+      vbBind(document.getElementById("vb-mail"), st, token, (n) => {
+        if (n.chosen) document.getElementById("vb-mail").innerHTML = vbChosenHtml(n);
+        else render(n);
+      });
+    };
+    render(r);
+  }
+
 
   // 1.8.0 (Jörg 02.11.2026): Index transparent und Verlauf über alle Checks – aus score_payload (my_checks), keine neue Abfrage.
   // Der Index ist der gewichtete Mittelwert der acht Bereiche (Score-Version 4, Gewichte aus dem Payload jedes Checks).
@@ -887,6 +1026,8 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
 
       ${list.length ? heroCard(list) : `<div class="card"><h2>Deine Vital-Checks</h2><p class="muted">Noch kein Check in deinem Konto.</p></div>`}
 
+      <div id="vb-card"></div>
+
       ${list.length ? `<details class="card sec">
         <summary><span><span class="sec-t">Deine Vital-Checks</span><span class="sec-s">${list.length === 1 ? "1 Check" : num(list.length) + " Checks"} · Ergebnisse ansehen</span></span><span class="sec-chev">›</span></summary>
         <div class="acc-body">${rows}</div>
@@ -941,6 +1082,7 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
     };
     bindToggle("t-rem", "reminders");
     if (list.length) fillNutriState(list[0], list); // 1.7.0 · 1.9.0: über alle Checks
+    if (list.length) vbFill(); // 1.13.0
     document.getElementById("b-guide").onclick = () => K.showGuide && K.showGuide();
 
     document.getElementById("b-del-open").onclick = () => {
@@ -972,6 +1114,11 @@ ab wann der Vergleich sinnvoll ist – danach der große Knopf. Ältere Checks b
   $logout.onclick = () => { K.logout(); sess = null; screenLogin("Du bist abgemeldet. Für die nächste Anmeldung auf diesem Gerät schicken wir dir einen neuen Link."); };
 
   (async () => {
+    // 1.13.0: Kurzcheck-Link aus der Begleit-Mail – funktioniert ohne Anmeldung
+    try {
+      const qp = new URLSearchParams(location.search), kc = qp.get("kc"), kr = qp.get("r");
+      if (kc && kr) return vbFromMail(kc, kr);
+    } catch (e) {}
     // 1.5.0 (Paket W5): Link aus der Mail – erst der Klick auf "Jetzt anmelden" meldet an
     const pend = K.pendingLink ? K.pendingLink() : null;
     if (pend) {
